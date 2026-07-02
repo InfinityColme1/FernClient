@@ -1,5 +1,5 @@
-name: fernclient
-description: "A new Flutter project."
+name: Fern
+description: "The media manager."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -31,16 +31,19 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_localization:
   flutter_svg:
-  flutter_bloc: 
-  hydrated_bloc:
+  flutter_bloc:
   path_provider: 
   get_it:
   equatable: 
-  flutter_staggered_grid_view: 
+  flutter_staggered_grid_view:
+  flutter_masonry_view:
+  url_launcher:
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  go_router:
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +55,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  isar_generator: ^3.1.0+1
+  build_runner: any
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -85,9 +90,13 @@ flutter:
     - family: Google Sans Flex
       fonts:
         - asset: assets/fonts/GoogleSansFlex_24pt-Light.ttf
+          weight: 300
         - asset: assets/fonts/GoogleSansFlex_24pt-Medium.ttf
+          weight: 400
         - asset: assets/fonts/GoogleSansFlex_24pt-Regular.ttf
+          weight: 500
         - asset: assets/fonts/GoogleSansFlex_24pt-SemiBold.ttf
+          weight: 600
 
   
   # For details regarding fonts from package dependencies,
