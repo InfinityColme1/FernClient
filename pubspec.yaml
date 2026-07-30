@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.5
+  sdk: ^3.12.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -32,6 +32,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  shared_preferences:
   flutter_localization:
   flutter_svg:
   flutter_bloc:
@@ -44,6 +45,11 @@ dependencies:
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   go_router:
+  file_picker: ^11.0.2
+  video_player: ^2.8.1
+  ffmpeg_kit_flutter_full: ^6.0.3
+  ffmpeg_kit_flutter:
+
 
 dev_dependencies:
   flutter_test:
@@ -56,7 +62,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   isar_generator: ^3.1.0+1
-  build_runner: any
+  build_runner: ^2.4.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -72,6 +78,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/fonts/
+    - assets/icons/
     - assets/images/
     - assets/vectors/
 

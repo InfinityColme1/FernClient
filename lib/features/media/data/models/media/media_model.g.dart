@@ -93,11 +93,12 @@ MediaModel _mediaModelDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = MediaModel();
+  final object = MediaModel(
+    id: id,
+    path: reader.readString(offsets[2]),
+  );
   object.downloaded = reader.readDateTime(offsets[0]);
-  object.id = id;
   object.isFavorite = reader.readBool(offsets[1]);
-  object.path = reader.readString(offsets[2]);
   return object;
 }
 
@@ -120,7 +121,7 @@ P _mediaModelDeserializeProp<P>(
 }
 
 Id _mediaModelGetId(MediaModel object) {
-  return object.id;
+  return object.id ?? Isar.autoIncrement;
 }
 
 List<IsarLinkBase<dynamic>> _mediaModelGetLinks(MediaModel object) {
@@ -269,8 +270,24 @@ extension MediaModelQueryFilter
     });
   }
 
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> idIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'id',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> idIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'id',
+      ));
+    });
+  }
+
   QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> idEqualTo(
-      Id value) {
+      Id? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'id',
@@ -280,7 +297,7 @@ extension MediaModelQueryFilter
   }
 
   QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> idGreaterThan(
-    Id value, {
+    Id? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -293,7 +310,7 @@ extension MediaModelQueryFilter
   }
 
   QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> idLessThan(
-    Id value, {
+    Id? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -306,8 +323,8 @@ extension MediaModelQueryFilter
   }
 
   QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> idBetween(
-    Id lower,
-    Id upper, {
+    Id? lower,
+    Id? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {

@@ -81,10 +81,11 @@ PersonaModel _personaModelDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = PersonaModel();
-  object.id = id;
-  object.name = reader.readString(offsets[0]);
-  object.picturePath = reader.readStringOrNull(offsets[1]);
+  final object = PersonaModel(
+    id: id,
+    name: reader.readString(offsets[0]),
+    picturePath: reader.readStringOrNull(offsets[1]),
+  );
   return object;
 }
 

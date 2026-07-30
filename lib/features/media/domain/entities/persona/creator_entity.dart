@@ -8,6 +8,7 @@ class CreatorEntity extends PersonaEntity {
   const CreatorEntity({
     required super.id,
     required super.name,
+    super.picturePath,
     this.socialProfiles,
   });
 

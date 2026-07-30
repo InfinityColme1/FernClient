@@ -95,10 +95,11 @@ TagModel _tagModelDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = TagModel();
-  object.id = id;
-  object.name = reader.readString(offsets[0]);
-  object.picturePath = reader.readStringOrNull(offsets[1]);
+  final object = TagModel(
+    id: id,
+    name: reader.readString(offsets[0]),
+    picturePath: reader.readStringOrNull(offsets[1]),
+  );
   return object;
 }
 

@@ -92,11 +92,12 @@ CreatorModel _creatorModelDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = CreatorModel();
-  object.id = id;
-  object.name = reader.readString(offsets[0]);
-  object.picturePath = reader.readStringOrNull(offsets[1]);
-  object.socialProfiles = reader.readStringList(offsets[2]);
+  final object = CreatorModel(
+    id: id,
+    name: reader.readString(offsets[0]),
+    picturePath: reader.readStringOrNull(offsets[1]),
+    socialProfiles: reader.readStringList(offsets[2]),
+  );
   return object;
 }
 

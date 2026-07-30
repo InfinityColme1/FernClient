@@ -21,15 +21,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (BuildContext context) => MediaBloc())
-      ],
-      child: MaterialApp.router(
-        title: appName,
-        theme: AppTheme.lightTheme,
-        routerConfig: appRouter,
-      ),
+    return MaterialApp.router(
+      title: appName,
+      theme: AppTheme.lightTheme,
+      routerConfig: appRouter,
     );
   }
 }

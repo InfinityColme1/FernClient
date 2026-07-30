@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:isar/isar.dart';
 
 import 'media/media_model.dart';
@@ -22,4 +25,28 @@ class TagModel {
 
   @Backlink(to: 'tags')
   final media = IsarLinks<MediaModel>();
+
+  
+  TagModel({
+    required this.id,
+    required this.name,
+    this.picturePath,
+  });
+
+  TagEntity toEntity() {
+    return TagEntity(
+      id: id,
+      name: name,
+      picturePath: picturePath,
+      children: children.map((tag) {return tag.toEntity();}).toList(),
+    );
+  }
+
+  factory TagModel.fromEntity(TagEntity entity) {
+    return TagModel(
+      id: entity.id,
+      picturePath: entity.picturePath,
+      name: entity.name,
+    );
+  }
 }

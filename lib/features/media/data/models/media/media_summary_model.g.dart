@@ -69,9 +69,10 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = MediaSummaryModel();
-  object.id = id;
-  object.path = reader.readString(offsets[0]);
+  final object = MediaSummaryModel(
+    id: id,
+    path: reader.readString(offsets[0]),
+  );
   return object;
 }
 
@@ -90,7 +91,7 @@ P _mediaSummaryModelDeserializeProp<P>(
 }
 
 Id _mediaSummaryModelGetId(MediaSummaryModel object) {
-  return object.id;
+  return object.id ?? Isar.autoIncrement;
 }
 
 List<IsarLinkBase<dynamic>> _mediaSummaryModelGetLinks(
@@ -187,7 +188,25 @@ extension MediaSummaryModelQueryWhere
 extension MediaSummaryModelQueryFilter
     on QueryBuilder<MediaSummaryModel, MediaSummaryModel, QFilterCondition> {
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
-      idEqualTo(Id value) {
+      idIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'id',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      idIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'id',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      idEqualTo(Id? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'id',
@@ -198,7 +217,7 @@ extension MediaSummaryModelQueryFilter
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       idGreaterThan(
-    Id value, {
+    Id? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -212,7 +231,7 @@ extension MediaSummaryModelQueryFilter
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       idLessThan(
-    Id value, {
+    Id? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -226,8 +245,8 @@ extension MediaSummaryModelQueryFilter
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       idBetween(
-    Id lower,
-    Id upper, {
+    Id? lower,
+    Id? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {

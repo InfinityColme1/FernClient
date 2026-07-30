@@ -1,43 +1,35 @@
+import 'package:Fern/config/theme/app_colors.dart';
+import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../features/media/presentation/widgets/media_thumbnail.dart';
 import '../widgets/surface.dart';
 
-
 const largeScreenMinWidth = 600;
 
-
-class MainLayout extends StatefulWidget{
-
+class MainLayout extends StatefulWidget {
   final Widget child;
 
-  const MainLayout({
-    super.key,
-    required this.child
-  });
+  const MainLayout({super.key, required this.child});
 
   @override
   State<StatefulWidget> createState() => _MainLayoutState();
 }
 
-
 class _MainLayoutState extends State<MainLayout> {
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-        builder: (context, constraints) {
-          final isLargeScreen = constraints.maxWidth > largeScreenMinWidth;
+    return LayoutBuilder(builder: (context, constraints) {
+      final isLargeScreen = constraints.maxWidth > largeScreenMinWidth;
 
-          if (isLargeScreen) {
-            return _buildLargeScreenLayout(context, widget.child);
-          }
+      if (isLargeScreen) {
+        return _buildLargeScreenLayout(context, widget.child);
+      }
 
-          return _buildSmallScreenLayout(context, widget.child);
-        }
-    );
+      return _buildSmallScreenLayout(context, widget.child);
+    });
   }
 
   Widget _buildLargeScreenLayout(BuildContext context, Widget child) {
@@ -46,57 +38,58 @@ class _MainLayoutState extends State<MainLayout> {
         title: Row(
           children: [
             Padding(
-              padding: EdgeInsetsGeometry.only(right: 50),
-              child:  Image.asset(
+              padding: const EdgeInsets.only(right: AppSpacing.xxxl),
+              child: Image.asset(
                 appLogo,
                 width: 150,
               ),
             ),
-
             SearchAnchor(
                 builder: (BuildContext context, SearchController controller) {
-                  return SearchBar(
-                    controller: controller,
-                    padding: const WidgetStatePropertyAll<EdgeInsets>(
-                      EdgeInsets.symmetric(horizontal: 16.0),
-                    ),
-                    onTap: () {
-                      controller.openView();
-                    },
-                    onChanged: (_) {
-                      controller.openView();
-                    },
-                    leading: const Icon(Icons.search),
-                    hintText: "Search",
-                  );
+              return SearchBar(
+                controller: controller,
+                elevation: const WidgetStatePropertyAll<double>(0.0), // Elevación eliminada
+                backgroundColor: const WidgetStatePropertyAll<Color>(AppColors.secondary),
+                padding: const WidgetStatePropertyAll<EdgeInsets>(
+                  EdgeInsets.symmetric(horizontal: AppSpacing.l),
+                ),
+                onTap: () {
+                  controller.openView();
                 },
-                suggestionsBuilder: (BuildContext context, SearchController controller ) {
-                  return List<ListTile>.generate(3, (int index) {
-                    final String item = 'item $index';
-                    return ListTile(
-                      title: Text(item),
-                    );
-                  });
-                }
-            )
+                onChanged: (_) {
+                  controller.openView();
+                },
+                leading: const Icon(Icons.search, color: AppColors.black),
+                hintText: "Search",
+                hintStyle: WidgetStatePropertyAll<TextStyle?>(
+                  Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.lightgray),
+                ),
+              );
+            }, suggestionsBuilder:
+                    (BuildContext context, SearchController controller) {
+              return List<ListTile>.generate(3, (int index) {
+                final String item = 'item $index';
+                return ListTile(
+                  title: Text(item, style: Theme.of(context).textTheme.bodyMedium),
+                  onTap: () {
+                    controller.closeView(item);
+                  },
+                );
+              });
+            })
           ],
         ),
         actions: [
-          IconButton(
-              onPressed: () { },
-              icon: Icon(Icons.add)
-          ),
-
-          IconButton(
-              onPressed: () { },
-              icon: Icon(Icons.settings)
-          )
+          IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+          const SizedBox(width: AppSpacing.l),
         ],
       ),
-
       body: Row(
         children: [
-          Sidebar(iconSize: 25,),
+          const Sidebar(
+            iconSize: AppSizes.iconLarge,
+          ),
           Expanded(child: child)
         ],
       ),
@@ -104,10 +97,13 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildSmallScreenLayout(BuildContext context, Widget child) {
-    return Center(
-      child: Surface(
-        radius: 5,
-        child: MediaThumbnail(path: 'C:/Users/Mauricio/Pictures/Gang/Random/UnaiUwU.jpeg'),
+    return Scaffold(
+      body: Center(
+        child: Surface(
+          radius: AppSizes.radiusSmall,
+          child: const MediaThumbnail(
+              path: 'C:/Users/Mauricio/Pictures/Gang/Random/UnaiUwU.jpeg'),
+        ),
       ),
     );
   }

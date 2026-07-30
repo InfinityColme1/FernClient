@@ -15,7 +15,7 @@ class MediaPage extends StatelessWidget {
         Expanded(
           child: MediaGrid(
             mediaList: [
-              File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/CattyRuby.jpg'),
+              /*File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/CattyRuby.jpg'),
               File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/Fotor_AI.png'),
               File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/MayaaaPompee.png'),
               File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/kpopdemonhunters.png'),
@@ -31,7 +31,7 @@ class MediaPage extends StatelessWidget {
               File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/3rubyfeet.png'),
               File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/Marigold.png'),
               File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/memerubyy.jpg'),
-              File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/memeruby.png'),
+              File('C:/Users/Mauricio/Pictures/Gang/PompeuAndFanarts/memeruby.png'),*/
             ],
             columns: 4
         ),)
