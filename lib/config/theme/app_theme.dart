@@ -4,6 +4,10 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  /// Cursor de todo lo pulsable: mano cuando está activo y flecha normal
+  /// cuando está deshabilitado.
+  static const _clickable = WidgetStateMouseCursor.clickable;
+
   static final lightTheme = ThemeData(
     useMaterial3: true,
     primaryColor: AppColors.primary,
@@ -41,14 +45,51 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Google Sans Flex',
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusExtraLarge),
         ),
         elevation: 0,
-      ),
+      ).copyWith(mouseCursor: _clickable),
     ),
+
+    textButtonTheme: TextButtonThemeData(
+      style: const ButtonStyle(mouseCursor: _clickable),
+    ),
+
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: const ButtonStyle(mouseCursor: _clickable),
+    ),
+
+    iconButtonTheme: IconButtonThemeData(
+      style: const ButtonStyle(mouseCursor: _clickable),
+    ),
+
+    filledButtonTheme: FilledButtonThemeData(
+      style: const ButtonStyle(mouseCursor: _clickable),
+    ),
+
+    segmentedButtonTheme: const SegmentedButtonThemeData(
+      style: ButtonStyle(mouseCursor: _clickable),
+    ),
+
+    listTileTheme: const ListTileThemeData(mouseCursor: _clickable),
+
+    checkboxTheme: const CheckboxThemeData(mouseCursor: _clickable),
+
+    radioTheme: const RadioThemeData(mouseCursor: _clickable),
+
+    switchTheme: const SwitchThemeData(mouseCursor: _clickable),
+
+    dropdownMenuTheme: const DropdownMenuThemeData(
+      menuStyle: MenuStyle(mouseCursor: _clickable),
+    ),
+
+    menuButtonTheme: const MenuButtonThemeData(
+      style: ButtonStyle(mouseCursor: _clickable),
+    ),
+
+    tabBarTheme: const TabBarThemeData(mouseCursor: _clickable),
 
     dividerTheme: const DividerThemeData(
       color: AppColors.lightgray,
@@ -80,7 +121,7 @@ class AppTheme {
       labelSmall: TextStyle(
         color: AppColors.black,
         fontSize: 10,
-        fontFamily: 'Courier',
+        fontWeight: FontWeight.w400,
       ),
     ),
 

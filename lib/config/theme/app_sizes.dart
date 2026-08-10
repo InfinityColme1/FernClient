@@ -10,6 +10,7 @@ class AppSizes {
 
   // Icon Sizes
   static const double iconSmall = 16.0;
+  static const double iconCompact = 18.0;
   static const double iconMedium = 20.0;
   static const double iconLarge = 24.0;
   static const double iconExtraLarge = 32.0;
@@ -23,10 +24,15 @@ class AppSizes {
   static const double avatarHuge = 80.0;
 
   // Button Heights
+  static const double buttonHeightSmall = 40.0;
   static const double buttonHeight = 50.0;
   static const double buttonHeightLarge = 54.0;
   
   // Panel Widths
   static const double infoPanelWidth = 350.0;
   static const double dialogMaxWidth = 800.0;
+
+  // Layout
+  static const double largeScreenMinWidth = 600.0;
+  static const double logoWidth = 150.0;
 }

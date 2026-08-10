@@ -17,18 +17,23 @@ const MediaModelSchema = CollectionSchema(
   name: r'Media',
   id: 6434281596432674333,
   properties: {
-    r'downloaded': PropertySchema(
+    r'description': PropertySchema(
       id: 0,
+      name: r'description',
+      type: IsarType.string,
+    ),
+    r'downloaded': PropertySchema(
+      id: 1,
       name: r'downloaded',
       type: IsarType.dateTime,
     ),
     r'isFavorite': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'isFavorite',
       type: IsarType.bool,
     ),
     r'path': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'path',
       type: IsarType.string,
     )
@@ -72,6 +77,12 @@ int _mediaModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.description;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.path.length * 3;
   return bytesCount;
 }
@@ -82,9 +93,10 @@ void _mediaModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.downloaded);
-  writer.writeBool(offsets[1], object.isFavorite);
-  writer.writeString(offsets[2], object.path);
+  writer.writeString(offsets[0], object.description);
+  writer.writeDateTime(offsets[1], object.downloaded);
+  writer.writeBool(offsets[2], object.isFavorite);
+  writer.writeString(offsets[3], object.path);
 }
 
 MediaModel _mediaModelDeserialize(
@@ -95,10 +107,11 @@ MediaModel _mediaModelDeserialize(
 ) {
   final object = MediaModel(
     id: id,
-    path: reader.readString(offsets[2]),
+    path: reader.readString(offsets[3]),
   );
-  object.downloaded = reader.readDateTime(offsets[0]);
-  object.isFavorite = reader.readBool(offsets[1]);
+  object.description = reader.readStringOrNull(offsets[0]);
+  object.downloaded = reader.readDateTime(offsets[1]);
+  object.isFavorite = reader.readBool(offsets[2]);
   return object;
 }
 
@@ -110,10 +123,12 @@ P _mediaModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 2:
+      return (reader.readBool(offset)) as P;
+    case 3:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -215,6 +230,160 @@ extension MediaModelQueryWhere
 
 extension MediaModelQueryFilter
     on QueryBuilder<MediaModel, MediaModel, QFilterCondition> {
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'description',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'description',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'description',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'description',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'description',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition>
+      descriptionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'description',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<MediaModel, MediaModel, QAfterFilterCondition> downloadedEqualTo(
       DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -572,6 +741,18 @@ extension MediaModelQueryLinks
 
 extension MediaModelQuerySortBy
     on QueryBuilder<MediaModel, MediaModel, QSortBy> {
+  QueryBuilder<MediaModel, MediaModel, QAfterSortBy> sortByDescription() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterSortBy> sortByDescriptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
   QueryBuilder<MediaModel, MediaModel, QAfterSortBy> sortByDownloaded() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'downloaded', Sort.asc);
@@ -611,6 +792,18 @@ extension MediaModelQuerySortBy
 
 extension MediaModelQuerySortThenBy
     on QueryBuilder<MediaModel, MediaModel, QSortThenBy> {
+  QueryBuilder<MediaModel, MediaModel, QAfterSortBy> thenByDescription() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterSortBy> thenByDescriptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
   QueryBuilder<MediaModel, MediaModel, QAfterSortBy> thenByDownloaded() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'downloaded', Sort.asc);
@@ -662,6 +855,13 @@ extension MediaModelQuerySortThenBy
 
 extension MediaModelQueryWhereDistinct
     on QueryBuilder<MediaModel, MediaModel, QDistinct> {
+  QueryBuilder<MediaModel, MediaModel, QDistinct> distinctByDescription(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'description', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<MediaModel, MediaModel, QDistinct> distinctByDownloaded() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'downloaded');
@@ -687,6 +887,12 @@ extension MediaModelQueryProperty
   QueryBuilder<MediaModel, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<MediaModel, String?, QQueryOperations> descriptionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'description');
     });
   }
 

@@ -1,6 +1,9 @@
 import 'dart:io';
+
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 class MediaViewer extends StatefulWidget {
   final String path;
@@ -15,50 +18,56 @@ class MediaViewer extends StatefulWidget {
 }
 
 class _MediaViewerState extends State<MediaViewer> {
-  VideoPlayerController? _videoController;
-  bool _isInitialized = false;
+  Player? _player;
+  VideoController? _controller;
 
-  bool get _isVideo =>
-      widget.path.toLowerCase().endsWith('.mp4') ||
-      widget.path.toLowerCase().endsWith('.mov') ||
-      widget.path.toLowerCase().endsWith('.avi');
+  bool get _isVideo => widget.path.isVideoPath;
 
   @override
   void initState() {
     super.initState();
-    if (_isVideo) {
-      _initVideo();
-    }
+    if (_isVideo) _initVideo();
   }
 
-  Future<void> _initVideo() async {
-    _videoController = VideoPlayerController.file(File(widget.path));
-    try {
-      await _videoController!.initialize();
-      setState(() {
-        _isInitialized = true;
-      });
-    } catch (e) {
-      debugPrint("Error initializing video player: $e");
-    }
+  @override
+  void didUpdateWidget(covariant MediaViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path == widget.path) return;
+
+    _disposeVideo();
+    if (_isVideo) _initVideo();
+    setState(() {});
   }
 
   @override
   void dispose() {
-    _videoController?.dispose();
+    _disposeVideo();
     super.dispose();
+  }
+
+  void _initVideo() {
+    final player = Player();
+    _player = player;
+    _controller = VideoController(player);
+
+    player.open(Media(widget.path)).catchError((Object e) {
+      debugPrint('MediaViewer: no se pudo abrir el vídeo: $e');
+    });
+  }
+
+  void _disposeVideo() {
+    final player = _player;
+    _player = null;
+    _controller = null;
+    player?.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isVideo) {
-      return _buildVideoPlayer();
-    } else {
-      return _buildImagePlayer();
-    }
+    return _isVideo ? _buildVideoPlayer() : _buildImageViewer();
   }
 
-  Widget _buildImagePlayer() {
+  Widget _buildImageViewer() {
     return Center(
       child: InteractiveViewer(
         minScale: 0.5,
@@ -74,107 +83,15 @@ class _MediaViewerState extends State<MediaViewer> {
   }
 
   Widget _buildVideoPlayer() {
-    if (!_isInitialized) {
+    final controller = _controller;
+    if (controller == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Center(
-      child: AspectRatio(
-        aspectRatio: _videoController!.value.aspectRatio,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            VideoPlayer(_videoController!),
-            _VideoControls(controller: _videoController!),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VideoControls extends StatefulWidget {
-  final VideoPlayerController controller;
-
-  const _VideoControls({required this.controller});
-
-  @override
-  State<_VideoControls> createState() => _VideoControlsState();
-}
-
-class _VideoControlsState extends State<_VideoControls> {
-  bool _showControls = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onHover: (_) => setState(() => _showControls = true),
-      child: GestureDetector(
-        onTap: () => setState(() => _showControls = !_showControls),
-        child: AnimatedOpacity(
-          opacity: _showError() ? 1.0 : (_showControls ? 1.0 : 0.0),
-          duration: const Duration(milliseconds: 300),
-          child: Container(
-            color: Colors.black26,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildProgressBar(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.replay_10, color: Colors.white),
-                      onPressed: () {
-                        final newPos = widget.controller.value.position - const Duration(seconds: 10);
-                        widget.controller.seekTo(newPos);
-                      },
-                    ),
-                    ValueListenableBuilder(
-                      valueListenable: widget.controller,
-                      builder: (context, VideoPlayerValue value, child) {
-                        return IconButton(
-                          iconSize: 48,
-                          icon: Icon(
-                            value.isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            value.isPlaying ? widget.controller.pause() : widget.controller.play();
-                          },
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.forward_10, color: Colors.white),
-                      onPressed: () {
-                        final newPos = widget.controller.value.position + const Duration(seconds: 10);
-                        widget.controller.seekTo(newPos);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  bool _showError() => widget.controller.value.hasError;
-
-  Widget _buildProgressBar() {
-    return VideoProgressIndicator(
-      widget.controller,
-      allowScrubbing: true,
-      colors: const VideoProgressColors(
-        playedColor: Colors.red,
-        bufferedColor: Colors.white24,
-        backgroundColor: Colors.white10,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+    return Video(
+      controller: controller,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
     );
   }
 }

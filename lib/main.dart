@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_kit/media_kit.dart';
 import 'config/theme/app_theme.dart';
 import 'core/navigation/app_router.dart';
 import 'core/service_locator.dart';
@@ -10,6 +11,7 @@ import 'features/media/presentation/blocs/media_bloc.dart';
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   await initializeDependencies();
 
   runApp(const MyApp());

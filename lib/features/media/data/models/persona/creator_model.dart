@@ -1,3 +1,4 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:isar/isar.dart';
 
@@ -31,9 +32,12 @@ class CreatorModel {
     );
   }
 
+  /// Un creador recién creado llega con [unsavedId]; en ese caso se deja que
+  /// Isar le asigne el identificador, o todos se escribirían sobre la misma
+  /// fila.
   factory CreatorModel.fromEntity(CreatorEntity entity) {
     return CreatorModel(
-        id: entity.id,
+        id: entity.id == unsavedId ? Isar.autoIncrement : entity.id,
         name: entity.name,
         picturePath: entity.picturePath,
         socialProfiles: entity.socialProfiles

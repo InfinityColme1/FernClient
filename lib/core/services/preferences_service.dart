@@ -1,24 +1,24 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
 class PreferencesService {
-  static const String _keyRootPath = 'user_media_root_path';
   final SharedPreferences _prefs;
 
   PreferencesService(this._prefs);
 
 
   Future<bool> setRootPath(String path) async {
-    return await _prefs.setString(_keyRootPath, path);
+    return await _prefs.setString(rootPathPreferenceKey, path);
   }
 
 
   String? getRootPath() {
-    return _prefs.getString(_keyRootPath);
+    return _prefs.getString(rootPathPreferenceKey);
   }
 
 
   Future<bool> clearRootPath() async {
-    return await _prefs.remove(_keyRootPath);
+    return await _prefs.remove(rootPathPreferenceKey);
   }
 }

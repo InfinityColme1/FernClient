@@ -12,6 +12,9 @@ abstract class MediaStates extends Equatable {
   final bool isModified;
   final bool isNew;
 
+  /// Identificadores de los elementos marcados en la rejilla.
+  final Set<int> selectedIds;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -19,6 +22,7 @@ abstract class MediaStates extends Equatable {
     this.showInfo = false,
     this.isModified = false,
     this.isNew = false,
+    this.selectedIds = const {},
   });
 
   MediaStates copyWith({
@@ -28,6 +32,7 @@ abstract class MediaStates extends Equatable {
     bool ? showInfo,
     bool ? isModified,
     bool ? isNew,
+    Set<int> ? selectedIds,
   });
 
   @override
@@ -38,11 +43,18 @@ abstract class MediaStates extends Equatable {
     showInfo,
     isModified,
     isNew,
+    selectedIds,
   ];
 }
 
 class MediaLoading extends MediaStates {
-  const MediaLoading({super.mediaList, super.showInfo, super.isModified, super.isNew});
+  const MediaLoading({
+    super.mediaList,
+    super.showInfo,
+    super.isModified,
+    super.isNew,
+    super.selectedIds,
+  });
 
   @override
   MediaLoading copyWith({
@@ -52,12 +64,14 @@ class MediaLoading extends MediaStates {
     bool ? showInfo,
     bool ? isModified,
     bool ? isNew,
+    Set<int> ? selectedIds,
   }) {
     return MediaLoading(
       mediaList: mediaList ?? this.mediaList,
       showInfo: showInfo ?? this.showInfo,
       isModified: isModified ?? this.isModified,
       isNew: isNew ?? this.isNew,
+      selectedIds: selectedIds ?? this.selectedIds,
     );
   }
 }
@@ -75,6 +89,7 @@ class DetailedMedia extends MediaStates {
     super.showInfo,
     super.isModified,
     super.isNew,
+    super.selectedIds,
   });
 
   @override
@@ -85,6 +100,7 @@ class DetailedMedia extends MediaStates {
     bool ? showInfo,
     bool ? isModified,
     bool ? isNew,
+    Set<int> ? selectedIds,
   }) {
     return DetailedMedia(
         mediaList: mediaList ?? this.mediaList,
@@ -93,6 +109,7 @@ class DetailedMedia extends MediaStates {
         showInfo: showInfo ?? this.showInfo,
         isModified: isModified ?? this.isModified,
         isNew: isNew ?? this.isNew,
+        selectedIds: selectedIds ?? this.selectedIds,
     );
   }
 }

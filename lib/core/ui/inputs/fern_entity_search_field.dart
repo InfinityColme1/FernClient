@@ -1,0 +1,120 @@
+import 'package:Fern/core/ui/inputs/fern_search_input.dart';
+import 'package:Fern/core/utils/debouncer.dart';
+import 'package:flutter/material.dart';
+
+/// Buscador que resuelve sus sugerencias con una búsqueda asíncrona.
+///
+/// Envuelve a [FernSearchInput] y se encarga de lo que se repetía en todos los
+/// diálogos: esperar a que se deje de escribir, lanzar la búsqueda y avisar del
+/// elemento elegido, ya sea porque se ha pulsado una sugerencia o porque lo
+/// escrito coincide con el nombre de una de ellas.
+class FernEntitySearchField<T> extends StatefulWidget {
+  final String label;
+  final String hintText;
+
+  /// Búsqueda que alimenta las sugerencias. Es quien decide cuántas devuelve y
+  /// qué elementos se descartan.
+  final Future<List<T>> Function(String query) search;
+
+  /// Nombre con el que se muestra cada elemento en el desplegable.
+  final String Function(T item) labelOf;
+
+  final ValueChanged<T> onSelected;
+  final Duration debounce;
+
+  const FernEntitySearchField({
+    super.key,
+    required this.label,
+    required this.search,
+    required this.labelOf,
+    required this.onSelected,
+    this.hintText = '',
+    this.debounce = const Duration(milliseconds: 250),
+  });
+
+  @override
+  State<FernEntitySearchField<T>> createState() =>
+      _FernEntitySearchFieldState<T>();
+}
+
+class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
+  late final Debouncer _debouncer = Debouncer(widget.debounce);
+
+  List<T> _results = const [];
+
+  /// Último nombre avisado, para no repetir el aviso mientras se sigue
+  /// escribiendo sobre una coincidencia ya elegida.
+  String? _notifiedName;
+
+  void _onQueryChanged(String query) {
+    if (_notifiedName != null && query.trim().toLowerCase() != _notifiedName) {
+      _notifiedName = null;
+    }
+
+    if (query.trim().isEmpty) {
+      _debouncer.cancel();
+      if (_results.isNotEmpty) setState(() => _results = const []);
+      return;
+    }
+
+    _debouncer.run(() => _search(query));
+  }
+
+  Future<void> _search(String query) async {
+    final results = await widget.search(query);
+    if (!mounted) return;
+
+    setState(() => _results = results);
+
+    // Si se ha terminado de escribir un nombre que existe, vale como elegido
+    // sin necesidad de pulsar la sugerencia.
+    final match = _matching(query);
+    if (match != null) _select(match);
+  }
+
+  T? _matching(String name) {
+    final target = name.trim().toLowerCase();
+    if (target.isEmpty) return null;
+
+    for (final item in _results) {
+      if (widget.labelOf(item).toLowerCase() == target) return item;
+    }
+    return null;
+  }
+
+  void _select(T item) {
+    final name = widget.labelOf(item).toLowerCase();
+    if (_notifiedName == name) return;
+
+    setState(() {
+      _notifiedName = name;
+      // Lo elegido deja de sugerirse hasta la siguiente búsqueda.
+      _results = _results.where((e) => e != item).toList();
+    });
+
+    widget.onSelected(item);
+  }
+
+  void _onSuggestionSelected(String name) {
+    final item = _matching(name);
+    if (item != null) _select(item);
+  }
+
+  @override
+  void dispose() {
+    _debouncer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FernSearchInput(
+      label: widget.label,
+      hintText: widget.hintText,
+      filterSuggestions: false,
+      suggestions: _results.map(widget.labelOf).toList(),
+      onChanged: _onQueryChanged,
+      onSelected: _onSuggestionSelected,
+    );
+  }
+}

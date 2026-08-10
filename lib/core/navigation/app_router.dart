@@ -15,12 +15,15 @@ final appRouter = GoRouter(
   initialLocation: mediaRoute,
   routes: [
     ShellRoute(
+      // El armazón (barra superior + menú lateral) envuelve siempre a sus
+      // pantallas. Si se le quitara al navegar al visor, las pantallas que
+      // siguen montadas debajo perderían el `Scaffold` y con él el `Material`
+      // que necesitan sus widgets, que es justo lo que asomaba durante la
+      // transición.
       builder: (context, state, child) {
-        return BlocProvider<MediaBloc>(
-          create: (context) => getIt(),
-          child: state.fullPath == viewerRoute
-              ? child
-              : MainLayout(child: child)
+        return BlocProvider<MediaBloc>.value(
+          value: getIt<MediaBloc>(),
+          child: MainLayout(child: child),
         );
       },
       routes: [
@@ -40,13 +43,35 @@ final appRouter = GoRouter(
             path: deletedRoute,
             builder: (context, state) => Text("deleted")
         ),
-
-        GoRoute(
-            path: viewerRoute,
-            builder: (context, state) => ViewerPage()
-        )
       ]
     ),
 
+    // El visor va a pantalla completa sobre el armazón, no dentro de él: se
+    // apila en el navegador raíz y deja intacta la pantalla de la que viene.
+    GoRoute(
+      path: viewerRoute,
+      // Entra con un fundido: no desplaza nada de sitio, así que no puede
+      // provocar desbordes mientras el layout se recoloca.
+      pageBuilder: (context, state) => CustomTransitionPage<void>(
+        key: state.pageKey,
+        transitionDuration: viewerTransitionDuration,
+        reverseTransitionDuration: viewerTransitionDuration,
+        child: BlocProvider<MediaBloc>.value(
+          value: getIt<MediaBloc>(),
+          child: ViewerPage(
+            openInfo: state.uri.queryParameters[viewerInfoQueryParam] == 'true',
+          ),
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ),
+            child: child,
+          );
+        },
+      ),
+    ),
   ]
 );

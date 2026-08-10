@@ -51,6 +51,7 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: widget.onTap,
+      mouseCursor: WidgetStateMouseCursor.clickable,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(16.0)),

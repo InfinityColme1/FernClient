@@ -12,5 +12,5 @@ class AppSpacing {
   // Edge Insets
   static const EdgeInsets pagePadding = EdgeInsets.all(xl);
   static const EdgeInsets dialogPadding = EdgeInsets.all(xl);
-  static const EdgeInsets infoPadding = EdgeInsets.symmetric(horizontal: xl, vertical: xxl);
+  static const EdgeInsets infoPadding = EdgeInsets.symmetric(horizontal: l, vertical: xl);
 }

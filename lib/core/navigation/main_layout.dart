@@ -2,12 +2,9 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
 import 'package:flutter/material.dart';
-import '../../features/media/presentation/widgets/media_thumbnail.dart';
-import '../widgets/surface.dart';
-
-const largeScreenMinWidth = 600;
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -22,7 +19,7 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final isLargeScreen = constraints.maxWidth > largeScreenMinWidth;
+      final isLargeScreen = constraints.maxWidth > AppSizes.largeScreenMinWidth;
 
       if (isLargeScreen) {
         return _buildLargeScreenLayout(context, widget.child);
@@ -41,7 +38,7 @@ class _MainLayoutState extends State<MainLayout> {
               padding: const EdgeInsets.only(right: AppSpacing.xxxl),
               child: Image.asset(
                 appLogo,
-                width: 150,
+                width: AppSizes.logoWidth,
               ),
             ),
             SearchAnchor(
@@ -97,12 +94,16 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildSmallScreenLayout(BuildContext context, Widget child) {
-    return Scaffold(
+    // TODO: diseñar el layout móvil. Por ahora se muestra un estado vacío.
+    return const Scaffold(
       body: Center(
-        child: Surface(
+        child: FernSurface(
           radius: AppSizes.radiusSmall,
-          child: const MediaThumbnail(
-              path: 'C:/Users/Mauricio/Pictures/Gang/Random/UnaiUwU.jpeg'),
+          padding: AppSpacing.pagePadding,
+          child: FernEmptyState(
+            imageAsset: fernEmptyImage,
+            message: "Mobile layout coming soon",
+          ),
         ),
       ),
     );

@@ -1,6 +1,5 @@
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:isar/isar.dart';
-
 import 'media_model.dart';
 
 part 'media_summary_model.g.dart';
@@ -8,23 +7,30 @@ part 'media_summary_model.g.dart';
 @collection
 @Name("MediaSummaries")
 class MediaSummaryModel {
+  Id id = Isar.autoIncrement; // Usaremos el hash aquí
 
-  Id? id = Isar.autoIncrement;
-
+  @Index(unique: true, replace: true)
   late String path;
+
+  bool isImported = false; // Nuevo campo para diferenciar
 
   final details = IsarLink<MediaModel>();
 
-
-  MediaSummaryModel({this.id, required this.path});
+  MediaSummaryModel();
 
   MediaSummaryEntity toEntity() {
-    return MediaSummaryEntity(id: id, path: path);
+    return MediaSummaryEntity(
+        id: id,
+        path: path,
+        isImported: isImported
+    );
   }
 
   factory MediaSummaryModel.fromEntity(MediaSummaryEntity entity) {
-    return MediaSummaryModel(
-      path: entity.path
-    );
+    final model = MediaSummaryModel()
+      ..id = entity.id
+      ..path = entity.path
+      ..isImported = entity.isImported;
+    return model;
   }
 }

@@ -1,3 +1,4 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:isar/isar.dart';
 
@@ -18,6 +19,8 @@ class MediaModel {
 
   late bool isFavorite;
 
+  String? description;
+
   final creator = IsarLink<CreatorModel>();
 
   final tags = IsarLinks<TagModel>();
@@ -27,15 +30,22 @@ class MediaModel {
   MediaModel({this.id, required this.path});
 
 
-  MediaEntity toEntity() {
+  /// [isImported] vive en el sumario, así que se pasa desde el repositorio.
+  ///
+  /// Los enlaces son perezosos en Isar: hay que haberlos cargado antes de
+  /// llamar a este método, y aun así el creador puede faltar en filas
+  /// antiguas, de ahí el `unknownCreator` de reserva.
+  MediaEntity toEntity({bool isImported = false}) {
     return MediaEntity(
       id: id!,
       path: path,
+      isImported: isImported,
       downloaded: downloaded,
       isFavorite: isFavorite,
-      creator: creator.value!.toEntity(),
-      tags: tags.map((tag) {return tag.toEntity();}).toList(),
-      source: source.value!.toEntity(),
+      description: description,
+      creator: creator.value?.toEntity() ?? unknownCreator,
+      tags: tags.map((tag) => tag.toEntity()).toList(),
+      source: source.value?.toEntity(),
     );
   }
 
@@ -46,6 +56,7 @@ class MediaModel {
     );
     model.downloaded = entity.downloaded;
     model.isFavorite = entity.isFavorite;
+    model.description = entity.description;
     // Note: Links should be handled in the repository/mapper context
     // because they require fetching or creating related models in Isar.
     return model;

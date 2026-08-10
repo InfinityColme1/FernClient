@@ -1,3 +1,4 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
 import 'package:flutter/material.dart';
 import 'collapsing_list_tile_widget.dart';
@@ -51,7 +52,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 300));
+        vsync: this, duration: drawerAnimationDuration);
     widthAnimation = Tween<double>(begin: widget.maxWidth, end: widget.minWidth)
         .animate(_animationController);
   }

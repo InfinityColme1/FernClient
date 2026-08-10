@@ -40,15 +40,16 @@ dependencies:
   get_it:
   equatable: 
   flutter_staggered_grid_view:
-  flutter_masonry_view:
   url_launcher:
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   go_router:
   file_picker: ^11.0.2
-  video_player: ^2.8.1
-  ffmpeg_kit_flutter_full: ^6.0.3
-  ffmpeg_kit_flutter:
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
+  crypto: ^3.0.7
+  path: ^1.9.1
 
 
 dev_dependencies:

@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+instr.md
+.claude
+.claude/*
+cl_*.md
