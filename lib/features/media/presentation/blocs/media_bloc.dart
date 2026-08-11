@@ -185,6 +185,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final result = await _saveMediaUseCase(params: event.media);
     if (result is! DataSuccess) return;
 
+    // Al guardar, la gestión de archivos puede haber llevado el fichero a otra
+    // carpeta; el visor lo sigue enseñando, así que se queda con la ruta nueva.
+    final newPath = result.data is String ? result.data as String : null;
+    final saved = event.media.copyWith(isImported: true, path: newPath);
+
     // El contenido pasa a ser definitivo. Si la lista de la pantalla es la de
     // contenido pendiente de revisar (la de importación), el elemento deja de
     // pertenecer a ella y se quita; si ya era definitivo (la de media), se
@@ -193,6 +198,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final index = mediaList.indexWhere((summary) => summary.id == event.media.id);
     if (index != -1 && !mediaList[index].isImported) {
       mediaList.removeAt(index);
+    } else if (index != -1) {
+      // Se queda en la lista, pero con la ruta que tenga ahora el fichero.
+      mediaList[index] = MediaSummaryEntity(
+        id: saved.id,
+        path: saved.path,
+        isImported: true,
+      );
     }
 
     // El índice del visor apunta a la lista que se acaba de recortar.
@@ -201,7 +213,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         : (state.currentMediaIndex ?? 0).clamp(0, mediaList.length - 1);
 
     emit(state.copyWith(
-      currentMedia: event.media.copyWith(isImported: true),
+      currentMedia: saved,
       mediaList: mediaList,
       currentMediaIndex: currentMediaIndex,
       isModified: false,

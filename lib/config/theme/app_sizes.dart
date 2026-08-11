@@ -37,6 +37,11 @@ class AppSizes {
   static const double largeScreenMinWidth = 600.0;
   static const double logoWidth = 150.0;
 
+  // Ajustes: diálogo a dos columnas, secciones a la izquierda
+  static const double settingsDialogWidth = 900.0;
+  static const double settingsDialogHeight = 620.0;
+  static const double settingsNavWidth = 240.0;
+
   // Buscador de la barra superior
   static const double searchBarWidth = 420.0;
   static const double searchBarHeight = 48.0;

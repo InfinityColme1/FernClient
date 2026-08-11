@@ -10,6 +10,7 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
+import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -82,6 +83,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   final _searchTags = getIt<SearchTagsUseCase>();
   final _saveTag = getIt<SaveTagUseCase>();
   final _saveCreator = getIt<SaveCreatorUseCase>();
+  final _avatarStorage = getIt<AvatarStorageService>();
 
   final TextEditingController _nameController = TextEditingController();
 
@@ -93,14 +95,19 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   String? _selectedImagePath;
   TagEntity? _parentTag;
 
+  /// Elige la imagen del avatar y se queda con la copia que guarda la
+  /// aplicación: los avatares se cargan siempre de la carpeta de avatares, no
+  /// de donde el usuario tuviera la imagen.
   Future<void> _pickImage() async {
     final result = await FilePicker.pickFiles(type: FileType.image);
-    if (!mounted) return;
 
     final path = result?.files.single.path;
-    if (path != null) {
-      setState(() => _selectedImagePath = path);
-    }
+    if (path == null) return;
+
+    final storedPath = await _avatarStorage.store(path);
+    if (!mounted) return;
+
+    setState(() => _selectedImagePath = storedPath);
   }
 
   Future<List<TagEntity>> _searchParentTags(String query) async {

@@ -42,6 +42,24 @@ const importSources = ["Local computer", "Pixiv", "Twitter"];
 
 // Preferences keys
 const rootPathPreferenceKey = 'user_media_root_path';
+const languagePreferenceKey = 'app_language';
+const syncLocalFilesPreferenceKey = 'sync_local_files';
+const copyFilesPreferenceKey = 'copy_files';
+const libraryPathPreferenceKey = 'library_path';
+const avatarsPathPreferenceKey = 'avatars_path';
+const fileOrganizationPreferenceKey = 'file_organization';
+
+// Gestión de ficheros
+/// Carpeta de la biblioteca donde se guardan los avatares mientras el usuario
+/// no elija otra, colgando del directorio de datos de la aplicación.
+const avatarsFolderName = 'avatars';
+
+/// Subcarpeta a la que van los contenidos que no tienen el dato por el que se
+/// está ordenando (sin etiqueta, sin origen o sin creador).
+const fallbackFolderName = 'Unsorted';
+
+/// Atenuado de las opciones de ajustes que están desactivadas.
+const disabledOptionOpacity = 0.4;
 
 // Animations
 const hoverAnimationDuration = Duration(milliseconds: 150);

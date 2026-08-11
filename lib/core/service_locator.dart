@@ -1,4 +1,16 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/organize_library_files_usecase.dart';
+import 'package:Fern/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
+import 'package:Fern/features/settings/domain/usecases/get_settings_usecase.dart';
+import 'package:Fern/features/settings/domain/usecases/save_settings_usecase.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:Fern/features/media/data/repositories/local_media_repository_impl.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
@@ -33,11 +45,42 @@ Future<void> initializeDependencies() async {
       PreferencesService(getIt<SharedPreferences>())
   );
 
+  // Ajustes. La carpeta por defecto de los avatares cuelga del directorio de
+  // datos de la aplicación y se resuelve aquí, que es el único sitio donde se
+  // puede esperar a que `path_provider` responda: a partir de este punto los
+  // ajustes se leen sin esperas.
+  final documentsDirectory = await getApplicationDocumentsDirectory();
+  getIt.registerLazySingleton<SettingsRepository>(() => SettingsRepositoryImpl(
+        preferences: getIt<SharedPreferences>(),
+        defaultAvatarsPath:
+            p.join(documentsDirectory.path, appName, avatarsFolderName),
+      ));
+
+  getIt.registerSingleton<GetSettingsUseCase>(
+    GetSettingsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SaveSettingsUseCase>(
+    SaveSettingsUseCase(getIt())
+  );
+
+  getIt.registerLazySingleton<AvatarStorageService>(() =>
+      AvatarStorageService(settingsRepository: getIt())
+  );
+
+  getIt.registerLazySingleton<MediaFileOrganizer>(() =>
+      MediaFileOrganizer(settingsRepository: getIt())
+  );
+
   getIt.registerSingleton<AppDatabase>(AppDatabase());
   getIt.registerSingleton<Isar>(await getIt<AppDatabase>().getIsar());
 
   getIt.registerLazySingleton<LocalMediaRepository>(() =>
-      LocalMediaRepositoryImpl(appDatabase: getIt<Isar>())
+      LocalMediaRepositoryImpl(
+        appDatabase: getIt<Isar>(),
+        fileOrganizer: getIt(),
+        avatarStorage: getIt(),
+      )
   );
 
   getIt.registerSingleton<SelectAndScanDirectoryUsecase>(
@@ -109,6 +152,22 @@ Future<void> initializeDependencies() async {
   getIt.registerSingleton<SearchMediaBySuggestionUseCase>(
     SearchMediaBySuggestionUseCase(getIt())
   );
+
+  getIt.registerSingleton<OrganizeLibraryFilesUseCase>(
+    OrganizeLibraryFilesUseCase(getIt())
+  );
+
+  getIt.registerSingleton<MigrateAvatarsUseCase>(
+    MigrateAvatarsUseCase(getIt())
+  );
+
+  // Uno por pantalla de ajustes: se abre, se usa y se cierra con el diálogo.
+  getIt.registerFactory<SettingsBloc>(() => SettingsBloc(
+        getSettings: getIt(),
+        saveSettings: getIt(),
+        migrateAvatars: getIt(),
+        organizeLibraryFiles: getIt(),
+      ));
 
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(

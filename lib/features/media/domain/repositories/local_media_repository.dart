@@ -15,6 +15,10 @@ abstract class LocalMediaRepository {
 
   Future<DataState> saveScannedMedia(List<MediaEntity> mediaList);
   
+  /// Guarda el contenido y lo marca como definitivo.
+  ///
+  /// Devuelve la ruta nueva del fichero si los ajustes de archivos han hecho
+  /// que cambie de carpeta, y `null` si se ha quedado donde estaba.
   Future<DataState> saveMedia(MediaEntity media);
 
   Future<DataState<List<MediaSummaryEntity>>> getMediaList();
@@ -31,6 +35,19 @@ abstract class LocalMediaRepository {
   /// Marca como definitivos los contenidos indicados dejando sus detalles tal
   /// y como están (los del escaneo si nadie los ha revisado).
   Future<DataState> confirmMediaList(List<int> ids);
+
+  /// Reordena en disco los ficheros de todo el contenido definitivo según los
+  /// ajustes de archivos y devuelve cuántos han cambiado de sitio.
+  Future<DataState<int>> organizeLibraryFiles();
+
+  /// Lleva las imágenes de los avatares (creadores y etiquetas) a
+  /// [targetDirectory] y actualiza sus rutas. Las que vinieran de
+  /// [previousDirectory] se mueven; las demás se copian, para no tocar los
+  /// ficheros originales del usuario. Devuelve cuántas se han reubicado.
+  Future<DataState<int>> migrateAvatars({
+    required String targetDirectory,
+    String? previousDirectory,
+  });
 
   /// Guarda la etiqueta y, si se indica [parent], la cuelga de ella.
   Future<DataState<TagEntity>> saveTag(TagEntity tag, {TagEntity? parent});

@@ -1,0 +1,71 @@
+import 'package:Fern/config/theme/app_colors.dart';
+import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/ui/inputs/fern_outlined_field.dart';
+import 'package:flutter/material.dart';
+
+/// Selector de carpeta: la ruta elegida a la izquierda y un botón para abrir el
+/// explorador a la derecha, dentro del marco con etiqueta flotante del resto de
+/// campos.
+///
+/// Mientras no haya ruta se enseña [hintText] en tono apagado, igual que un
+/// campo de texto vacío.
+class FernDirectoryField extends StatelessWidget {
+  final String label;
+  final String? path;
+  final String hintText;
+  final VoidCallback? onPressed;
+
+  const FernDirectoryField({
+    super.key,
+    required this.label,
+    this.path,
+    this.hintText = "No folder selected",
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasPath = path != null && path!.isNotEmpty;
+
+    return Opacity(
+      opacity: onPressed == null ? disabledOptionOpacity : 1.0,
+      child: FernOutlinedField(
+        label: label,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.l,
+            top: AppSpacing.s,
+            bottom: AppSpacing.s,
+            right: AppSpacing.s,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  hasPath ? path! : hintText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: hasPath ? AppColors.black : AppColors.lightgray,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s),
+              IconButton(
+                onPressed: onPressed,
+                tooltip: "Choose folder",
+                icon: const Icon(
+                  Icons.folder_open,
+                  size: AppSizes.iconMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

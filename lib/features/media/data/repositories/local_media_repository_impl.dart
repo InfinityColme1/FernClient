@@ -4,6 +4,8 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
+import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
@@ -20,8 +22,16 @@ import 'package:isar/isar.dart';
 class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
   final Isar _appDatabase;
+  final MediaFileOrganizer _fileOrganizer;
+  final AvatarStorageService _avatarStorage;
 
-  LocalMediaRepositoryImpl({required this._appDatabase});
+  LocalMediaRepositoryImpl({
+    required Isar appDatabase,
+    required MediaFileOrganizer fileOrganizer,
+    required AvatarStorageService avatarStorage,
+  })  : _appDatabase = appDatabase,
+        _fileOrganizer = fileOrganizer,
+        _avatarStorage = avatarStorage;
 
 
   int _fastHash(String string) {
@@ -92,7 +102,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
               final id = _fastHash(path);
 
               // 1. COMPROBAR SI YA EXISTE (Escaneado o Definitivo)
-              final existing = await _appDatabase.mediaSummaryModels.get(id);
+              //
+              // Se mira por identificador y también por ruta: el
+              // identificador es el hash de la ruta con la que se escaneó, así
+              // que un contenido que la aplicación haya movido a la carpeta de
+              // la biblioteca ya no coincide por hash y volvería a entrar como
+              // si fuera nuevo.
+              final existing = await _appDatabase.mediaSummaryModels.get(id) ??
+                  await _appDatabase.mediaSummaryModels
+                      .filter()
+                      .pathEqualTo(path)
+                      .findFirst();
 
               if (existing == null) {
                 // 2. CREAR NUEVO SUMARIO
@@ -180,24 +200,65 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<MediaEntity>> getMediaDetails(int id) async {
     try {
-      final query = await _appDatabase.mediaModels.get(id);
-      if (query == null) {
+      final media = await _loadedDetails(id);
+      if (media == null) {
         return DataException(Exception("Media not found"));
       }
 
-      // Los enlaces de Isar son perezosos: sin cargarlos, el creador y las
-      // etiquetas llegarían vacíos a la pantalla de información.
-      await query.creator.load();
-      await query.tags.load();
-      await query.source.load();
-
-      final summary = await _appDatabase.mediaSummaryModels.get(id);
-
-      return DataSuccess(query.toEntity(isImported: summary?.isImported ?? false));
-
+      return DataSuccess(media);
     } on Exception catch (e) {
       return DataException(e);
     }
+  }
+
+
+  /// Detalles de un contenido con sus enlaces ya cargados.
+  ///
+  /// Los enlaces de Isar son perezosos: sin cargarlos, el creador, las
+  /// etiquetas y el origen llegarían vacíos tanto a la pantalla de información
+  /// como al organizador de ficheros, que es justo lo que usa para decidir la
+  /// subcarpeta.
+  Future<MediaEntity?> _loadedDetails(int id) async {
+    final model = await _appDatabase.mediaModels.get(id);
+    if (model == null) return null;
+
+    await model.creator.load();
+    await model.tags.load();
+    await model.source.load();
+
+    final summary = await _appDatabase.mediaSummaryModels.get(id);
+
+    return model.toEntity(isImported: summary?.isImported ?? false);
+  }
+
+
+  /// Coloca el fichero de [media] donde digan los ajustes de archivos y, si ha
+  /// cambiado de sitio, actualiza la ruta en el sumario y en los detalles.
+  ///
+  /// El identificador no cambia: es el hash de la ruta con la que se escaneó y
+  /// mantenerlo es lo que hace que el contenido siga siendo el mismo después de
+  /// moverlo.
+  /// Devuelve la ruta nueva, o `null` si el fichero se ha quedado donde
+  /// estaba.
+  Future<String?> _relocatedPath(MediaEntity media) async {
+    final newPath = await _fileOrganizer.organize(media);
+    if (newPath == null) return null;
+
+    await _appDatabase.writeTxn(() async {
+      final summary = await _appDatabase.mediaSummaryModels.get(media.id);
+      if (summary != null) {
+        summary.path = newPath;
+        await _appDatabase.mediaSummaryModels.put(summary);
+      }
+
+      final details = await _appDatabase.mediaModels.get(media.id);
+      if (details != null) {
+        details.path = newPath;
+        await _appDatabase.mediaModels.put(details);
+      }
+    });
+
+    return newPath;
   }
 
   @override
@@ -260,7 +321,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         }
       });
 
-      return DataSuccess(null);
+      // El contenido acaba de pasar a definitivo: si la aplicación gestiona los
+      // ficheros, este es el momento de llevarlo a su carpeta. La ruta nueva se
+      // devuelve porque quien ha guardado sigue enseñando el contenido y su
+      // ruta ya no es la de antes.
+      final newPath = await _relocatedPath(media.copyWith(isImported: true));
+
+      return DataSuccess<String?>(newPath);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -314,6 +381,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     try {
       if (ids.isEmpty) return DataSuccess(null);
 
+      final confirmed = <int>[];
+
       await _appDatabase.writeTxn(() async {
         final summaries = await _appDatabase.mediaSummaryModels.getAll(ids);
         final pending = summaries.nonNulls.where((s) => !s.isImported).toList();
@@ -321,11 +390,104 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
         for (final summary in pending) {
           summary.isImported = true;
+          confirmed.add(summary.id);
         }
         await _appDatabase.mediaSummaryModels.putAll(pending);
       });
 
+      // Mismo trato que al guardar de uno en uno: lo que pasa a definitivo se
+      // coloca en su carpeta.
+      for (final id in confirmed) {
+        final media = await _loadedDetails(id);
+        if (media != null) await _relocatedPath(media);
+      }
+
       return DataSuccess(null);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+
+  /// Reordena los ficheros de todo el contenido definitivo.
+  ///
+  /// Es la migración que se dispara desde los ajustes: recorre la biblioteca y
+  /// aplica a cada contenido el mismo criterio que se aplica al importar, así
+  /// que sirve tanto para colocar lo que ya estaba como para reorganizarlo todo
+  /// después de cambiar de criterio.
+  @override
+  Future<DataState<int>> organizeLibraryFiles() async {
+    try {
+      final summaries = await _appDatabase.mediaSummaryModels
+          .filter()
+          .isImportedEqualTo(true)
+          .findAll();
+
+      var relocated = 0;
+      for (final summary in summaries) {
+        final media = await _loadedDetails(summary.id);
+        if (media == null) continue;
+
+        if (await _relocatedPath(media) != null) relocated++;
+      }
+
+      // Los criterios son excluyentes: lo que quede del anterior se vacía al
+      // recolocar, y esas carpetas ya no dicen nada.
+      await _fileOrganizer.removeEmptyFolders();
+
+      return DataSuccess(relocated);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+
+  /// Lleva los avatares de creadores y etiquetas a [targetDirectory].
+  @override
+  Future<DataState<int>> migrateAvatars({
+    required String targetDirectory,
+    String? previousDirectory,
+  }) async {
+    try {
+      var relocated = 0;
+
+      for (final creator in await _appDatabase.creatorModels.where().findAll()) {
+        final path = creator.picturePath;
+        if (path == null) continue;
+
+        final newPath = await _avatarStorage.relocate(
+          path,
+          targetDirectory: targetDirectory,
+          previousDirectory: previousDirectory,
+        );
+        if (newPath == null) continue;
+
+        creator.picturePath = newPath;
+        await _appDatabase.writeTxn(() async {
+          await _appDatabase.creatorModels.put(creator);
+        });
+        relocated++;
+      }
+
+      for (final tag in await _appDatabase.tagModels.where().findAll()) {
+        final path = tag.picturePath;
+        if (path == null) continue;
+
+        final newPath = await _avatarStorage.relocate(
+          path,
+          targetDirectory: targetDirectory,
+          previousDirectory: previousDirectory,
+        );
+        if (newPath == null) continue;
+
+        tag.picturePath = newPath;
+        await _appDatabase.writeTxn(() async {
+          await _appDatabase.tagModels.put(tag);
+        });
+        relocated++;
+      }
+
+      return DataSuccess(relocated);
     } on Exception catch (e) {
       return DataException(e);
     }

@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
+import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
 import 'package:flutter/material.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
@@ -54,6 +55,14 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
+  /// Ajustes de la aplicación, en el engranaje que hay junto al "+".
+  void _openSettings() {
+    showFernDialog(
+      context: context,
+      builder: (_) => const SettingsDialog(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -91,7 +100,10 @@ class _MainLayoutState extends State<MainLayout> {
               icon: const Icon(Icons.add),
             ),
           ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+          IconButton(
+            onPressed: _openSettings,
+            icon: const Icon(Icons.settings),
+          ),
           const SizedBox(width: AppSpacing.l),
         ],
       ),
