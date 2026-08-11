@@ -1,6 +1,7 @@
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
@@ -26,6 +27,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final GetMediaDetailsUsecase _getMediaDetailsUsecase;
   final SaveMediaUseCase _saveMediaUseCase;
   final DeleteMediaUseCase _deleteMediaUseCase;
+  final DeleteMissingMediaUseCase _deleteMissingMediaUseCase;
   final DeleteMediaListUseCase _deleteMediaListUseCase;
   final ConfirmMediaListUseCase _confirmMediaListUseCase;
   final GetScannedMediaUseCase _getScannedMediaUseCase;
@@ -39,6 +41,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required GetMediaDetailsUsecase getMediaDetailsUsecase,
     required SaveMediaUseCase saveMediaUseCase,
     required DeleteMediaUseCase deleteMediaUseCase,
+    required DeleteMissingMediaUseCase deleteMissingMediaUseCase,
     required DeleteMediaListUseCase deleteMediaListUseCase,
     required ConfirmMediaListUseCase confirmMediaListUseCase,
     required GetScannedMediaUseCase getScannedMediaUseCase,
@@ -50,6 +53,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
         _saveMediaUseCase = saveMediaUseCase,
         _deleteMediaUseCase = deleteMediaUseCase,
+        _deleteMissingMediaUseCase = deleteMissingMediaUseCase,
         _deleteMediaListUseCase = deleteMediaListUseCase,
         _confirmMediaListUseCase = confirmMediaListUseCase,
         _getScannedMediaUseCase = getScannedMediaUseCase,
@@ -72,6 +76,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<SetInfoVisibilityEvent>(onSetInfoVisibility);
     on<SaveMediaEvent>(onSaveMedia);
     on<DeleteMediaEvent>(onDeleteMedia);
+    on<MediaLoadFailedEvent>(onMediaLoadFailed);
     on<DeleteSelectedMediaEvent>(onDeleteSelectedMedia);
     on<ConfirmSelectedMediaEvent>(onConfirmSelectedMedia);
     on<UpdateMediaInfoEvent>(onUpdateMediaInfo);
@@ -234,6 +239,72 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         searchSections: _sectionsWithout((summary) => summary.id == event.media.id),
       ));
     }
+  }
+
+  /// Un contenido no se ha podido pintar.
+  ///
+  /// Sólo desaparece si el motivo es que su fichero ya no está donde decía su
+  /// ruta (borrado o movido por fuera de la aplicación); de eso se encarga el
+  /// caso de uso, así que aquí basta con mirar si ha llegado a borrar la fila.
+  void onMediaLoadFailed(MediaLoadFailedEvent event, Emitter<MediaStates> emit) async {
+    final result = await _deleteMissingMediaUseCase(params: event.id);
+    if (result is! DataSuccess || result.data != true) return;
+
+    bool isMissing(MediaSummaryEntity summary) => summary.id == event.id;
+
+    final mediaList = List<MediaSummaryEntity>.from(state.mediaList ?? const [])
+      ..removeWhere(isMissing);
+    final sections = _sectionsWithout(isMissing);
+    final selectedIds = Set<int>.from(state.selectedIds)..remove(event.id);
+
+    // Lo que ha desaparecido es justo lo que el visor está enseñando: hay que
+    // pasar al siguiente contenido, que al recortar la lista ocupa ahora este
+    // mismo índice.
+    final wasCurrent = state.currentMedia?.id == event.id;
+    final index = state.currentMediaIndex ?? 0;
+
+    if (!wasCurrent) {
+      // El visor (si está abierto) sigue enseñando lo suyo; sólo se ajusta el
+      // índice, que al recortar la lista ha podido moverse.
+      final current = state.currentMedia;
+      final currentIndex = current == null
+          ? null
+          : mediaList.indexWhere((summary) => summary.id == current.id);
+
+      emit(state.copyWith(
+        mediaList: mediaList,
+        searchSections: sections,
+        selectedIds: selectedIds,
+        currentMediaIndex: (currentIndex ?? -1) >= 0 ? currentIndex : null,
+      ));
+      return;
+    }
+
+    // Sin contenido no queda nada que enseñar: el estado se queda sin elemento
+    // actual, que es la señal con la que el visor se cierra.
+    if (mediaList.isEmpty) {
+      emit(MediaLoading(
+        mediaList: const [],
+        selectedIds: selectedIds,
+        showInfo: state.showInfo,
+        searchQuery: state.searchQuery,
+        searchSections: sections,
+        searchSuggestion: state.searchSuggestion,
+      ));
+      return;
+    }
+
+    // Paso intermedio con la lista ya recortada: el visor sigue enseñando lo de
+    // antes hasta que lleguen los detalles del siguiente, de modo que no pasa
+    // por un instante sin contenido actual y no se cierra por error.
+    emit(state.copyWith(
+      mediaList: mediaList,
+      searchSections: sections,
+      selectedIds: selectedIds,
+    ));
+
+    final nextIndex = index.clamp(0, mediaList.length - 1);
+    emit(await _detailsOf(mediaList[nextIndex], nextIndex));
   }
 
   /// Borrado masivo de la selección de la rejilla.

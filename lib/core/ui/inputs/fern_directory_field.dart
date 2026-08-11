@@ -3,31 +3,33 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/inputs/fern_outlined_field.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Selector de carpeta: la ruta elegida a la izquierda y un botón para abrir el
 /// explorador a la derecha, dentro del marco con etiqueta flotante del resto de
 /// campos.
 ///
-/// Mientras no haya ruta se enseña [hintText] en tono apagado, igual que un
-/// campo de texto vacío.
+/// Mientras no haya ruta se enseña [hintText] (o el aviso traducido de que no
+/// hay carpeta elegida) en tono apagado, igual que un campo de texto vacío.
 class FernDirectoryField extends StatelessWidget {
   final String label;
   final String? path;
-  final String hintText;
+  final String? hintText;
   final VoidCallback? onPressed;
 
   const FernDirectoryField({
     super.key,
     required this.label,
     this.path,
-    this.hintText = "No folder selected",
+    this.hintText,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final texts = AppLocalizations.of(context);
     final hasPath = path != null && path!.isNotEmpty;
 
     return Opacity(
@@ -45,7 +47,7 @@ class FernDirectoryField extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  hasPath ? path! : hintText,
+                  hasPath ? path! : (hintText ?? texts.noFolderSelected),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -56,7 +58,7 @@ class FernDirectoryField extends StatelessWidget {
               const SizedBox(width: AppSpacing.s),
               IconButton(
                 onPressed: onPressed,
-                tooltip: "Choose folder",
+                tooltip: texts.chooseFolder,
                 icon: const Icon(
                   Icons.folder_open,
                   size: AppSizes.iconMedium,

@@ -6,6 +6,7 @@ import 'package:Fern/core/widgets/sidebar.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
@@ -21,35 +22,39 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  static const _createOptions = [
-    FernMenuOption(
-      value: _CreateOption.creator,
-      label: "New creator",
-      icon: Icons.person_outline,
-    ),
-    FernMenuOption(
-      value: _CreateOption.tag,
-      label: "New tag",
-      icon: Icons.label_outline,
-    ),
-    FernMenuOption(
-      value: _CreateOption.collection,
-      label: "New collection",
-      icon: Icons.collections_outlined,
-    ),
-  ];
+  /// Las opciones se arman en cada construcción porque sus etiquetas salen del
+  /// idioma en curso, que puede cambiar sin salir de la pantalla.
+  List<FernMenuOption<_CreateOption>> _createOptions(AppLocalizations texts) {
+    return [
+      FernMenuOption(
+        value: _CreateOption.creator,
+        label: texts.menuNewCreator,
+        icon: Icons.person_outline,
+      ),
+      FernMenuOption(
+        value: _CreateOption.tag,
+        label: texts.menuNewTag,
+        icon: Icons.label_outline,
+      ),
+      FernMenuOption(
+        value: _CreateOption.collection,
+        label: texts.menuNewCollection,
+        icon: Icons.collections_outlined,
+      ),
+    ];
+  }
 
   /// Abre el diálogo de la opción elegida. Las colecciones todavía no existen,
   /// así que se avisa y punto.
   void _onCreateSelected(_CreateOption option) {
     showFernDialog(
       context: context,
-      builder: (_) => switch (option) {
+      builder: (context) => switch (option) {
         _CreateOption.creator => const FernCreateDialog.creator(),
         _CreateOption.tag => const FernCreateDialog.tag(),
-        _CreateOption.collection => const FernMessageDialog(
+        _CreateOption.collection => FernMessageDialog(
             imageAsset: fernEmptyImage,
-            message: "Collections are still a work in progress",
+            message: AppLocalizations.of(context).collectionsWip,
           ),
       },
     );
@@ -93,7 +98,7 @@ class _MainLayoutState extends State<MainLayout> {
         ),
         actions: [
           FernPopupMenu<_CreateOption>(
-            options: _createOptions,
+            options: _createOptions(AppLocalizations.of(context)),
             onSelected: _onCreateSelected,
             builder: (context, toggle) => IconButton(
               onPressed: toggle,
@@ -120,14 +125,14 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildSmallScreenLayout(BuildContext context, Widget child) {
     // TODO: diseñar el layout móvil. Por ahora se muestra un estado vacío.
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: FernSurface(
           radius: AppSizes.radiusSmall,
           padding: AppSpacing.pagePadding,
           child: FernEmptyState(
             imageAsset: fernEmptyImage,
-            message: "Mobile layout coming soon",
+            message: AppLocalizations.of(context).mobileLayoutWip,
           ),
         ),
       ),

@@ -9,6 +9,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_creator_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_tag_dialog.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +23,8 @@ class MediaInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
     return BlocBuilder<MediaBloc, MediaStates>(
       builder: (context, state) {
         final media = state.currentMedia;
@@ -41,7 +44,7 @@ class MediaInfo extends StatelessWidget {
 
                 // Acciones fijas: quedan fuera de la zona desplazable.
                 FernActionButton(
-                  label: "Save",
+                  label: texts.actionSave,
                   onPressed: (state.isNew || state.isModified)
                       ? () {
                           context.read<MediaBloc>().add(SaveMediaEvent(media));
@@ -56,7 +59,7 @@ class MediaInfo extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s),
                 FernActionButton(
-                  label: "Delete",
+                  label: texts.actionDelete,
                   backgroundColor: AppColors.terciary,
                   foregroundColor: AppColors.white,
                   onPressed: () {
@@ -87,6 +90,7 @@ class _InfoContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final texts = AppLocalizations.of(context);
     final tags = media.tags ?? const [];
 
     return CustomScrollView(
@@ -95,7 +99,7 @@ class _InfoContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Media Info", style: theme.textTheme.titleMedium),
+              Text(texts.mediaInfoTitle, style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.m),
               _DescriptionField(
                 mediaId: media.id,
@@ -104,9 +108,9 @@ class _InfoContent extends StatelessWidget {
               const SizedBox(height: AppSpacing.l),
               _CreatorRow(media: media),
               const SizedBox(height: AppSpacing.l),
-              const FernSectionHeader(
+              FernSectionHeader(
                 icon: Icons.label_outline,
-                title: "Tags",
+                title: texts.tagsTitle,
               ),
               const SizedBox(height: AppSpacing.m),
             ],
@@ -143,7 +147,7 @@ class _InfoContent extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: FernAddButton.inline(
-                label: "Add Tag",
+                label: texts.addTag,
                 onTap: () => showFernDialog(
                   context: context,
                   bloc: context.read<MediaBloc>(),
@@ -204,7 +208,9 @@ class _DescriptionFieldState extends State<_DescriptionField> {
       maxLines: mediaDescriptionMaxLines,
       keyboardType: TextInputType.multiline,
       style: Theme.of(context).textTheme.bodyMedium,
-      decoration: const InputDecoration(hintText: "Add a description"),
+      decoration: InputDecoration(
+        hintText: AppLocalizations.of(context).descriptionHint,
+      ),
       onChanged: (value) =>
           context.read<MediaBloc>().add(UpdateMediaDescriptionEvent(value)),
     );
@@ -243,7 +249,7 @@ class _CreatorRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Created by:",
+                AppLocalizations.of(context).createdBy,
                 style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
               ),
               Text(

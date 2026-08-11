@@ -1,0 +1,101 @@
+{
+  "@@locale": "ca",
+
+  "navMedia": "Contingut",
+  "navImport": "Importa",
+  "navFavorites": "Preferits",
+  "navDeleted": "Eliminats",
+
+  "searchHint": "Cerca",
+  "menuNewCreator": "Nou creador",
+  "menuNewTag": "Nova etiqueta",
+  "menuNewCollection": "Nova col·lecció",
+  "collectionsWip": "Les col·leccions encara estan en construcció",
+  "mobileLayoutWip": "La versió mòbil arribarà aviat",
+
+  "mediaCount": "{count, plural, =0{Sense contingut} =1{1 fitxer} other{{count} fitxers}}",
+  "filters": "Filtres",
+  "emptyLibrary": "Aquí hi ha ben poca cosa",
+
+  "mediaFetched": "{count, plural, =1{1 fitxer trobat} other{{count} fitxers trobats}}",
+  "selectedCount": "{count} seleccionats",
+
+  "actionImport": "Importa",
+  "actionDelete": "Elimina",
+  "actionConfirm": "Confirma",
+  "actionSave": "Desa",
+  "sourceLocalComputer": "Equip local",
+
+  "selectItem": "Selecciona",
+  "deselectItem": "Treu la selecció",
+
+  "mediaInfoTitle": "Informació",
+  "descriptionHint": "Afegeix una descripció",
+  "createdBy": "Creat per:",
+  "tagsTitle": "Etiquetes",
+  "addTag": "Afegeix una etiqueta",
+
+  "noTagsYet": "Encara no hi ha etiquetes",
+  "tagNameSearchLabel": "Nom de l'etiqueta",
+  "tagSearchHint": "Etiqueta",
+  "createTag": "Crea una etiqueta",
+  "searchCreatorLabel": "Cerca un creador",
+  "creatorSearchHint": "Nom",
+  "createCreator": "Crea un creador",
+
+  "newTagTitle": "Nova etiqueta",
+  "tagNameLabel": "Nom de l'etiqueta",
+  "parentTagLabel": "Etiqueta pare (opcional)",
+  "newCreatorTitle": "Nou creador",
+  "creatorNameLabel": "Nom del creador",
+  "socialProfilesLabel": "Perfils socials",
+  "enterNameHint": "Escriu un nom",
+  "searchEllipsisHint": "Cerca...",
+  "profileLinkHint": "Enllaç al perfil",
+  "addProfile": "Afegeix un perfil",
+
+  "resultTypeMedia": "contingut",
+  "resultTypeTag": "etiqueta",
+  "resultTypeCreator": "creador",
+
+  "noFolderSelected": "Cap carpeta seleccionada",
+  "chooseFolder": "Tria una carpeta",
+
+  "settingsTitle": "Configuració",
+  "settingsLanguage": "Idioma",
+  "settingsFiles": "Fitxers",
+
+  "languageSectionTitle": "Idioma de l'aplicació",
+  "languageSectionNote": "Tota l'aplicació canvia d'idioma tan bon punt en tries un.",
+
+  "filesLocalTitle": "Fitxers locals",
+  "syncLocalFiles": "Sincronitza els fitxers locals",
+  "syncLocalFilesDescription": "El Fern mou a una carpeta pròpia el contingut amb què treballa, tant el que ja està importat com el que arribi després.",
+  "libraryFolder": "Carpeta de la biblioteca",
+  "copyFiles": "Copia els fitxers",
+  "copyFilesDescription": "Conserva el fitxer original on era i treballa amb una còpia dins la carpeta de la biblioteca.",
+
+  "avatarsTitle": "Avatars",
+  "avatarsDescription": "Les imatges dels avatars sempre es copien a una carpeta pròpia, tant si la sincronització de fitxers locals està activada com si no. En canviar de carpeta, els avatars que ja existeixin s'hi enduen.",
+  "avatarsFolder": "Carpeta d'avatars",
+
+  "organizationTitle": "Ordenació",
+  "organizationDescription": "Com es reparteixen els fitxers dins la carpeta de la biblioteca. No afecta les imatges dels avatars.",
+  "organizationFlat": "Tots els fitxers junts",
+  "organizationFlatDescription": "Cada fitxer queda directament a la carpeta de la biblioteca",
+  "organizationByTag": "Subcarpetes per etiqueta",
+  "organizationByTagDescription": "Una carpeta per etiqueta, presa de la primera etiqueta del contingut",
+  "organizationBySource": "Subcarpetes per font",
+  "organizationBySourceDescription": "Una carpeta per origen: local, Pixiv, Twitter...",
+  "organizationByCreator": "Subcarpetes per creador",
+  "organizationByCreatorDescription": "Una carpeta per creador",
+
+  "migrationTitle": "Migració",
+  "migrationDescription": "Ordena amb els criteris de dalt tots els fitxers que ja són a la biblioteca.",
+  "migrateFiles": "Migra els fitxers",
+
+  "avatarsMoved": "{count, plural, =0{Els avatars ja eren en aquesta carpeta} =1{1 avatar mogut a la carpeta nova} other{{count} avatars moguts a la carpeta nova}}",
+  "avatarsMoveFailed": "No s'han pogut moure els avatars",
+  "filesOrganized": "{count, plural, =0{Ja era tot al seu lloc} =1{1 fitxer mogut} other{{count} fitxers moguts}}",
+  "filesOrganizeFailed": "No s'han pogut ordenar els fitxers"
+}

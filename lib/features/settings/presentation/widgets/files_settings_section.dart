@@ -6,9 +6,28 @@ import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart'
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+/// Cómo se nombra cada criterio de ordenación en la pantalla. El criterio en sí
+/// (el dominio) sólo guarda su identificador.
+extension FileOrganizationCriteriaLabels on FileOrganizationCriteria {
+  String label(AppLocalizations texts) => switch (this) {
+        FileOrganizationCriteria.flat => texts.organizationFlat,
+        FileOrganizationCriteria.byTag => texts.organizationByTag,
+        FileOrganizationCriteria.bySource => texts.organizationBySource,
+        FileOrganizationCriteria.byCreator => texts.organizationByCreator,
+      };
+
+  String description(AppLocalizations texts) => switch (this) {
+        FileOrganizationCriteria.flat => texts.organizationFlatDescription,
+        FileOrganizationCriteria.byTag => texts.organizationByTagDescription,
+        FileOrganizationCriteria.bySource => texts.organizationBySourceDescription,
+        FileOrganizationCriteria.byCreator => texts.organizationByCreatorDescription,
+      };
+}
 
 /// Gestión de los ficheros locales: si la aplicación los ordena, dónde, cómo y
 /// dónde guarda las imágenes de los avatares.
@@ -29,6 +48,8 @@ class FilesSettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
         final settings = state.settings;
@@ -38,18 +59,16 @@ class FilesSettingsSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _title(context, "Local files"),
+            _title(context, texts.filesLocalTitle),
             FernCheckboxTile(
-              label: "Sync local files",
-              description:
-                  "Fern moves the media it works with into a folder of its own, "
-                  "both what is already imported and what comes next.",
+              label: texts.syncLocalFiles,
+              description: texts.syncLocalFilesDescription,
               value: syncEnabled,
               onChanged: (value) => bloc.add(SyncLocalFilesToggledEvent(value)),
             ),
             const SizedBox(height: AppSpacing.xl),
             FernDirectoryField(
-              label: "Library folder",
+              label: texts.libraryFolder,
               path: settings.libraryPath,
               onPressed: syncEnabled
                   ? () => _pickDirectory(
@@ -60,10 +79,8 @@ class FilesSettingsSection extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.l),
             FernCheckboxTile(
-              label: "Copy files",
-              description:
-                  "Keep the original file where it was and work with a copy "
-                  "inside the library folder.",
+              label: texts.copyFiles,
+              description: texts.copyFilesDescription,
               value: settings.copyFiles,
               onChanged: syncEnabled
                   ? (value) => bloc.add(CopyFilesToggledEvent(value))
@@ -71,16 +88,11 @@ class FilesSettingsSection extends StatelessWidget {
             ),
 
             _separator(),
-            _title(context, "Avatars"),
-            _description(
-              context,
-              "Avatar images are always copied into their own folder, whether "
-              "local files are synced or not. Changing the folder brings the "
-              "existing avatars along.",
-            ),
+            _title(context, texts.avatarsTitle),
+            _description(context, texts.avatarsDescription),
             const SizedBox(height: AppSpacing.l),
             FernDirectoryField(
-              label: "Avatars folder",
+              label: texts.avatarsFolder,
               path: settings.avatarsPath,
               onPressed: state.isWorking
                   ? null
@@ -91,35 +103,28 @@ class FilesSettingsSection extends StatelessWidget {
             ),
 
             _separator(),
-            _title(context, "Organization"),
-            _description(
-              context,
-              "How the files are laid out inside the library folder. It does "
-              "not affect avatar images.",
-            ),
+            _title(context, texts.organizationTitle),
+            _description(context, texts.organizationDescription),
             const SizedBox(height: AppSpacing.s),
             for (final criteria in FileOrganizationCriteria.values)
               FernRadioTile<FileOrganizationCriteria>(
                 value: criteria,
                 groupValue: settings.organization,
-                label: criteria.label,
-                description: criteria.description,
+                label: criteria.label(texts),
+                description: criteria.description(texts),
                 onChanged: syncEnabled
                     ? (value) => bloc.add(FileOrganizationChangedEvent(value))
                     : null,
               ),
 
             _separator(),
-            _title(context, "Migration"),
-            _description(
-              context,
-              "Sort every file already in the library with the criteria above.",
-            ),
+            _title(context, texts.migrationTitle),
+            _description(context, texts.migrationDescription),
             const SizedBox(height: AppSpacing.l),
             Row(
               children: [
                 FernPillButton(
-                  label: "Migrate files",
+                  label: texts.migrateFiles,
                   icon: Icons.drive_file_move_outline,
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.black,
@@ -134,10 +139,10 @@ class FilesSettingsSection extends StatelessWidget {
                     height: AppSizes.iconMedium,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                else if (state.statusMessage != null)
+                else if (state.lastResult != null)
                   Expanded(
                     child: Text(
-                      state.statusMessage!,
+                      _resultMessage(texts, state.lastResult!),
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -150,6 +155,17 @@ class FilesSettingsSection extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// El resultado se guarda en datos y se traduce aquí, así que cambiar de
+  /// idioma reescribe también el aviso de la última migración.
+  String _resultMessage(AppLocalizations texts, SettingsResult result) {
+    return switch (result.status) {
+      SettingsStatus.avatarsMigrated => texts.avatarsMoved(result.count),
+      SettingsStatus.avatarsFailed => texts.avatarsMoveFailed,
+      SettingsStatus.filesOrganized => texts.filesOrganized(result.count),
+      SettingsStatus.filesFailed => texts.filesOrganizeFailed,
+    };
   }
 
   Widget _title(BuildContext context, String text) {

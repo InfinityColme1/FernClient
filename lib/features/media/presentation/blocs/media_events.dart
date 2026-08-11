@@ -68,6 +68,16 @@ class DeleteSelectedMediaEvent extends MediaEvents {
   const DeleteSelectedMediaEvent();
 }
 
+/// El contenido [id] no se ha podido cargar para pintarlo.
+///
+/// Si el motivo es que su fichero ya no está (borrado o movido por fuera de la
+/// aplicación), su fila deja de tener sentido y se quita de la base de datos.
+class MediaLoadFailedEvent extends MediaEvents {
+  final int id;
+
+  const MediaLoadFailedEvent(this.id);
+}
+
 /// Marca como definitivo todo lo que esté seleccionado en la rejilla, con los
 /// datos que tenga en ese momento.
 class ConfirmSelectedMediaEvent extends MediaEvents {

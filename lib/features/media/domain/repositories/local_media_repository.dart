@@ -29,6 +29,14 @@ abstract class LocalMediaRepository {
   
   Future<DataState> deleteMedia(int id);
 
+  /// Borra el contenido [id] **sólo** si su fichero ya no está en la ruta
+  /// guardada, que es lo que ocurre cuando se ha borrado o movido por fuera de
+  /// la aplicación.
+  ///
+  /// Devuelve `true` si se ha llegado a borrar la fila y `false` si el fichero
+  /// sigue estando donde debía.
+  Future<DataState<bool>> deleteMissingMedia(int id);
+
   /// Borra de la base de datos todos los contenidos indicados.
   Future<DataState> deleteMediaList(List<int> ids);
 

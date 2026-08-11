@@ -11,6 +11,7 @@ import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -19,30 +20,27 @@ import 'package:go_router/go_router.dart';
 /// (avatar editable y nombre); lo que cambia es el formulario de la derecha,
 /// y [secondaryLabel] nombra ese segundo bloque en cada caso.
 enum CreateDialogType {
-  tag(
-    title: "New Tag",
-    nameLabel: "Tag Name",
-    secondaryLabel: "Parent tag (Optional)",
-    icon: Icons.label_outline,
-  ),
-  creator(
-    title: "New Creator",
-    nameLabel: "Creator Name",
-    secondaryLabel: "Social profiles",
-    icon: Icons.person_outline,
-  );
+  tag(icon: Icons.label_outline),
+  creator(icon: Icons.person_outline);
 
-  const CreateDialogType({
-    required this.title,
-    required this.nameLabel,
-    required this.secondaryLabel,
-    required this.icon,
-  });
+  const CreateDialogType({required this.icon});
 
-  final String title;
-  final String nameLabel;
-  final String secondaryLabel;
   final IconData icon;
+
+  String title(AppLocalizations texts) => switch (this) {
+        CreateDialogType.tag => texts.newTagTitle,
+        CreateDialogType.creator => texts.newCreatorTitle,
+      };
+
+  String nameLabel(AppLocalizations texts) => switch (this) {
+        CreateDialogType.tag => texts.tagNameLabel,
+        CreateDialogType.creator => texts.creatorNameLabel,
+      };
+
+  String secondaryLabel(AppLocalizations texts) => switch (this) {
+        CreateDialogType.tag => texts.parentTagLabel,
+        CreateDialogType.creator => texts.socialProfilesLabel,
+      };
 }
 
 /// Diálogo para crear una etiqueta o un creador y guardarlo en la base de
@@ -187,6 +185,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
     final name = _nameController.text.trim();
 
     return FernDialog(
@@ -194,7 +193,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       leftContent: FernDialogSidePanel(
         // Mientras no haya nombre se enseña el título de la variante, en tono
         // apagado para que se lea como un hueco por rellenar.
-        title: name.isEmpty ? widget.type.title : name,
+        title: name.isEmpty ? widget.type.title(texts) : name,
         titleColor: name.isEmpty ? AppColors.unremarked : null,
         avatar: FernEditableAvatar(
           imagePath: _selectedImagePath,
@@ -209,8 +208,8 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           FernLabeledTextField(
-            label: widget.type.nameLabel,
-            hintText: "Enter name",
+            label: widget.type.nameLabel(texts),
+            hintText: texts.enterNameHint,
             controller: _nameController,
             // El panel de la izquierda sigue al nombre en cada pulsación.
             onChanged: (_) => setState(() {}),
@@ -228,9 +227,11 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
   /// Buscador de la etiqueta padre, para armar la jerarquía de etiquetas.
   Widget _parentTagField() {
+    final texts = AppLocalizations.of(context);
+
     return FernEntitySearchField<TagEntity>(
-      label: widget.type.secondaryLabel,
-      hintText: "Search...",
+      label: widget.type.secondaryLabel(texts),
+      hintText: texts.searchEllipsisHint,
       search: _searchParentTags,
       labelOf: (tag) => tag.name,
       onSelected: (tag) => setState(() => _parentTag = tag),
@@ -242,12 +243,13 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// botón pequeño para añadir uno más.
   Widget _socialProfilesField() {
     final theme = Theme.of(context);
+    final texts = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.type.secondaryLabel,
+          widget.type.secondaryLabel(texts),
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -265,13 +267,13 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
             itemBuilder: (_, index) => TextField(
               controller: _socialControllers[index],
               keyboardType: TextInputType.url,
-              decoration: const InputDecoration(hintText: "Profile link"),
+              decoration: InputDecoration(hintText: texts.profileLinkHint),
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.s),
         FernInlineAddButton(
-          label: "Add profile",
+          label: texts.addProfile,
           onTap: _addSocialField,
         ),
       ],

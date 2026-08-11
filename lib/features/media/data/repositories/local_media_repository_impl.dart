@@ -351,6 +351,33 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
+  /// Borra el contenido [id] sólo si su fichero ya no existe.
+  ///
+  /// La comprobación se hace contra la ruta guardada en la base de datos, que
+  /// es la única que la aplicación reconoce: si el fichero se ha movido a otro
+  /// sitio, ahí ya no está y la fila deja de servir para nada.
+  ///
+  /// Que el fichero siga estando y aun así no se haya podido pintar (formato no
+  /// soportado, fichero corrupto, sin permisos) **no** borra nada: esos datos
+  /// se han revisado a mano y no se pierden por un fallo pasajero.
+  @override
+  Future<DataState<bool>> deleteMissingMedia(int id) async {
+    try {
+      final summary = await _appDatabase.mediaSummaryModels.get(id);
+      if (summary == null) return const DataSuccess(false);
+      if (await File(summary.path).exists()) return const DataSuccess(false);
+
+      await _appDatabase.writeTxn(() async {
+        await _appDatabase.mediaSummaryModels.delete(id);
+        await _appDatabase.mediaModels.delete(id);
+      });
+
+      return const DataSuccess(true);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   /// Borrado masivo, en una sola transacción.
   ///
   /// Mismo criterio que [deleteMedia]: los ficheros del disco no se tocan, así

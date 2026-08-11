@@ -75,9 +75,17 @@ class _ViewerPageState extends State<ViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MediaBloc, MediaStates>(
-      builder: (context, state) {
-        return Focus(
+    return BlocListener<MediaBloc, MediaStates>(
+      // El contenido que se estaba viendo ha desaparecido (su fichero ya no
+      // estaba) y no queda nada más que enseñar: se vuelve a la rejilla.
+      listenWhen: (previous, current) =>
+          previous.currentMedia != null && current.currentMedia == null,
+      listener: (context, state) {
+        if (context.canPop()) context.pop();
+      },
+      child: BlocBuilder<MediaBloc, MediaStates>(
+        builder: (context, state) {
+          return Focus(
           focusNode: _keyboardFocusNode,
           autofocus: true,
           onKeyEvent: _handleKeyEvent,
@@ -102,10 +110,17 @@ class _ViewerPageState extends State<ViewerPage> {
                                 buildWhen: (previous, current) =>
                                 previous.currentMedia?.path != current.currentMedia?.path,
                                 builder: (context, state) {
-                                  if (state.currentMedia != null) {
+                                  final media = state.currentMedia;
+                                  if (media != null) {
                                     return MediaViewer(
-                                      key: ValueKey(state.currentMedia!.path),
-                                      path: state.currentMedia!.path,
+                                      key: ValueKey(media.path),
+                                      path: media.path,
+                                      // Si el fichero ya no está, su fila sale
+                                      // de la base de datos y el visor pasa al
+                                      // siguiente contenido.
+                                      onLoadFailed: () => context
+                                          .read<MediaBloc>()
+                                          .add(MediaLoadFailedEvent(media.id)),
                                     );
                                   }
                                   return const Center(child: CircularProgressIndicator());
@@ -143,7 +158,7 @@ class _ViewerPageState extends State<ViewerPage> {
                             ),
                             IconButton(
                               icon: Image.asset(icDelete, scale: 2),
-                              onPressed: () { /* TODO: Implementar delete */ },
+                              onPressed: () => context.read<MediaBloc>().add(DeleteMediaEvent(state.currentMedia!)),
                             ),
                             IconButton(
                               icon: Image.asset(icHeart, scale: 2),
@@ -162,7 +177,8 @@ class _ViewerPageState extends State<ViewerPage> {
             ),
           ),
         );
-      },
+        },
+      ),
     );
   }
 }

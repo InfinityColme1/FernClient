@@ -7,6 +7,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -120,6 +121,8 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
     final chips = [
       for (final tag in _assignedTags) _tagChip(tag, isPending: false),
       for (final tag in _pendingTags) _tagChip(tag, isPending: true),
@@ -128,15 +131,15 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
     return FernDialog(
       onClose: () => context.pop(),
       leftContent: FernDialogSidePanel.list(
-        header: const FernSectionHeader(
+        header: FernSectionHeader(
           icon: Icons.label_outline,
-          title: "Tags",
+          title: texts.tagsTitle,
         ),
         items: chips.isNotEmpty
             ? chips
             : [
                 Text(
-                  "No tags yet",
+                  texts.noTagsYet,
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -149,8 +152,8 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           FernEntitySearchField<TagEntity>(
-            label: "Tag name",
-            hintText: "Tag",
+            label: texts.tagNameSearchLabel,
+            hintText: texts.tagSearchHint,
             search: _search,
             labelOf: (tag) => tag.name,
             onSelected: (tag) => setState(() => _pendingTags.add(tag)),
@@ -158,7 +161,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
           ),
           const SizedBox(height: AppSpacing.xl),
           FernAddButton(
-            label: "Create Tag",
+            label: texts.createTag,
             onTap: () => _openCreateTagDialog(context),
           ),
         ],

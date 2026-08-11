@@ -1,30 +1,49 @@
-// This is a basic Flutter widget test.
+// Comprueba que los cuatro idiomas soportados resuelven y traducen.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// No monta la aplicación entera (necesitaría la base de datos y el reproductor
+// de vídeo): monta el mismo `MaterialApp` con los delegados generados y lee los
+// textos con el idioma puesto, que es lo que hace cada pantalla.
 
-import 'package:Fern/main.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Future<AppLocalizations> _textsIn(WidgetTester tester, String languageCode) async {
+  late AppLocalizations texts;
+
+  await tester.pumpWidget(MaterialApp(
+    locale: Locale(languageCode),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Builder(builder: (context) {
+      texts = AppLocalizations.of(context);
+      return const SizedBox.shrink();
+    }),
+  ));
+
+  return texts;
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('los cuatro idiomas están soportados', (tester) async {
+    expect(
+      AppLocalizations.supportedLocales.map((locale) => locale.languageCode).toSet(),
+      {'en', 'fr', 'es', 'ca'},
+    );
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('cada idioma trae sus propios textos', (tester) async {
+    expect((await _textsIn(tester, 'en')).settingsTitle, 'Settings');
+    expect((await _textsIn(tester, 'es')).settingsTitle, 'Configuración');
+    expect((await _textsIn(tester, 'ca')).settingsTitle, 'Configuració');
+    expect((await _textsIn(tester, 'fr')).settingsTitle, 'Paramètres');
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('los plurales concuerdan con el número', (tester) async {
+    final texts = await _textsIn(tester, 'es');
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(texts.mediaCount(0), 'Sin contenido');
+    expect(texts.mediaCount(1), '1 archivo');
+    expect(texts.mediaCount(7), '7 archivos');
   });
 }

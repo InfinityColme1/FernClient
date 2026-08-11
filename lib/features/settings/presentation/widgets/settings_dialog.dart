@@ -5,19 +5,24 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Las secciones de la pantalla de ajustes, en el orden en el que se listan.
 enum SettingsSection {
-  language(title: "Language", icon: Icons.language),
-  files(title: "Files", icon: Icons.folder_outlined);
+  language(icon: Icons.language),
+  files(icon: Icons.folder_outlined);
 
-  const SettingsSection({required this.title, required this.icon});
+  const SettingsSection({required this.icon});
 
-  final String title;
   final IconData icon;
+
+  String title(AppLocalizations texts) => switch (this) {
+        SettingsSection.language => texts.settingsLanguage,
+        SettingsSection.files => texts.settingsFiles,
+      };
 }
 
 /// Pantalla de ajustes: la lista de secciones a la izquierda y las opciones de
@@ -38,8 +43,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SettingsBloc>(
-      create: (_) => getIt<SettingsBloc>(),
+    // El bloc es el mismo de la raíz (el idioma lo escucha `MaterialApp`), así
+    // que se re-provee con `.value`: no se crea aquí ni se cierra al salir.
+    return BlocProvider<SettingsBloc>.value(
+      value: getIt<SettingsBloc>(),
       child: Dialog(
         backgroundColor: AppColors.white,
         clipBehavior: Clip.antiAlias,
@@ -80,7 +87,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
               left: AppSpacing.m,
               bottom: AppSpacing.xl,
             ),
-            child: Text("Settings", style: theme.textTheme.headlineMedium),
+            child: Text(
+              AppLocalizations.of(context).settingsTitle,
+              style: theme.textTheme.headlineMedium,
+            ),
           ),
           for (final section in SettingsSection.values)
             _sectionTile(context, section),
@@ -111,7 +121,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 Icon(section.icon, size: AppSizes.iconMedium),
                 const SizedBox(width: AppSpacing.m),
                 Text(
-                  section.title,
+                  section.title(AppLocalizations.of(context)),
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -140,7 +150,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
           ),
           child: Row(
             children: [
-              Text(_section.title, style: theme.textTheme.headlineMedium),
+              Text(
+                _section.title(AppLocalizations.of(context)),
+                style: theme.textTheme.headlineMedium,
+              ),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),

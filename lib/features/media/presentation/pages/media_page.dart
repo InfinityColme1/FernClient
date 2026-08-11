@@ -8,6 +8,7 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -58,6 +59,7 @@ class _MediaView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final texts = AppLocalizations.of(context);
 
     return BlocConsumer<MediaBloc, MediaStates>(
       listenWhen: (previous, current) =>
@@ -86,7 +88,7 @@ class _MediaView extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      "${mediaList.length} media",
+                      texts.mediaCount(mediaList.length),
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
@@ -94,7 +96,7 @@ class _MediaView extends StatelessWidget {
                     // TODO: los filtros son otra tarea; el botón ya está en su
                     // sitio para colgarlos de él.
                     FernPillButton(
-                      label: "Filters",
+                      label: texts.filters,
                       icon: Icons.tune,
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.black,

@@ -111,9 +111,9 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
 
     emit(SettingsState(
       settings: settings,
-      statusMessage: result is DataSuccess
-          ? "${result.data ?? 0} avatars moved to the new folder"
-          : "The avatars could not be moved",
+      lastResult: result is DataSuccess
+          ? SettingsResult(SettingsStatus.avatarsMigrated, count: result.data ?? 0)
+          : const SettingsResult(SettingsStatus.avatarsFailed),
     ));
   }
 
@@ -136,9 +136,9 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
 
     emit(SettingsState(
       settings: state.settings,
-      statusMessage: result is DataSuccess
-          ? "${result.data ?? 0} files moved"
-          : "The files could not be organized",
+      lastResult: result is DataSuccess
+          ? SettingsResult(SettingsStatus.filesOrganized, count: result.data ?? 0)
+          : const SettingsResult(SettingsStatus.filesFailed),
     ));
   }
 }

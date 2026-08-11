@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,6 +19,8 @@ class Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
     return CollapsingNavigationDrawer(
       textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight(400)),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -28,28 +31,28 @@ class Sidebar extends StatelessWidget {
       iconSize: iconSize,
       items: [
         SidebarItem(
-          title: "Media",
+          title: texts.navMedia,
           icon: Icons.photo_outlined,
           onTap: () {
             GoRouter.of(context).go(mediaRoute);
           },
         ),
         SidebarItem(
-            title: "Import",
+            title: texts.navImport,
             icon: Icons.file_download_outlined,
             onTap: () {
               GoRouter.of(context).go(importRoute);
             }
         ),
         SidebarItem(
-            title: "Favorites",
+            title: texts.navFavorites,
             icon: Icons.favorite_border_outlined,
             onTap: () {
               context.go(favoritesRoute);
             }
         ),
         SidebarItem(
-            title: "Deleted",
+            title: texts.navDeleted,
             icon: Icons.delete_outline_outlined,
             onTap: () {
               context.go(deletedRoute);

@@ -38,7 +38,11 @@ final unknownCreator = CreatorEntity(id: 0, name: "Unknown");
 final unknownTag = TagEntity(id: 0, name: "Unknown", children: []);
 
 // Import sources
-const importSources = ["Local computer", "Pixiv", "Twitter"];
+//
+// Son identificadores, no textos de pantalla: Pixiv y Twitter se llaman igual
+// en todos los idiomas y el equipo local se traduce al pintarlo.
+const localComputerSource = "Local computer";
+const importSources = [localComputerSource, "Pixiv", "Twitter"];
 
 // Preferences keys
 const rootPathPreferenceKey = 'user_media_root_path';

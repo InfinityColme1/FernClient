@@ -16,6 +16,7 @@ import 'package:Fern/features/media/domain/repositories/local_media_repository.d
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
@@ -117,6 +118,10 @@ Future<void> initializeDependencies() async {
     DeleteMediaUseCase(getIt())
   );
 
+  getIt.registerSingleton<DeleteMissingMediaUseCase>(
+    DeleteMissingMediaUseCase(getIt())
+  );
+
   getIt.registerSingleton<DeleteMediaListUseCase>(
     DeleteMediaListUseCase(getIt())
   );
@@ -161,8 +166,9 @@ Future<void> initializeDependencies() async {
     MigrateAvatarsUseCase(getIt())
   );
 
-  // Uno por pantalla de ajustes: se abre, se usa y se cierra con el diálogo.
-  getIt.registerFactory<SettingsBloc>(() => SettingsBloc(
+  // Único: el idioma vive aquí y lo escucha `MaterialApp` desde la raíz, así
+  // que no puede morir con el diálogo de ajustes.
+  getIt.registerLazySingleton<SettingsBloc>(() => SettingsBloc(
         getSettings: getIt(),
         saveSettings: getIt(),
         migrateAvatars: getIt(),
@@ -177,6 +183,7 @@ Future<void> initializeDependencies() async {
         getMediaDetailsUsecase: getIt(),
         saveMediaUseCase: getIt(),
         deleteMediaUseCase: getIt(),
+        deleteMissingMediaUseCase: getIt(),
         deleteMediaListUseCase: getIt(),
         confirmMediaListUseCase: getIt(),
         getMediaListUsecase: getIt(),

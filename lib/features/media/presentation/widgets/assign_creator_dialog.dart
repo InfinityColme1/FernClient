@@ -8,6 +8,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -94,6 +95,7 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
     final creator = _pendingCreator ?? widget.media.creator;
     final isPending = _pendingCreator != null;
 
@@ -116,8 +118,8 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           FernEntitySearchField<CreatorEntity>(
-            label: "Search Creator",
-            hintText: "Name",
+            label: texts.searchCreatorLabel,
+            hintText: texts.creatorSearchHint,
             search: _search,
             labelOf: (creator) => creator.name,
             onSelected: (creator) =>
@@ -126,7 +128,7 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
           ),
           const SizedBox(height: AppSpacing.xl),
           FernAddButton(
-            label: "Create Creator",
+            label: texts.createCreator,
             onTap: () => _openCreateCreatorDialog(context),
           ),
         ],

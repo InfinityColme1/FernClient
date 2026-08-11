@@ -10,6 +10,7 @@ import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.d
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -229,7 +230,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
-                      hintText: "Search",
+                      hintText: AppLocalizations.of(context).searchHint,
                       hintStyle: Theme.of(context)
                           .textTheme
                           .bodyMedium

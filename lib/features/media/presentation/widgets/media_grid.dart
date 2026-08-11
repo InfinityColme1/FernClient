@@ -5,6 +5,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_item.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -41,11 +42,11 @@ class MediaGrid extends StatelessWidget {
     final isEmpty = sections?.isEmpty ?? mediaList.isEmpty;
 
     if (isEmpty) {
-      return const FernSurface(
+      return FernSurface(
         width: double.infinity,
         child: FernEmptyState(
           imageAsset: fernEmptyImage,
-          message: "This looks a little empty",
+          message: AppLocalizations.of(context).emptyLibrary,
         ),
       );
     }
@@ -118,6 +119,10 @@ class MediaGrid extends StatelessWidget {
             context.read<MediaBloc>().add(MediaClickedEvent(media: media)),
         onSelectionToggled: () =>
             context.read<MediaBloc>().add(ToggleMediaSelectionEvent(media: media)),
+        // Si el contenido no se pinta porque su fichero ya no está, la fila de
+        // la base de datos sobra y el elemento desaparece de la rejilla.
+        onLoadFailed: () =>
+            context.read<MediaBloc>().add(MediaLoadFailedEvent(media.id)),
       ),
     );
   }

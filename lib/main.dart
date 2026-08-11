@@ -1,11 +1,13 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'config/theme/app_theme.dart';
 import 'core/navigation/app_router.dart';
 import 'core/service_locator.dart';
-import 'features/media/presentation/blocs/media_bloc.dart';
 
 
 Future<void> main() async {
@@ -23,10 +25,23 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: appName,
-      theme: AppTheme.lightTheme,
-      routerConfig: appRouter,
+    // El bloc de ajustes se provee desde la raíz porque el idioma es suyo: al
+    // cambiarlo se reconstruye la aplicación entera con el nuevo `locale`, que
+    // es lo que hace que el cambio se vea al instante y sin reiniciar.
+    return BlocProvider<SettingsBloc>.value(
+      value: getIt<SettingsBloc>(),
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+        buildWhen: (previous, current) =>
+            previous.settings.language != current.settings.language,
+        builder: (context, state) => MaterialApp.router(
+          title: appName,
+          theme: AppTheme.lightTheme,
+          locale: Locale(state.settings.language.code),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: appRouter,
+        ),
+      ),
     );
   }
 }

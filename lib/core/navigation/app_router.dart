@@ -3,6 +3,7 @@ import 'package:Fern/core/navigation/main_layout.dart';
 import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/features/media/presentation/pages/media_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -35,13 +36,16 @@ final appRouter = GoRouter(
             path: importRoute,
             builder: (context, state) => const ImportPage()
         ),
+        // TODO: pantallas por hacer; de momento sólo su nombre.
         GoRoute(
             path: favoritesRoute,
-            builder: (context, state) => Text("favorites")
+            builder: (context, state) =>
+                Center(child: Text(AppLocalizations.of(context).navFavorites))
         ),
         GoRoute(
             path: deletedRoute,
-            builder: (context, state) => Text("deleted")
+            builder: (context, state) =>
+                Center(child: Text(AppLocalizations.of(context).navDeleted))
         ),
       ]
     ),

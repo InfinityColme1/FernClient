@@ -5,15 +5,16 @@ import 'package:Fern/core/services/media_preview_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Cómo se pinta cada tipo de resultado: el texto que lo nombra y el icono con
 /// el que se muestra cuando no hay imagen.
 extension SearchResultTypeVisuals on SearchResultType {
-  String get label => switch (this) {
-        SearchResultType.media => 'media',
-        SearchResultType.tag => 'tag',
-        SearchResultType.creator => 'creator',
+  String label(AppLocalizations texts) => switch (this) {
+        SearchResultType.media => texts.resultTypeMedia,
+        SearchResultType.tag => texts.resultTypeTag,
+        SearchResultType.creator => texts.resultTypeCreator,
       };
 
   IconData get icon => switch (this) {
@@ -87,7 +88,7 @@ class SearchResultRow extends StatelessWidget {
           _isHeader ? Flexible(child: name) : Expanded(child: name),
           const SizedBox(width: AppSpacing.m),
           Text(
-            type.label,
+            type.label(AppLocalizations.of(context)),
             style: theme.textTheme.labelSmall?.copyWith(color: AppColors.gray),
           ),
         ],

@@ -29,37 +29,17 @@ enum AppLanguage {
 /// Los criterios son excluyentes: o los ficheros quedan sueltos en la raíz, o
 /// se agrupan por uno de los tres criterios en subcarpetas de un solo nivel.
 /// No afecta a las imágenes de los avatares, que viven en su propia carpeta.
+/// Sólo lleva el identificador con el que se guarda: cómo se nombra cada
+/// criterio es cosa de la pantalla, que lo traduce.
 enum FileOrganizationCriteria {
-  flat(
-    id: 'flat',
-    label: 'All files together',
-    description: 'Every file sits directly in the library folder',
-  ),
-  byTag(
-    id: 'tag',
-    label: 'Subfolders by tag',
-    description: 'One folder per tag, taken from the first tag of the content',
-  ),
-  bySource(
-    id: 'source',
-    label: 'Subfolders by source',
-    description: 'One folder per origin: local, Pixiv, Twitter...',
-  ),
-  byCreator(
-    id: 'creator',
-    label: 'Subfolders by creator',
-    description: 'One folder per creator',
-  );
+  flat(id: 'flat'),
+  byTag(id: 'tag'),
+  bySource(id: 'source'),
+  byCreator(id: 'creator');
 
-  const FileOrganizationCriteria({
-    required this.id,
-    required this.label,
-    required this.description,
-  });
+  const FileOrganizationCriteria({required this.id});
 
   final String id;
-  final String label;
-  final String description;
 
   static FileOrganizationCriteria fromId(String? id) {
     return FileOrganizationCriteria.values.firstWhere(

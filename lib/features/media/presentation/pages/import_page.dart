@@ -6,6 +6,7 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +44,7 @@ class _ImportView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final texts = AppLocalizations.of(context);
 
     return BlocConsumer<MediaBloc, MediaStates>(
       listenWhen: (previous, current) =>
@@ -76,6 +78,12 @@ class _ImportView extends StatelessWidget {
                     FernDropdownPill<String>(
                       value: importSources.first,
                       items: importSources,
+                      // El valor es el identificador de la fuente; sólo el
+                      // equipo local tiene nombre que traducir (Pixiv y
+                      // Twitter son marcas).
+                      labelBuilder: (source) => source == localComputerSource
+                          ? texts.sourceLocalComputer
+                          : source,
                       onChanged: (_) {},
                     ),
                     const Spacer(),
@@ -83,7 +91,7 @@ class _ImportView extends StatelessWidget {
                       // CENTER: Stats
                       if (hasSelection) ...[
                         Text(
-                          "$selectedCount selected",
+                          texts.selectedCount(selectedCount),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: AppColors.terciary,
@@ -92,7 +100,7 @@ class _ImportView extends StatelessWidget {
                         const SizedBox(width: AppSpacing.l),
                       ],
                       Text(
-                        "${state.mediaList!.length} media fetched",
+                        texts.mediaFetched(state.mediaList!.length),
                         style: theme.textTheme.bodyMedium
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
@@ -113,7 +121,7 @@ class _ImportView extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.s),
                       FernPillButton(
-                        label: "Delete",
+                        label: texts.actionDelete,
                         icon: Icons.delete_outline,
                         backgroundColor: AppColors.terciary,
                         foregroundColor: AppColors.white,
@@ -125,7 +133,7 @@ class _ImportView extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.s),
                       FernPillButton(
-                        label: "Confirm",
+                        label: texts.actionConfirm,
                         icon: Icons.check,
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.black,
@@ -146,7 +154,7 @@ class _ImportView extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.s),
                       FernPillButton(
-                        label: "Import",
+                        label: texts.actionImport,
                         icon: Icons.file_download_outlined,
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.black,

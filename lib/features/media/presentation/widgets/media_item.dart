@@ -10,6 +10,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/services/media_preview_service.dart';
 import 'package:Fern/core/utils/media_type.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -32,12 +33,17 @@ class MediaItem extends StatefulWidget {
   /// Se invoca al pulsar el botón de selección que aparece al pasar el ratón.
   final VoidCallback? onSelectionToggled;
 
+  /// Se invoca, una sola vez por fichero, cuando el contenido no se ha podido
+  /// cargar. Quien lo escuche decide qué hacer con el contenido.
+  final VoidCallback? onLoadFailed;
+
   const MediaItem({
     super.key,
     required this.media,
     this.onTap,
     this.isSelected = false,
     this.onSelectionToggled,
+    this.onLoadFailed,
   });
 
   @override
@@ -52,6 +58,10 @@ class _MediaItemState extends State<MediaItem> {
   VideoController? _videoController;
   StreamSubscription<Duration>? _positionSubscription;
   bool _isPreviewReady = false;
+
+  /// Evita repetir el aviso de fallo de carga: la celda se reconstruye muchas
+  /// veces (scroll, hover, selección) y el fichero sigue siendo el mismo.
+  bool _loadFailureReported = false;
 
   bool get _isVideo => widget.media.path.isVideoPath;
 
@@ -68,6 +78,7 @@ class _MediaItemState extends State<MediaItem> {
     if (oldWidget.media.path == widget.media.path) return;
 
     _stopPreview();
+    _loadFailureReported = false;
     _preview = MediaPreviewService.instance.peek(widget.media.path);
     if (_preview == null) _loadPreview();
   }
@@ -80,8 +91,22 @@ class _MediaItemState extends State<MediaItem> {
 
   Future<void> _loadPreview() async {
     final preview = await MediaPreviewService.instance.load(widget.media.path);
-    if (!mounted || preview == null) return;
+    if (preview == null) {
+      _reportLoadFailure();
+      return;
+    }
+    if (!mounted) return;
     setState(() => _preview = preview);
+  }
+
+  /// Avisa de que este contenido no se ha podido cargar.
+  ///
+  /// No se juzga aquí el motivo: sólo se cuenta lo que ha pasado y quien
+  /// escucha comprueba si el fichero sigue estando.
+  void _reportLoadFailure() {
+    if (_loadFailureReported) return;
+    _loadFailureReported = true;
+    widget.onLoadFailed?.call();
   }
 
   void _onHoverChanged(bool isHovered) {
@@ -123,6 +148,7 @@ class _MediaItemState extends State<MediaItem> {
       setState(() => _isPreviewReady = true);
     } catch (e) {
       debugPrint('MediaItem: no se pudo previsualizar el vídeo: $e');
+      _reportLoadFailure();
       _stopPreview();
     }
   }
@@ -196,7 +222,10 @@ class _MediaItemState extends State<MediaItem> {
         // Se decodifica exactamente a la resolución en la que se va a pintar
         // (nunca por debajo), que es lo que evita el efecto borroso.
         cacheWidth: _decodeWidth(context, constraints.maxWidth),
-        errorBuilder: (_, _, _) => _buildPlaceholder(),
+        errorBuilder: (_, _, _) {
+          _reportLoadFailure();
+          return _buildPlaceholder();
+        },
       ),
     );
   }
@@ -301,7 +330,9 @@ class _MediaItemState extends State<MediaItem> {
           ignoring: !isVisible,
           child: IconButton(
             onPressed: widget.onSelectionToggled,
-            tooltip: widget.isSelected ? 'Deselect' : 'Select',
+            tooltip: widget.isSelected
+                ? AppLocalizations.of(context).deselectItem
+                : AppLocalizations.of(context).selectItem,
             visualDensity: VisualDensity.compact,
             iconSize: AppSizes.iconMedium,
             icon: Icon(

@@ -1,0 +1,101 @@
+{
+  "@@locale": "es",
+
+  "navMedia": "Contenido",
+  "navImport": "Importar",
+  "navFavorites": "Favoritos",
+  "navDeleted": "Eliminados",
+
+  "searchHint": "Buscar",
+  "menuNewCreator": "Nuevo creador",
+  "menuNewTag": "Nueva etiqueta",
+  "menuNewCollection": "Nueva colección",
+  "collectionsWip": "Las colecciones todavía están en construcción",
+  "mobileLayoutWip": "La versión móvil llegará pronto",
+
+  "mediaCount": "{count, plural, =0{Sin contenido} =1{1 archivo} other{{count} archivos}}",
+  "filters": "Filtros",
+  "emptyLibrary": "Esto está un poco vacío",
+
+  "mediaFetched": "{count, plural, =1{1 archivo encontrado} other{{count} archivos encontrados}}",
+  "selectedCount": "{count} seleccionados",
+
+  "actionImport": "Importar",
+  "actionDelete": "Eliminar",
+  "actionConfirm": "Confirmar",
+  "actionSave": "Guardar",
+  "sourceLocalComputer": "Equipo local",
+
+  "selectItem": "Seleccionar",
+  "deselectItem": "Quitar selección",
+
+  "mediaInfoTitle": "Información",
+  "descriptionHint": "Añade una descripción",
+  "createdBy": "Creado por:",
+  "tagsTitle": "Etiquetas",
+  "addTag": "Añadir etiqueta",
+
+  "noTagsYet": "Todavía no hay etiquetas",
+  "tagNameSearchLabel": "Nombre de la etiqueta",
+  "tagSearchHint": "Etiqueta",
+  "createTag": "Crear etiqueta",
+  "searchCreatorLabel": "Buscar creador",
+  "creatorSearchHint": "Nombre",
+  "createCreator": "Crear creador",
+
+  "newTagTitle": "Nueva etiqueta",
+  "tagNameLabel": "Nombre de la etiqueta",
+  "parentTagLabel": "Etiqueta padre (opcional)",
+  "newCreatorTitle": "Nuevo creador",
+  "creatorNameLabel": "Nombre del creador",
+  "socialProfilesLabel": "Perfiles sociales",
+  "enterNameHint": "Escribe un nombre",
+  "searchEllipsisHint": "Buscar...",
+  "profileLinkHint": "Enlace al perfil",
+  "addProfile": "Añadir perfil",
+
+  "resultTypeMedia": "contenido",
+  "resultTypeTag": "etiqueta",
+  "resultTypeCreator": "creador",
+
+  "noFolderSelected": "Ninguna carpeta seleccionada",
+  "chooseFolder": "Elegir carpeta",
+
+  "settingsTitle": "Configuración",
+  "settingsLanguage": "Idioma",
+  "settingsFiles": "Archivos",
+
+  "languageSectionTitle": "Idioma de la aplicación",
+  "languageSectionNote": "Toda la aplicación cambia de idioma en cuanto eliges uno.",
+
+  "filesLocalTitle": "Archivos locales",
+  "syncLocalFiles": "Sincronizar archivos locales",
+  "syncLocalFilesDescription": "Fern mueve a una carpeta propia el contenido con el que trabaja, tanto el que ya está importado como el que llegue después.",
+  "libraryFolder": "Carpeta de la biblioteca",
+  "copyFiles": "Copiar archivos",
+  "copyFilesDescription": "Conserva el archivo original donde estaba y trabaja con una copia dentro de la carpeta de la biblioteca.",
+
+  "avatarsTitle": "Avatares",
+  "avatarsDescription": "Las imágenes de los avatares siempre se copian a una carpeta propia, esté o no activada la sincronización de archivos locales. Al cambiar de carpeta, los avatares que ya existan se llevan con ella.",
+  "avatarsFolder": "Carpeta de avatares",
+
+  "organizationTitle": "Ordenación",
+  "organizationDescription": "Cómo se reparten los archivos dentro de la carpeta de la biblioteca. No afecta a las imágenes de los avatares.",
+  "organizationFlat": "Todos los archivos juntos",
+  "organizationFlatDescription": "Cada archivo queda directamente en la carpeta de la biblioteca",
+  "organizationByTag": "Subcarpetas por etiqueta",
+  "organizationByTagDescription": "Una carpeta por etiqueta, tomada de la primera etiqueta del contenido",
+  "organizationBySource": "Subcarpetas por fuente",
+  "organizationBySourceDescription": "Una carpeta por origen: local, Pixiv, Twitter...",
+  "organizationByCreator": "Subcarpetas por creador",
+  "organizationByCreatorDescription": "Una carpeta por creador",
+
+  "migrationTitle": "Migración",
+  "migrationDescription": "Ordena con los criterios de arriba todos los archivos que ya están en la biblioteca.",
+  "migrateFiles": "Migrar archivos",
+
+  "avatarsMoved": "{count, plural, =0{Los avatares ya estaban en esa carpeta} =1{1 avatar movido a la carpeta nueva} other{{count} avatares movidos a la carpeta nueva}}",
+  "avatarsMoveFailed": "No se han podido mover los avatares",
+  "filesOrganized": "{count, plural, =0{Ya estaba todo en su sitio} =1{1 archivo movido} other{{count} archivos movidos}}",
+  "filesOrganizeFailed": "No se han podido ordenar los archivos"
+}
