@@ -2,6 +2,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/presentation/widgets/media_info.dart';
 import 'package:Fern/features/media/presentation/widgets/media_viewer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,6 +25,9 @@ class ViewerPage extends StatefulWidget {
 }
 
 class _ViewerPageState extends State<ViewerPage> {
+  /// Nodo que recibe el foco al entrar para poder atender el teclado.
+  final FocusNode _keyboardFocusNode = FocusNode(debugLabel: 'ViewerPageKeyboard');
+
   @override
   void initState() {
     super.initState();
@@ -31,87 +35,131 @@ class _ViewerPageState extends State<ViewerPage> {
   }
 
   @override
+  void dispose() {
+    _keyboardFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _goTo({required bool next}) =>
+      context.read<MediaBloc>().add(ViewerNextEvent(next: next));
+
+  /// Flechas izquierda/derecha para navegar entre contenidos y escape para
+  /// volver a la pantalla anterior.
+  ///
+  /// Solo atendemos pulsaciones (incluidas las repeticiones al mantener la
+  /// tecla) y dejamos pasar el resto de eventos para no interferir con los
+  /// campos de texto del panel de información, que consumen las flechas antes
+  /// de que el evento llegue hasta aquí.
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    final key = event.logicalKey;
+
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      _goTo(next: false);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowRight) {
+      _goTo(next: true);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      if (context.canPop()) context.pop();
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<MediaBloc, MediaStates>(
       builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppColors.black,
-          body: Row(
-            children: [
-              // LADO IZQUIERDO: Visor y Controles
-              Expanded(
-                child: Stack(
-                  children: [
-                    // Visor de Media
-                    Center(
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => context.read<MediaBloc>().add(const ViewerNextEvent(next: false)),
-                            icon: Image.asset(icLeft, width: AppSizes.buttonHeightSmall),
-                          ),
-                          Expanded(
-                            child: BlocBuilder<MediaBloc, MediaStates>(
-                              buildWhen: (previous, current) =>
-                              previous.currentMedia?.path != current.currentMedia?.path,
-                              builder: (context, state) {
-                                if (state.currentMedia != null) {
-                                  return MediaViewer(
-                                    key: ValueKey(state.currentMedia!.path),
-                                    path: state.currentMedia!.path,
-                                  );
-                                }
-                                return const Center(child: CircularProgressIndicator());
-                              },
+        return Focus(
+          focusNode: _keyboardFocusNode,
+          autofocus: true,
+          onKeyEvent: _handleKeyEvent,
+          child: Scaffold(
+            backgroundColor: AppColors.black,
+            body: Row(
+              children: [
+                // LADO IZQUIERDO: Visor y Controles
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Visor de Media
+                      Center(
+                        child: Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => _goTo(next: false),
+                              icon: Image.asset(icLeft, width: AppSizes.buttonHeightSmall),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () => context.read<MediaBloc>().add(const ViewerNextEvent(next: true)),
-                            icon: Image.asset(icRight, width: AppSizes.buttonHeightSmall),
-                          ),
-                        ],
+                            Expanded(
+                              child: BlocBuilder<MediaBloc, MediaStates>(
+                                buildWhen: (previous, current) =>
+                                previous.currentMedia?.path != current.currentMedia?.path,
+                                builder: (context, state) {
+                                  if (state.currentMedia != null) {
+                                    return MediaViewer(
+                                      key: ValueKey(state.currentMedia!.path),
+                                      path: state.currentMedia!.path,
+                                    );
+                                  }
+                                  return const Center(child: CircularProgressIndicator());
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _goTo(next: true),
+                              icon: Image.asset(icRight, width: AppSizes.buttonHeightSmall),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    // Barra Superior de Acciones
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.s),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back,
-                                color: AppColors.white,
-                                size: AppSizes.iconExtraLarge),
-                            onPressed: () => context.pop(),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: Image.asset(icShare, scale: 2),
-                            onPressed: () { /* TODO: Implementar share */ },
-                          ),
-                          IconButton(
-                            icon: Image.asset(icInfo, scale: 2),
-                            // DISPARAR EL EVENTO DE TOGGLE
-                            onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
-                          ),
-                          IconButton(
-                            icon: Image.asset(icDelete, scale: 2),
-                            onPressed: () { /* TODO: Implementar delete */ },
-                          ),
-                          IconButton(
-                            icon: Image.asset(icHeart, scale: 2),
-                            onPressed: () { /* TODO: Implementar favorite */ },
-                          ),
-                        ],
+                      // Barra Superior de Acciones
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.s),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back,
+                                  color: AppColors.white,
+                                  size: AppSizes.iconExtraLarge),
+                              onPressed: () => context.pop(),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: Image.asset(icShare, scale: 2),
+                              onPressed: () { /* TODO: Implementar share */ },
+                            ),
+                            IconButton(
+                              icon: Image.asset(icInfo, scale: 2),
+                              // DISPARAR EL EVENTO DE TOGGLE
+                              onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
+                            ),
+                            IconButton(
+                              icon: Image.asset(icDelete, scale: 2),
+                              onPressed: () { /* TODO: Implementar delete */ },
+                            ),
+                            IconButton(
+                              icon: Image.asset(icHeart, scale: 2),
+                              onPressed: () { /* TODO: Implementar favorite */ },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // LADO DERECHO: Panel de Información
-              _InfoPanel(isOpen: state.showInfo),
-            ],
+                // LADO DERECHO: Panel de Información
+                _InfoPanel(isOpen: state.showInfo),
+              ],
+            ),
           ),
         );
       },

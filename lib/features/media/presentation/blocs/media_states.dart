@@ -1,5 +1,7 @@
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:equatable/equatable.dart';
 
 
@@ -15,6 +17,19 @@ abstract class MediaStates extends Equatable {
   /// Identificadores de los elementos marcados en la rejilla.
   final Set<int> selectedIds;
 
+  /// Texto de la búsqueda que ha dado lugar a [mediaList]. `null` cuando la
+  /// rejilla muestra la biblioteca entera y no un resultado de búsqueda.
+  final String? searchQuery;
+
+  /// Resultado de la búsqueda repartido en grupos (descripciones, etiquetas y
+  /// creadores), en el orden en el que la rejilla los pinta. `null` si no hay
+  /// búsqueda: entonces la rejilla usa [mediaList] sin cabeceras.
+  final List<MediaSearchSectionEntity>? searchSections;
+
+  /// Sugerencia elegida en el buscador, cuando la búsqueda viene de pulsar una
+  /// y no de escribir. `null` en las búsquedas por texto.
+  final SearchSuggestionEntity? searchSuggestion;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -23,6 +38,9 @@ abstract class MediaStates extends Equatable {
     this.isModified = false,
     this.isNew = false,
     this.selectedIds = const {},
+    this.searchQuery,
+    this.searchSections,
+    this.searchSuggestion,
   });
 
   MediaStates copyWith({
@@ -33,6 +51,9 @@ abstract class MediaStates extends Equatable {
     bool ? isModified,
     bool ? isNew,
     Set<int> ? selectedIds,
+    String ? searchQuery,
+    List<MediaSearchSectionEntity> ? searchSections,
+    SearchSuggestionEntity ? searchSuggestion,
   });
 
   @override
@@ -44,6 +65,9 @@ abstract class MediaStates extends Equatable {
     isModified,
     isNew,
     selectedIds,
+    searchQuery,
+    searchSections,
+    searchSuggestion,
   ];
 }
 
@@ -54,6 +78,9 @@ class MediaLoading extends MediaStates {
     super.isModified,
     super.isNew,
     super.selectedIds,
+    super.searchQuery,
+    super.searchSections,
+    super.searchSuggestion,
   });
 
   @override
@@ -65,6 +92,9 @@ class MediaLoading extends MediaStates {
     bool ? isModified,
     bool ? isNew,
     Set<int> ? selectedIds,
+    String ? searchQuery,
+    List<MediaSearchSectionEntity> ? searchSections,
+    SearchSuggestionEntity ? searchSuggestion,
   }) {
     return MediaLoading(
       mediaList: mediaList ?? this.mediaList,
@@ -72,6 +102,9 @@ class MediaLoading extends MediaStates {
       isModified: isModified ?? this.isModified,
       isNew: isNew ?? this.isNew,
       selectedIds: selectedIds ?? this.selectedIds,
+      searchQuery: searchQuery ?? this.searchQuery,
+      searchSections: searchSections ?? this.searchSections,
+      searchSuggestion: searchSuggestion ?? this.searchSuggestion,
     );
   }
 }
@@ -81,7 +114,7 @@ class DetailedMedia extends MediaStates {
   final int currentMediaIndex;
   @override
   final MediaEntity currentMedia;
-  
+
   const DetailedMedia({
     super.mediaList,
     required this.currentMediaIndex,
@@ -90,6 +123,9 @@ class DetailedMedia extends MediaStates {
     super.isModified,
     super.isNew,
     super.selectedIds,
+    super.searchQuery,
+    super.searchSections,
+    super.searchSuggestion,
   });
 
   @override
@@ -101,6 +137,9 @@ class DetailedMedia extends MediaStates {
     bool ? isModified,
     bool ? isNew,
     Set<int> ? selectedIds,
+    String ? searchQuery,
+    List<MediaSearchSectionEntity> ? searchSections,
+    SearchSuggestionEntity ? searchSuggestion,
   }) {
     return DetailedMedia(
         mediaList: mediaList ?? this.mediaList,
@@ -110,6 +149,9 @@ class DetailedMedia extends MediaStates {
         isModified: isModified ?? this.isModified,
         isNew: isNew ?? this.isNew,
         selectedIds: selectedIds ?? this.selectedIds,
+        searchQuery: searchQuery ?? this.searchQuery,
+        searchSections: searchSections ?? this.searchSections,
+        searchSuggestion: searchSuggestion ?? this.searchSuggestion,
     );
   }
 }

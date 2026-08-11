@@ -1,10 +1,14 @@
-import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
+import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
+import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
 import 'package:flutter/material.dart';
+
+/// Lo que se puede crear desde el "+" de la barra superior.
+enum _CreateOption { creator, tag, collection }
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -16,6 +20,40 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  static const _createOptions = [
+    FernMenuOption(
+      value: _CreateOption.creator,
+      label: "New creator",
+      icon: Icons.person_outline,
+    ),
+    FernMenuOption(
+      value: _CreateOption.tag,
+      label: "New tag",
+      icon: Icons.label_outline,
+    ),
+    FernMenuOption(
+      value: _CreateOption.collection,
+      label: "New collection",
+      icon: Icons.collections_outlined,
+    ),
+  ];
+
+  /// Abre el diálogo de la opción elegida. Las colecciones todavía no existen,
+  /// así que se avisa y punto.
+  void _onCreateSelected(_CreateOption option) {
+    showFernDialog(
+      context: context,
+      builder: (_) => switch (option) {
+        _CreateOption.creator => const FernCreateDialog.creator(),
+        _CreateOption.tag => const FernCreateDialog.tag(),
+        _CreateOption.collection => const FernMessageDialog(
+            imageAsset: fernEmptyImage,
+            message: "Collections are still a work in progress",
+          ),
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -41,43 +79,18 @@ class _MainLayoutState extends State<MainLayout> {
                 width: AppSizes.logoWidth,
               ),
             ),
-            SearchAnchor(
-                builder: (BuildContext context, SearchController controller) {
-              return SearchBar(
-                controller: controller,
-                elevation: const WidgetStatePropertyAll<double>(0.0), // Elevación eliminada
-                backgroundColor: const WidgetStatePropertyAll<Color>(AppColors.secondary),
-                padding: const WidgetStatePropertyAll<EdgeInsets>(
-                  EdgeInsets.symmetric(horizontal: AppSpacing.l),
-                ),
-                onTap: () {
-                  controller.openView();
-                },
-                onChanged: (_) {
-                  controller.openView();
-                },
-                leading: const Icon(Icons.search, color: AppColors.black),
-                hintText: "Search",
-                hintStyle: WidgetStatePropertyAll<TextStyle?>(
-                  Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.lightgray),
-                ),
-              );
-            }, suggestionsBuilder:
-                    (BuildContext context, SearchController controller) {
-              return List<ListTile>.generate(3, (int index) {
-                final String item = 'item $index';
-                return ListTile(
-                  title: Text(item, style: Theme.of(context).textTheme.bodyMedium),
-                  onTap: () {
-                    controller.closeView(item);
-                  },
-                );
-              });
-            })
+            const MediaSearchBar(),
           ],
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+          FernPopupMenu<_CreateOption>(
+            options: _createOptions,
+            onSelected: _onCreateSelected,
+            builder: (context, toggle) => IconButton(
+              onPressed: toggle,
+              icon: const Icon(Icons.add),
+            ),
+          ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
           const SizedBox(width: AppSpacing.l),
         ],

@@ -43,7 +43,15 @@ class MediaInfo extends StatelessWidget {
                 FernActionButton(
                   label: "Save",
                   onPressed: (state.isNew || state.isModified)
-                      ? () => context.read<MediaBloc>().add(SaveMediaEvent(media))
+                      ? () {
+                          context.read<MediaBloc>().add(SaveMediaEvent(media));
+
+                          // El contenido pendiente de revisar se abre desde la
+                          // pantalla de importación; al darlo por definitivo
+                          // deja de estar allí, así que se vuelve atrás para
+                          // ver la lista ya sin él.
+                          if (state.isNew) context.pop();
+                        }
                       : null,
                 ),
                 const SizedBox(height: AppSpacing.s),

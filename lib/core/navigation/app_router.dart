@@ -29,11 +29,11 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
             path: mediaRoute,
-            builder: (context, state) => MediaPage()
+            builder: (context, state) => const MediaPage()
         ),
         GoRoute(
             path: importRoute,
-            builder: (context, state) => ImportPage()
+            builder: (context, state) => const ImportPage()
         ),
         GoRoute(
             path: favoritesRoute,

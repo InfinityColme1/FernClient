@@ -31,8 +31,13 @@ class AppSizes {
   // Panel Widths
   static const double infoPanelWidth = 350.0;
   static const double dialogMaxWidth = 800.0;
+  static const double menuWidth = 280.0;
 
   // Layout
   static const double largeScreenMinWidth = 600.0;
   static const double logoWidth = 150.0;
+
+  // Buscador de la barra superior
+  static const double searchBarWidth = 420.0;
+  static const double searchBarHeight = 48.0;
 }

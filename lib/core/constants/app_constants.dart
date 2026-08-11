@@ -49,6 +49,12 @@ const drawerAnimationDuration = Duration(milliseconds: 300);
 const viewerTransitionDuration = Duration(milliseconds: 250);
 const infoPanelAnimationDuration = Duration(milliseconds: 300);
 
+// Sidebar
+const sidebarSelectedOpacity = 0.3;
+
+/// Velo oscuro que se pone sobre el botón del menú al pasar el ratón.
+const sidebarHoverOverlayOpacity = 0.08;
+
 // Media info
 const mediaDescriptionMaxLines = 10;
 
@@ -56,9 +62,23 @@ const mediaDescriptionMaxLines = 10;
 const searchSuggestionsLimit = 3;
 const searchDebounceDuration = Duration(milliseconds: 250);
 
+/// Sugerencias del buscador principal: hasta cinco entre contenidos, etiquetas
+/// y creadores.
+const mediaSearchSuggestionsLimit = 5;
+
+/// Tiempo sin escribir tras el que el buscador principal actualiza la rejilla
+/// por su cuenta, sin necesidad de pulsar enter ni elegir una sugerencia.
+const mediaSearchDelay = Duration(seconds: 3);
+
+/// Alto máximo del desplegable de sugerencias del buscador principal.
+const mediaSearchSuggestionsMaxHeight = 320.0;
+
 /// Identificador de las entidades que todavía no están en la base de datos.
 /// Al guardarlas, Isar les asigna uno de verdad.
 const unsavedId = 0;
+
+/// Atenuado de los botones de píldora cuando están desactivados.
+const pillButtonDisabledOpacity = 0.35;
 
 // Create dialog
 const createDialogSocialFieldsMaxHeight = 160.0;

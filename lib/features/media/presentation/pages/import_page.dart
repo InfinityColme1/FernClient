@@ -56,6 +56,10 @@ class _ImportView extends StatelessWidget {
       },
       builder: (context, state) {
         final hasMedia = state.mediaList != null && state.mediaList!.isNotEmpty;
+        // Los botones masivos actúan sobre la selección de la rejilla, así que
+        // sin selección no hay nada que borrar ni que confirmar.
+        final selectedCount = state.selectedIds.length;
+        final hasSelection = selectedCount > 0;
 
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
@@ -77,6 +81,16 @@ class _ImportView extends StatelessWidget {
                     const Spacer(),
                     if (hasMedia) ...[
                       // CENTER: Stats
+                      if (hasSelection) ...[
+                        Text(
+                          "$selectedCount selected",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.terciary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.l),
+                      ],
                       Text(
                         "${state.mediaList!.length} media fetched",
                         style: theme.textTheme.bodyMedium
@@ -103,9 +117,11 @@ class _ImportView extends StatelessWidget {
                         icon: Icons.delete_outline,
                         backgroundColor: AppColors.terciary,
                         foregroundColor: AppColors.white,
-                        onPressed: () {
-                          // Lógica de borrado masivo
-                        },
+                        onPressed: hasSelection
+                            ? () => context
+                                .read<MediaBloc>()
+                                .add(const DeleteSelectedMediaEvent())
+                            : null,
                       ),
                       const SizedBox(width: AppSpacing.s),
                       FernPillButton(
@@ -113,9 +129,11 @@ class _ImportView extends StatelessWidget {
                         icon: Icons.check,
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.black,
-                        onPressed: () {
-                          // Lógica de confirmación masiva
-                        },
+                        onPressed: hasSelection
+                            ? () => context
+                                .read<MediaBloc>()
+                                .add(const ConfirmSelectedMediaEvent())
+                            : null,
                       ),
                     ] else ...[
                       // RIGHT: Actions when empty

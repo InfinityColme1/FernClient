@@ -1,6 +1,8 @@
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/data/repositories/local_media_repository_impl.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
+import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
@@ -9,6 +11,9 @@ import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/scan_directory_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
@@ -69,6 +74,14 @@ Future<void> initializeDependencies() async {
     DeleteMediaUseCase(getIt())
   );
 
+  getIt.registerSingleton<DeleteMediaListUseCase>(
+    DeleteMediaListUseCase(getIt())
+  );
+
+  getIt.registerSingleton<ConfirmMediaListUseCase>(
+    ConfirmMediaListUseCase(getIt())
+  );
+
   getIt.registerSingleton<SaveTagUseCase>(
     SaveTagUseCase(getIt())
   );
@@ -85,6 +98,18 @@ Future<void> initializeDependencies() async {
     SearchCreatorsUseCase(getIt())
   );
 
+  getIt.registerSingleton<SearchSuggestionsUseCase>(
+    SearchSuggestionsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SearchMediaUseCase>(
+    SearchMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SearchMediaBySuggestionUseCase>(
+    SearchMediaBySuggestionUseCase(getIt())
+  );
+
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
         getScannedMediaUseCase: getIt(),
@@ -93,6 +118,11 @@ Future<void> initializeDependencies() async {
         getMediaDetailsUsecase: getIt(),
         saveMediaUseCase: getIt(),
         deleteMediaUseCase: getIt(),
+        deleteMediaListUseCase: getIt(),
+        confirmMediaListUseCase: getIt(),
+        getMediaListUsecase: getIt(),
+        searchMediaUseCase: getIt(),
+        searchMediaBySuggestionUseCase: getIt(),
       )
   );
 }
