@@ -1,6 +1,8 @@
 {
   "@@locale": "es",
 
+  "navGallery": "Galería",
+  "navTags": "Etiquetas",
   "navMedia": "Contenido",
   "navImport": "Importar",
   "navFavorites": "Favoritos",
@@ -14,15 +16,21 @@
   "mobileLayoutWip": "La versión móvil llegará pronto",
 
   "mediaCount": "{count, plural, =0{Sin contenido} =1{1 archivo} other{{count} archivos}}",
+  "favoritesCount": "{count, plural, =0{Todavía no hay favoritos} =1{1 favorito} other{{count} favoritos}}",
   "filters": "Filtros",
   "emptyLibrary": "Esto está un poco vacío",
 
   "mediaFetched": "{count, plural, =1{1 archivo encontrado} other{{count} archivos encontrados}}",
   "selectedCount": "{count} seleccionados",
 
+  "deletedCount": "{count, plural, =0{Nada marcado para borrar} =1{1 archivo marcado para borrar} other{{count} archivos marcados para borrar}}",
+  "deletedRetentionNotice": "{days, plural, =1{El contenido marcado se borra definitivamente al cabo de 1 día} other{El contenido marcado se borra definitivamente al cabo de {days} días}}",
+  "deleteForeverTooltip": "Borrar definitivamente de la base de datos",
+
   "actionImport": "Importar",
   "actionDelete": "Eliminar",
   "actionConfirm": "Confirmar",
+  "actionRestore": "Restablecer",
   "actionSave": "Guardar",
   "sourceLocalComputer": "Equipo local",
 

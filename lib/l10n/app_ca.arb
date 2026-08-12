@@ -1,6 +1,8 @@
 {
   "@@locale": "ca",
 
+  "navGallery": "Galeria",
+  "navTags": "Etiquetes",
   "navMedia": "Contingut",
   "navImport": "Importa",
   "navFavorites": "Preferits",
@@ -14,15 +16,21 @@
   "mobileLayoutWip": "La versió mòbil arribarà aviat",
 
   "mediaCount": "{count, plural, =0{Sense contingut} =1{1 fitxer} other{{count} fitxers}}",
+  "favoritesCount": "{count, plural, =0{Encara no hi ha preferits} =1{1 preferit} other{{count} preferits}}",
   "filters": "Filtres",
   "emptyLibrary": "Aquí hi ha ben poca cosa",
 
   "mediaFetched": "{count, plural, =1{1 fitxer trobat} other{{count} fitxers trobats}}",
   "selectedCount": "{count} seleccionats",
 
+  "deletedCount": "{count, plural, =0{Res marcat per esborrar} =1{1 fitxer marcat per esborrar} other{{count} fitxers marcats per esborrar}}",
+  "deletedRetentionNotice": "{days, plural, =1{El contingut marcat s'esborra definitivament al cap d'1 dia} other{El contingut marcat s'esborra definitivament al cap de {days} dies}}",
+  "deleteForeverTooltip": "Esborra definitivament de la base de dades",
+
   "actionImport": "Importa",
   "actionDelete": "Elimina",
   "actionConfirm": "Confirma",
+  "actionRestore": "Restableix",
   "actionSave": "Desa",
   "sourceLocalComputer": "Equip local",
 

@@ -14,6 +14,16 @@ class MediaSummaryModel {
 
   bool isImported = false; // Nuevo campo para diferenciar
 
+  /// Contenido marcado para borrar: sigue en la base de datos, pero sólo se ve
+  /// en la pantalla de eliminados hasta que se restablezca o se fuerce el
+  /// borrado definitivo.
+  bool isDeleted = false;
+
+  /// Cuándo se marcó para borrar, que es lo que decide cuándo caduca: pasada la
+  /// semana de gracia, la papelera se vacía sola. `null` en lo que no está
+  /// marcado.
+  DateTime? deletedAt;
+
   final details = IsarLink<MediaModel>();
 
   MediaSummaryModel();
@@ -22,7 +32,9 @@ class MediaSummaryModel {
     return MediaSummaryEntity(
         id: id,
         path: path,
-        isImported: isImported
+        isImported: isImported,
+        isDeleted: isDeleted,
+        deletedAt: deletedAt
     );
   }
 
@@ -30,7 +42,9 @@ class MediaSummaryModel {
     final model = MediaSummaryModel()
       ..id = entity.id
       ..path = entity.path
-      ..isImported = entity.isImported;
+      ..isImported = entity.isImported
+      ..isDeleted = entity.isDeleted
+      ..deletedAt = entity.deletedAt;
     return model;
   }
 }

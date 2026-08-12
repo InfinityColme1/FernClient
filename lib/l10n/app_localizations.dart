@@ -102,6 +102,18 @@ abstract class AppLocalizations {
     Locale('fr'),
   ];
 
+  /// No description provided for @navGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get navGallery;
+
+  /// No description provided for @navTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get navTags;
+
   /// No description provided for @navMedia.
   ///
   /// In en, this message translates to:
@@ -168,6 +180,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{No media} =1{1 media} other{{count} media}}'**
   String mediaCount(int count);
 
+  /// No description provided for @favoritesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No favorites yet} =1{1 favorite} other{{count} favorites}}'**
+  String favoritesCount(int count);
+
   /// No description provided for @filters.
   ///
   /// In en, this message translates to:
@@ -192,6 +210,24 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String selectedCount(int count);
 
+  /// No description provided for @deletedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing marked for deletion} =1{1 media marked for deletion} other{{count} media marked for deletion}}'**
+  String deletedCount(int count);
+
+  /// No description provided for @deletedRetentionNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Marked media is deleted for good after 1 day} other{Marked media is deleted for good after {days} days}}'**
+  String deletedRetentionNotice(int days);
+
+  /// No description provided for @deleteForeverTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently from the database'**
+  String get deleteForeverTooltip;
+
   /// No description provided for @actionImport.
   ///
   /// In en, this message translates to:
@@ -209,6 +245,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get actionConfirm;
+
+  /// No description provided for @actionRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get actionRestore;
 
   /// No description provided for @actionSave.
   ///

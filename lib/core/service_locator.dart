@@ -15,11 +15,17 @@ import 'package:Fern/features/media/data/repositories/local_media_repository_imp
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/delete_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_deleted_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/purge_deleted_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/purge_expired_deleted_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/restore_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
@@ -27,10 +33,12 @@ import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart
 import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/scan_directory_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
+import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,6 +114,18 @@ Future<void> initializeDependencies() async {
     GetMediaListUsercase(localMediaRepository: getIt())
   );
 
+  getIt.registerSingleton<GetDeletedMediaUseCase>(
+    GetDeletedMediaUseCase(localMediaRepository: getIt())
+  );
+
+  getIt.registerSingleton<GetFavoriteMediaUseCase>(
+    GetFavoriteMediaUseCase(localMediaRepository: getIt())
+  );
+
+  getIt.registerSingleton<SetMediaFavoriteUseCase>(
+    SetMediaFavoriteUseCase(getIt())
+  );
+
   getIt.registerSingleton<GetMediaDetailsUsecase>(
     GetMediaDetailsUsecase(localMediaRepository: getIt())
   );
@@ -114,16 +134,28 @@ Future<void> initializeDependencies() async {
     SaveMediaUseCase(getIt())
   );
 
-  getIt.registerSingleton<DeleteMediaUseCase>(
-    DeleteMediaUseCase(getIt())
-  );
-
   getIt.registerSingleton<DeleteMissingMediaUseCase>(
     DeleteMissingMediaUseCase(getIt())
   );
 
   getIt.registerSingleton<DeleteMediaListUseCase>(
     DeleteMediaListUseCase(getIt())
+  );
+
+  getIt.registerSingleton<MarkMediaDeletedUseCase>(
+    MarkMediaDeletedUseCase(getIt())
+  );
+
+  getIt.registerSingleton<RestoreMediaUseCase>(
+    RestoreMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<PurgeDeletedMediaUseCase>(
+    PurgeDeletedMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<PurgeExpiredDeletedMediaUseCase>(
+    PurgeExpiredDeletedMediaUseCase(getIt())
   );
 
   getIt.registerSingleton<ConfirmMediaListUseCase>(
@@ -140,6 +172,10 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<SearchTagsUseCase>(
     SearchTagsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetTagTreeUseCase>(
+    GetTagTreeUseCase(localMediaRepository: getIt())
   );
 
   getIt.registerSingleton<SearchCreatorsUseCase>(
@@ -175,6 +211,12 @@ Future<void> initializeDependencies() async {
         organizeLibraryFiles: getIt(),
       ));
 
+  // Único por el mismo motivo que el de ajustes: las etiquetas se listan en el
+  // menú lateral, que está en el marco de la aplicación y no en una pantalla.
+  getIt.registerSingleton<TagsBloc>(
+      TagsBloc(getTagTree: getIt())
+  );
+
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
         getScannedMediaUseCase: getIt(),
@@ -182,11 +224,17 @@ Future<void> initializeDependencies() async {
         selectAndScanDirectoryUsecase: getIt(),
         getMediaDetailsUsecase: getIt(),
         saveMediaUseCase: getIt(),
-        deleteMediaUseCase: getIt(),
         deleteMissingMediaUseCase: getIt(),
         deleteMediaListUseCase: getIt(),
+        markMediaDeletedUseCase: getIt(),
+        restoreMediaUseCase: getIt(),
+        purgeDeletedMediaUseCase: getIt(),
+        purgeExpiredDeletedMediaUseCase: getIt(),
         confirmMediaListUseCase: getIt(),
         getMediaListUsecase: getIt(),
+        getDeletedMediaUseCase: getIt(),
+        getFavoriteMediaUseCase: getIt(),
+        setMediaFavoriteUseCase: getIt(),
         searchMediaUseCase: getIt(),
         searchMediaBySuggestionUseCase: getIt(),
       )

@@ -65,6 +65,12 @@ const fallbackFolderName = 'Unsorted';
 /// Atenuado de las opciones de ajustes que están desactivadas.
 const disabledOptionOpacity = 0.4;
 
+// Papelera
+/// Cuánto aguanta el contenido marcado para borrar antes de salir solo de la
+/// base de datos. Se cuenta desde el momento en que se marcó, y restablecerlo
+/// vuelve a poner el contador a cero (deja de estar marcado).
+const deletedRetention = Duration(days: 7);
+
 // Animations
 const hoverAnimationDuration = Duration(milliseconds: 150);
 const drawerAnimationDuration = Duration(milliseconds: 300);
@@ -76,6 +82,15 @@ const sidebarSelectedOpacity = 0.3;
 
 /// Velo oscuro que se pone sobre el botón del menú al pasar el ratón.
 const sidebarHoverOverlayOpacity = 0.08;
+
+/// Sangría que se le añade a un botón del menú por cada nivel de jerarquía: una
+/// etiqueta hija entra más que su padre.
+const sidebarDepthIndent = 20.0;
+
+/// Hasta qué nivel crece la sangría. Se cuenta desde 0 (las etiquetas raíz), así
+/// que con 2 la última que entra es la nieta; de ahí para abajo se pinta el
+/// indicador de jerarquía en lugar de seguir estrechando el botón.
+const sidebarMaxIndentDepth = 2;
 
 // Media info
 const mediaDescriptionMaxLines = 10;

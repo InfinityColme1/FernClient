@@ -1,6 +1,8 @@
 {
   "@@locale": "en",
 
+  "navGallery": "Gallery",
+  "navTags": "Tags",
   "navMedia": "Media",
   "navImport": "Import",
   "navFavorites": "Favorites",
@@ -15,6 +17,12 @@
 
   "mediaCount": "{count, plural, =0{No media} =1{1 media} other{{count} media}}",
   "@mediaCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "favoritesCount": "{count, plural, =0{No favorites yet} =1{1 favorite} other{{count} favorites}}",
+  "@favoritesCount": {
     "placeholders": {
       "count": { "type": "int" }
     }
@@ -35,9 +43,24 @@
     }
   },
 
+  "deletedCount": "{count, plural, =0{Nothing marked for deletion} =1{1 media marked for deletion} other{{count} media marked for deletion}}",
+  "@deletedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "deletedRetentionNotice": "{days, plural, =1{Marked media is deleted for good after 1 day} other{Marked media is deleted for good after {days} days}}",
+  "@deletedRetentionNotice": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "deleteForeverTooltip": "Delete permanently from the database",
+
   "actionImport": "Import",
   "actionDelete": "Delete",
   "actionConfirm": "Confirm",
+  "actionRestore": "Restore",
   "actionSave": "Save",
   "sourceLocalComputer": "Local computer",
 

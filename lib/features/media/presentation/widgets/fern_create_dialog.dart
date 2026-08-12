@@ -10,6 +10,8 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
+import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
+import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
@@ -63,8 +65,9 @@ enum CreateDialogType {
 /// );
 /// ```
 ///
-/// No depende de ningún bloc: guarda con los casos de uso, así que se puede
-/// abrir desde cualquier pantalla.
+/// No necesita que nadie le provea un bloc: guarda con los casos de uso, así que
+/// se puede abrir desde cualquier pantalla. Al crear una etiqueta avisa al
+/// `TagsBloc` (que es único) para que el menú lateral la liste.
 class FernCreateDialog extends StatefulWidget {
   final CreateDialogType type;
 
@@ -152,6 +155,10 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
         final tag = result.data;
         if (!mounted || result is! DataSuccess || tag == null) return;
+
+        // La etiqueta nueva tiene que salir en el menú lateral sin tener que
+        // reiniciar: es el único sitio donde se crean, así que el aviso va aquí.
+        getIt<TagsBloc>().add(const LoadTagsEvent());
 
         navigator.pop(tag);
 

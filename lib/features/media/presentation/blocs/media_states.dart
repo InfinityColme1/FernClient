@@ -30,6 +30,12 @@ abstract class MediaStates extends Equatable {
   /// y no de escribir. `null` en las búsquedas por texto.
   final SearchSuggestionEntity? searchSuggestion;
 
+  /// La lista es la de la pantalla de favoritos.
+  ///
+  /// Es lo que hace que quitar el corazón desde el visor saque el contenido de
+  /// la rejilla: en cualquier otra pantalla el contenido se queda donde está.
+  final bool favoritesOnly;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -41,6 +47,7 @@ abstract class MediaStates extends Equatable {
     this.searchQuery,
     this.searchSections,
     this.searchSuggestion,
+    this.favoritesOnly = false,
   });
 
   MediaStates copyWith({
@@ -54,6 +61,7 @@ abstract class MediaStates extends Equatable {
     String ? searchQuery,
     List<MediaSearchSectionEntity> ? searchSections,
     SearchSuggestionEntity ? searchSuggestion,
+    bool ? favoritesOnly,
   });
 
   @override
@@ -68,6 +76,7 @@ abstract class MediaStates extends Equatable {
     searchQuery,
     searchSections,
     searchSuggestion,
+    favoritesOnly,
   ];
 }
 
@@ -81,6 +90,7 @@ class MediaLoading extends MediaStates {
     super.searchQuery,
     super.searchSections,
     super.searchSuggestion,
+    super.favoritesOnly,
   });
 
   @override
@@ -95,6 +105,7 @@ class MediaLoading extends MediaStates {
     String ? searchQuery,
     List<MediaSearchSectionEntity> ? searchSections,
     SearchSuggestionEntity ? searchSuggestion,
+    bool ? favoritesOnly,
   }) {
     return MediaLoading(
       mediaList: mediaList ?? this.mediaList,
@@ -105,6 +116,7 @@ class MediaLoading extends MediaStates {
       searchQuery: searchQuery ?? this.searchQuery,
       searchSections: searchSections ?? this.searchSections,
       searchSuggestion: searchSuggestion ?? this.searchSuggestion,
+      favoritesOnly: favoritesOnly ?? this.favoritesOnly,
     );
   }
 }
@@ -126,6 +138,7 @@ class DetailedMedia extends MediaStates {
     super.searchQuery,
     super.searchSections,
     super.searchSuggestion,
+    super.favoritesOnly,
   });
 
   @override
@@ -140,6 +153,7 @@ class DetailedMedia extends MediaStates {
     String ? searchQuery,
     List<MediaSearchSectionEntity> ? searchSections,
     SearchSuggestionEntity ? searchSuggestion,
+    bool ? favoritesOnly,
   }) {
     return DetailedMedia(
         mediaList: mediaList ?? this.mediaList,
@@ -152,6 +166,7 @@ class DetailedMedia extends MediaStates {
         searchQuery: searchQuery ?? this.searchQuery,
         searchSections: searchSections ?? this.searchSections,
         searchSuggestion: searchSuggestion ?? this.searchSuggestion,
+        favoritesOnly: favoritesOnly ?? this.favoritesOnly,
     );
   }
 }

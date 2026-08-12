@@ -12,6 +12,7 @@ import 'package:Fern/core/services/media_preview_service.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -33,6 +34,11 @@ class MediaItem extends StatefulWidget {
   /// Se invoca al pulsar el botón de selección que aparece al pasar el ratón.
   final VoidCallback? onSelectionToggled;
 
+  /// Se invoca al pulsar con la tecla mayúsculas, tanto en el contenido como en
+  /// el botón de selección: en vez de tocar sólo este elemento, la selección se
+  /// extiende desde el último marcado hasta él.
+  final VoidCallback? onRangeSelectionRequested;
+
   /// Se invoca, una sola vez por fichero, cuando el contenido no se ha podido
   /// cargar. Quien lo escuche decide qué hacer con el contenido.
   final VoidCallback? onLoadFailed;
@@ -43,6 +49,7 @@ class MediaItem extends StatefulWidget {
     this.onTap,
     this.isSelected = false,
     this.onSelectionToggled,
+    this.onRangeSelectionRequested,
     this.onLoadFailed,
   });
 
@@ -107,6 +114,29 @@ class _MediaItemState extends State<MediaItem> {
     if (_loadFailureReported) return;
     _loadFailureReported = true;
     widget.onLoadFailed?.call();
+  }
+
+  /// Extiende la selección si se está pulsando mayúsculas. Devuelve `true`
+  /// cuando lo ha hecho, para que el clic no siga su camino normal.
+  bool _extendSelection() {
+    final extend = widget.onRangeSelectionRequested;
+    if (extend == null || !HardwareKeyboard.instance.isShiftPressed) {
+      return false;
+    }
+    extend();
+    return true;
+  }
+
+  /// Clic sobre el contenido: abre el visor, salvo que se esté pulsando
+  /// mayúsculas para estirar la selección.
+  void _onTap() {
+    if (_extendSelection()) return;
+    widget.onTap?.call();
+  }
+
+  void _onSelectionPressed() {
+    if (_extendSelection()) return;
+    widget.onSelectionToggled?.call();
   }
 
   void _onHoverChanged(bool isHovered) {
@@ -176,7 +206,7 @@ class _MediaItemState extends State<MediaItem> {
       onEnter: (_) => _onHoverChanged(true),
       onExit: (_) => _onHoverChanged(false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: _onTap,
         child: AnimatedScale(
           scale: _isHovered ? mediaHoverScale : 1.0,
           duration: hoverAnimationDuration,
@@ -329,7 +359,7 @@ class _MediaItemState extends State<MediaItem> {
         child: IgnorePointer(
           ignoring: !isVisible,
           child: IconButton(
-            onPressed: widget.onSelectionToggled,
+            onPressed: _onSelectionPressed,
             tooltip: widget.isSelected
                 ? AppLocalizations.of(context).deselectItem
                 : AppLocalizations.of(context).selectItem,

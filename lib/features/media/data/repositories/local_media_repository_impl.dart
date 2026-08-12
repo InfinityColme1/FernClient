@@ -170,10 +170,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<List<MediaSummaryEntity>>> getMediaList() async {
     try {
-      // Devolvemos solo el contenido DEFINITIVO
+      // Devolvemos solo el contenido DEFINITIVO que no esté marcado para borrar
       final query = await _appDatabase.mediaSummaryModels
           .filter()
           .isImportedEqualTo(true)
+          .isDeletedEqualTo(false)
           .findAll();
 
       return DataSuccess(query.map((e) => e.toEntity()).toList());
@@ -185,13 +186,76 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<List<MediaSummaryEntity>>> getScannedMedia() async {
     try {
-      // Devolvemos solo el contenido ESCANEADO pendiente de importar
+      // Devolvemos solo el contenido ESCANEADO pendiente de importar.
+      //
+      // Lo pendiente no se llega a marcar nunca (se descarta de la base de datos
+      // directamente), pero el filtro se queda: si alguna fila quedara marcada,
+      // esta pantalla no es su sitio.
       final query = await _appDatabase.mediaSummaryModels
           .filter()
           .isImportedEqualTo(false)
+          .isDeletedEqualTo(false)
           .findAll();
 
       return DataSuccess(query.map((e) => e.toEntity()).toList());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Contenido marcado para borrar, venga de donde venga: en la pantalla de
+  /// eliminados conviven lo definitivo y lo que estaba pendiente de revisar.
+  @override
+  Future<DataState<List<MediaSummaryEntity>>> getDeletedMedia() async {
+    try {
+      final query = await _appDatabase.mediaSummaryModels
+          .filter()
+          .isDeletedEqualTo(true)
+          .findAll();
+
+      return DataSuccess(query.map((e) => e.toEntity()).toList());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Contenido favorito, el de la pantalla de favoritos.
+  ///
+  /// La marca vive en los detalles, así que se pregunta por ellos y se
+  /// devuelven sus sumarios: los mismos que pinta la rejilla de contenido. Lo
+  /// pendiente de revisar y lo marcado para borrar se quedan fuera, como en las
+  /// búsquedas: cada uno tiene su pantalla.
+  @override
+  Future<DataState<List<MediaSummaryEntity>>> getFavoriteMedia() async {
+    try {
+      final media = await _appDatabase.mediaModels
+          .filter()
+          .isFavoriteEqualTo(true)
+          .findAll();
+
+      return DataSuccess(await _importedSummaries(media));
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Pone o quita la marca de favorito de un contenido.
+  ///
+  /// Sólo se toca ese campo: los enlaces (creador, etiquetas y origen) se
+  /// guardan aparte en Isar, así que reescribir la fila no los pierde.
+  @override
+  Future<DataState> setMediaFavorite(int id, {required bool isFavorite}) async {
+    try {
+      final model = await _appDatabase.mediaModels.get(id);
+      if (model == null) return DataException(Exception("Media not found"));
+      if (model.isFavorite == isFavorite) return DataSuccess(null);
+
+      await _appDatabase.writeTxn(() async {
+        model.isFavorite = isFavorite;
+        await _appDatabase.mediaModels.put(model);
+      });
+
+      return DataSuccess(null);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -333,24 +397,6 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
-  /// Borra el contenido de la base de datos, sumario y detalles.
-  ///
-  /// El fichero del disco **no se toca**: al desaparecer su fila, la ruta
-  /// vuelve a estar disponible y el siguiente escaneo la recoge otra vez.
-  @override
-  Future<DataState> deleteMedia(int id) async {
-    try {
-      await _appDatabase.writeTxn(() async {
-        await _appDatabase.mediaSummaryModels.delete(id);
-        await _appDatabase.mediaModels.delete(id);
-      });
-
-      return DataSuccess(null);
-    } on Exception catch (e) {
-      return DataException(e);
-    }
-  }
-
   /// Borra el contenido [id] sólo si su fichero ya no existe.
   ///
   /// La comprobación se hace contra la ruta guardada en la base de datos, que
@@ -378,10 +424,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
-  /// Borrado masivo, en una sola transacción.
+  /// Borrado real de varios contenidos, en una sola transacción.
   ///
-  /// Mismo criterio que [deleteMedia]: los ficheros del disco no se tocan, así
-  /// que el siguiente escaneo vuelve a recoger esas rutas.
+  /// El fichero del disco **no se toca**: al desaparecer su fila, la ruta vuelve
+  /// a estar disponible y el siguiente escaneo la recoge otra vez. Es lo que se
+  /// hace al descartar contenido pendiente de revisar desde importación.
   @override
   Future<DataState> deleteMediaList(List<int> ids) async {
     try {
@@ -393,6 +440,117 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       });
 
       return DataSuccess(null);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Marcado para borrar, en una sola transacción.
+  ///
+  /// Nada sale de la base de datos: el contenido deja de verse en su pantalla y
+  /// aparece en la de eliminados, desde donde se puede restablecer o borrar de
+  /// verdad.
+  @override
+  Future<DataState> markMediaListAsDeleted(List<int> ids) =>
+      _setDeletedFlag(ids, isDeleted: true);
+
+  /// Deshace el marcado: el contenido vuelve a la pantalla que le toque según
+  /// siga pendiente de revisar o ya sea definitivo.
+  @override
+  Future<DataState> restoreMediaList(List<int> ids) =>
+      _setDeletedFlag(ids, isDeleted: false);
+
+  Future<DataState> _setDeletedFlag(
+    List<int> ids, {
+    required bool isDeleted,
+  }) async {
+    try {
+      if (ids.isEmpty) return DataSuccess(null);
+
+      await _appDatabase.writeTxn(() async {
+        final summaries = await _appDatabase.mediaSummaryModels.getAll(ids);
+        final pending = summaries.nonNulls
+            .where((summary) => summary.isDeleted != isDeleted)
+            .toList();
+        if (pending.isEmpty) return;
+
+        // La fecha se sella al marcar y se borra al restablecer: la semana de
+        // gracia se cuenta desde este momento, así que restablecer y volver a
+        // marcar la empieza de nuevo.
+        final now = DateTime.now();
+
+        for (final summary in pending) {
+          summary.isDeleted = isDeleted;
+          summary.deletedAt = isDeleted ? now : null;
+        }
+        await _appDatabase.mediaSummaryModels.putAll(pending);
+      });
+
+      return DataSuccess(null);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Vacía la papelera de lo que ya ha cumplido su semana y devuelve cuántos
+  /// contenidos han salido de la base de datos.
+  ///
+  /// Como en el resto de borrados, los ficheros del disco no se tocan: lo que
+  /// caduca vuelve a estar disponible para el siguiente escaneo.
+  ///
+  /// Lo marcado **sin fecha** se queda: no se puede saber cuándo caduca algo que
+  /// no dice cuándo se marcó, y borrarlo por si acaso sería justo el error que
+  /// esta pantalla existe para evitar.
+  @override
+  Future<DataState<int>> purgeExpiredDeletedMedia() async {
+    try {
+      final cutoff = DateTime.now().subtract(deletedRetention);
+
+      // El nulo es el valor más pequeño en Isar, así que entraría en el
+      // `lessThan` si no se descartara antes.
+      final ids = await _appDatabase.mediaSummaryModels
+          .filter()
+          .isDeletedEqualTo(true)
+          .deletedAtIsNotNull()
+          .deletedAtLessThan(cutoff)
+          .idProperty()
+          .findAll();
+
+      if (ids.isEmpty) return const DataSuccess(0);
+
+      await _appDatabase.writeTxn(() async {
+        await _appDatabase.mediaSummaryModels.deleteAll(ids);
+        await _appDatabase.mediaModels.deleteAll(ids);
+      });
+
+      return DataSuccess(ids.length);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Borrado definitivo de todo lo que estuviera marcado, en una sola
+  /// transacción.
+  ///
+  /// Los ficheros del disco **no se tocan**: al desaparecer sus filas, sus rutas
+  /// vuelven a estar libres y el siguiente escaneo las recoge otra vez.
+  @override
+  Future<DataState<int>> purgeDeletedMedia() async {
+    try {
+      final ids = await _appDatabase.mediaSummaryModels
+          .filter()
+          .isDeletedEqualTo(true)
+          .idProperty()
+          .findAll();
+
+      if (ids.isEmpty) return const DataSuccess(0);
+
+      await _appDatabase.writeTxn(() async {
+        await _appDatabase.mediaSummaryModels.deleteAll(ids);
+        await _appDatabase.mediaModels.deleteAll(ids);
+      });
+
+      return DataSuccess(ids.length);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -448,6 +606,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final summaries = await _appDatabase.mediaSummaryModels
           .filter()
           .isImportedEqualTo(true)
+          .isDeletedEqualTo(false)
           .findAll();
 
       var relocated = 0;
@@ -573,6 +732,66 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     } on Exception catch (e) {
       return DataException(e);
     }
+  }
+
+  /// Las etiquetas en forma de árbol, para la sección de etiquetas del menú
+  /// lateral.
+  ///
+  /// Isar no distingue raíces de hijas, así que las raíces se sacan por
+  /// descarte: son las que no aparecen entre las hijas de ninguna otra.
+  @override
+  Future<DataState<List<TagEntity>>> getTagTree() async {
+    try {
+      final models = await _appDatabase.tagModels.where().findAll();
+
+      final childIds = <int>{};
+      for (final model in models) {
+        await model.children.load();
+        childIds.addAll(model.children.map((child) => child.id));
+      }
+
+      final roots = models.where((model) => !childIds.contains(model.id));
+
+      // Un mismo identificador no se pinta dos veces: cuelgue de donde cuelgue,
+      // una etiqueta aparece una sola vez, y así una jerarquía mal formada (con
+      // un ciclo) no deja la lectura dando vueltas.
+      final visited = <int>{};
+      final tags = <TagEntity>[];
+      for (final root in _byName(roots)) {
+        if (!visited.add(root.id)) continue;
+        tags.add(await _tagWithChildren(root, visited));
+      }
+
+      return DataSuccess(tags);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// La etiqueta con toda su descendencia, cargando los enlaces nivel a nivel:
+  /// Isar los deja vacíos hasta que se piden.
+  Future<TagEntity> _tagWithChildren(TagModel model, Set<int> visited) async {
+    await model.children.load();
+
+    final children = <TagEntity>[];
+    for (final child in _byName(model.children)) {
+      if (!visited.add(child.id)) continue;
+      children.add(await _tagWithChildren(child, visited));
+    }
+
+    return TagEntity(
+      id: model.id,
+      name: model.name,
+      picturePath: model.picturePath,
+      children: children,
+    );
+  }
+
+  /// Etiquetas ordenadas por nombre: el orden en el que las lee Isar es el de
+  /// creación, que en un listado no dice nada.
+  List<TagModel> _byName(Iterable<TagModel> tags) {
+    return tags.toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   @override
@@ -805,7 +1024,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     SearchSuggestionEntity suggestion,
   ) async {
     final summary = await _appDatabase.mediaSummaryModels.get(suggestion.id);
-    if (summary == null || !summary.isImported) return null;
+    if (summary == null || !summary.isImported || summary.isDeleted) return null;
 
     return MediaSearchSectionEntity(
       type: SearchResultType.media,
@@ -831,7 +1050,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     final imported = <MediaModel>[];
     for (final media in results) {
       final summary = await _appDatabase.mediaSummaryModels.get(media.id!);
-      if (summary == null || !summary.isImported) continue;
+      if (summary == null || !summary.isImported || summary.isDeleted) continue;
 
       imported.add(media);
       if (imported.length == limit) break;
@@ -856,8 +1075,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
   /// Sumarios **definitivos** de los contenidos indicados, en el mismo orden.
   ///
-  /// Lo pendiente de revisar vive en la pantalla de importación, así que no
-  /// tiene nada que hacer en los resultados de búsqueda.
+  /// Lo pendiente de revisar vive en la pantalla de importación y lo marcado
+  /// para borrar en la de eliminados, así que ninguno de los dos tiene nada que
+  /// hacer en los resultados de búsqueda.
   Future<List<MediaSummaryEntity>> _importedSummaries(List<MediaModel> media) async {
     if (media.isEmpty) return const [];
 
@@ -865,7 +1085,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         .getAll(media.map((e) => e.id!).toList());
 
     return summaries.nonNulls
-        .where((summary) => summary.isImported)
+        .where((summary) => summary.isImported && !summary.isDeleted)
         .map((summary) => summary.toEntity())
         .toList();
   }

@@ -9,6 +9,12 @@ class AppLocalizationsCa extends AppLocalizations {
   AppLocalizationsCa([String locale = 'ca']) : super(locale);
 
   @override
+  String get navGallery => 'Galeria';
+
+  @override
+  String get navTags => 'Etiquetes';
+
+  @override
   String get navMedia => 'Contingut';
 
   @override
@@ -51,6 +57,18 @@ class AppLocalizationsCa extends AppLocalizations {
   }
 
   @override
+  String favoritesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count preferits',
+      one: '1 preferit',
+      zero: 'Encara no hi ha preferits',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get filters => 'Filtres';
 
   @override
@@ -73,6 +91,34 @@ class AppLocalizationsCa extends AppLocalizations {
   }
 
   @override
+  String deletedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fitxers marcats per esborrar',
+      one: '1 fitxer marcat per esborrar',
+      zero: 'Res marcat per esborrar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deletedRetentionNotice(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other:
+          'El contingut marcat s\'esborra definitivament al cap de $days dies',
+      one: 'El contingut marcat s\'esborra definitivament al cap d\'1 dia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteForeverTooltip =>
+      'Esborra definitivament de la base de dades';
+
+  @override
   String get actionImport => 'Importa';
 
   @override
@@ -80,6 +126,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get actionConfirm => 'Confirma';
+
+  @override
+  String get actionRestore => 'Restableix';
 
   @override
   String get actionSave => 'Desa';

@@ -1,14 +1,26 @@
 import 'package:Fern/config/theme/app_colors.dart';
+import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class CollapsingListTile extends StatefulWidget {
   final String title;
   final IconData icon;
   final AnimationController animationController;
   final bool isSelected;
+
+  /// Si el menú está abierto del todo. Lo decide el menú, no el botón, para que
+  /// todo lo que sólo cabe estando abierto (el título y la sangría) aparezca a
+  /// la vez.
+  final bool isExpanded;
+
   final VoidCallback ? onTap;
   final double iconSize;
+
+  /// Nivel del botón en la jerarquía de etiquetas: cuanto más honda, más
+  /// adentro empieza.
+  final int depth;
 
   final TextStyle textStyle;
 
@@ -23,7 +35,9 @@ class CollapsingListTile extends StatefulWidget {
     required this.icon,
     required this.animationController,
     this.isSelected = false,
+    this.isExpanded = true,
     this.onTap,
+    this.depth = 0,
     required this.iconSize,
     required this.textStyle,
     required this.selectedColor,
@@ -70,6 +84,20 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     );
   }
 
+  /// Cuánto entra el botón por colgar de otro. Deja de crecer en
+  /// [sidebarMaxIndentDepth]: más adentro no quedaría sitio para el título.
+  double get _indent {
+    if (!widget.isExpanded) return 0;
+
+    return sidebarDepthIndent *
+        math.min(widget.depth, sidebarMaxIndentDepth);
+  }
+
+  /// Lo que queda por debajo del último nivel con sangría se marca con una
+  /// flecha: la jerarquía se sigue viendo aunque el botón ya no entre más.
+  bool get _showsDepthMark =>
+      widget.isExpanded && widget.depth > sidebarMaxIndentDepth;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -84,24 +112,35 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
             color: _backgroundColor(context),
           ),
           width: widthAnimation.value,
-          margin: EdgeInsets.symmetric(horizontal: 8.0),
+          margin: EdgeInsets.only(left: 8.0 + _indent, right: 8.0),
           padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
           child: Row(
             children: <Widget>[
+              if (_showsDepthMark) ...[
+                Icon(
+                  Icons.subdirectory_arrow_right,
+                  color: AppColors.unremarked,
+                  size: AppSizes.iconSmall,
+                ),
+                SizedBox(width: sizedBoxAnimation.value),
+              ],
               Icon(
                 widget.icon,
                 color: AppColors.black,
                 size: widget.iconSize,
               ),
               SizedBox(width: sizedBoxAnimation.value),
-              (widthAnimation.value >= 190)
-                  ? Text(widget.title,
+              if (widget.isExpanded)
+                Expanded(
+                  child: Text(widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: widget.textStyle.copyWith(
                         color: widget.isSelected
                             ? widget.textSelectedColor
                             : widget.textUnselectedColor
-                      ))
-                  : Container()
+                      )),
+                ),
             ],
           ),
         ),

@@ -37,6 +37,16 @@ class MediaGrid extends StatelessWidget {
     required this.columns,
   }) : mediaList = const [];
 
+  /// Todo el contenido de la rejilla en el orden en el que se pinta, que es el
+  /// que sigue la selección por rango. Con grupos, los recorre de arriba abajo
+  /// como una sola lista, igual que se ven.
+  List<int> get _orderedIds => sections == null
+      ? [for (final media in mediaList) media.id]
+      : [
+          for (final section in sections!)
+            for (final media in section.media) media.id,
+        ];
+
   @override
   Widget build(BuildContext context) {
     final isEmpty = sections?.isEmpty ?? mediaList.isEmpty;
@@ -51,30 +61,35 @@ class MediaGrid extends StatelessWidget {
       );
     }
 
+    final orderedIds = _orderedIds;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.l, right: AppSpacing.l),
       child: FernSurface(
         clipBehavior: Clip.antiAlias,
-        child: sections == null ? _buildGrid() : _buildSections(),
+        child: sections == null
+            ? _buildGrid(orderedIds)
+            : _buildSections(orderedIds),
       ),
     );
   }
 
-  Widget _buildGrid() {
+  Widget _buildGrid(List<int> orderedIds) {
     return MasonryGridView.count(
       padding: const EdgeInsets.all(AppSpacing.s),
       crossAxisCount: columns,
       mainAxisSpacing: AppSpacing.s,
       crossAxisSpacing: AppSpacing.s,
       itemCount: mediaList.length,
-      itemBuilder: (context, index) => _buildItem(mediaList[index]),
+      itemBuilder: (context, index) =>
+          _buildItem(mediaList[index], orderedIds),
     );
   }
 
   /// Un bloque por grupo: la cabecera que lo identifica y su rejilla. Todo va en
   /// el mismo scroll, así que los grupos se recorren de arriba abajo como una
   /// sola lista.
-  Widget _buildSections() {
+  Widget _buildSections(List<int> orderedIds) {
     return CustomScrollView(
       slivers: [
         for (final section in sections!) ...[
@@ -100,7 +115,8 @@ class MediaGrid extends StatelessWidget {
               mainAxisSpacing: AppSpacing.s,
               crossAxisSpacing: AppSpacing.s,
               childCount: section.media.length,
-              itemBuilder: (context, index) => _buildItem(section.media[index]),
+              itemBuilder: (context, index) =>
+                  _buildItem(section.media[index], orderedIds),
             ),
           ),
         ],
@@ -109,7 +125,7 @@ class MediaGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(MediaSummaryEntity media) {
+  Widget _buildItem(MediaSummaryEntity media, List<int> orderedIds) {
     return BlocSelector<MediaBloc, MediaStates, bool>(
       selector: (state) => state.selectedIds.contains(media.id),
       builder: (context, isSelected) => MediaItem(
@@ -119,6 +135,11 @@ class MediaGrid extends StatelessWidget {
             context.read<MediaBloc>().add(MediaClickedEvent(media: media)),
         onSelectionToggled: () =>
             context.read<MediaBloc>().add(ToggleMediaSelectionEvent(media: media)),
+        // Mayúsculas + clic: la selección se estira hasta aquí desde el último
+        // elemento marcado, siguiendo el orden de la rejilla.
+        onRangeSelectionRequested: () => context.read<MediaBloc>().add(
+              SelectMediaRangeEvent(media: media, orderedIds: orderedIds),
+            ),
         // Si el contenido no se pinta porque su fichero ya no está, la fila de
         // la base de datos sobra y el elemento desaparece de la rejilla.
         onLoadFailed: () =>

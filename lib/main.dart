@@ -1,4 +1,5 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/domain/usecases/purge_expired_deleted_media_usecase.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -15,6 +16,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await initializeDependencies();
+
+  // La papelera se vacía sola: lo que lleve más de una semana marcado sale de la
+  // base de datos al arrancar, sin que haya que entrar en la pantalla de
+  // eliminados a mirar.
+  await getIt<PurgeExpiredDeletedMediaUseCase>()();
 
   runApp(const MyApp());
 }

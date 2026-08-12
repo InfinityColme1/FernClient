@@ -59,13 +59,61 @@ class ToggleMediaSelectionEvent extends MediaEvents {
   const ToggleMediaSelectionEvent({required this.media});
 }
 
+/// Selección de todo lo que hay entre el último elemento marcado y [media],
+/// ambos incluidos. Es lo que hace mayúsculas + clic en la rejilla.
+///
+/// [orderedIds] es el contenido de la rejilla en el orden exacto en el que se
+/// está pintando: sólo ella lo conoce, porque una búsqueda lo reparte en grupos
+/// y ese orden ya no es el de la lista del estado.
+class SelectMediaRangeEvent extends MediaEvents {
+  final MediaSummaryEntity media;
+  final List<int> orderedIds;
+
+  const SelectMediaRangeEvent({
+    required this.media,
+    required this.orderedIds,
+  });
+}
+
 class ClearMediaSelectionEvent extends MediaEvents {
   const ClearMediaSelectionEvent();
 }
 
-/// Borra de la base de datos todo lo que esté seleccionado en la rejilla.
+/// Carga el contenido marcado para borrar: el de la pantalla de eliminados.
+class LoadDeletedMediaEvent extends MediaEvents {
+  const LoadDeletedMediaEvent();
+}
+
+/// Carga el contenido marcado como favorito: el de la pantalla de favoritos.
+class LoadFavoriteMediaEvent extends MediaEvents {
+  const LoadFavoriteMediaEvent();
+}
+
+/// Pone o quita la marca de favorito del contenido que se está viendo en el
+/// visor, que es lo que hace su corazón.
+class ToggleFavoriteEvent extends MediaEvents {
+  const ToggleFavoriteEvent();
+}
+
+/// Marca para borrar todo lo que esté seleccionado en la rejilla.
+///
+/// No borra nada de la base de datos: el contenido sale de la pantalla en la que
+/// esté y aparece en la de eliminados.
 class DeleteSelectedMediaEvent extends MediaEvents {
   const DeleteSelectedMediaEvent();
+}
+
+/// Quita la marca de borrado de la selección de la rejilla, que vuelve a la
+/// pantalla que le toque (contenido o importación).
+class RestoreSelectedMediaEvent extends MediaEvents {
+  const RestoreSelectedMediaEvent();
+}
+
+/// Borrado definitivo de **todo** lo marcado, el que se fuerza desde la
+/// pantalla de eliminados. Los ficheros del disco no se tocan, así que se
+/// pueden volver a escanear.
+class PurgeDeletedMediaEvent extends MediaEvents {
+  const PurgeDeletedMediaEvent();
 }
 
 /// El contenido [id] no se ha podido cargar para pintarlo.
@@ -109,6 +157,7 @@ class SaveMediaEvent extends MediaEvents {
   const SaveMediaEvent(this.media);
 }
 
+/// Marca para borrar el contenido que se está viendo en el visor.
 class DeleteMediaEvent extends MediaEvents {
   final MediaEntity media;
   const DeleteMediaEvent(this.media);

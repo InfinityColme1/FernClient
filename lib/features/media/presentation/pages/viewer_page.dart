@@ -161,8 +161,22 @@ class _ViewerPageState extends State<ViewerPage> {
                               onPressed: () => context.read<MediaBloc>().add(DeleteMediaEvent(state.currentMedia!)),
                             ),
                             IconButton(
-                              icon: Image.asset(icHeart, scale: 2),
-                              onPressed: () { /* TODO: Implementar favorite */ },
+                              // No hay corazón relleno entre los iconos, así
+                              // que lo que dice si el contenido es favorito es
+                              // el color: teñido cuando lo es y tal cual
+                              // cuando no.
+                              icon: Image.asset(
+                                icHeart,
+                                scale: 2,
+                                color: (state.currentMedia?.isFavorite ?? false)
+                                    ? AppColors.terciary
+                                    : null,
+                              ),
+                              onPressed: state.currentMedia == null
+                                  ? null
+                                  : () => context
+                                      .read<MediaBloc>()
+                                      .add(const ToggleFavoriteEvent()),
                             ),
                           ],
                         ),

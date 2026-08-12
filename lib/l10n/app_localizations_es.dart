@@ -9,6 +9,12 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get navGallery => 'Galería';
+
+  @override
+  String get navTags => 'Etiquetas';
+
+  @override
   String get navMedia => 'Contenido';
 
   @override
@@ -51,6 +57,18 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String favoritesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count favoritos',
+      one: '1 favorito',
+      zero: 'Todavía no hay favoritos',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get filters => 'Filtros';
 
   @override
@@ -73,6 +91,34 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String deletedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count archivos marcados para borrar',
+      one: '1 archivo marcado para borrar',
+      zero: 'Nada marcado para borrar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deletedRetentionNotice(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other:
+          'El contenido marcado se borra definitivamente al cabo de $days días',
+      one: 'El contenido marcado se borra definitivamente al cabo de 1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteForeverTooltip =>
+      'Borrar definitivamente de la base de datos';
+
+  @override
   String get actionImport => 'Importar';
 
   @override
@@ -80,6 +126,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get actionConfirm => 'Confirmar';
+
+  @override
+  String get actionRestore => 'Restablecer';
 
   @override
   String get actionSave => 'Guardar';

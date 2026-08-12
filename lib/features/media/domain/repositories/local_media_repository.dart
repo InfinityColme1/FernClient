@@ -25,9 +25,21 @@ abstract class LocalMediaRepository {
 
   Future<DataState<List<MediaSummaryEntity>>> getScannedMedia();
 
+  /// Contenido marcado para borrar, el de la pantalla de eliminados.
+  Future<DataState<List<MediaSummaryEntity>>> getDeletedMedia();
+
+  /// Contenido definitivo marcado como favorito, el de la pantalla de
+  /// favoritos.
+  Future<DataState<List<MediaSummaryEntity>>> getFavoriteMedia();
+
+  /// Marca o desmarca como favorito el contenido [id].
+  ///
+  /// Se escribe en el momento, sin pasar por el "Save" del panel de
+  /// información: el corazón del visor es un interruptor, no una edición
+  /// pendiente de guardar.
+  Future<DataState> setMediaFavorite(int id, {required bool isFavorite});
+
   Future<DataState<MediaEntity>> getMediaDetails(int id);
-  
-  Future<DataState> deleteMedia(int id);
 
   /// Borra el contenido [id] **sólo** si su fichero ya no está en la ruta
   /// guardada, que es lo que ocurre cuando se ha borrado o movido por fuera de
@@ -37,8 +49,34 @@ abstract class LocalMediaRepository {
   /// sigue estando donde debía.
   Future<DataState<bool>> deleteMissingMedia(int id);
 
-  /// Borra de la base de datos todos los contenidos indicados.
+  /// Borra de la base de datos los contenidos indicados, sumario y detalles.
+  ///
+  /// Es lo que se hace con lo que todavía está pendiente de revisar: descartarlo
+  /// al importar no es guardarlo en la papelera, es no quererlo. Su fichero
+  /// sigue en el disco, así que el siguiente escaneo lo recoge otra vez.
   Future<DataState> deleteMediaList(List<int> ids);
+
+  /// Marca los contenidos indicados para borrar: siguen en la base de datos,
+  /// pero salen de contenido y de las búsquedas para pasar a la pantalla de
+  /// eliminados.
+  Future<DataState> markMediaListAsDeleted(List<int> ids);
+
+  /// Quita la marca de borrado de los contenidos indicados, que vuelven a la
+  /// pantalla de la que salieron.
+  Future<DataState> restoreMediaList(List<int> ids);
+
+  /// Borra de la base de datos lo que lleve marcado más de una semana
+  /// (`deletedRetention`) y devuelve cuántos contenidos se han borrado.
+  ///
+  /// Es el vaciado automático de la papelera. Lo marcado sin fecha no se toca.
+  Future<DataState<int>> purgeExpiredDeletedMedia();
+
+  /// Borra de la base de datos **todo** lo que esté marcado para borrar y
+  /// devuelve cuántos contenidos se han borrado.
+  ///
+  /// Es el borrado definitivo de la pantalla de eliminados: los ficheros del
+  /// disco no se tocan, así que el siguiente escaneo puede recogerlos otra vez.
+  Future<DataState<int>> purgeDeletedMedia();
 
   /// Marca como definitivos los contenidos indicados dejando sus detalles tal
   /// y como están (los del escaneo si nadie los ha revisado).
@@ -63,6 +101,14 @@ abstract class LocalMediaRepository {
   Future<DataState<CreatorEntity>> saveCreator(CreatorEntity creator);
   
   Future<DataState<List<TagEntity>>> getTags();
+
+  /// Las etiquetas en forma de árbol: sólo las que no cuelgan de ninguna otra,
+  /// cada una con sus descendientes ya cargados.
+  ///
+  /// Es lo que necesita la sección de etiquetas del menú lateral, que las pinta
+  /// con la jerarquía a la vista. [getTags] devuelve la lista plana y sin
+  /// resolver los enlaces, que no sirve para eso.
+  Future<DataState<List<TagEntity>>> getTagTree();
 
   Future<DataState<List<CreatorEntity>>> getCreators();
 
