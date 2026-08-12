@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
@@ -68,20 +70,66 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
+  /// El menú lateral, tal cual se le pasó la última vez.
+  ///
+  /// Reescalar la ventana rehace esta rama en cada fotograma, y con el mismo
+  /// widget de vuelta Flutter se salta su subárbol entero (la lista de
+  /// etiquetas incluida). Antes lo daba el `const`, que ya no cabe ahora que el
+  /// menú recibe si va plegado.
+  Widget? _sidebar;
+  bool? _sidebarCollapsed;
+
+  Widget _buildSidebar({required bool isCollapsed}) {
+    if (_sidebar == null || isCollapsed != _sidebarCollapsed) {
+      _sidebarCollapsed = isCollapsed;
+      _sidebar = Sidebar(
+        iconSize: AppSizes.iconLarge,
+        isCollapsed: isCollapsed,
+      );
+    }
+
+    return _sidebar!;
+  }
+
+  /// La mitad del ancho de la pantalla del dispositivo, en píxeles lógicos.
+  ///
+  /// Es la pantalla, no la ventana: el menú se pliega cuando la ventana ocupa
+  /// media pantalla, así que hace falta saber cuánto es eso.
+  double _halfScreenWidth(BuildContext context) {
+    final display = View.of(context).display;
+    return display.size.width / display.devicePixelRatio / 2;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       final isLargeScreen = constraints.maxWidth > AppSizes.largeScreenMinWidth;
 
       if (isLargeScreen) {
-        return _buildLargeScreenLayout(context, widget.child);
+        // El menú se pliega a media pantalla, pero si esa mitad todavía es muy
+        // ancha se espera al ancho al que las cabeceras dejan de caber: lo que
+        // no puede pasar es que desborden con el menú desplegado.
+        final collapseWidth = math.max(
+          _halfScreenWidth(context),
+          AppSizes.sidebarAutoCollapseMinWidth,
+        );
+
+        return _buildLargeScreenLayout(
+          context,
+          widget.child,
+          isSidebarCollapsed: constraints.maxWidth <= collapseWidth,
+        );
       }
 
       return _buildSmallScreenLayout(context, widget.child);
     });
   }
 
-  Widget _buildLargeScreenLayout(BuildContext context, Widget child) {
+  Widget _buildLargeScreenLayout(
+    BuildContext context,
+    Widget child, {
+    required bool isSidebarCollapsed,
+  }) {
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -114,9 +162,7 @@ class _MainLayoutState extends State<MainLayout> {
       ),
       body: Row(
         children: [
-          const Sidebar(
-            iconSize: AppSizes.iconLarge,
-          ),
+          _buildSidebar(isCollapsed: isSidebarCollapsed),
           Expanded(child: child)
         ],
       ),

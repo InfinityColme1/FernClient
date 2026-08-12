@@ -27,9 +27,15 @@ class Sidebar extends StatefulWidget {
 
   final double iconSize;
 
+  /// Si el menú arranca plegado, y con qué lo pliega el armazón al estrecharse
+  /// la ventana. Cruzar el umbral lo pliega o lo despliega; a partir de ahí el
+  /// botón del propio menú manda.
+  final bool isCollapsed;
+
   const Sidebar({
     super.key,
-    required this.iconSize
+    required this.iconSize,
+    this.isCollapsed = false,
   });
 
   @override
@@ -142,6 +148,7 @@ class _SidebarState extends State<Sidebar> {
         unselectedColor: Theme.of(context).scaffoldBackgroundColor,
         textUnselectedColor: AppColors.unremarked,
         iconSize: widget.iconSize,
+        isCollapsed: widget.isCollapsed,
         sections: [
           SidebarSection(
             title: texts.navGallery,

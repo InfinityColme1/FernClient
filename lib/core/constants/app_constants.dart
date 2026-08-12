@@ -127,6 +127,11 @@ const mediaShadeOpacity = 0.55;
 const mediaBadgeOpacity = 0.55;
 const mediaSelectionShadowOpacity = 0.5;
 const mediaFallbackAspectRatio = 1.0;
+
+/// Salto del ancho al que se descodifican las imágenes de la rejilla, en
+/// píxeles físicos. Cuanto más grande, menos veces hay que volver al disco al
+/// reescalar la ventana, y más resolución de sobra se guarda de más.
+const mediaDecodeWidthStep = 64;
 const mediaVideoPreviewLength = Duration(seconds: 10);
 const mediaEmptyDurationLabel = '--:--';
 

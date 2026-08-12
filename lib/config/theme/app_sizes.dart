@@ -34,7 +34,23 @@ class AppSizes {
   static const double menuWidth = 280.0;
 
   // Layout
-  static const double largeScreenMinWidth = 600.0;
+  /// Ancho por debajo del cual se pasa al layout de móvil.
+  ///
+  /// Es el ancho al que la cabecera más cargada (la de importación, con
+  /// selección hecha y todos sus botones) deja de caber con el menú lateral
+  /// plegado: medido en `test/layout_breakpoints_test.dart`, que falla si
+  /// alguna cabecera crece y este número se queda corto.
+  static const double largeScreenMinWidth = 960.0;
+
+  /// Ancho por debajo del cual el menú lateral se pliega solo.
+  ///
+  /// El menú se pliega a la mitad del ancho de la pantalla del dispositivo,
+  /// pero nunca más tarde de esto: es el ancho al que la cabecera de
+  /// importación deja de caber con el menú desplegado, así que en pantallas
+  /// cuya mitad es mayor que este número el menú se pliega aquí para que no
+  /// desborde antes de llegar a [largeScreenMinWidth].
+  static const double sidebarAutoCollapseMinWidth = 1100.0;
+
   static const double logoWidth = 150.0;
 
   // Ajustes: diálogo a dos columnas, secciones a la izquierda

@@ -25,9 +25,12 @@ class CollapsingNavigationDrawer extends StatefulWidget {
   final Color unselectedColor;
   final Color textUnselectedColor;
 
-  bool isCollapsed = false;
+  /// Con qué estado lo quiere quien lo monta. Es una petición, no una orden
+  /// permanente: cambiarla pliega o despliega el menú, pero después el botón
+  /// del propio menú sigue mandando hasta que vuelva a cambiar.
+  final bool isCollapsed;
 
-  CollapsingNavigationDrawer({
+  const CollapsingNavigationDrawer({
     super.key,
     required this.sections,
     this.maxWidth = 210,
@@ -58,6 +61,10 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
   /// que es la pantalla con la que arranca la aplicación.
   String? _selectedId;
 
+  /// Si el menú está encogido. Empieza como lo pida quien lo monta y luego lo
+  /// cambian su botón o los cambios de esa petición.
+  late bool _isCollapsed;
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +72,28 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         vsync: this, duration: drawerAnimationDuration);
     widthAnimation = Tween<double>(begin: widget.maxWidth, end: widget.minWidth)
         .animate(_animationController);
+
+    // De arranque no se anima: el menú ya aparece como toca.
+    _isCollapsed = widget.isCollapsed;
+    if (_isCollapsed) _animationController.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(CollapsingNavigationDrawer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Sólo al cruzar el umbral: si se comparara con el estado actual, plegarlo
+    // a mano en una ventana ancha se desharía en la reconstrucción siguiente.
+    if (widget.isCollapsed != oldWidget.isCollapsed) {
+      _setCollapsed(widget.isCollapsed);
+    }
+  }
+
+  void _setCollapsed(bool isCollapsed) {
+    setState(() => _isCollapsed = isCollapsed);
+    isCollapsed
+        ? _animationController.forward()
+        : _animationController.reverse();
   }
 
   /// Si el menú está lo bastante abierto para que quepan los textos. Se mira
@@ -109,14 +138,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
               }),
             ),
             InkWell(
-              onTap: () {
-                setState(() {
-                  widget.isCollapsed = !widget.isCollapsed;
-                  widget.isCollapsed
-                      ? _animationController.forward()
-                      : _animationController.reverse();
-                });
-              },
+              onTap: () => _setCollapsed(!_isCollapsed),
               child: AnimatedIcon(
                 icon: AnimatedIcons.close_menu,
                 progress: _animationController,
@@ -196,7 +218,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context)
             .textTheme
-            .labelSmall
+            .labelLarge
             ?.copyWith(color: widget.textUnselectedColor),
       ),
     );

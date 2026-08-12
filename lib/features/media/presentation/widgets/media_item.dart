@@ -247,10 +247,19 @@ class _MediaItemState extends State<MediaItem> {
     return LayoutBuilder(
       builder: (context, constraints) => Image.file(
         File(path),
+        // El fichero identifica a la imagen: cambiar de contenido (la celda se
+        // reaprovecha al desplazar la rejilla) tiene que empezar de cero, y no
+        // dejar a la vista la imagen anterior como hace `gaplessPlayback`.
+        key: ValueKey(path),
         fit: BoxFit.cover,
         filterQuality: FilterQuality.medium,
-        // Se decodifica exactamente a la resolución en la que se va a pintar
-        // (nunca por debajo), que es lo que evita el efecto borroso.
+        // Cambiar de resolución no deja la celda en blanco: se sigue viendo lo
+        // que ya estaba descodificado hasta que la nueva está lista. Sin esto,
+        // reescalar la ventana apaga y enciende todas las imágenes de la
+        // rejilla en cada fotograma.
+        gaplessPlayback: true,
+        // Se decodifica a la resolución en la que se va a pintar (nunca por
+        // debajo), que es lo que evita el efecto borroso.
         cacheWidth: _decodeWidth(context, constraints.maxWidth),
         errorBuilder: (_, _, _) {
           _reportLoadFailure();
@@ -262,15 +271,22 @@ class _MediaItemState extends State<MediaItem> {
 
   /// Ancho de decodificación en píxeles físicos, limitado por el ancho real del
   /// fichero para no gastar memoria escalando hacia arriba.
+  ///
+  /// Va a saltos de [mediaDecodeWidthStep]: es la clave con la que se guarda la
+  /// imagen descodificada, así que si siguiera al ancho exacto de la celda, un
+  /// reescalado de la ventana la haría descodificar de nuevo desde el disco en
+  /// cada fotograma. Redondea hacia arriba para no perder resolución.
   int? _decodeWidth(BuildContext context, double layoutWidth) {
     if (!layoutWidth.isFinite || layoutWidth <= 0) return null;
 
     final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
     final target = (layoutWidth * devicePixelRatio * mediaHoverScale).ceil();
+    final stepped =
+        (target / mediaDecodeWidthStep).ceil() * mediaDecodeWidthStep;
     final intrinsic = _preview?.width;
 
-    if (intrinsic == null || intrinsic <= 0) return target;
-    return math.min(target, intrinsic);
+    if (intrinsic == null || intrinsic <= 0) return stepped;
+    return math.min(stepped, intrinsic);
   }
 
   Widget _buildPlaceholder() {
