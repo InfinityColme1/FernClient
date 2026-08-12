@@ -3,7 +3,9 @@ import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.da
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/remove_tag_from_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_expired_deleted_media_usecase.dart';
@@ -25,6 +27,7 @@ import '../../../../core/resources/data_state.dart';
 import '../../domain/entities/media/media_entity.dart';
 import '../../domain/entities/media/media_summary_entity.dart';
 import '../../domain/entities/search/media_search_section_entity.dart';
+import '../../domain/entities/search/search_result_type.dart';
 import '../../domain/entities/search/search_suggestion_entity.dart';
 import 'media_events.dart';
 import 'media_states.dart';
@@ -45,6 +48,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final GetMediaListUsercase _getMediaListUsecase;
   final GetDeletedMediaUseCase _getDeletedMediaUseCase;
   final GetFavoriteMediaUseCase _getFavoriteMediaUseCase;
+  final GetMediaByTagUseCase _getMediaByTagUseCase;
+  final RemoveTagFromMediaUseCase _removeTagFromMediaUseCase;
   final SetMediaFavoriteUseCase _setMediaFavoriteUseCase;
   final SearchMediaUseCase _searchMediaUseCase;
   final SearchMediaBySuggestionUseCase _searchMediaBySuggestionUseCase;
@@ -70,6 +75,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required GetMediaListUsercase getMediaListUsecase,
     required GetDeletedMediaUseCase getDeletedMediaUseCase,
     required GetFavoriteMediaUseCase getFavoriteMediaUseCase,
+    required GetMediaByTagUseCase getMediaByTagUseCase,
+    required RemoveTagFromMediaUseCase removeTagFromMediaUseCase,
     required SetMediaFavoriteUseCase setMediaFavoriteUseCase,
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
@@ -88,6 +95,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _getMediaListUsecase = getMediaListUsecase,
         _getDeletedMediaUseCase = getDeletedMediaUseCase,
         _getFavoriteMediaUseCase = getFavoriteMediaUseCase,
+        _getMediaByTagUseCase = getMediaByTagUseCase,
+        _removeTagFromMediaUseCase = removeTagFromMediaUseCase,
         _setMediaFavoriteUseCase = setMediaFavoriteUseCase,
         _searchMediaUseCase = searchMediaUseCase,
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
@@ -96,9 +105,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
     on<LoadDeletedMediaEvent>(onLoadDeletedMedia);
     on<LoadFavoriteMediaEvent>(onLoadFavoriteMedia);
+    on<LoadMediaByTagEvent>(onLoadMediaByTag);
+    on<RemoveTagFromSelectedMediaEvent>(onRemoveTagFromSelectedMedia);
     on<ToggleFavoriteEvent>(onToggleFavorite);
     on<SearchMediaEvent>(onSearchMedia);
     on<SearchSuggestionSelectedEvent>(onSearchSuggestionSelected);
+    on<ToggleSearchFilterEvent>(onToggleSearchFilter);
     on<ClearMediaSearchEvent>(onClearMediaSearch);
     on<ScanDirectoryEvent>(onScanDirectoryEvent);
     on<SelectAndScanDirectoryEvent>(onSelectAndScanDirectoryEvent);
@@ -173,6 +185,46 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         : const <MediaSummaryEntity>[];
 
     emit(MediaLoading(mediaList: mediaList, favoritesOnly: true));
+  }
+
+  /// Contenido de una etiqueta, el de la rejilla de la pantalla de gestión de
+  /// etiquetas.
+  ///
+  /// Como en las demás pantallas se parte de un estado limpio: cambiar de
+  /// etiqueta es cambiar de rejilla, así que la selección de la anterior no tiene
+  /// nada que ver con la nueva.
+  void onLoadMediaByTag(LoadMediaByTagEvent event, Emitter<MediaStates> emit) async {
+    emit(const MediaLoading());
+
+    final result = await _getMediaByTagUseCase(params: event.tagId);
+    final mediaList = (result is DataSuccess && result.data != null)
+        ? result.data!
+        : const <MediaSummaryEntity>[];
+
+    emit(MediaLoading(mediaList: mediaList));
+  }
+
+  /// Quita la etiqueta de la selección de la rejilla.
+  ///
+  /// Los contenidos dejan de tener esa etiqueta, así que salen de la rejilla de la
+  /// pantalla de gestión de etiquetas (que es justo la de esa etiqueta); en la
+  /// base de datos siguen tal cual, con sus demás etiquetas.
+  void onRemoveTagFromSelectedMedia(
+    RemoveTagFromSelectedMediaEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final selectedIds = state.selectedIds;
+    if (selectedIds.isEmpty) return;
+
+    final result = await _removeTagFromMediaUseCase(
+      params: RemoveTagFromMediaParams(
+        tagId: event.tagId,
+        mediaIds: selectedIds.toList(),
+      ),
+    );
+    if (result is! DataSuccess) return;
+
+    emit(_withoutSelection((summary) => selectedIds.contains(summary.id)));
   }
 
   /// El corazón del visor: pone o quita la marca de favorito del contenido que
@@ -255,19 +307,62 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// Estado de un resultado de búsqueda.
   ///
   /// La rejilla pinta los grupos, pero el visor se mueve por índice sobre una
-  /// lista plana, así que se guardan las dos cosas: los grupos y su contenido
-  /// aplanado en el mismo orden en el que se ve.
+  /// lista plana, así que se guardan las dos cosas: los grupos (todos, también
+  /// los que el filtro esconde) y el contenido que se ve, aplanado en el mismo
+  /// orden.
+  ///
+  /// El filtro se mantiene de una búsqueda a la siguiente: es cómo se quiere ver
+  /// el buscador, no parte de un resultado concreto.
   MediaStates _searchState(
     List<MediaSearchSectionEntity> sections, {
     required String query,
     SearchSuggestionEntity? suggestion,
   }) {
     return MediaLoading(
-      mediaList: sections.expand((section) => section.media).toList(),
+      mediaList: _visibleMedia(sections, state.searchFilters),
       searchQuery: query,
       searchSections: sections,
+      searchFilters: state.searchFilters,
       searchSuggestion: suggestion,
     );
+  }
+
+  /// Enciende o apaga un tipo de resultado en el filtro.
+  ///
+  /// No se vuelve a buscar: los grupos ya están en el estado, así que basta con
+  /// rehacer la lista de lo que se ve. Lo que se esconde deja de estar marcado:
+  /// las acciones de la cabecera trabajan sobre la selección y no pueden llevarse
+  /// por delante contenido que no está a la vista.
+  void onToggleSearchFilter(ToggleSearchFilterEvent event, Emitter<MediaStates> emit) {
+    final filters = Set<SearchResultType>.from(state.searchFilters);
+    if (!filters.remove(event.type)) filters.add(event.type);
+
+    final sections = state.searchSections;
+    if (sections == null) {
+      emit(state.copyWith(searchFilters: filters));
+      return;
+    }
+
+    final mediaList = _visibleMedia(sections, filters);
+    final visibleIds = {for (final summary in mediaList) summary.id};
+
+    emit(state.copyWith(
+      searchFilters: filters,
+      mediaList: mediaList,
+      selectedIds: state.selectedIds.where(visibleIds.contains).toSet(),
+    ));
+  }
+
+  /// El contenido de los grupos que [filters] deja pasar, aplanado en el orden en
+  /// el que la rejilla los pinta.
+  List<MediaSummaryEntity> _visibleMedia(
+    List<MediaSearchSectionEntity> sections,
+    Set<SearchResultType> filters,
+  ) {
+    return [
+      for (final section in sections)
+        if (filters.contains(section.type)) ...section.media,
+    ];
   }
 
   void onClearMediaSearch(ClearMediaSearchEvent event, Emitter<MediaStates> emit) async {
@@ -362,6 +457,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       selectedIds: Set<int>.from(state.selectedIds)..remove(id),
       searchQuery: state.searchQuery,
       searchSections: _sectionsWithout((summary) => summary.id == id),
+      searchFilters: state.searchFilters,
       favoritesOnly: state.favoritesOnly,
     ));
   }
@@ -441,6 +537,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         showInfo: state.showInfo,
         searchQuery: state.searchQuery,
         searchSections: sections,
+        searchFilters: state.searchFilters,
         searchSuggestion: state.searchSuggestion,
         favoritesOnly: state.favoritesOnly,
       ));
@@ -532,6 +629,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       mediaList: mediaList,
       searchQuery: state.searchQuery,
       searchSections: _sectionsWithout(remove),
+      searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
     );
@@ -613,6 +711,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       selectedIds: state.selectedIds,
       searchQuery: state.searchQuery,
       searchSections: state.searchSections,
+      searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
     ));
@@ -652,6 +751,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       // exactamente como estaba.
       searchQuery: state.searchQuery,
       searchSections: state.searchSections,
+      searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
     );

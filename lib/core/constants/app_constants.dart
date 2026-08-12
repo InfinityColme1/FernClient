@@ -9,6 +9,7 @@ const mediaRoute = '/media';
 const importRoute = '/import';
 const favoritesRoute = '/favorites';
 const deletedRoute = '/deleted';
+const tagManagerRoute = '/tag-manager';
 
 const viewerRoute = '/viewer';
 
@@ -119,6 +120,16 @@ const pillButtonDisabledOpacity = 0.35;
 
 // Create dialog
 const createDialogSocialFieldsMaxHeight = 160.0;
+
+// Gestión de etiquetas
+/// Sangría que se le añade a una fila de la lista de etiquetas por cada nivel de
+/// jerarquía, igual que en el menú lateral pero con su propio listado.
+const tagListDepthIndent = 16.0;
+
+/// Columnas de la rejilla de la pantalla de gestión de etiquetas. Son más que en
+/// las demás pantallas: los elementos salen algo más pequeños, y así caben más a
+/// la vista en el hueco que la rejilla comparte con la ficha y con la lista.
+const tagManagerGridColumns = 5;
 
 // Media grid
 const mediaHoverScale = 1.04;

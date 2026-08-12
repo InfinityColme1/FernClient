@@ -14,6 +14,11 @@ import 'package:flutter/material.dart';
 class FernSearchInput extends StatefulWidget {
   final String label;
   final String hintText;
+
+  /// Texto con el que arranca el campo. Sirve para los formularios de edición,
+  /// donde el valor que ya tiene lo que se está editando aparece escrito.
+  final String initialValue;
+
   final List<String> suggestions;
   final ValueChanged<String>? onSelected;
   final ValueChanged<String>? onChanged;
@@ -26,6 +31,7 @@ class FernSearchInput extends StatefulWidget {
     super.key,
     required this.label,
     this.hintText = '',
+    this.initialValue = '',
     this.suggestions = const [],
     this.onSelected,
     this.onChanged,
@@ -38,7 +44,8 @@ class FernSearchInput extends StatefulWidget {
 }
 
 class _FernSearchInputState extends State<FernSearchInput> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialValue);
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 

@@ -16,8 +16,10 @@ import 'package:Fern/features/media/domain/repositories/local_media_repository.d
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
@@ -25,10 +27,12 @@ import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_expired_deleted_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/remove_tag_from_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/restore_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
@@ -166,6 +170,22 @@ Future<void> initializeDependencies() async {
     SaveTagUseCase(getIt())
   );
 
+  getIt.registerSingleton<UpdateTagUseCase>(
+    UpdateTagUseCase(getIt())
+  );
+
+  getIt.registerSingleton<DeleteTagUseCase>(
+    DeleteTagUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetMediaByTagUseCase>(
+    GetMediaByTagUseCase(getIt())
+  );
+
+  getIt.registerSingleton<RemoveTagFromMediaUseCase>(
+    RemoveTagFromMediaUseCase(getIt())
+  );
+
   getIt.registerSingleton<SaveCreatorUseCase>(
     SaveCreatorUseCase(getIt())
   );
@@ -234,6 +254,8 @@ Future<void> initializeDependencies() async {
         getMediaListUsecase: getIt(),
         getDeletedMediaUseCase: getIt(),
         getFavoriteMediaUseCase: getIt(),
+        getMediaByTagUseCase: getIt(),
+        removeTagFromMediaUseCase: getIt(),
         setMediaFavoriteUseCase: getIt(),
         searchMediaUseCase: getIt(),
         searchMediaBySuggestionUseCase: getIt(),

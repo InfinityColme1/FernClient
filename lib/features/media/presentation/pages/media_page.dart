@@ -1,13 +1,12 @@
-import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
-import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
+import 'package:Fern/features/media/presentation/widgets/search_filter_menu.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -73,7 +72,9 @@ class _MediaView extends StatelessWidget {
       },
       builder: (context, state) {
         final mediaList = state.mediaList ?? const [];
-        final sections = state.searchSections;
+        // Los grupos que el filtro deja ver; `mediaList` ya viene recortada
+        // igual, así que el contador cuenta lo que de verdad hay en la rejilla.
+        final sections = state.visibleSearchSections;
 
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
@@ -93,14 +94,9 @@ class _MediaView extends StatelessWidget {
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const Spacer(),
-                    // TODO: los filtros son otra tarea; el botón ya está en su
-                    // sitio para colgarlos de él.
-                    FernPillButton(
-                      label: texts.filters,
-                      icon: Icons.tune,
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.black,
-                      onPressed: () {},
+                    SearchFilterMenu(
+                      filters: state.searchFilters,
+                      hasSearch: state.searchSections != null,
                     ),
                   ],
                 ),

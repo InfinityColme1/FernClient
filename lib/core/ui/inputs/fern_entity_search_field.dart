@@ -12,6 +12,10 @@ class FernEntitySearchField<T> extends StatefulWidget {
   final String label;
   final String hintText;
 
+  /// Nombre con el que arranca el campo, para los formularios de edición: el
+  /// elemento que ya está elegido aparece escrito, sin necesidad de buscarlo.
+  final String initialValue;
+
   /// Búsqueda que alimenta las sugerencias. Es quien decide cuántas devuelve y
   /// qué elementos se descartan.
   final Future<List<T>> Function(String query) search;
@@ -20,6 +24,11 @@ class FernEntitySearchField<T> extends StatefulWidget {
   final String Function(T item) labelOf;
 
   final ValueChanged<T> onSelected;
+
+  /// Cada pulsación, con el texto que hay escrito. Hace falta para saber cuándo
+  /// el campo se ha quedado vacío, que es la forma de deshacer lo elegido.
+  final ValueChanged<String>? onChanged;
+
   final Duration debounce;
 
   const FernEntitySearchField({
@@ -28,7 +37,9 @@ class FernEntitySearchField<T> extends StatefulWidget {
     required this.search,
     required this.labelOf,
     required this.onSelected,
+    this.onChanged,
     this.hintText = '',
+    this.initialValue = '',
     this.debounce = const Duration(milliseconds: 250),
   });
 
@@ -47,6 +58,8 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
   String? _notifiedName;
 
   void _onQueryChanged(String query) {
+    widget.onChanged?.call(query);
+
     if (_notifiedName != null && query.trim().toLowerCase() != _notifiedName) {
       _notifiedName = null;
     }
@@ -111,6 +124,7 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
     return FernSearchInput(
       label: widget.label,
       hintText: widget.hintText,
+      initialValue: widget.initialValue,
       filterSuggestions: false,
       suggestions: _results.map(widget.labelOf).toList(),
       onChanged: _onQueryChanged,

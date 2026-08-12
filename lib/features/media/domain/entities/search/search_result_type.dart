@@ -12,3 +12,11 @@ enum SearchResultType {
 
   creator,
 }
+
+/// Los tres tipos a la vez, que es con lo que arranca el filtro de la pantalla
+/// de media: sin tocar nada se ve todo lo que ha encontrado el buscador.
+const Set<SearchResultType> allSearchResultTypes = {
+  SearchResultType.media,
+  SearchResultType.tag,
+  SearchResultType.creator,
+};

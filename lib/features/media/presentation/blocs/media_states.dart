@@ -1,6 +1,7 @@
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -24,7 +25,15 @@ abstract class MediaStates extends Equatable {
   /// Resultado de la búsqueda repartido en grupos (descripciones, etiquetas y
   /// creadores), en el orden en el que la rejilla los pinta. `null` si no hay
   /// búsqueda: entonces la rejilla usa [mediaList] sin cabeceras.
+  ///
+  /// Están **todos** los grupos que ha encontrado el buscador, también los que el
+  /// filtro esconde: apagar un tipo no repite la búsqueda, sólo deja de pintarlo,
+  /// así que volver a encenderlo tiene que poder recuperarlo.
   final List<MediaSearchSectionEntity>? searchSections;
+
+  /// Tipos de resultado que el filtro de la cabecera deja ver. De partida están
+  /// los tres, que es la búsqueda entera.
+  final Set<SearchResultType> searchFilters;
 
   /// Sugerencia elegida en el buscador, cuando la búsqueda viene de pulsar una
   /// y no de escribir. `null` en las búsquedas por texto.
@@ -46,9 +55,16 @@ abstract class MediaStates extends Equatable {
     this.selectedIds = const {},
     this.searchQuery,
     this.searchSections,
+    this.searchFilters = allSearchResultTypes,
     this.searchSuggestion,
     this.favoritesOnly = false,
   });
+
+  /// Los grupos que la rejilla pinta: los de la búsqueda que el filtro deja
+  /// pasar. `null` cuando no hay búsqueda, igual que [searchSections].
+  List<MediaSearchSectionEntity>? get visibleSearchSections => searchSections
+      ?.where((section) => searchFilters.contains(section.type))
+      .toList();
 
   MediaStates copyWith({
     MediaEntity ? currentMedia,
@@ -60,6 +76,7 @@ abstract class MediaStates extends Equatable {
     Set<int> ? selectedIds,
     String ? searchQuery,
     List<MediaSearchSectionEntity> ? searchSections,
+    Set<SearchResultType> ? searchFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
   });
@@ -75,6 +92,7 @@ abstract class MediaStates extends Equatable {
     selectedIds,
     searchQuery,
     searchSections,
+    searchFilters,
     searchSuggestion,
     favoritesOnly,
   ];
@@ -89,6 +107,7 @@ class MediaLoading extends MediaStates {
     super.selectedIds,
     super.searchQuery,
     super.searchSections,
+    super.searchFilters,
     super.searchSuggestion,
     super.favoritesOnly,
   });
@@ -104,6 +123,7 @@ class MediaLoading extends MediaStates {
     Set<int> ? selectedIds,
     String ? searchQuery,
     List<MediaSearchSectionEntity> ? searchSections,
+    Set<SearchResultType> ? searchFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
   }) {
@@ -115,6 +135,7 @@ class MediaLoading extends MediaStates {
       selectedIds: selectedIds ?? this.selectedIds,
       searchQuery: searchQuery ?? this.searchQuery,
       searchSections: searchSections ?? this.searchSections,
+      searchFilters: searchFilters ?? this.searchFilters,
       searchSuggestion: searchSuggestion ?? this.searchSuggestion,
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,
     );
@@ -137,6 +158,7 @@ class DetailedMedia extends MediaStates {
     super.selectedIds,
     super.searchQuery,
     super.searchSections,
+    super.searchFilters,
     super.searchSuggestion,
     super.favoritesOnly,
   });
@@ -152,6 +174,7 @@ class DetailedMedia extends MediaStates {
     Set<int> ? selectedIds,
     String ? searchQuery,
     List<MediaSearchSectionEntity> ? searchSections,
+    Set<SearchResultType> ? searchFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
   }) {
@@ -165,6 +188,7 @@ class DetailedMedia extends MediaStates {
         selectedIds: selectedIds ?? this.selectedIds,
         searchQuery: searchQuery ?? this.searchQuery,
         searchSections: searchSections ?? this.searchSections,
+        searchFilters: searchFilters ?? this.searchFilters,
         searchSuggestion: searchSuggestion ?? this.searchSuggestion,
         favoritesOnly: favoritesOnly ?? this.favoritesOnly,
     );

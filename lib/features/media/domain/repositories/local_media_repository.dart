@@ -98,6 +98,38 @@ abstract class LocalMediaRepository {
   /// Guarda la etiqueta y, si se indica [parent], la cuelga de ella.
   Future<DataState<TagEntity>> saveTag(TagEntity tag, {TagEntity? parent});
 
+  /// Cambia el nombre, el avatar y el sitio en la jerarquía de una etiqueta que
+  /// ya está en la base de datos.
+  ///
+  /// A diferencia de [saveTag], [parent] manda siempre: con una etiqueta la
+  /// cuelga de ella (soltándola de la que la tuviera) y con `null` la deja como
+  /// etiqueta raíz. Es lo que hace la pantalla de gestión de etiquetas, donde el
+  /// campo de la etiqueta padre se puede vaciar.
+  ///
+  /// Los contenidos que ya tienen la etiqueta la conservan: sólo cambian sus
+  /// datos.
+  Future<DataState<TagEntity>> updateTag(TagEntity tag, {TagEntity? parent});
+
+  /// Borra la etiqueta [tagId] de la base de datos.
+  ///
+  /// Los contenidos que la tenían **no se borran**: lo que se les quita es la
+  /// etiqueta, y siguen con las demás. Las etiquetas que colgaban de ella se
+  /// quedan como raíces.
+  Future<DataState> deleteTag(int tagId);
+
+  /// Contenido definitivo que tiene la etiqueta [tagId].
+  ///
+  /// Es lo que enseña la rejilla de la pantalla de gestión de etiquetas. Como en
+  /// las búsquedas, lo pendiente de revisar y lo marcado para borrar se quedan
+  /// fuera: cada uno tiene su pantalla.
+  Future<DataState<List<MediaSummaryEntity>>> getMediaByTag(int tagId);
+
+  /// Quita la etiqueta [tagId] de los contenidos indicados.
+  ///
+  /// Ni la etiqueta ni los contenidos desaparecen: lo único que se deshace es la
+  /// relación entre ellos.
+  Future<DataState> removeTagFromMedia(int tagId, List<int> mediaIds);
+
   Future<DataState<CreatorEntity>> saveCreator(CreatorEntity creator);
   
   Future<DataState<List<TagEntity>>> getTags();

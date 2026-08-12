@@ -27,6 +27,9 @@ class AppLocalizationsCa extends AppLocalizations {
   String get navDeleted => 'Eliminats';
 
   @override
+  String get navTagManager => 'Gestor d\'etiquetes';
+
+  @override
   String get searchHint => 'Cerca';
 
   @override
@@ -70,6 +73,18 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get filters => 'Filtres';
+
+  @override
+  String get filtersResultsFrom => 'Mostra resultats de';
+
+  @override
+  String get filterMedia => 'Contingut';
+
+  @override
+  String get filterTags => 'Etiquetes';
+
+  @override
+  String get filterCreators => 'Creadors';
 
   @override
   String get emptyLibrary => 'Aquí hi ha ben poca cosa';
@@ -132,6 +147,15 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get actionSave => 'Desa';
+
+  @override
+  String get actionUnassignTag => 'Treu l\'etiqueta';
+
+  @override
+  String get actionRemoveParentTag => 'Treu el pare';
+
+  @override
+  String get actionDeleteTag => 'Elimina l\'etiqueta';
 
   @override
   String get sourceLocalComputer => 'Equip local';

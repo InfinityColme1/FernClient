@@ -106,6 +106,14 @@ class _SidebarState extends State<Sidebar> {
           }
       ),
       SidebarItem(
+          id: tagManagerRoute,
+          title: texts.navTagManager,
+          icon: Icons.sell_outlined,
+          onTap: () {
+            context.go(tagManagerRoute);
+          }
+      ),
+      SidebarItem(
           id: deletedRoute,
           title: texts.navDeleted,
           icon: Icons.delete_outline_outlined,

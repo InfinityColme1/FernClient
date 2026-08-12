@@ -33,6 +33,10 @@ class AppSizes {
   static const double dialogMaxWidth = 800.0;
   static const double menuWidth = 280.0;
 
+  /// Ancho de la lista de etiquetas de la pantalla de gestión de etiquetas: lo
+  /// justo para que quepan el avatar, el nombre y la sangría de la jerarquía.
+  static const double tagListWidth = 260.0;
+
   // Layout
   /// Ancho por debajo del cual se pasa al layout de móvil.
   ///

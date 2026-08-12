@@ -4,6 +4,7 @@ import 'package:Fern/features/media/presentation/pages/delete_page.dart';
 import 'package:Fern/features/media/presentation/pages/favorites_page.dart';
 import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/features/media/presentation/pages/media_page.dart';
+import 'package:Fern/features/media/presentation/pages/tag_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,6 +45,10 @@ final appRouter = GoRouter(
         GoRoute(
             path: favoritesRoute,
             builder: (context, state) => const FavoritesPage()
+        ),
+        GoRoute(
+            path: tagManagerRoute,
+            builder: (context, state) => const TagManagerPage()
         ),
       ]
     ),

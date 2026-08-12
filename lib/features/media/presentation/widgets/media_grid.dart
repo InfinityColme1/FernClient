@@ -22,10 +22,16 @@ class MediaGrid extends StatelessWidget {
   /// normal, que pinta [mediaList] de un tirón.
   final List<MediaSearchSectionEntity>? sections;
 
+  /// Si la rejilla va sobre una superficie propia. Con `false` el contenido va
+  /// directamente sobre el fondo de la pantalla, para las pantallas en las que la
+  /// superficie es de otra cosa (la ficha de gestión de etiquetas).
+  final bool hasSurface;
+
   const MediaGrid({
     super.key,
     required this.mediaList,
     required this.columns,
+    this.hasSurface = true,
   }) : sections = null;
 
   /// Rejilla de resultados de búsqueda: el contenido va separado en grupos
@@ -35,6 +41,7 @@ class MediaGrid extends StatelessWidget {
     super.key,
     required List<MediaSearchSectionEntity> this.sections,
     required this.columns,
+    this.hasSurface = true,
   }) : mediaList = const [];
 
   /// Todo el contenido de la rejilla en el orden en el que se pinta, que es el
@@ -52,25 +59,25 @@ class MediaGrid extends StatelessWidget {
     final isEmpty = sections?.isEmpty ?? mediaList.isEmpty;
 
     if (isEmpty) {
-      return FernSurface(
-        width: double.infinity,
-        child: FernEmptyState(
-          imageAsset: fernEmptyImage,
-          message: AppLocalizations.of(context).emptyLibrary,
-        ),
+      final emptyState = FernEmptyState(
+        imageAsset: fernEmptyImage,
+        message: AppLocalizations.of(context).emptyLibrary,
       );
+
+      return hasSurface
+          ? FernSurface(width: double.infinity, child: emptyState)
+          : SizedBox(width: double.infinity, child: emptyState);
     }
 
     final orderedIds = _orderedIds;
+    final content =
+        sections == null ? _buildGrid(orderedIds) : _buildSections(orderedIds);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.l, right: AppSpacing.l),
-      child: FernSurface(
-        clipBehavior: Clip.antiAlias,
-        child: sections == null
-            ? _buildGrid(orderedIds)
-            : _buildSections(orderedIds),
-      ),
+      child: hasSurface
+          ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
+          : content,
     );
   }
 

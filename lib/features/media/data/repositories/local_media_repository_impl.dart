@@ -375,9 +375,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         model.creator.value = creatorModel;
         await model.creator.save();
 
-        model.tags.clear();
-        model.tags.addAll(tagModels);
-        await model.tags.save();
+        // Las etiquetas que llegan son las que tiene que tener: `reset` quita
+        // las de antes en la base de datos, que es algo que `clear()` no hace
+        // (sólo vacía lo que Isar tiene en memoria).
+        await model.tags.update(link: tagModels, reset: true);
 
         if (sourceModel != null) {
           model.source.value = sourceModel;
@@ -702,6 +703,200 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       });
 
       return DataSuccess(model.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Cambia los datos de una etiqueta que ya existe: su nombre, su avatar y de
+  /// quién cuelga.
+  ///
+  /// El identificador no se toca, así que los contenidos que la tienen la siguen
+  /// teniendo. [parent] manda siempre: se suelta de cualquier otra etiqueta que
+  /// la tuviera entre sus hijas y, si llega `null`, se queda como etiqueta raíz.
+  ///
+  /// Un padre que cerraría el círculo se descarta: la etiqueta se queda con el
+  /// que ya tenía, y el resto de sus datos se guarda igual.
+  @override
+  Future<DataState<TagEntity>> updateTag(TagEntity tag, {TagEntity? parent}) async {
+    try {
+      final model = await _appDatabase.tagModels.get(tag.id);
+      if (model == null) return DataException(Exception("Tag not found"));
+
+      final newParent = await _allowedParent(model, parent);
+
+      await _appDatabase.writeTxn(() async {
+        model.name = tag.name;
+        model.picturePath = tag.picturePath;
+        await _appDatabase.tagModels.put(model);
+
+        // Quien la tuviera entre sus hijas la suelta, menos el padre nuevo si ya
+        // era el que la tenía.
+        final currentParents = await _appDatabase.tagModels
+            .filter()
+            .children((q) => q.idEqualTo(tag.id))
+            .findAll();
+
+        for (final currentParent in currentParents) {
+          if (currentParent.id == newParent?.id) continue;
+
+          // Se desenlaza pidiéndolo, no dejando fuera de la lista a la que se va:
+          // `clear()` sólo vacía lo que Isar tiene en memoria, y al guardar
+          // manda las altas pero ninguna baja, así que el enlace seguiría ahí.
+          await currentParent.children.update(unlink: [model]);
+        }
+
+        if (newParent == null) return;
+
+        final parentModel = await _appDatabase.tagModels.get(newParent.id);
+        if (parentModel == null) return;
+
+        parentModel.children.add(model);
+        await parentModel.children.save();
+      });
+
+      await model.children.load();
+
+      return DataSuccess(model.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// El padre que se le puede dar a [model] cuando se pide [parent].
+  ///
+  /// Una etiqueta no puede colgar de sí misma ni de nada que cuelgue de ella (su
+  /// hija, la hija de su hija...): sería un círculo, y el árbol de etiquetas se
+  /// quedaría sin raíz por la que empezar a pintarlo, así que las dos etiquetas
+  /// desaparecerían del menú lateral y de la lista.
+  ///
+  /// Lo que no se puede se descarta dejando el sitio que ya ocupa en la
+  /// jerarquía: pedir un imposible no la mueve, y desde luego no la suelta de un
+  /// padre que sí valía. Quedarse sin padre, en cambio, siempre vale: es lo que
+  /// se pide al vaciar el campo o al quitarle el padre.
+  Future<TagEntity?> _allowedParent(TagModel model, TagEntity? parent) async {
+    if (parent == null) return null;
+
+    final closesCircle =
+        parent.id == model.id || await _descends(parent.id, from: model);
+
+    return closesCircle ? await _currentParent(model) : parent;
+  }
+
+  /// La etiqueta que tiene a [model] entre sus hijas, si hay alguna.
+  ///
+  /// Sólo se usa para volver a dejarla donde estaba, así que llega sin sus hijas:
+  /// de ella lo único que hace falta es el identificador.
+  Future<TagEntity?> _currentParent(TagModel model) async {
+    final parents = await _appDatabase.tagModels
+        .filter()
+        .children((q) => q.idEqualTo(model.id))
+        .findAll();
+
+    if (parents.isEmpty) return null;
+
+    final parent = parents.first;
+    return TagEntity(
+      id: parent.id,
+      name: parent.name,
+      picturePath: parent.picturePath,
+      children: const [],
+    );
+  }
+
+  /// Si [tagId] cuelga de [from], a cualquier profundidad.
+  Future<bool> _descends(int tagId, {required TagModel from}) async {
+    final pending = <TagModel>[from];
+    // Una jerarquía mal formada no deja la búsqueda dando vueltas: cada
+    // etiqueta se mira una sola vez.
+    final visited = <int>{from.id};
+
+    while (pending.isNotEmpty) {
+      final current = pending.removeLast();
+      await current.children.load();
+
+      for (final child in current.children) {
+        if (child.id == tagId) return true;
+        if (visited.add(child.id)) pending.add(child);
+      }
+    }
+
+    return false;
+  }
+
+  /// Borra una etiqueta y la quita de los contenidos que la tenían.
+  ///
+  /// Los contenidos se quedan donde están, con sus demás etiquetas: borrar una
+  /// etiqueta es dejar de clasificar por ella, no perder lo clasificado. Las
+  /// etiquetas que colgaban de ella pasan a ser raíces, porque el árbol se arma
+  /// por descarte (raíz es la que no es hija de ninguna) y ya no hay quien las
+  /// tenga.
+  @override
+  Future<DataState> deleteTag(int tagId) async {
+    try {
+      final model = await _appDatabase.tagModels.get(tagId);
+      if (model == null) return DataSuccess(null);
+
+      await _appDatabase.writeTxn(() async {
+        // El enlace de vuelta da justo los contenidos que la tienen.
+        await model.media.load();
+
+        // Se desenlaza pidiéndolo: `clear()` sólo vacía lo que Isar tiene en
+        // memoria y al guardar no manda ninguna baja.
+        for (final media in model.media.toList()) {
+          await media.tags.update(unlink: [model]);
+        }
+
+        await _appDatabase.tagModels.delete(tagId);
+      });
+
+      return DataSuccess(null);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Contenido definitivo de una etiqueta, el de la rejilla de la pantalla de
+  /// gestión de etiquetas.
+  @override
+  Future<DataState<List<MediaSummaryEntity>>> getMediaByTag(int tagId) async {
+    try {
+      final media = await _appDatabase.mediaModels
+          .filter()
+          .tags((q) => q.idEqualTo(tagId))
+          .findAll();
+
+      return DataSuccess(await _importedSummaries(media));
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Deshace la relación entre una etiqueta y unos contenidos, en una sola
+  /// transacción.
+  ///
+  /// Sólo se toca el enlace: la etiqueta sigue existiendo (con el resto de sus
+  /// contenidos) y los contenidos siguen donde estaban, con sus demás etiquetas.
+  @override
+  Future<DataState> removeTagFromMedia(int tagId, List<int> mediaIds) async {
+    try {
+      if (mediaIds.isEmpty) return DataSuccess(null);
+
+      await _appDatabase.writeTxn(() async {
+        final tagModel = await _appDatabase.tagModels.get(tagId);
+        if (tagModel == null) return;
+
+        final models = await _appDatabase.mediaModels.getAll(mediaIds);
+
+        // Se desenlaza pidiéndolo: `clear()` sólo vacía lo que Isar tiene en
+        // memoria y al guardar no manda ninguna baja. Los que no la tuvieran no
+        // hace falta descartarlos: quitar un enlace que no está no hace nada.
+        for (final model in models.nonNulls) {
+          await model.tags.update(unlink: [tagModel]);
+        }
+      });
+
+      return DataSuccess(null);
     } on Exception catch (e) {
       return DataException(e);
     }

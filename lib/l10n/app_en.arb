@@ -7,6 +7,7 @@
   "navImport": "Import",
   "navFavorites": "Favorites",
   "navDeleted": "Deleted",
+  "navTagManager": "Tag Manager",
 
   "searchHint": "Search",
   "menuNewCreator": "New creator",
@@ -28,6 +29,10 @@
     }
   },
   "filters": "Filters",
+  "filtersResultsFrom": "Show results from",
+  "filterMedia": "Media",
+  "filterTags": "Tags",
+  "filterCreators": "Creators",
   "emptyLibrary": "This looks a little empty",
 
   "mediaFetched": "{count, plural, =1{1 media fetched} other{{count} media fetched}}",
@@ -62,6 +67,9 @@
   "actionConfirm": "Confirm",
   "actionRestore": "Restore",
   "actionSave": "Save",
+  "actionUnassignTag": "Unassign tag",
+  "actionRemoveParentTag": "Remove parent",
+  "actionDeleteTag": "Delete tag",
   "sourceLocalComputer": "Local computer",
 
   "selectItem": "Select",

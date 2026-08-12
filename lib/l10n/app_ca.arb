@@ -7,6 +7,7 @@
   "navImport": "Importa",
   "navFavorites": "Preferits",
   "navDeleted": "Eliminats",
+  "navTagManager": "Gestor d'etiquetes",
 
   "searchHint": "Cerca",
   "menuNewCreator": "Nou creador",
@@ -18,6 +19,10 @@
   "mediaCount": "{count, plural, =0{Sense contingut} =1{1 fitxer} other{{count} fitxers}}",
   "favoritesCount": "{count, plural, =0{Encara no hi ha preferits} =1{1 preferit} other{{count} preferits}}",
   "filters": "Filtres",
+  "filtersResultsFrom": "Mostra resultats de",
+  "filterMedia": "Contingut",
+  "filterTags": "Etiquetes",
+  "filterCreators": "Creadors",
   "emptyLibrary": "Aquí hi ha ben poca cosa",
 
   "mediaFetched": "{count, plural, =1{1 fitxer trobat} other{{count} fitxers trobats}}",
@@ -32,6 +37,9 @@
   "actionConfirm": "Confirma",
   "actionRestore": "Restableix",
   "actionSave": "Desa",
+  "actionUnassignTag": "Treu l'etiqueta",
+  "actionRemoveParentTag": "Treu el pare",
+  "actionDeleteTag": "Elimina l'etiqueta",
   "sourceLocalComputer": "Equip local",
 
   "selectItem": "Selecciona",

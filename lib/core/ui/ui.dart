@@ -30,3 +30,4 @@ export 'inputs/fern_outlined_field.dart';
 export 'inputs/fern_radio_tile.dart';
 export 'inputs/fern_search_input.dart';
 export 'menus/fern_popup_menu.dart';
+export 'menus/fern_popup_panel.dart';

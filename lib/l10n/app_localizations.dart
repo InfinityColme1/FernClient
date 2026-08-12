@@ -138,6 +138,12 @@ abstract class AppLocalizations {
   /// **'Deleted'**
   String get navDeleted;
 
+  /// No description provided for @navTagManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag Manager'**
+  String get navTagManager;
+
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
@@ -191,6 +197,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filters'**
   String get filters;
+
+  /// No description provided for @filtersResultsFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Show results from'**
+  String get filtersResultsFrom;
+
+  /// No description provided for @filterMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get filterMedia;
+
+  /// No description provided for @filterTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get filterTags;
+
+  /// No description provided for @filterCreators.
+  ///
+  /// In en, this message translates to:
+  /// **'Creators'**
+  String get filterCreators;
 
   /// No description provided for @emptyLibrary.
   ///
@@ -257,6 +287,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get actionSave;
+
+  /// No description provided for @actionUnassignTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassign tag'**
+  String get actionUnassignTag;
+
+  /// No description provided for @actionRemoveParentTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove parent'**
+  String get actionRemoveParentTag;
+
+  /// No description provided for @actionDeleteTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag'**
+  String get actionDeleteTag;
 
   /// No description provided for @sourceLocalComputer.
   ///

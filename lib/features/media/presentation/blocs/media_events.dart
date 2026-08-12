@@ -1,5 +1,6 @@
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 
 abstract class MediaEvents {
@@ -32,6 +33,17 @@ class SearchSuggestionSelectedEvent extends MediaEvents {
   final SearchSuggestionEntity suggestion;
 
   const SearchSuggestionSelectedEvent(this.suggestion);
+}
+
+/// Enciende o apaga [type] en el filtro de la cabecera de la pantalla de media.
+///
+/// No repite la búsqueda: los grupos que ha encontrado el buscador siguen en el
+/// estado y lo único que cambia es cuáles de ellos se pintan, así que volver a
+/// encender un tipo lo devuelve a la rejilla tal cual estaba.
+class ToggleSearchFilterEvent extends MediaEvents {
+  final SearchResultType type;
+
+  const ToggleSearchFilterEvent(this.type);
 }
 
 /// Deshace la búsqueda: la rejilla vuelve a mostrar la biblioteca completa.
@@ -87,6 +99,24 @@ class LoadDeletedMediaEvent extends MediaEvents {
 /// Carga el contenido marcado como favorito: el de la pantalla de favoritos.
 class LoadFavoriteMediaEvent extends MediaEvents {
   const LoadFavoriteMediaEvent();
+}
+
+/// Carga el contenido que tiene la etiqueta [tagId]: el de la rejilla de la
+/// pantalla de gestión de etiquetas.
+class LoadMediaByTagEvent extends MediaEvents {
+  final int tagId;
+
+  const LoadMediaByTagEvent(this.tagId);
+}
+
+/// Quita la etiqueta [tagId] de todo lo que esté seleccionado en la rejilla.
+///
+/// No borra nada: los contenidos dejan de tener esa etiqueta, así que salen de la
+/// rejilla de la pantalla de gestión de etiquetas y siguen en la biblioteca.
+class RemoveTagFromSelectedMediaEvent extends MediaEvents {
+  final int tagId;
+
+  const RemoveTagFromSelectedMediaEvent(this.tagId);
 }
 
 /// Pone o quita la marca de favorito del contenido que se está viendo en el

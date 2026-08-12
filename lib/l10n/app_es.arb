@@ -7,6 +7,7 @@
   "navImport": "Importar",
   "navFavorites": "Favoritos",
   "navDeleted": "Eliminados",
+  "navTagManager": "Gestor de etiquetas",
 
   "searchHint": "Buscar",
   "menuNewCreator": "Nuevo creador",
@@ -18,6 +19,10 @@
   "mediaCount": "{count, plural, =0{Sin contenido} =1{1 archivo} other{{count} archivos}}",
   "favoritesCount": "{count, plural, =0{Todavía no hay favoritos} =1{1 favorito} other{{count} favoritos}}",
   "filters": "Filtros",
+  "filtersResultsFrom": "Mostrar resultados de",
+  "filterMedia": "Contenido",
+  "filterTags": "Etiquetas",
+  "filterCreators": "Creadores",
   "emptyLibrary": "Esto está un poco vacío",
 
   "mediaFetched": "{count, plural, =1{1 archivo encontrado} other{{count} archivos encontrados}}",
@@ -32,6 +37,9 @@
   "actionConfirm": "Confirmar",
   "actionRestore": "Restablecer",
   "actionSave": "Guardar",
+  "actionUnassignTag": "Quitar etiqueta",
+  "actionRemoveParentTag": "Quitar padre",
+  "actionDeleteTag": "Eliminar etiqueta",
   "sourceLocalComputer": "Equipo local",
 
   "selectItem": "Seleccionar",

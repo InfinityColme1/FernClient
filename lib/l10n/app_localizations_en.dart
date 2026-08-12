@@ -27,6 +27,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDeleted => 'Deleted';
 
   @override
+  String get navTagManager => 'Tag Manager';
+
+  @override
   String get searchHint => 'Search';
 
   @override
@@ -70,6 +73,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filters => 'Filters';
+
+  @override
+  String get filtersResultsFrom => 'Show results from';
+
+  @override
+  String get filterMedia => 'Media';
+
+  @override
+  String get filterTags => 'Tags';
+
+  @override
+  String get filterCreators => 'Creators';
 
   @override
   String get emptyLibrary => 'This looks a little empty';
@@ -130,6 +145,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionSave => 'Save';
+
+  @override
+  String get actionUnassignTag => 'Unassign tag';
+
+  @override
+  String get actionRemoveParentTag => 'Remove parent';
+
+  @override
+  String get actionDeleteTag => 'Delete tag';
 
   @override
   String get sourceLocalComputer => 'Local computer';

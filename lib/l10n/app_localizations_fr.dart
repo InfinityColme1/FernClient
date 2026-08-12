@@ -27,6 +27,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navDeleted => 'Supprimés';
 
   @override
+  String get navTagManager => 'Gestion des tags';
+
+  @override
   String get searchHint => 'Rechercher';
 
   @override
@@ -70,6 +73,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get filters => 'Filtres';
+
+  @override
+  String get filtersResultsFrom => 'Afficher les résultats de';
+
+  @override
+  String get filterMedia => 'Médias';
+
+  @override
+  String get filterTags => 'Tags';
+
+  @override
+  String get filterCreators => 'Créateurs';
 
   @override
   String get emptyLibrary => 'C\'est un peu vide par ici';
@@ -132,6 +147,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get actionSave => 'Enregistrer';
+
+  @override
+  String get actionUnassignTag => 'Retirer le tag';
+
+  @override
+  String get actionRemoveParentTag => 'Retirer le parent';
+
+  @override
+  String get actionDeleteTag => 'Supprimer le tag';
 
   @override
   String get sourceLocalComputer => 'Ordinateur local';
