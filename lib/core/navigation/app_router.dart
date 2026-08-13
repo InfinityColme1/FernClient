@@ -1,12 +1,12 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/main_layout.dart';
+import 'package:Fern/core/navigation/page_transitions.dart';
 import 'package:Fern/features/media/presentation/pages/delete_page.dart';
 import 'package:Fern/features/media/presentation/pages/favorites_page.dart';
 import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/features/media/presentation/pages/media_page.dart';
 import 'package:Fern/features/media/presentation/pages/tag_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,26 +29,45 @@ final appRouter = GoRouter(
           child: MainLayout(child: child),
         );
       },
+      // Todas las pantallas del armazón entran y salen con la misma transición
+      // (`fernTransitionPage`), así que pasar de una a otra es un fundido y no un
+      // cambio seco. El armazón no se mueve: lo que se desvanece es sólo lo que
+      // hay dentro.
       routes: [
         GoRoute(
             path: mediaRoute,
-            builder: (context, state) => const MediaPage()
+            pageBuilder: (context, state) => fernTransitionPage(
+              key: state.pageKey,
+              child: const MediaPage(),
+            ),
         ),
         GoRoute(
             path: importRoute,
-            builder: (context, state) => const ImportPage()
+            pageBuilder: (context, state) => fernTransitionPage(
+              key: state.pageKey,
+              child: const ImportPage(),
+            ),
         ),
         GoRoute(
             path: deletedRoute,
-            builder: (context, state) => const DeletePage()
+            pageBuilder: (context, state) => fernTransitionPage(
+              key: state.pageKey,
+              child: const DeletePage(),
+            ),
         ),
         GoRoute(
             path: favoritesRoute,
-            builder: (context, state) => const FavoritesPage()
+            pageBuilder: (context, state) => fernTransitionPage(
+              key: state.pageKey,
+              child: const FavoritesPage(),
+            ),
         ),
         GoRoute(
             path: tagManagerRoute,
-            builder: (context, state) => const TagManagerPage()
+            pageBuilder: (context, state) => fernTransitionPage(
+              key: state.pageKey,
+              child: const TagManagerPage(),
+            ),
         ),
       ]
     ),
@@ -57,27 +76,19 @@ final appRouter = GoRouter(
     // apila en el navegador raíz y deja intacta la pantalla de la que viene.
     GoRoute(
       path: viewerRoute,
-      // Entra con un fundido: no desplaza nada de sitio, así que no puede
+      // Con la misma transición que las demás pantallas, sólo algo más larga: el
+      // visor se abre sobre la que se estaba viendo y conviene que se entienda de
+      // dónde sale. Como el resto, no desplaza nada de sitio, así que no puede
       // provocar desbordes mientras el layout se recoloca.
-      pageBuilder: (context, state) => CustomTransitionPage<void>(
+      pageBuilder: (context, state) => fernTransitionPage(
         key: state.pageKey,
-        transitionDuration: viewerTransitionDuration,
-        reverseTransitionDuration: viewerTransitionDuration,
+        duration: viewerTransitionDuration,
         child: BlocProvider<MediaBloc>.value(
           value: getIt<MediaBloc>(),
           child: ViewerPage(
             openInfo: state.uri.queryParameters[viewerInfoQueryParam] == 'true',
           ),
         ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            ),
-            child: child,
-          );
-        },
       ),
     ),
   ]

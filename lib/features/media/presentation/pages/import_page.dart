@@ -172,6 +172,7 @@ class _ImportView extends StatelessWidget {
                 child: MediaGrid(
                   mediaList: state.mediaList ?? [],
                   columns: 4,
+                  isLoading: state.isBusy,
                 ),
               ),
             ],

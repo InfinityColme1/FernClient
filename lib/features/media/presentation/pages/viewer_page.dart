@@ -1,4 +1,5 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/presentation/widgets/media_info.dart';
 import 'package:Fern/features/media/presentation/widgets/media_viewer.dart';
 import 'package:flutter/material.dart';
@@ -105,26 +106,43 @@ class _ViewerPageState extends State<ViewerPage> {
                               onPressed: () => _goTo(next: false),
                               icon: Image.asset(icLeft, width: AppSizes.buttonHeightSmall),
                             ),
+                            // Mientras hay algo en marcha (los detalles del
+                            // contenido siguiente, guardar, el corazón) el
+                            // indicador de espera se pone sobre el contenido, que
+                            // es lo único que va a cambiar: las flechas y la barra
+                            // de acciones se quedan fuera del velo, atendiendo.
                             Expanded(
-                              child: BlocBuilder<MediaBloc, MediaStates>(
-                                buildWhen: (previous, current) =>
-                                previous.currentMedia?.path != current.currentMedia?.path,
-                                builder: (context, state) {
-                                  final media = state.currentMedia;
-                                  if (media != null) {
-                                    return MediaViewer(
-                                      key: ValueKey(media.path),
-                                      path: media.path,
-                                      // Si el fichero ya no está, su fila sale
-                                      // de la base de datos y el visor pasa al
-                                      // siguiente contenido.
-                                      onLoadFailed: () => context
-                                          .read<MediaBloc>()
-                                          .add(MediaLoadFailedEvent(media.id)),
+                              child: FernBusyOverlay(
+                                isBusy: state.isBusy,
+                                color: AppColors.black,
+                                radius: AppSizes.radiusSmall,
+                                indicatorColor: AppColors.white,
+                                child: BlocBuilder<MediaBloc, MediaStates>(
+                                  buildWhen: (previous, current) =>
+                                  previous.currentMedia?.path != current.currentMedia?.path,
+                                  builder: (context, state) {
+                                    final media = state.currentMedia;
+                                    if (media != null) {
+                                      return MediaViewer(
+                                        key: ValueKey(media.path),
+                                        path: media.path,
+                                        // Si el fichero ya no está, su fila sale
+                                        // de la base de datos y el visor pasa al
+                                        // siguiente contenido.
+                                        onLoadFailed: () => context
+                                            .read<MediaBloc>()
+                                            .add(MediaLoadFailedEvent(media.id)),
+                                      );
+                                    }
+                                    // Todavía no hay nada que enseñar: se están
+                                    // leyendo los detalles del contenido.
+                                    return const Center(
+                                      child: FernProgressIndicator(
+                                        color: AppColors.white,
+                                      ),
                                     );
-                                  }
-                                  return const Center(child: CircularProgressIndicator());
-                                },
+                                  },
+                                ),
                               ),
                             ),
                             IconButton(

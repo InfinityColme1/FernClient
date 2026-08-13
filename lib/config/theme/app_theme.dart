@@ -91,6 +91,14 @@ class AppTheme {
 
     tabBarTheme: const TabBarThemeData(mouseCursor: _clickable),
 
+    // El lavanda de la aplicación no se ve sobre el fondo claro, así que las
+    // esperas se pintan con el rosa, que es el color con el que la aplicación
+    // llama la atención. Sin surco: sólo gira el trazo.
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: AppColors.terciary,
+      circularTrackColor: Colors.transparent,
+    ),
+
     dividerTheme: const DividerThemeData(
       color: AppColors.lightgray,
       thickness: 1,

@@ -78,6 +78,30 @@ const drawerAnimationDuration = Duration(milliseconds: 300);
 const viewerTransitionDuration = Duration(milliseconds: 250);
 const infoPanelAnimationDuration = Duration(milliseconds: 300);
 
+/// Lo que tarda el cambio de pantalla: la que sale se desvanece mientras la que
+/// entra aparece. Corto a propósito, que es un cambio de pantalla y no una
+/// animación que haya que mirar.
+const pageTransitionDuration = Duration(milliseconds: 220);
+
+/// Tamaño con el que arranca la pantalla que entra, antes de asentarse en el
+/// suyo. Es un efecto de pintado, no de maquetación: nada se recoloca por él, así
+/// que no puede provocar desbordes mientras la transición está en marcha.
+const pageTransitionScale = 0.98;
+
+// Indicador de progreso
+/// Lo que tarda el velo de ocupado en aparecer y en irse. Bastante más corto que
+/// la transición de pantalla: lo que se quiere es que no parpadee, no que se note.
+const busyOverlayFadeDuration = Duration(milliseconds: 150);
+
+/// Cuánto tapa el velo lo que hay debajo mientras se espera. Deja ver el
+/// contenido anterior para que se entienda que sigue ahí, sólo que en espera.
+const busyOverlayOpacity = 0.55;
+
+/// Grosor del trazo del indicador de progreso, en su tamaño normal y en el
+/// pequeño (el que va dentro de un botón o de un campo).
+const progressStrokeWidth = 3.0;
+const progressSmallStrokeWidth = 2.0;
+
 // Sidebar
 const sidebarSelectedOpacity = 0.3;
 

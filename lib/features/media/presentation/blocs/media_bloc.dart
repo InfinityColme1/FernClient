@@ -132,8 +132,16 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<UpdateMediaDescriptionEvent>(onUpdateMediaDescription);
   }
 
+  /// El estado tal cual, pero sin la señal de espera.
+  ///
+  /// Es lo que se emite cuando una operación termina sin cambiar nada (porque ha
+  /// fallado o porque no había nada que hacer): la pantalla se queda como estaba
+  /// y el indicador de espera desaparece, que es lo que no puede olvidarse en
+  /// ninguna salida.
+  MediaStates get _idle => state.copyWith(isBusy: false);
+
   void onLoadScannedMedia(LoadScannedMediaEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading());
+    emit(const MediaLoading(isBusy: true));
     final result = await _getScannedMediaUseCase();
     if (result is DataSuccess && result.data != null) {
       emit(MediaLoading(mediaList: result.data!));
@@ -159,7 +167,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// aplicación puede llevar días abierta y lo que se enseñe aquí (y su contador)
   /// tiene que ser lo que de verdad queda en la papelera.
   void onLoadDeletedMedia(LoadDeletedMediaEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading());
+    emit(const MediaLoading(isBusy: true));
 
     await _purgeExpiredDeletedMediaUseCase();
 
@@ -177,7 +185,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// marca la lista como la de favoritos: es lo que hace que quitar el corazón
   /// desde el visor saque el contenido de esta rejilla y no de las otras.
   void onLoadFavoriteMedia(LoadFavoriteMediaEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading(favoritesOnly: true));
+    emit(const MediaLoading(favoritesOnly: true, isBusy: true));
 
     final result = await _getFavoriteMediaUseCase();
     final mediaList = (result is DataSuccess && result.data != null)
@@ -194,7 +202,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// etiqueta es cambiar de rejilla, así que la selección de la anterior no tiene
   /// nada que ver con la nueva.
   void onLoadMediaByTag(LoadMediaByTagEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading());
+    emit(const MediaLoading(isBusy: true));
 
     final result = await _getMediaByTagUseCase(params: event.tagId);
     final mediaList = (result is DataSuccess && result.data != null)
@@ -216,13 +224,18 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final selectedIds = state.selectedIds;
     if (selectedIds.isEmpty) return;
 
+    emit(state.copyWith(isBusy: true));
+
     final result = await _removeTagFromMediaUseCase(
       params: RemoveTagFromMediaParams(
         tagId: event.tagId,
         mediaIds: selectedIds.toList(),
       ),
     );
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     emit(_withoutSelection((summary) => selectedIds.contains(summary.id)));
   }
@@ -240,10 +253,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     final isFavorite = !media.isFavorite;
 
+    emit(state.copyWith(isBusy: true));
+
     final result = await _setMediaFavoriteUseCase(
       params: (id: media.id, isFavorite: isFavorite),
     );
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     if (!isFavorite && state.favoritesOnly) {
       emit(MediaLoading(
@@ -255,12 +273,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       return;
     }
 
-    emit(state.copyWith(currentMedia: media.copyWith(isFavorite: isFavorite)));
+    emit(state.copyWith(
+      currentMedia: media.copyWith(isFavorite: isFavorite),
+      isBusy: false,
+    ));
   }
 
   /// Vuelve a la biblioteca completa, sin búsqueda ni selección.
   Future<void> _loadLibrary(Emitter<MediaStates> emit) async {
-    emit(const MediaLoading());
+    emit(const MediaLoading(isBusy: true));
     final result = await _getMediaListUsecase();
     if (result is DataSuccess && result.data != null) {
       emit(MediaLoading(mediaList: result.data!));
@@ -277,8 +298,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       return;
     }
 
+    emit(state.copyWith(isBusy: true));
+
     final result = await _searchMediaUseCase(params: term);
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     final sections = result.data ?? const <MediaSearchSectionEntity>[];
 
@@ -294,8 +320,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     SearchSuggestionSelectedEvent event,
     Emitter<MediaStates> emit,
   ) async {
+    emit(state.copyWith(isBusy: true));
+
     final result = await _searchMediaBySuggestionUseCase(params: event.suggestion);
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     emit(_searchState(
       result.data ?? const [],
@@ -387,8 +418,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   }
 
   void onSaveMedia(SaveMediaEvent event, Emitter<MediaStates> emit) async {
+    emit(state.copyWith(isBusy: true));
+
     final result = await _saveMediaUseCase(params: event.media);
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     // Al guardar, la gestión de archivos puede haber llevado el fichero a otra
     // carpeta; el visor lo sigue enseñando, así que se queda con la ruta nueva.
@@ -423,6 +459,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       currentMediaIndex: currentMediaIndex,
       isModified: false,
       isNew: false,
+      isBusy: false,
     ));
   }
 
@@ -440,6 +477,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         false;
     if (isMarked) return;
 
+    emit(state.copyWith(isBusy: true));
+
     // El visor se abre desde cualquier pantalla, así que quien decide es el
     // propio contenido: si todavía está pendiente de revisar se descarta.
     final isPending = !event.media.isImported;
@@ -447,7 +486,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       discarded: isPending ? [id] : const [],
       marked: isPending ? const [] : [id],
     );
-    if (removed.isEmpty) return;
+    if (removed.isEmpty) {
+      emit(_idle);
+      return;
+    }
 
     final newList = List<MediaSummaryEntity>.from(state.mediaList ?? [])
       ..removeWhere((element) => element.id == id);
@@ -569,11 +611,16 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final selected = (state.mediaList ?? const <MediaSummaryEntity>[])
         .where((summary) => selectedIds.contains(summary.id));
 
+    emit(state.copyWith(isBusy: true));
+
     final removed = await _removedContent(
       discarded: [for (final summary in selected) if (!summary.isImported) summary.id],
       marked: [for (final summary in selected) if (summary.isImported) summary.id],
     );
-    if (removed.isEmpty) return;
+    if (removed.isEmpty) {
+      emit(_idle);
+      return;
+    }
 
     emit(_withoutSelection((summary) => removed.contains(summary.id)));
   }
@@ -584,8 +631,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final selectedIds = state.selectedIds;
     if (selectedIds.isEmpty) return;
 
+    emit(state.copyWith(isBusy: true));
+
     final result = await _restoreMediaUseCase(params: selectedIds.toList());
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     emit(_withoutSelection((summary) => selectedIds.contains(summary.id)));
   }
@@ -596,8 +648,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// Los ficheros siguen en el disco, así que un escaneo posterior los recoge
   /// otra vez como contenido nuevo.
   void onPurgeDeletedMedia(PurgeDeletedMediaEvent event, Emitter<MediaStates> emit) async {
+    emit(state.copyWith(isBusy: true));
+
     final result = await _purgeDeletedMediaUseCase();
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     emit(const MediaLoading(mediaList: []));
   }
@@ -611,8 +668,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final selectedIds = state.selectedIds;
     if (selectedIds.isEmpty) return;
 
+    emit(state.copyWith(isBusy: true));
+
     final result = await _confirmMediaListUseCase(params: selectedIds.toList());
-    if (result is! DataSuccess) return;
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
 
     emit(_withoutSelection(
       (summary) => selectedIds.contains(summary.id) && !summary.isImported,
@@ -706,6 +768,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   }
 
   void onMediaClicked(MediaClickedEvent event, Emitter<MediaStates> emit) async {
+    // Los detalles se leen de la base de datos, así que la rejilla espera con su
+    // indicador hasta que el visor tiene qué enseñar.
     emit(MediaLoading(
       mediaList: state.mediaList,
       selectedIds: state.selectedIds,
@@ -714,6 +778,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
+      isBusy: true,
     ));
 
     final index = state.mediaList!.indexWhere((element) => element.id == event.media.id);
@@ -758,41 +823,48 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   }
 
   void onScanDirectoryEvent(ScanDirectoryEvent event, Emitter<MediaStates> emit) async {
-    List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
-    final selectedIds = state.selectedIds;
-    emit(MediaLoading(mediaList: currentMedia, selectedIds: selectedIds));
-
-    final stream = await _scanDirectoryUseCase();
-
-    await emit.forEach<DataState<MediaSummaryEntity>>(
-      stream,
-      onData: (dataState) {
-        if (dataState is DataSuccess && dataState.data != null) {
-          currentMedia = List.from(currentMedia)..add(dataState.data!);
-          return MediaLoading(mediaList: currentMedia, selectedIds: selectedIds);
-        }
-        return state;
-      },
-    );
+    await _scan(emit, () => _scanDirectoryUseCase());
   }
 
   void onSelectAndScanDirectoryEvent(SelectAndScanDirectoryEvent event, Emitter<MediaStates> emit) async {
+    await _scan(emit, () => _selectAndScanDirectoryUsecase());
+  }
+
+  /// Escaneo de una carpeta: el contenido que va apareciendo se añade a lo que ya
+  /// hay en la rejilla, uno a uno, conforme el escaneo lo encuentra.
+  ///
+  /// Es de lo que más tarda de la aplicación (recorre el disco y escribe en la
+  /// base de datos), así que la rejilla espera con su indicador de principio a
+  /// fin, aunque ya se estén viendo los primeros resultados: mientras el
+  /// indicador esté puesto quedan cosas por llegar.
+  Future<void> _scan(
+    Emitter<MediaStates> emit,
+    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan,
+  ) async {
     List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
     final selectedIds = state.selectedIds;
-    emit(MediaLoading(mediaList: currentMedia, selectedIds: selectedIds));
+    emit(MediaLoading(mediaList: currentMedia, selectedIds: selectedIds, isBusy: true));
 
-    final stream = await _selectAndScanDirectoryUsecase();
+    final stream = await scan();
 
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
       onData: (dataState) {
         if (dataState is DataSuccess && dataState.data != null) {
           currentMedia = List.from(currentMedia)..add(dataState.data!);
-          return MediaLoading(mediaList: currentMedia, selectedIds: selectedIds);
+          return MediaLoading(
+            mediaList: currentMedia,
+            selectedIds: selectedIds,
+            isBusy: true,
+          );
         }
         return state;
       },
     );
+
+    // El escaneo ha terminado: se queda lo encontrado y se retira el indicador.
+    if (emit.isDone) return;
+    emit(_idle);
   }
 
   void onViewerNextEvent(ViewerNextEvent event, Emitter<MediaStates> emit) async {
@@ -802,6 +874,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final int offset = event.next ? 1 : -1;
     final nextIdx = (state.currentMediaIndex! + offset + length) % length;
     final nextMedia = state.mediaList![nextIdx];
+
+    // El visor sigue enseñando el contenido anterior mientras se leen los
+    // detalles del siguiente, con el indicador de espera encima.
+    emit(state.copyWith(isBusy: true));
 
     emit(await _detailsOf(nextMedia, nextIdx));
   }

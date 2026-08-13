@@ -21,6 +21,10 @@ class TagsBloc extends Bloc<TagsEvents, TagsState> {
   }
 
   Future<void> onLoadTags(LoadTagsEvent event, Emitter<TagsState> emit) async {
+    // Las etiquetas que ya hubiera se quedan a la vista mientras se leen las
+    // nuevas; lo que dice que hay que esperar es el indicador.
+    emit(state.copyWith(isBusy: true));
+
     final result = await _getTagTree();
 
     emit(TagsState(

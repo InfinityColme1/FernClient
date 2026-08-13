@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/ui/display/fern_progress_indicator.dart';
 import 'package:Fern/core/ui/inputs/fern_outlined_field.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,11 @@ class FernSearchInput extends StatefulWidget {
   /// Si es `false`, [suggestions] se muestra sin filtrar por el texto escrito.
   final bool filterSuggestions;
 
+  /// Las sugerencias se están buscando. Mientras dure, el campo enseña el
+  /// indicador de espera en lugar del botón de borrar: así se ve que lo que se ha
+  /// escrito se está consultando y que el desplegable está por llegar.
+  final bool isSearching;
+
   const FernSearchInput({
     super.key,
     required this.label,
@@ -37,6 +43,7 @@ class FernSearchInput extends StatefulWidget {
     this.onChanged,
     this.maxSuggestionsHeight = 200,
     this.filterSuggestions = true,
+    this.isSearching = false,
   });
 
   @override
@@ -171,17 +178,25 @@ class _FernSearchInputState extends State<FernSearchInput> {
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
-            suffixIcon: _controller.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.cancel, color: AppColors.black),
-                    onPressed: () {
-                      _controller.clear();
-                      _hideOverlay();
-                      widget.onChanged?.call('');
-                      setState(() {});
-                    },
-                  )
-                : null,
+            suffixIcon: switch ((widget.isSearching, _controller.text.isEmpty)) {
+              // El indicador va donde iría el botón de borrar, con su mismo
+              // hueco: al terminar la búsqueda el botón vuelve a su sitio sin que
+              // el campo cambie de tamaño.
+              (true, _) => const Padding(
+                  padding: EdgeInsets.all(AppSpacing.m),
+                  child: FernProgressIndicator.small(),
+                ),
+              (false, true) => null,
+              (false, false) => IconButton(
+                  icon: const Icon(Icons.cancel, color: AppColors.black),
+                  onPressed: () {
+                    _controller.clear();
+                    _hideOverlay();
+                    widget.onChanged?.call('');
+                    setState(() {});
+                  },
+                ),
+            },
           ),
         ),
       ),

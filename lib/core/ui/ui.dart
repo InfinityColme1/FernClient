@@ -18,6 +18,7 @@ export 'display/fern_avatar_tile.dart';
 export 'display/fern_chip.dart';
 export 'display/fern_editable_avatar.dart';
 export 'display/fern_empty_state.dart';
+export 'display/fern_progress_indicator.dart';
 export 'display/fern_section_header.dart';
 export 'display/fern_surface.dart';
 export 'inputs/fern_checkbox_tile.dart';

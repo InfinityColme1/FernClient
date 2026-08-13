@@ -53,6 +53,10 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
 
   List<T> _results = const [];
 
+  /// Hay una búsqueda en marcha. El campo lo enseña con su indicador de espera,
+  /// que es lo único que se ve mientras la base de datos responde.
+  bool _isSearching = false;
+
   /// Último nombre avisado, para no repetir el aviso mientras se sigue
   /// escribiendo sobre una coincidencia ya elegida.
   String? _notifiedName;
@@ -66,7 +70,12 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
 
     if (query.trim().isEmpty) {
       _debouncer.cancel();
-      if (_results.isNotEmpty) setState(() => _results = const []);
+      if (_results.isNotEmpty || _isSearching) {
+        setState(() {
+          _results = const [];
+          _isSearching = false;
+        });
+      }
       return;
     }
 
@@ -74,10 +83,15 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
   }
 
   Future<void> _search(String query) async {
+    setState(() => _isSearching = true);
+
     final results = await widget.search(query);
     if (!mounted) return;
 
-    setState(() => _results = results);
+    setState(() {
+      _isSearching = false;
+      _results = results;
+    });
 
     // Si se ha terminado de escribir un nombre que existe, vale como elegido
     // sin necesidad de pulsar la sugerencia.
@@ -126,6 +140,7 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
       hintText: widget.hintText,
       initialValue: widget.initialValue,
       filterSuggestions: false,
+      isSearching: _isSearching,
       suggestions: _results.map(widget.labelOf).toList(),
       onChanged: _onQueryChanged,
       onSelected: _onSuggestionSelected,

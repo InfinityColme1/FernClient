@@ -1,3 +1,4 @@
+import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
@@ -27,11 +28,20 @@ class MediaGrid extends StatelessWidget {
   /// superficie es de otra cosa (la ficha de gestión de etiquetas).
   final bool hasSurface;
 
+  /// Hay una consulta en marcha: lo que se está viendo es lo de antes y está a
+  /// punto de cambiar.
+  ///
+  /// Con contenido a la vista se pone el indicador de espera encima, y sin nada
+  /// que enseñar el indicador ocupa el sitio de la rejilla: mientras se está
+  /// leyendo no se puede decir que no haya nada, todavía no se sabe.
+  final bool isLoading;
+
   const MediaGrid({
     super.key,
     required this.mediaList,
     required this.columns,
     this.hasSurface = true,
+    this.isLoading = false,
   }) : sections = null;
 
   /// Rejilla de resultados de búsqueda: el contenido va separado en grupos
@@ -42,6 +52,7 @@ class MediaGrid extends StatelessWidget {
     required List<MediaSearchSectionEntity> this.sections,
     required this.columns,
     this.hasSurface = true,
+    this.isLoading = false,
   }) : mediaList = const [];
 
   /// Todo el contenido de la rejilla en el orden en el que se pinta, que es el
@@ -59,14 +70,18 @@ class MediaGrid extends StatelessWidget {
     final isEmpty = sections?.isEmpty ?? mediaList.isEmpty;
 
     if (isEmpty) {
-      final emptyState = FernEmptyState(
-        imageAsset: fernEmptyImage,
-        message: AppLocalizations.of(context).emptyLibrary,
-      );
+      // Mientras se está leyendo, el indicador de espera; sólo cuando ya se sabe
+      // que no hay nada se dice que la rejilla está vacía.
+      final Widget placeholder = isLoading
+          ? const Center(child: FernProgressIndicator())
+          : FernEmptyState(
+              imageAsset: fernEmptyImage,
+              message: AppLocalizations.of(context).emptyLibrary,
+            );
 
       return hasSurface
-          ? FernSurface(width: double.infinity, child: emptyState)
-          : SizedBox(width: double.infinity, child: emptyState);
+          ? FernSurface(width: double.infinity, child: placeholder)
+          : SizedBox(width: double.infinity, child: placeholder);
     }
 
     final orderedIds = _orderedIds;
@@ -75,9 +90,13 @@ class MediaGrid extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.l, right: AppSpacing.l),
-      child: hasSurface
-          ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
-          : content,
+      child: FernBusyOverlay(
+        isBusy: isLoading,
+        radius: hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,
+        child: hasSurface
+            ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
+            : content,
+      ),
     );
   }
 

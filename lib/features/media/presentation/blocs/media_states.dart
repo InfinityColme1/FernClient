@@ -45,6 +45,13 @@ abstract class MediaStates extends Equatable {
   /// la rejilla: en cualquier otra pantalla el contenido se queda donde está.
   final bool favoritesOnly;
 
+  /// Hay una consulta a la base de datos o una operación con ficheros en marcha.
+  ///
+  /// Es lo que enseña el indicador de espera de las pantallas. Lo pone quien
+  /// lanza la operación y lo quita el estado con el que termina, así que basta
+  /// con emitir el resultado para que el indicador desaparezca.
+  final bool isBusy;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -58,6 +65,7 @@ abstract class MediaStates extends Equatable {
     this.searchFilters = allSearchResultTypes,
     this.searchSuggestion,
     this.favoritesOnly = false,
+    this.isBusy = false,
   });
 
   /// Los grupos que la rejilla pinta: los de la búsqueda que el filtro deja
@@ -79,6 +87,7 @@ abstract class MediaStates extends Equatable {
     Set<SearchResultType> ? searchFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
+    bool ? isBusy,
   });
 
   @override
@@ -95,6 +104,7 @@ abstract class MediaStates extends Equatable {
     searchFilters,
     searchSuggestion,
     favoritesOnly,
+    isBusy,
   ];
 }
 
@@ -110,6 +120,7 @@ class MediaLoading extends MediaStates {
     super.searchFilters,
     super.searchSuggestion,
     super.favoritesOnly,
+    super.isBusy,
   });
 
   @override
@@ -126,6 +137,7 @@ class MediaLoading extends MediaStates {
     Set<SearchResultType> ? searchFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
+    bool ? isBusy,
   }) {
     return MediaLoading(
       mediaList: mediaList ?? this.mediaList,
@@ -138,6 +150,7 @@ class MediaLoading extends MediaStates {
       searchFilters: searchFilters ?? this.searchFilters,
       searchSuggestion: searchSuggestion ?? this.searchSuggestion,
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+      isBusy: isBusy ?? this.isBusy,
     );
   }
 }
@@ -161,6 +174,7 @@ class DetailedMedia extends MediaStates {
     super.searchFilters,
     super.searchSuggestion,
     super.favoritesOnly,
+    super.isBusy,
   });
 
   @override
@@ -177,6 +191,7 @@ class DetailedMedia extends MediaStates {
     Set<SearchResultType> ? searchFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
+    bool ? isBusy,
   }) {
     return DetailedMedia(
         mediaList: mediaList ?? this.mediaList,
@@ -191,6 +206,7 @@ class DetailedMedia extends MediaStates {
         searchFilters: searchFilters ?? this.searchFilters,
         searchSuggestion: searchSuggestion ?? this.searchSuggestion,
         favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+        isBusy: isBusy ?? this.isBusy,
     );
   }
 }

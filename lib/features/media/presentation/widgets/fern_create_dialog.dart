@@ -96,6 +96,24 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   String? _selectedImagePath;
   TagEntity? _parentTag;
 
+  /// Hay una escritura en marcha: la de guardar o la de copiar el avatar
+  /// elegido. El botón de confirmar pasa a ser el indicador de espera y no admite
+  /// una segunda pulsación: sería crear la misma etiqueta (o el mismo creador)
+  /// dos veces.
+  bool _isBusy = false;
+
+  /// Lanza [operation] dejando el diálogo en espera mientras dure.
+  Future<void> _run(Future<void> Function() operation) async {
+    if (_isBusy) return;
+
+    setState(() => _isBusy = true);
+    try {
+      await operation();
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
   /// Elige la imagen del avatar y se queda con la copia que guarda la
   /// aplicación: los avatares se cargan siempre de la carpeta de avatares, no
   /// de donde el usuario tuviera la imagen.
@@ -105,10 +123,15 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     final path = result?.files.single.path;
     if (path == null) return;
 
-    final storedPath = await _avatarStorage.store(path);
-    if (!mounted) return;
+    // La copia a la carpeta de avatares puede tardar, así que se hace con el
+    // diálogo en espera. El explorador de ficheros no: allí el tiempo lo pone el
+    // usuario.
+    await _run(() async {
+      final storedPath = await _avatarStorage.store(path);
+      if (!mounted) return;
 
-    setState(() => _selectedImagePath = storedPath);
+      setState(() => _selectedImagePath = storedPath);
+    });
   }
 
   Future<List<TagEntity>> _searchParentTags(String query) async {
@@ -131,7 +154,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// Guarda en la base de datos y, si sale bien, cierra el diálogo devolviendo
   /// lo guardado. Si falla, el diálogo se queda abierto para no perder lo
   /// escrito.
-  Future<void> _confirm() async {
+  Future<void> _confirm() => _run(_save);
+
+  Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
@@ -228,7 +253,11 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           },
         ],
       ),
-      actionButton: FernConfirmButton(icon: null, onPressed: _confirm),
+      actionButton: FernConfirmButton(
+        icon: null,
+        isBusy: _isBusy,
+        onPressed: _confirm,
+      ),
     );
   }
 

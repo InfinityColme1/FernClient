@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/debouncer.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
@@ -47,6 +48,10 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
 
   List<SearchSuggestionEntity> _suggestions = const [];
 
+  /// Se están buscando las sugerencias. Mientras dure, el buscador enseña el
+  /// indicador de espera en el sitio del botón de borrar.
+  bool _isSuggesting = false;
+
   void _onQueryChanged(String value) {
     setState(() {});
     _goToMediaPage();
@@ -74,10 +79,13 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
   }
 
   Future<void> _loadSuggestions(String term) async {
+    setState(() => _isSuggesting = true);
+
     final result = await _searchSuggestions(params: term);
     if (!mounted) return;
 
     setState(() {
+      _isSuggesting = false;
       _suggestions = result is DataSuccess
           ? result.data ?? const []
           : const <SearchSuggestionEntity>[];
@@ -118,7 +126,10 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
     _suggestionsDebouncer.cancel();
     _searchDebouncer.cancel();
     _hideOverlay();
-    setState(() => _suggestions = const []);
+    setState(() {
+      _suggestions = const [];
+      _isSuggesting = false;
+    });
     _bloc.add(const ClearMediaSearchEvent());
   }
 
@@ -238,7 +249,15 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                     ),
                   ),
                 ),
-                if (_controller.text.isNotEmpty)
+                // Mientras se consultan las sugerencias, el indicador de espera
+                // ocupa el sitio del botón de borrar: es el mismo hueco, así que
+                // el campo de texto no cambia de ancho al aparecer.
+                if (_isSuggesting)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                    child: FernProgressIndicator.small(),
+                  )
+                else if (_controller.text.isNotEmpty)
                   IconButton(
                     onPressed: _clear,
                     visualDensity: VisualDensity.compact,

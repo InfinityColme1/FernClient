@@ -139,7 +139,11 @@ class _DeleteView extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: MediaGrid(mediaList: mediaList, columns: 4),
+                child: MediaGrid(
+                  mediaList: mediaList,
+                  columns: 4,
+                  isLoading: state.isBusy,
+                ),
               ),
             ],
           ),

@@ -111,7 +111,7 @@ class _TagManagerPageState extends State<TagManagerPage> {
 
           // Sin etiquetas no hay nada que gestionar: se dice y punto. Mientras la
           // primera lectura está en marcha no se dice que no haya ninguna,
-          // todavía no se sabe.
+          // todavía no se sabe: se espera con el indicador.
           if (rows.isEmpty) {
             return Padding(
               padding: AppSpacing.pagePadding,
@@ -120,7 +120,7 @@ class _TagManagerPageState extends State<TagManagerPage> {
                       imageAsset: fernEmptyImage,
                       message: AppLocalizations.of(context).noTagsYet,
                     )
-                  : const SizedBox.shrink(),
+                  : const Center(child: FernProgressIndicator()),
             );
           }
 
@@ -138,10 +138,19 @@ class _TagManagerPageState extends State<TagManagerPage> {
                   ),
                   child: SizedBox(
                     width: AppSizes.tagListWidth,
-                    child: TagList(
-                      tags: state.tags,
-                      selectedTagId: selected.id,
-                      onSelected: _select,
+                    // Al guardar o borrar una etiqueta la lista se vuelve a leer:
+                    // hasta que llegue se queda la de antes, con el indicador
+                    // encima.
+                    child: FernBusyOverlay(
+                      isBusy: state.isBusy,
+                      // La lista va directamente sobre el fondo, sin superficie
+                      // propia de la que copiar el redondeo.
+                      radius: AppSizes.radiusMedium,
+                      child: TagList(
+                        tags: state.tags,
+                        selectedTagId: selected.id,
+                        onSelected: _select,
+                      ),
                     ),
                   ),
                 ),
@@ -185,6 +194,7 @@ class _TagManagerPageState extends State<TagManagerPage> {
             builder: (context, state) => MediaGrid(
               mediaList: state.mediaList ?? const [],
               columns: tagManagerGridColumns,
+              isLoading: state.isBusy,
               // La superficie de esta pantalla es la de la ficha: la rejilla va
               // directamente sobre el fondo.
               hasSurface: false,

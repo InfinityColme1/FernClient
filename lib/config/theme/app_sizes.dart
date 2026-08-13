@@ -65,4 +65,13 @@ class AppSizes {
   // Buscador de la barra superior
   static const double searchBarWidth = 420.0;
   static const double searchBarHeight = 48.0;
+
+  // Indicador de progreso
+  /// Tamaño del indicador de progreso cuando ocupa el sitio de lo que se está
+  /// esperando (una rejilla, un panel).
+  static const double progressIndicator = 36.0;
+
+  /// Tamaño del indicador de progreso cuando va dentro de otra cosa: un botón,
+  /// un campo de búsqueda o una cabecera.
+  static const double progressIndicatorSmall = 20.0;
 }

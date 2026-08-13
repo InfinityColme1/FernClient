@@ -103,8 +103,16 @@ class _MediaView extends StatelessWidget {
               ),
               Expanded(
                 child: sections == null
-                    ? MediaGrid(mediaList: mediaList, columns: 4)
-                    : MediaGrid.sections(sections: sections, columns: 4),
+                    ? MediaGrid(
+                        mediaList: mediaList,
+                        columns: 4,
+                        isLoading: state.isBusy,
+                      )
+                    : MediaGrid.sections(
+                        sections: sections,
+                        columns: 4,
+                        isLoading: state.isBusy,
+                      ),
               ),
             ],
           ),
