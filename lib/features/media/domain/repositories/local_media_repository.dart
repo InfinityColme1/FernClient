@@ -1,3 +1,4 @@
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
@@ -23,7 +24,13 @@ abstract class LocalMediaRepository {
 
   Future<DataState<List<MediaSummaryEntity>>> getMediaList();
 
-  Future<DataState<List<MediaSummaryEntity>>> getScannedMedia();
+  /// Contenido pendiente de revisar, el de la pantalla de importación.
+  ///
+  /// [source] filtra por la fuente de la que llegó; con [ImportSource.all] se
+  /// devuelve el de todas.
+  Future<DataState<List<MediaSummaryEntity>>> getScannedMedia({
+    ImportSource source,
+  });
 
   /// Contenido marcado para borrar, el de la pantalla de eliminados.
   Future<DataState<List<MediaSummaryEntity>>> getDeletedMedia();

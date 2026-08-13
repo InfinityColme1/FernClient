@@ -33,14 +33,20 @@
   "deleteForeverTooltip": "Esborra definitivament de la base de dades",
 
   "actionImport": "Importa",
+  "actionRefresh": "Actualitza",
+  "actionSelectFolder": "Tria una carpeta",
   "actionDelete": "Elimina",
   "actionConfirm": "Confirma",
   "actionRestore": "Restableix",
   "actionSave": "Desa",
+  "showPassword": "Mostra",
+  "hidePassword": "Amaga",
   "actionUnassignTag": "Treu l'etiqueta",
   "actionRemoveParentTag": "Treu el pare",
   "actionDeleteTag": "Elimina l'etiqueta",
   "sourceLocalComputer": "Equip local",
+  "sourceAll": "Totes",
+  "sourceNotConfigured": "Sense configurar",
 
   "selectItem": "Selecciona",
   "deselectItem": "Treu la selecció",
@@ -80,6 +86,7 @@
   "settingsTitle": "Configuració",
   "settingsLanguage": "Idioma",
   "settingsFiles": "Fitxers",
+  "settingsRemoteSources": "Fonts remotes",
 
   "languageSectionTitle": "Idioma de l'aplicació",
   "languageSectionNote": "Tota l'aplicació canvia d'idioma tan bon punt en tries un.",
@@ -113,5 +120,43 @@
   "avatarsMoved": "{count, plural, =0{Els avatars ja eren en aquesta carpeta} =1{1 avatar mogut a la carpeta nova} other{{count} avatars moguts a la carpeta nova}}",
   "avatarsMoveFailed": "No s'han pogut moure els avatars",
   "filesOrganized": "{count, plural, =0{Ja era tot al seu lloc} =1{1 fitxer mogut} other{{count} fitxers moguts}}",
-  "filesOrganizeFailed": "No s'han pogut ordenar els fitxers"
+  "filesOrganizeFailed": "No s'han pogut ordenar els fitxers",
+
+  "redditTitle": "Reddit",
+  "redditDescription": "Fern es descarrega el que tinguis desat al teu compte de Reddit. Registra una aplicació de tipus script a reddit.com/prefs/apps per aconseguir les dues claus.",
+  "redditClientId": "ID de client",
+  "redditClientIdHint": "La clau que apareix sota el nom de la teva aplicació",
+  "redditClientSecret": "Secret de client",
+  "redditClientSecretHint": "El secret de la teva aplicació",
+  "redditUsername": "Usuari",
+  "redditUsernameHint": "El teu compte de Reddit, sense /u/",
+  "redditPassword": "Contrasenya",
+  "redditPasswordHint": "La contrasenya d'aquest compte",
+  "redditCredentialsNote": "Les credencials es queden en aquest equip i només s'usen per parlar amb Reddit.",
+
+  "importLimitAll": "Tots",
+  "importLimitSinceLast": "Nous",
+  "importLimitSinceLastTooltip": "Només el que s'ha desat des de la darrera importació",
+  "importLimitTooltip": "Màxim d'elements que porta una exploració",
+  "lastImportNever": "Mai importat",
+  "sourceNotConfiguredHint": "Configura aquesta font als ajustaments abans d'importar-ne",
+  "lastImportHint": "Quan es va mirar per darrera vegada si hi havia contingut nou",
+  "lastImportMinutes": "{count, plural, =0{Ara mateix} =1{Fa 1 min} other{Fa {count} min}}",
+  "@lastImportMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportHours": "{count, plural, =1{Fa 1 h} other{Fa {count} h}}",
+  "@lastImportHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportDays": "{count, plural, =1{Fa 1 dia} other{Fa {count} dies}}",
+  "@lastImportDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

@@ -38,13 +38,6 @@ final unknownCreator = CreatorEntity(id: 0, name: "Unknown");
 // Unknown tag
 final unknownTag = TagEntity(id: 0, name: "Unknown", children: []);
 
-// Import sources
-//
-// Son identificadores, no textos de pantalla: Pixiv y Twitter se llaman igual
-// en todos los idiomas y el equipo local se traduce al pintarlo.
-const localComputerSource = "Local computer";
-const importSources = [localComputerSource, "Pixiv", "Twitter"];
-
 // Preferences keys
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
@@ -53,11 +46,118 @@ const copyFilesPreferenceKey = 'copy_files';
 const libraryPathPreferenceKey = 'library_path';
 const avatarsPathPreferenceKey = 'avatars_path';
 const fileOrganizationPreferenceKey = 'file_organization';
+/// Prefijo de la preferencia que guarda cuándo se importó por última vez de una
+/// fuente. Se completa con el identificador de la fuente.
+const lastImportPreferenceKeyPrefix = 'last_import_';
+
+const redditClientIdPreferenceKey = 'reddit_client_id';
+const redditClientSecretPreferenceKey = 'reddit_client_secret';
+const redditUsernamePreferenceKey = 'reddit_username';
+const redditPasswordPreferenceKey = 'reddit_password';
 
 // Gestión de ficheros
 /// Carpeta de la biblioteca donde se guardan los avatares mientras el usuario
 /// no elija otra, colgando del directorio de datos de la aplicación.
 const avatarsFolderName = 'avatars';
+
+/// Carpeta a la que se descarga lo que viene de una fuente remota, con una
+/// subcarpeta por fuente. Es el equivalente a la carpeta que se escanea en el
+/// equipo: de aquí lo recoge la gestión de ficheros cuando el contenido pasa a
+/// ser definitivo.
+const remoteDownloadsFolderName = 'downloads';
+
+// Importación
+/// Hasta dónde llega un escaneo.
+///
+/// [unlimitedImportLimit] es "todo lo que haya", que es como se importa mientras
+/// no se diga otra cosa. [untilLastImportLimit] es "lo guardado desde la última
+/// vez": no es una cuenta, es un punto de parada, y quien sabe dónde está es
+/// cada fuente. El resto son cortes por número, para traerse una muestra en
+/// lugar de la cuenta entera.
+const unlimitedImportLimit = 0;
+const untilLastImportLimit = -1;
+const importLimitOptions = [
+  unlimitedImportLimit,
+  untilLastImportLimit,
+  10,
+  25,
+  50,
+  100,
+  250,
+];
+
+/// Prefijo de la preferencia que recuerda por dónde se quedó la última
+/// importación de una fuente: el identificador de lo más nuevo que había en ella
+/// en ese momento. Se completa con el identificador de la fuente.
+const lastImportMarkerPreferenceKeyPrefix = 'last_import_marker_';
+
+// Fuentes remotas
+/// Con lo que la aplicación se identifica ante las API remotas. Reddit exige
+/// uno propio de la aplicación y rechaza las peticiones que no lo llevan.
+const remoteUserAgent = 'FernClient/1.0 (by /u/%s)';
+
+/// Extensiones que la aplicación reconoce como contenido, tanto al escanear el
+/// equipo como al decidir qué se descarga de una fuente remota.
+const mediaExtensions = {
+  '.jpg', '.jpeg', '.webp', '.gif', '.png', '.mp4', '.mov', '.avi',
+};
+
+// Enlaces externos
+/// Sitios cuyos enlaces la aplicación se atreve a abrir para buscar el fichero
+/// que hay detrás.
+///
+/// Es una lista cerrada a propósito: lo guardado en una plataforma puede llevar
+/// a cualquier parte de internet, y sólo se visitan sitios conocidos que alojan
+/// contenido multimedia. Cualquier otro enlace se descarta sin llegar a pedirlo.
+/// Vale el dominio y también sus subdominios.
+const externalMediaHosts = {
+  'redgifs.com',
+  'imgur.com',
+  'gfycat.com',
+  'streamable.com',
+  'giphy.com',
+  'tenor.com',
+  'ibb.co',
+  'postimg.cc',
+};
+
+/// Lo que se llega a leer de una página al buscar sus etiquetas de contenido.
+/// Con la cabecera basta; el resto no se descarga.
+const maxExternalPageBytes = 512 * 1024;
+
+/// Tope de lo que se descarga de un solo contenido. Lo que pese más se descarta:
+/// una descarga sin fin no es contenido, es un problema.
+const maxRemoteDownloadBytes = 512 * 1024 * 1024;
+
+/// Tipos de contenido que se aceptan al descargar. Lo que llegue diciendo ser
+/// otra cosa no se guarda, aunque su dirección acabara en `.jpg`.
+const remoteMediaContentTypes = ['image/', 'video/'];
+
+// Redgifs
+/// Sus páginas se arman en el navegador, así que las etiquetas de la página no
+/// sirven: el fichero se pide a su API, que da un permiso temporal a cualquiera.
+const redgifsTokenUrl = 'https://api.redgifs.com/v2/auth/temporary';
+const redgifsGifUrl = 'https://api.redgifs.com/v2/gifs/';
+
+// Reddit
+const redditTokenUrl = 'https://www.reddit.com/api/v1/access_token';
+const redditApiHost = 'oauth.reddit.com';
+
+/// Cuántos elementos se piden por página del listado de guardados. Es el máximo
+/// que admite la API.
+const redditPageSize = 100;
+
+/// Tope de páginas que se recorren de una vez. Con el tamaño de página son
+/// hasta mil elementos, que es también donde Reddit corta el histórico.
+const redditMaxPages = 10;
+
+/// Nombre de la etiqueta de origen con la que nace el contenido de Reddit, para
+/// que la ordenación de ficheros por origen sepa dónde ponerlo.
+const redditSourceTagName = 'Reddit';
+
+/// Lo que se espera a que respondan las llamadas a la API antes de darlas por
+/// perdidas.
+const remoteRequestTimeout = Duration(seconds: 30);
 
 /// Subcarpeta a la que van los contenidos que no tienen el dato por el que se
 /// está ordenando (sin etiqueta, sin origen o sin creador).

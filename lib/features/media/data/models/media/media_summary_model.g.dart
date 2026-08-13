@@ -22,18 +22,23 @@ const MediaSummaryModelSchema = CollectionSchema(
       name: r'deletedAt',
       type: IsarType.dateTime,
     ),
-    r'isDeleted': PropertySchema(
+    r'importSource': PropertySchema(
       id: 1,
+      name: r'importSource',
+      type: IsarType.string,
+    ),
+    r'isDeleted': PropertySchema(
+      id: 2,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'isImported': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'isImported',
       type: IsarType.bool,
     ),
     r'path': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'path',
       type: IsarType.string,
     )
@@ -52,6 +57,19 @@ const MediaSummaryModelSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'path',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'importSource': IndexSchema(
+      id: -7892523392039954412,
+      name: r'importSource',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'importSource',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -79,6 +97,7 @@ int _mediaSummaryModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.importSource.length * 3;
   bytesCount += 3 + object.path.length * 3;
   return bytesCount;
 }
@@ -90,9 +109,10 @@ void _mediaSummaryModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.deletedAt);
-  writer.writeBool(offsets[1], object.isDeleted);
-  writer.writeBool(offsets[2], object.isImported);
-  writer.writeString(offsets[3], object.path);
+  writer.writeString(offsets[1], object.importSource);
+  writer.writeBool(offsets[2], object.isDeleted);
+  writer.writeBool(offsets[3], object.isImported);
+  writer.writeString(offsets[4], object.path);
 }
 
 MediaSummaryModel _mediaSummaryModelDeserialize(
@@ -104,9 +124,10 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
   final object = MediaSummaryModel();
   object.deletedAt = reader.readDateTimeOrNull(offsets[0]);
   object.id = id;
-  object.isDeleted = reader.readBool(offsets[1]);
-  object.isImported = reader.readBool(offsets[2]);
-  object.path = reader.readString(offsets[3]);
+  object.importSource = reader.readString(offsets[1]);
+  object.isDeleted = reader.readBool(offsets[2]);
+  object.isImported = reader.readBool(offsets[3]);
+  object.path = reader.readString(offsets[4]);
   return object;
 }
 
@@ -120,10 +141,12 @@ P _mediaSummaryModelDeserializeProp<P>(
     case 0:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
+      return (reader.readBool(offset)) as P;
+    case 4:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -323,6 +346,51 @@ extension MediaSummaryModelQueryWhere
       }
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      importSourceEqualTo(String importSource) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'importSource',
+        value: [importSource],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      importSourceNotEqualTo(String importSource) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'importSource',
+              lower: [],
+              upper: [importSource],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'importSource',
+              lower: [importSource],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'importSource',
+              lower: [importSource],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'importSource',
+              lower: [],
+              upper: [importSource],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
 }
 
 extension MediaSummaryModelQueryFilter
@@ -453,6 +521,142 @@ extension MediaSummaryModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'importSource',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'importSource',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'importSource',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'importSource',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'importSource',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'importSource',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'importSource',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'importSource',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'importSource',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      importSourceIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'importSource',
+        value: '',
       ));
     });
   }
@@ -651,6 +855,20 @@ extension MediaSummaryModelQuerySortBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByImportSource() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'importSource', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByImportSourceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'importSource', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       sortByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isDeleted', Sort.asc);
@@ -723,6 +941,20 @@ extension MediaSummaryModelQuerySortThenBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByImportSource() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'importSource', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByImportSourceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'importSource', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       thenByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isDeleted', Sort.asc);
@@ -775,6 +1007,13 @@ extension MediaSummaryModelQueryWhereDistinct
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByImportSource({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'importSource', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
       distinctByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isDeleted');
@@ -808,6 +1047,13 @@ extension MediaSummaryModelQueryProperty
       deletedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'deletedAt');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, String, QQueryOperations>
+      importSourceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'importSource');
     });
   }
 

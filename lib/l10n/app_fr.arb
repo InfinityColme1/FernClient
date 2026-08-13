@@ -33,14 +33,20 @@
   "deleteForeverTooltip": "Supprimer définitivement de la base de données",
 
   "actionImport": "Importer",
+  "actionRefresh": "Actualiser",
+  "actionSelectFolder": "Choisir un dossier",
   "actionDelete": "Supprimer",
   "actionConfirm": "Confirmer",
   "actionRestore": "Restaurer",
   "actionSave": "Enregistrer",
+  "showPassword": "Afficher",
+  "hidePassword": "Masquer",
   "actionUnassignTag": "Retirer le tag",
   "actionRemoveParentTag": "Retirer le parent",
   "actionDeleteTag": "Supprimer le tag",
   "sourceLocalComputer": "Ordinateur local",
+  "sourceAll": "Toutes",
+  "sourceNotConfigured": "Non configurée",
 
   "selectItem": "Sélectionner",
   "deselectItem": "Désélectionner",
@@ -80,6 +86,7 @@
   "settingsTitle": "Paramètres",
   "settingsLanguage": "Langue",
   "settingsFiles": "Fichiers",
+  "settingsRemoteSources": "Sources distantes",
 
   "languageSectionTitle": "Langue de l'application",
   "languageSectionNote": "Toute l'application change de langue dès que vous en choisissez une.",
@@ -113,5 +120,43 @@
   "avatarsMoved": "{count, plural, =0{Les avatars étaient déjà dans ce dossier} =1{1 avatar déplacé vers le nouveau dossier} other{{count} avatars déplacés vers le nouveau dossier}}",
   "avatarsMoveFailed": "Les avatars n'ont pas pu être déplacés",
   "filesOrganized": "{count, plural, =0{Tout était déjà à sa place} =1{1 fichier déplacé} other{{count} fichiers déplacés}}",
-  "filesOrganizeFailed": "Les fichiers n'ont pas pu être classés"
+  "filesOrganizeFailed": "Les fichiers n'ont pas pu être classés",
+
+  "redditTitle": "Reddit",
+  "redditDescription": "Fern télécharge ce que tu as enregistré sur ton compte Reddit. Crée une application de type script sur reddit.com/prefs/apps pour obtenir les deux clés.",
+  "redditClientId": "Identifiant client",
+  "redditClientIdHint": "La clé affichée sous le nom de ton application",
+  "redditClientSecret": "Secret client",
+  "redditClientSecretHint": "Le secret de ton application",
+  "redditUsername": "Nom d'utilisateur",
+  "redditUsernameHint": "Ton compte Reddit, sans /u/",
+  "redditPassword": "Mot de passe",
+  "redditPasswordHint": "Le mot de passe de ce compte",
+  "redditCredentialsNote": "Les identifiants restent sur cet ordinateur et ne servent qu'à parler à Reddit.",
+
+  "importLimitAll": "Tous",
+  "importLimitSinceLast": "Nouveaux",
+  "importLimitSinceLastTooltip": "Seulement ce qui a été enregistré depuis le dernier import",
+  "importLimitTooltip": "Nombre maximum d'éléments par analyse",
+  "lastImportNever": "Jamais importé",
+  "sourceNotConfiguredHint": "Configure cette source dans les réglages avant d'importer",
+  "lastImportHint": "Dernière fois que cette source a été consultée",
+  "lastImportMinutes": "{count, plural, =0{Tout juste} =1{Il y a 1 min} other{Il y a {count} min}}",
+  "@lastImportMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportHours": "{count, plural, =1{Il y a 1 h} other{Il y a {count} h}}",
+  "@lastImportHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportDays": "{count, plural, =1{Il y a 1 jour} other{Il y a {count} jours}}",
+  "@lastImportDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

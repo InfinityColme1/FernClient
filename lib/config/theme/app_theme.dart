@@ -62,7 +62,16 @@ class AppTheme {
     ),
 
     iconButtonTheme: IconButtonThemeData(
-      style: const ButtonStyle(mouseCursor: _clickable),
+      style: ButtonStyle(
+        mouseCursor: _clickable,
+        // Un botón que no se puede pulsar se pinta en gris claro: es lo único
+        // que lo distingue de uno que sí, porque no tiene ni fondo ni texto.
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled)
+              ? AppColors.lightgray
+              : AppColors.black,
+        ),
+      ),
     ),
 
     filledButtonTheme: FilledButtonThemeData(

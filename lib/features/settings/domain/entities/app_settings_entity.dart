@@ -1,3 +1,4 @@
+import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
 /// Idiomas en los que se puede usar la aplicación.
@@ -72,6 +73,11 @@ class AppSettingsEntity extends Equatable {
 
   final FileOrganizationCriteria organization;
 
+  /// Credenciales de la fuente remota de Reddit. Vienen vacías mientras el
+  /// usuario no las haya rellenado, que es como la aplicación sabe que esa
+  /// fuente todavía no se puede usar.
+  final RedditSettingsEntity reddit;
+
   const AppSettingsEntity({
     this.language = AppLanguage.english,
     this.syncLocalFiles = false,
@@ -79,6 +85,7 @@ class AppSettingsEntity extends Equatable {
     this.libraryPath,
     required this.avatarsPath,
     this.organization = FileOrganizationCriteria.flat,
+    this.reddit = const RedditSettingsEntity(),
   });
 
   /// Los ficheros sólo se reordenan si el usuario lo ha pedido y ha dicho
@@ -92,6 +99,7 @@ class AppSettingsEntity extends Equatable {
     String? libraryPath,
     String? avatarsPath,
     FileOrganizationCriteria? organization,
+    RedditSettingsEntity? reddit,
   }) {
     return AppSettingsEntity(
       language: language ?? this.language,
@@ -100,6 +108,7 @@ class AppSettingsEntity extends Equatable {
       libraryPath: libraryPath ?? this.libraryPath,
       avatarsPath: avatarsPath ?? this.avatarsPath,
       organization: organization ?? this.organization,
+      reddit: reddit ?? this.reddit,
     );
   }
 
@@ -111,5 +120,6 @@ class AppSettingsEntity extends Equatable {
         libraryPath,
         avatarsPath,
         organization,
+        reddit,
       ];
 }

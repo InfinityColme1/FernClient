@@ -1,3 +1,4 @@
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:isar/isar.dart';
 import 'media_model.dart';
@@ -13,6 +14,14 @@ class MediaSummaryModel {
   late String path;
 
   bool isImported = false; // Nuevo campo para diferenciar
+
+  /// Fuente de la que ha llegado el contenido, con el identificador de
+  /// [ImportSource]. Es lo que filtra la rejilla de la pantalla de importación.
+  ///
+  /// Lo que se guardó antes de que hubiera fuentes remotas se lee como local,
+  /// que es de donde vino.
+  @Index()
+  String importSource = ImportSource.local.id;
 
   /// Contenido marcado para borrar: sigue en la base de datos, pero sólo se ve
   /// en la pantalla de eliminados hasta que se restablezca o se fuerce el
@@ -34,7 +43,8 @@ class MediaSummaryModel {
         path: path,
         isImported: isImported,
         isDeleted: isDeleted,
-        deletedAt: deletedAt
+        deletedAt: deletedAt,
+        importSource: ImportSource.fromId(importSource)
     );
   }
 
@@ -44,7 +54,8 @@ class MediaSummaryModel {
       ..path = entity.path
       ..isImported = entity.isImported
       ..isDeleted = entity.isDeleted
-      ..deletedAt = entity.deletedAt;
+      ..deletedAt = entity.deletedAt
+      ..importSource = entity.importSource.id;
     return model;
   }
 }

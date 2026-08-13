@@ -65,6 +65,14 @@ class MediaGrid extends StatelessWidget {
             for (final media in section.media) media.id,
         ];
 
+  /// El hueco que la rejilla deja hasta el borde de la ventana.
+  ///
+  /// La pantalla ya separa por arriba y por la izquierda (que es donde están la
+  /// cabecera y el menú), así que aquí se completan los otros dos lados: la
+  /// superficie nunca toca el borde, ni con contenido ni vacía.
+  static const _padding =
+      EdgeInsets.only(bottom: AppSpacing.l, right: AppSpacing.l);
+
   @override
   Widget build(BuildContext context) {
     final isEmpty = sections?.isEmpty ?? mediaList.isEmpty;
@@ -79,9 +87,12 @@ class MediaGrid extends StatelessWidget {
               message: AppLocalizations.of(context).emptyLibrary,
             );
 
-      return hasSurface
-          ? FernSurface(width: double.infinity, child: placeholder)
-          : SizedBox(width: double.infinity, child: placeholder);
+      return Padding(
+        padding: _padding,
+        child: hasSurface
+            ? FernSurface(width: double.infinity, child: placeholder)
+            : SizedBox(width: double.infinity, child: placeholder),
+      );
     }
 
     final orderedIds = _orderedIds;
@@ -89,7 +100,7 @@ class MediaGrid extends StatelessWidget {
         sections == null ? _buildGrid(orderedIds) : _buildSections(orderedIds);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.l, right: AppSpacing.l),
+      padding: _padding,
       child: FernBusyOverlay(
         isBusy: isLoading,
         radius: hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,

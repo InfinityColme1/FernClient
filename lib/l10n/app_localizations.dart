@@ -264,6 +264,18 @@ abstract class AppLocalizations {
   /// **'Import'**
   String get actionImport;
 
+  /// No description provided for @actionRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get actionRefresh;
+
+  /// No description provided for @actionSelectFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose folder'**
+  String get actionSelectFolder;
+
   /// No description provided for @actionDelete.
   ///
   /// In en, this message translates to:
@@ -288,6 +300,18 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get actionSave;
 
+  /// No description provided for @showPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get showPassword;
+
+  /// No description provided for @hidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hidePassword;
+
   /// No description provided for @actionUnassignTag.
   ///
   /// In en, this message translates to:
@@ -311,6 +335,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Local computer'**
   String get sourceLocalComputer;
+
+  /// No description provided for @sourceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get sourceAll;
+
+  /// No description provided for @sourceNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set up yet'**
+  String get sourceNotConfigured;
 
   /// No description provided for @selectItem.
   ///
@@ -504,6 +540,12 @@ abstract class AppLocalizations {
   /// **'Files'**
   String get settingsFiles;
 
+  /// No description provided for @settingsRemoteSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote sources'**
+  String get settingsRemoteSources;
+
   /// No description provided for @languageSectionTitle.
   ///
   /// In en, this message translates to:
@@ -671,6 +713,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The files could not be organized'**
   String get filesOrganizeFailed;
+
+  /// No description provided for @redditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reddit'**
+  String get redditTitle;
+
+  /// No description provided for @redditDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern downloads what you have saved in your Reddit account. Register a script application at reddit.com/prefs/apps to get the two keys.'**
+  String get redditDescription;
+
+  /// No description provided for @redditClientId.
+  ///
+  /// In en, this message translates to:
+  /// **'Client ID'**
+  String get redditClientId;
+
+  /// No description provided for @redditClientIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The key under the name of your application'**
+  String get redditClientIdHint;
+
+  /// No description provided for @redditClientSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Client secret'**
+  String get redditClientSecret;
+
+  /// No description provided for @redditClientSecretHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The secret of your application'**
+  String get redditClientSecretHint;
+
+  /// No description provided for @redditUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get redditUsername;
+
+  /// No description provided for @redditUsernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Reddit account, without /u/'**
+  String get redditUsernameHint;
+
+  /// No description provided for @redditPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get redditPassword;
+
+  /// No description provided for @redditPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The password of that account'**
+  String get redditPasswordHint;
+
+  /// No description provided for @redditCredentialsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The credentials stay on this computer and are only used to talk to Reddit.'**
+  String get redditCredentialsNote;
+
+  /// No description provided for @importLimitAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get importLimitAll;
+
+  /// No description provided for @importLimitSinceLast.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get importLimitSinceLast;
+
+  /// No description provided for @importLimitSinceLastTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what has been saved since the last import'**
+  String get importLimitSinceLastTooltip;
+
+  /// No description provided for @importLimitTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Most items a scan brings in'**
+  String get importLimitTooltip;
+
+  /// No description provided for @lastImportNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never imported'**
+  String get lastImportNever;
+
+  /// No description provided for @sourceNotConfiguredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set this source up in Settings before importing from it'**
+  String get sourceNotConfiguredHint;
+
+  /// No description provided for @lastImportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When this source was last checked for new content'**
+  String get lastImportHint;
+
+  /// No description provided for @lastImportMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Just now} =1{1 min ago} other{{count} min ago}}'**
+  String lastImportMinutes(int count);
+
+  /// No description provided for @lastImportHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 h ago} other{{count} h ago}}'**
+  String lastImportHours(int count);
+
+  /// No description provided for @lastImportDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
+  String lastImportDays(int count);
 }
 
 class _AppLocalizationsDelegate

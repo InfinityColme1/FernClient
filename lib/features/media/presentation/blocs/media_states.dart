@@ -1,3 +1,4 @@
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
@@ -52,6 +53,18 @@ abstract class MediaStates extends Equatable {
   /// con emitir el resultado para que el indicador desaparezca.
   final bool isBusy;
 
+  /// Fuente elegida en la pantalla de importación.
+  ///
+  /// Decide las dos cosas que hace ese desplegable: de dónde se importa la
+  /// próxima vez y qué contenido de los pendientes enseña la rejilla. En las
+  /// demás pantallas no pinta nada, pero se arrastra igual para que volver a
+  /// importación la encuentre como se dejó.
+  final ImportSource importSource;
+
+  /// Cuándo se importó por última vez de [importSource]. `null` si nunca, o si
+  /// lo elegido son todas las fuentes (que no tienen un único momento).
+  final DateTime? lastImportAt;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -66,6 +79,8 @@ abstract class MediaStates extends Equatable {
     this.searchSuggestion,
     this.favoritesOnly = false,
     this.isBusy = false,
+    this.importSource = ImportSource.local,
+    this.lastImportAt,
   });
 
   /// Los grupos que la rejilla pinta: los de la búsqueda que el filtro deja
@@ -88,6 +103,8 @@ abstract class MediaStates extends Equatable {
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
+    ImportSource ? importSource,
+    DateTime ? lastImportAt,
   });
 
   @override
@@ -105,6 +122,8 @@ abstract class MediaStates extends Equatable {
     searchSuggestion,
     favoritesOnly,
     isBusy,
+    importSource,
+    lastImportAt,
   ];
 }
 
@@ -121,6 +140,8 @@ class MediaLoading extends MediaStates {
     super.searchSuggestion,
     super.favoritesOnly,
     super.isBusy,
+    super.importSource,
+    super.lastImportAt,
   });
 
   @override
@@ -138,6 +159,8 @@ class MediaLoading extends MediaStates {
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
+    ImportSource ? importSource,
+    DateTime ? lastImportAt,
   }) {
     return MediaLoading(
       mediaList: mediaList ?? this.mediaList,
@@ -151,6 +174,8 @@ class MediaLoading extends MediaStates {
       searchSuggestion: searchSuggestion ?? this.searchSuggestion,
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,
       isBusy: isBusy ?? this.isBusy,
+      importSource: importSource ?? this.importSource,
+      lastImportAt: lastImportAt ?? this.lastImportAt,
     );
   }
 }
@@ -175,6 +200,8 @@ class DetailedMedia extends MediaStates {
     super.searchSuggestion,
     super.favoritesOnly,
     super.isBusy,
+    super.importSource,
+    super.lastImportAt,
   });
 
   @override
@@ -192,6 +219,8 @@ class DetailedMedia extends MediaStates {
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
+    ImportSource ? importSource,
+    DateTime ? lastImportAt,
   }) {
     return DetailedMedia(
         mediaList: mediaList ?? this.mediaList,
@@ -207,6 +236,8 @@ class DetailedMedia extends MediaStates {
         searchSuggestion: searchSuggestion ?? this.searchSuggestion,
         favoritesOnly: favoritesOnly ?? this.favoritesOnly,
         isBusy: isBusy ?? this.isBusy,
+        importSource: importSource ?? this.importSource,
+      lastImportAt: lastImportAt ?? this.lastImportAt,
     );
   }
 }

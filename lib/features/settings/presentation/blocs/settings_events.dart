@@ -1,4 +1,5 @@
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class SettingsEvents extends Equatable {
@@ -68,6 +69,19 @@ class FileOrganizationChangedEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [criteria];
+}
+
+/// Credenciales de Reddit tal y como han quedado tras tocar uno de sus campos.
+///
+/// Llegan las cuatro juntas porque se guardan juntas: la fuente sólo sirve
+/// cuando están todas, así que no tiene sentido tratarlas por separado.
+class RedditSettingsChangedEvent extends SettingsEvents {
+  final RedditSettingsEntity reddit;
+
+  const RedditSettingsChangedEvent(this.reddit);
+
+  @override
+  List<Object?> get props => [reddit];
 }
 
 /// Migración a petición: ordena los ficheros que ya están en la biblioteca.

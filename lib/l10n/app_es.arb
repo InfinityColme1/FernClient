@@ -33,14 +33,20 @@
   "deleteForeverTooltip": "Borrar definitivamente de la base de datos",
 
   "actionImport": "Importar",
+  "actionRefresh": "Actualizar",
+  "actionSelectFolder": "Elegir carpeta",
   "actionDelete": "Eliminar",
   "actionConfirm": "Confirmar",
   "actionRestore": "Restablecer",
   "actionSave": "Guardar",
+  "showPassword": "Mostrar",
+  "hidePassword": "Ocultar",
   "actionUnassignTag": "Quitar etiqueta",
   "actionRemoveParentTag": "Quitar padre",
   "actionDeleteTag": "Eliminar etiqueta",
   "sourceLocalComputer": "Equipo local",
+  "sourceAll": "Todas",
+  "sourceNotConfigured": "Sin configurar",
 
   "selectItem": "Seleccionar",
   "deselectItem": "Quitar selección",
@@ -80,6 +86,7 @@
   "settingsTitle": "Configuración",
   "settingsLanguage": "Idioma",
   "settingsFiles": "Archivos",
+  "settingsRemoteSources": "Fuentes remotas",
 
   "languageSectionTitle": "Idioma de la aplicación",
   "languageSectionNote": "Toda la aplicación cambia de idioma en cuanto eliges uno.",
@@ -113,5 +120,43 @@
   "avatarsMoved": "{count, plural, =0{Los avatares ya estaban en esa carpeta} =1{1 avatar movido a la carpeta nueva} other{{count} avatares movidos a la carpeta nueva}}",
   "avatarsMoveFailed": "No se han podido mover los avatares",
   "filesOrganized": "{count, plural, =0{Ya estaba todo en su sitio} =1{1 archivo movido} other{{count} archivos movidos}}",
-  "filesOrganizeFailed": "No se han podido ordenar los archivos"
+  "filesOrganizeFailed": "No se han podido ordenar los archivos",
+
+  "redditTitle": "Reddit",
+  "redditDescription": "Fern se descarga lo que tengas guardado en tu cuenta de Reddit. Registra una aplicación de tipo script en reddit.com/prefs/apps para conseguir las dos claves.",
+  "redditClientId": "ID de cliente",
+  "redditClientIdHint": "La clave que aparece bajo el nombre de tu aplicación",
+  "redditClientSecret": "Secreto de cliente",
+  "redditClientSecretHint": "El secreto de tu aplicación",
+  "redditUsername": "Usuario",
+  "redditUsernameHint": "Tu cuenta de Reddit, sin /u/",
+  "redditPassword": "Contraseña",
+  "redditPasswordHint": "La contraseña de esa cuenta",
+  "redditCredentialsNote": "Las credenciales se quedan en este equipo y sólo se usan para hablar con Reddit.",
+
+  "importLimitAll": "Todos",
+  "importLimitSinceLast": "Nuevos",
+  "importLimitSinceLastTooltip": "Sólo lo que se ha guardado desde la última importación",
+  "importLimitTooltip": "Máximo de elementos que trae un escaneo",
+  "lastImportNever": "Nunca importado",
+  "sourceNotConfiguredHint": "Configura esta fuente en los ajustes antes de importar de ella",
+  "lastImportHint": "Cuándo se miró por última vez si esta fuente tenía contenido nuevo",
+  "lastImportMinutes": "{count, plural, =0{Ahora mismo} =1{Hace 1 min} other{Hace {count} min}}",
+  "@lastImportMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportHours": "{count, plural, =1{Hace 1 h} other{Hace {count} h}}",
+  "@lastImportHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportDays": "{count, plural, =1{Hace 1 día} other{Hace {count} días}}",
+  "@lastImportDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

@@ -52,6 +52,7 @@ dependencies:
   media_kit_libs_video: ^1.0.7
   crypto: ^3.0.7
   path: ^1.9.1
+  http: ^1.6.0
 
 
 dev_dependencies:

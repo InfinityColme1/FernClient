@@ -1,6 +1,12 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
+import 'package:Fern/features/media/data/repositories/remote_media_repository_impl.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/media/data/services/external_media_resolver.dart';
+import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
+import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/organize_library_files_usecase.dart';
 import 'package:Fern/features/settings/data/repositories/settings_repository_impl.dart';
@@ -22,6 +28,7 @@ import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.d
 import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
+import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
@@ -39,7 +46,7 @@ import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/scan_directory_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
@@ -88,11 +95,44 @@ Future<void> initializeDependencies() async {
   getIt.registerSingleton<AppDatabase>(AppDatabase());
   getIt.registerSingleton<Isar>(await getIt<AppDatabase>().getIsar());
 
+  // Por aquí entra todo el contenido nuevo, venga del disco o de una API.
+  getIt.registerLazySingleton<MediaRegistry>(() =>
+      MediaRegistry(database: getIt<Isar>())
+  );
+
   getIt.registerLazySingleton<LocalMediaRepository>(() =>
       LocalMediaRepositoryImpl(
         appDatabase: getIt<Isar>(),
         fileOrganizer: getIt(),
         avatarStorage: getIt(),
+        registry: getIt(),
+      )
+  );
+
+  // Fuentes remotas. La carpeta de descargas cuelga del directorio de datos de
+  // la aplicación, igual que la de los avatares: es de donde salen los ficheros
+  // hasta que la gestión de archivos los coloca en la biblioteca.
+  getIt.registerLazySingleton<RedditApiClient>(() => RedditApiClient());
+
+  getIt.registerLazySingleton<ExternalMediaResolver>(() =>
+      ExternalMediaResolver()
+  );
+
+  getIt.registerLazySingleton<RemoteMediaDownloader>(() =>
+      RemoteMediaDownloader(
+        downloadsPath:
+            p.join(documentsDirectory.path, appName, remoteDownloadsFolderName),
+        resolver: getIt(),
+      )
+  );
+
+  getIt.registerLazySingleton<RemoteMediaRepository>(() =>
+      RemoteMediaRepositoryImpl(
+        reddit: getIt(),
+        downloader: getIt(),
+        registry: getIt(),
+        settingsRepository: getIt(),
+        preferencesService: getIt(),
       )
   );
 
@@ -103,15 +143,20 @@ Future<void> initializeDependencies() async {
     )
   );
 
-  getIt.registerSingleton<ScanDirectoryUseCase>(
-    ScanDirectoryUseCase(
+  getIt.registerSingleton<ScanSourceUseCase>(
+    ScanSourceUseCase(
         localMediaRepository: getIt(),
+        remoteMediaRepository: getIt(),
         preferencesService: getIt()
     )
   );
 
   getIt.registerSingleton<GetScannedMediaUseCase>(
     GetScannedMediaUseCase(localMediaRepository: getIt())
+  );
+
+  getIt.registerSingleton<GetLastImportUseCase>(
+    GetLastImportUseCase(getIt())
   );
   
   getIt.registerSingleton<GetMediaListUsercase>(
@@ -240,7 +285,8 @@ Future<void> initializeDependencies() async {
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
         getScannedMediaUseCase: getIt(),
-        scanDirectoryUseCase: getIt(),
+        getLastImportUseCase: getIt(),
+        scanSourceUseCase: getIt(),
         selectAndScanDirectoryUsecase: getIt(),
         getMediaDetailsUsecase: getIt(),
         saveMediaUseCase: getIt(),

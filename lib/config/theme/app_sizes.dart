@@ -44,7 +44,7 @@ class AppSizes {
   /// selección hecha y todos sus botones) deja de caber con el menú lateral
   /// plegado: medido en `test/layout_breakpoints_test.dart`, que falla si
   /// alguna cabecera crece y este número se queda corto.
-  static const double largeScreenMinWidth = 960.0;
+  static const double largeScreenMinWidth = 1200.0;
 
   /// Ancho por debajo del cual el menú lateral se pliega solo.
   ///
@@ -53,7 +53,7 @@ class AppSizes {
   /// importación deja de caber con el menú desplegado, así que en pantallas
   /// cuya mitad es mayor que este número el menú se pliega aquí para que no
   /// desborde antes de llegar a [largeScreenMinWidth].
-  static const double sidebarAutoCollapseMinWidth = 1100.0;
+  static const double sidebarAutoCollapseMinWidth = 1340.0;
 
   static const double logoWidth = 150.0;
 

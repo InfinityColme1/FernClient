@@ -1,3 +1,5 @@
+import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
@@ -9,6 +11,16 @@ abstract class MediaEvents {
 
 class LoadScannedMediaEvent extends MediaEvents {
   const LoadScannedMediaEvent();
+}
+
+/// Cambio de fuente en el desplegable de la pantalla de importación.
+///
+/// Cambia las dos cosas a la vez: la rejilla pasa a enseñar sólo lo que vino de
+/// esa fuente y el siguiente escaneo se hace sobre ella.
+class ImportSourceChangedEvent extends MediaEvents {
+  final ImportSource source;
+
+  const ImportSourceChangedEvent(this.source);
 }
 
 /// Carga el contenido definitivo de la base de datos: el de la pantalla de
@@ -51,12 +63,26 @@ class ClearMediaSearchEvent extends MediaEvents {
   const ClearMediaSearchEvent();
 }
 
-class ScanDirectoryEvent extends MediaEvents {
-  const ScanDirectoryEvent();
+/// Busca contenido nuevo en la fuente elegida: recorre la carpeta del equipo,
+/// se descarga lo guardado en una plataforma remota o las dos cosas.
+///
+/// [limit] es el tope de contenidos nuevos que se traen, el de la píldora de la
+/// cabecera; con [unlimitedImportLimit] se trae todo lo que haya.
+class ScanSourceEvent extends MediaEvents {
+  final int limit;
+
+  const ScanSourceEvent({this.limit = unlimitedImportLimit});
 }
 
+/// Elige otra carpeta del equipo y la escanea. Sólo tiene sentido con la fuente
+/// local: de una plataforma remota no hay carpeta que elegir.
+///
+/// [limit] es el mismo tope que en [ScanSourceEvent]: lo que diga la cabecera
+/// vale para cualquier escaneo.
 class SelectAndScanDirectoryEvent extends MediaEvents {
-  const SelectAndScanDirectoryEvent();
+  final int limit;
+
+  const SelectAndScanDirectoryEvent({this.limit = unlimitedImportLimit});
 }
 
 class MediaClickedEvent extends MediaEvents {

@@ -63,14 +63,20 @@
   "deleteForeverTooltip": "Delete permanently from the database",
 
   "actionImport": "Import",
+  "actionRefresh": "Refresh",
+  "actionSelectFolder": "Choose folder",
   "actionDelete": "Delete",
   "actionConfirm": "Confirm",
   "actionRestore": "Restore",
   "actionSave": "Save",
+  "showPassword": "Show",
+  "hidePassword": "Hide",
   "actionUnassignTag": "Unassign tag",
   "actionRemoveParentTag": "Remove parent",
   "actionDeleteTag": "Delete tag",
   "sourceLocalComputer": "Local computer",
+  "sourceAll": "All",
+  "sourceNotConfigured": "Not set up yet",
 
   "selectItem": "Select",
   "deselectItem": "Deselect",
@@ -110,6 +116,7 @@
   "settingsTitle": "Settings",
   "settingsLanguage": "Language",
   "settingsFiles": "Files",
+  "settingsRemoteSources": "Remote sources",
 
   "languageSectionTitle": "Application language",
   "languageSectionNote": "Every screen switches over as soon as you pick a language.",
@@ -153,5 +160,43 @@
       "count": { "type": "int" }
     }
   },
-  "filesOrganizeFailed": "The files could not be organized"
+  "filesOrganizeFailed": "The files could not be organized",
+
+  "redditTitle": "Reddit",
+  "redditDescription": "Fern downloads what you have saved in your Reddit account. Register a script application at reddit.com/prefs/apps to get the two keys.",
+  "redditClientId": "Client ID",
+  "redditClientIdHint": "The key under the name of your application",
+  "redditClientSecret": "Client secret",
+  "redditClientSecretHint": "The secret of your application",
+  "redditUsername": "Username",
+  "redditUsernameHint": "Your Reddit account, without /u/",
+  "redditPassword": "Password",
+  "redditPasswordHint": "The password of that account",
+  "redditCredentialsNote": "The credentials stay on this computer and are only used to talk to Reddit.",
+
+  "importLimitAll": "All",
+  "importLimitSinceLast": "New",
+  "importLimitSinceLastTooltip": "Only what has been saved since the last import",
+  "importLimitTooltip": "Most items a scan brings in",
+  "lastImportNever": "Never imported",
+  "sourceNotConfiguredHint": "Set this source up in Settings before importing from it",
+  "lastImportHint": "When this source was last checked for new content",
+  "lastImportMinutes": "{count, plural, =0{Just now} =1{1 min ago} other{{count} min ago}}",
+  "@lastImportMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportHours": "{count, plural, =1{1 h ago} other{{count} h ago}}",
+  "@lastImportHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "lastImportDays": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@lastImportDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

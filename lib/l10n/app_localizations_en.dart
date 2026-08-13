@@ -135,6 +135,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionImport => 'Import';
 
   @override
+  String get actionRefresh => 'Refresh';
+
+  @override
+  String get actionSelectFolder => 'Choose folder';
+
+  @override
   String get actionDelete => 'Delete';
 
   @override
@@ -147,6 +153,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionSave => 'Save';
 
   @override
+  String get showPassword => 'Show';
+
+  @override
+  String get hidePassword => 'Hide';
+
+  @override
   String get actionUnassignTag => 'Unassign tag';
 
   @override
@@ -157,6 +169,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourceLocalComputer => 'Local computer';
+
+  @override
+  String get sourceAll => 'All';
+
+  @override
+  String get sourceNotConfigured => 'Not set up yet';
 
   @override
   String get selectItem => 'Select';
@@ -253,6 +271,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsFiles => 'Files';
+
+  @override
+  String get settingsRemoteSources => 'Remote sources';
 
   @override
   String get languageSectionTitle => 'Application language';
@@ -364,4 +385,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filesOrganizeFailed => 'The files could not be organized';
+
+  @override
+  String get redditTitle => 'Reddit';
+
+  @override
+  String get redditDescription =>
+      'Fern downloads what you have saved in your Reddit account. Register a script application at reddit.com/prefs/apps to get the two keys.';
+
+  @override
+  String get redditClientId => 'Client ID';
+
+  @override
+  String get redditClientIdHint => 'The key under the name of your application';
+
+  @override
+  String get redditClientSecret => 'Client secret';
+
+  @override
+  String get redditClientSecretHint => 'The secret of your application';
+
+  @override
+  String get redditUsername => 'Username';
+
+  @override
+  String get redditUsernameHint => 'Your Reddit account, without /u/';
+
+  @override
+  String get redditPassword => 'Password';
+
+  @override
+  String get redditPasswordHint => 'The password of that account';
+
+  @override
+  String get redditCredentialsNote =>
+      'The credentials stay on this computer and are only used to talk to Reddit.';
+
+  @override
+  String get importLimitAll => 'All';
+
+  @override
+  String get importLimitSinceLast => 'New';
+
+  @override
+  String get importLimitSinceLastTooltip =>
+      'Only what has been saved since the last import';
+
+  @override
+  String get importLimitTooltip => 'Most items a scan brings in';
+
+  @override
+  String get lastImportNever => 'Never imported';
+
+  @override
+  String get sourceNotConfiguredHint =>
+      'Set this source up in Settings before importing from it';
+
+  @override
+  String get lastImportHint =>
+      'When this source was last checked for new content';
+
+  @override
+  String lastImportMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count min ago',
+      one: '1 min ago',
+      zero: 'Just now',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastImportHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count h ago',
+      one: '1 h ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastImportDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
 }

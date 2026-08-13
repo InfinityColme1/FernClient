@@ -36,6 +36,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<LibraryDirectoryChangedEvent>(onLibraryDirectoryChanged);
     on<AvatarsDirectoryChangedEvent>(onAvatarsDirectoryChanged);
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
+    on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<MigrateLibraryRequestedEvent>(onMigrateLibraryRequested);
   }
 
@@ -122,6 +123,16 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     return _apply(state.settings.copyWith(organization: event.criteria), emit);
+  }
+
+  /// Las credenciales se guardan según se escriben, como el resto de ajustes.
+  /// Nadie las comprueba aquí: hasta que no se lanza una importación no hay
+  /// forma de saber si son buenas.
+  Future<void> onRedditSettingsChanged(
+    RedditSettingsChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(state.settings.copyWith(reddit: event.reddit), emit);
   }
 
   Future<void> onMigrateLibraryRequested(

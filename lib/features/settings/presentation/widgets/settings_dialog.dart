@@ -5,6 +5,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/remote_sources_settings_section.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +14,8 @@ import 'package:go_router/go_router.dart';
 /// Las secciones de la pantalla de ajustes, en el orden en el que se listan.
 enum SettingsSection {
   language(icon: Icons.language),
-  files(icon: Icons.folder_outlined);
+  files(icon: Icons.folder_outlined),
+  remoteSources(icon: Icons.cloud_download_outlined);
 
   const SettingsSection({required this.icon});
 
@@ -22,6 +24,7 @@ enum SettingsSection {
   String title(AppLocalizations texts) => switch (this) {
         SettingsSection.language => texts.settingsLanguage,
         SettingsSection.files => texts.settingsFiles,
+        SettingsSection.remoteSources => texts.settingsRemoteSources,
       };
 }
 
@@ -174,6 +177,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
             child: switch (_section) {
               SettingsSection.language => const LanguageSettingsSection(),
               SettingsSection.files => const FilesSettingsSection(),
+              SettingsSection.remoteSources =>
+                const RemoteSourcesSettingsSection(),
             },
           ),
         ),

@@ -10,6 +10,7 @@ import 'package:Fern/features/media/data/models/persona/persona_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/data/repositories/local_media_repository_impl.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
@@ -61,6 +62,7 @@ void main() {
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: _NoSettings()),
       avatarStorage: AvatarStorageService(settingsRepository: _NoSettings()),
+      registry: MediaRegistry(database: isar),
     );
   });
 

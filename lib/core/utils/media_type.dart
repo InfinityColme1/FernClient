@@ -1,3 +1,19 @@
+import 'package:Fern/core/constants/app_constants.dart';
+import 'package:path/path.dart' as p;
+
+/// La extensión de [url] si apunta a un fichero multimedia de los que la
+/// aplicación reconoce, y `null` en cualquier otro caso.
+///
+/// Los parámetros de la dirección no cuentan: `foto.jpg?width=640` es una
+/// imagen. Es lo que decide qué se descarga de una fuente remota, así que un
+/// enlace a una página web (que no lleva extensión) se queda fuera.
+String? mediaExtensionOfUrl(String url) {
+  final path = Uri.tryParse(url)?.path ?? '';
+  final extension = p.extension(path).toLowerCase();
+
+  return mediaExtensions.contains(extension) ? extension : null;
+}
+
 /// Detección del tipo de fichero multimedia a partir de su ruta.
 ///
 /// Centraliza las comprobaciones de extensión que estaban duplicadas en los

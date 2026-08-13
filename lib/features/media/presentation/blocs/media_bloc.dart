@@ -4,6 +4,7 @@ import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase
 import 'package:Fern/features/media/domain/usecases/get_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/remove_tag_from_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
@@ -13,7 +14,7 @@ import 'package:Fern/features/media/domain/usecases/restore_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
-import 'package:Fern/features/media/domain/usecases/scan_directory_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
@@ -24,6 +25,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/resources/data_state.dart';
+import '../../domain/entities/import_source.dart';
 import '../../domain/entities/media/media_entity.dart';
 import '../../domain/entities/media/media_summary_entity.dart';
 import '../../domain/entities/search/media_search_section_entity.dart';
@@ -34,7 +36,7 @@ import 'media_states.dart';
 
 class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final SelectAndScanDirectoryUsecase _selectAndScanDirectoryUsecase;
-  final ScanDirectoryUseCase _scanDirectoryUseCase;
+  final ScanSourceUseCase _scanSourceUseCase;
   final GetMediaDetailsUsecase _getMediaDetailsUsecase;
   final SaveMediaUseCase _saveMediaUseCase;
   final DeleteMissingMediaUseCase _deleteMissingMediaUseCase;
@@ -45,6 +47,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final PurgeExpiredDeletedMediaUseCase _purgeExpiredDeletedMediaUseCase;
   final ConfirmMediaListUseCase _confirmMediaListUseCase;
   final GetScannedMediaUseCase _getScannedMediaUseCase;
+  final GetLastImportUseCase _getLastImportUseCase;
   final GetMediaListUsercase _getMediaListUsecase;
   final GetDeletedMediaUseCase _getDeletedMediaUseCase;
   final GetFavoriteMediaUseCase _getFavoriteMediaUseCase;
@@ -61,7 +64,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
   MediaBloc({
     required SelectAndScanDirectoryUsecase selectAndScanDirectoryUsecase,
-    required ScanDirectoryUseCase scanDirectoryUseCase,
+    required ScanSourceUseCase scanSourceUseCase,
     required GetMediaDetailsUsecase getMediaDetailsUsecase,
     required SaveMediaUseCase saveMediaUseCase,
     required DeleteMissingMediaUseCase deleteMissingMediaUseCase,
@@ -72,6 +75,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required PurgeExpiredDeletedMediaUseCase purgeExpiredDeletedMediaUseCase,
     required ConfirmMediaListUseCase confirmMediaListUseCase,
     required GetScannedMediaUseCase getScannedMediaUseCase,
+    required GetLastImportUseCase getLastImportUseCase,
     required GetMediaListUsercase getMediaListUsecase,
     required GetDeletedMediaUseCase getDeletedMediaUseCase,
     required GetFavoriteMediaUseCase getFavoriteMediaUseCase,
@@ -81,7 +85,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
   })  : _selectAndScanDirectoryUsecase = selectAndScanDirectoryUsecase,
-        _scanDirectoryUseCase = scanDirectoryUseCase,
+        _scanSourceUseCase = scanSourceUseCase,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
         _saveMediaUseCase = saveMediaUseCase,
         _deleteMissingMediaUseCase = deleteMissingMediaUseCase,
@@ -92,6 +96,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _purgeExpiredDeletedMediaUseCase = purgeExpiredDeletedMediaUseCase,
         _confirmMediaListUseCase = confirmMediaListUseCase,
         _getScannedMediaUseCase = getScannedMediaUseCase,
+        _getLastImportUseCase = getLastImportUseCase,
         _getMediaListUsecase = getMediaListUsecase,
         _getDeletedMediaUseCase = getDeletedMediaUseCase,
         _getFavoriteMediaUseCase = getFavoriteMediaUseCase,
@@ -112,7 +117,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<SearchSuggestionSelectedEvent>(onSearchSuggestionSelected);
     on<ToggleSearchFilterEvent>(onToggleSearchFilter);
     on<ClearMediaSearchEvent>(onClearMediaSearch);
-    on<ScanDirectoryEvent>(onScanDirectoryEvent);
+    on<ImportSourceChangedEvent>(onImportSourceChanged);
+    on<ScanSourceEvent>(onScanSource);
     on<SelectAndScanDirectoryEvent>(onSelectAndScanDirectoryEvent);
     on<MediaClickedEvent>(onMediaClicked);
     on<ToggleMediaSelectionEvent>(onToggleMediaSelection);
@@ -141,13 +147,41 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   MediaStates get _idle => state.copyWith(isBusy: false);
 
   void onLoadScannedMedia(LoadScannedMediaEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading(isBusy: true));
-    final result = await _getScannedMediaUseCase();
-    if (result is DataSuccess && result.data != null) {
-      emit(MediaLoading(mediaList: result.data!));
-    } else {
-      emit(const MediaLoading(mediaList: []));
-    }
+    await _loadScanned(state.importSource, emit);
+  }
+
+  /// Cambiar de fuente cambia lo que se ve: la rejilla pasa a enseñar sólo lo
+  /// que llegó de ella (o todo, con la opción de todas), así que se vuelve a
+  /// leer con el filtro nuevo.
+  void onImportSourceChanged(
+    ImportSourceChangedEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    if (state.importSource == event.source) return;
+
+    await _loadScanned(event.source, emit);
+  }
+
+  /// Contenido pendiente de revisar de [source], el de la pantalla de
+  /// importación. Se parte de un estado limpio: la selección de lo que se estaba
+  /// viendo no tiene nada que ver con lo que llega.
+  Future<void> _loadScanned(ImportSource source, Emitter<MediaStates> emit) async {
+    emit(MediaLoading(
+      importSource: source,
+      lastImportAt: await _getLastImportUseCase(params: source),
+      isBusy: true,
+    ));
+
+    final result = await _getScannedMediaUseCase(params: source);
+    final mediaList = (result is DataSuccess && result.data != null)
+        ? result.data!
+        : const <MediaSummaryEntity>[];
+
+    emit(MediaLoading(
+      mediaList: mediaList,
+      importSource: source,
+      lastImportAt: state.lastImportAt,
+    ));
   }
 
   /// Contenido definitivo de la base de datos, el de la pantalla de media.
@@ -445,6 +479,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         id: saved.id,
         path: saved.path,
         isImported: true,
+        importSource: mediaList[index].importSource,
       );
     }
 
@@ -501,6 +536,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchSections: _sectionsWithout((summary) => summary.id == id),
       searchFilters: state.searchFilters,
       favoritesOnly: state.favoritesOnly,
+      importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
     ));
   }
 
@@ -582,6 +619,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         searchFilters: state.searchFilters,
         searchSuggestion: state.searchSuggestion,
         favoritesOnly: state.favoritesOnly,
+        importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
       ));
       return;
     }
@@ -694,6 +733,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
+      importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
     );
   }
 
@@ -778,6 +819,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
+      importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
       isBusy: true,
     ));
 
@@ -819,15 +862,22 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchFilters: state.searchFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
+      importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
     );
   }
 
-  void onScanDirectoryEvent(ScanDirectoryEvent event, Emitter<MediaStates> emit) async {
-    await _scan(emit, () => _scanDirectoryUseCase());
+  void onScanSource(ScanSourceEvent event, Emitter<MediaStates> emit) async {
+    await _scan(
+      emit,
+      () => _scanSourceUseCase(
+        params: (source: state.importSource, limit: event.limit),
+      ),
+    );
   }
 
   void onSelectAndScanDirectoryEvent(SelectAndScanDirectoryEvent event, Emitter<MediaStates> emit) async {
-    await _scan(emit, () => _selectAndScanDirectoryUsecase());
+    await _scan(emit, () => _selectAndScanDirectoryUsecase(params: event.limit));
   }
 
   /// Escaneo de una carpeta: el contenido que va apareciendo se añade a lo que ya
@@ -843,7 +893,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   ) async {
     List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
     final selectedIds = state.selectedIds;
-    emit(MediaLoading(mediaList: currentMedia, selectedIds: selectedIds, isBusy: true));
+    emit(MediaLoading(
+      mediaList: currentMedia,
+      selectedIds: selectedIds,
+      importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
+      isBusy: true,
+    ));
 
     final stream = await scan();
 
@@ -855,6 +911,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
           return MediaLoading(
             mediaList: currentMedia,
             selectedIds: selectedIds,
+            importSource: state.importSource,
+            lastImportAt: state.lastImportAt,
             isBusy: true,
           );
         }
@@ -862,9 +920,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       },
     );
 
-    // El escaneo ha terminado: se queda lo encontrado y se retira el indicador.
+    // El escaneo ha terminado: se queda lo encontrado, se retira el indicador y
+    // se recoge la fecha que acaba de sellar el caso de uso.
     if (emit.isDone) return;
-    emit(_idle);
+    emit(state.copyWith(
+      isBusy: false,
+      lastImportAt: await _getLastImportUseCase(params: state.importSource),
+    ));
   }
 
   void onViewerNextEvent(ViewerNextEvent event, Emitter<MediaStates> emit) async {

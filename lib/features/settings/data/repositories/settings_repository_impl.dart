@@ -1,5 +1,6 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,6 +33,13 @@ class SettingsRepositoryImpl implements SettingsRepository {
       organization: FileOrganizationCriteria.fromId(
         _preferences.getString(fileOrganizationPreferenceKey),
       ),
+      reddit: RedditSettingsEntity(
+        clientId: _preferences.getString(redditClientIdPreferenceKey) ?? '',
+        clientSecret:
+            _preferences.getString(redditClientSecretPreferenceKey) ?? '',
+        username: _preferences.getString(redditUsernamePreferenceKey) ?? '',
+        password: _preferences.getString(redditPasswordPreferenceKey) ?? '',
+      ),
     );
   }
 
@@ -54,6 +62,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
       avatarsPathPreferenceKey,
       settings.avatarsPath,
     );
+
+    final reddit = settings.reddit;
+    await _preferences.setString(redditClientIdPreferenceKey, reddit.clientId);
+    await _preferences.setString(
+      redditClientSecretPreferenceKey,
+      reddit.clientSecret,
+    );
+    await _preferences.setString(redditUsernamePreferenceKey, reddit.username);
+    await _preferences.setString(redditPasswordPreferenceKey, reddit.password);
 
     final libraryPath = settings.libraryPath;
     if (libraryPath == null) {

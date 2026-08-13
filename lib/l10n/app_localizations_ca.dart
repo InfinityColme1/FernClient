@@ -137,6 +137,12 @@ class AppLocalizationsCa extends AppLocalizations {
   String get actionImport => 'Importa';
 
   @override
+  String get actionRefresh => 'Actualitza';
+
+  @override
+  String get actionSelectFolder => 'Tria una carpeta';
+
+  @override
   String get actionDelete => 'Elimina';
 
   @override
@@ -149,6 +155,12 @@ class AppLocalizationsCa extends AppLocalizations {
   String get actionSave => 'Desa';
 
   @override
+  String get showPassword => 'Mostra';
+
+  @override
+  String get hidePassword => 'Amaga';
+
+  @override
   String get actionUnassignTag => 'Treu l\'etiqueta';
 
   @override
@@ -159,6 +171,12 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get sourceLocalComputer => 'Equip local';
+
+  @override
+  String get sourceAll => 'Totes';
+
+  @override
+  String get sourceNotConfigured => 'Sense configurar';
 
   @override
   String get selectItem => 'Selecciona';
@@ -255,6 +273,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get settingsFiles => 'Fitxers';
+
+  @override
+  String get settingsRemoteSources => 'Fonts remotes';
 
   @override
   String get languageSectionTitle => 'Idioma de l\'aplicació';
@@ -366,4 +387,98 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get filesOrganizeFailed => 'No s\'han pogut ordenar els fitxers';
+
+  @override
+  String get redditTitle => 'Reddit';
+
+  @override
+  String get redditDescription =>
+      'Fern es descarrega el que tinguis desat al teu compte de Reddit. Registra una aplicació de tipus script a reddit.com/prefs/apps per aconseguir les dues claus.';
+
+  @override
+  String get redditClientId => 'ID de client';
+
+  @override
+  String get redditClientIdHint =>
+      'La clau que apareix sota el nom de la teva aplicació';
+
+  @override
+  String get redditClientSecret => 'Secret de client';
+
+  @override
+  String get redditClientSecretHint => 'El secret de la teva aplicació';
+
+  @override
+  String get redditUsername => 'Usuari';
+
+  @override
+  String get redditUsernameHint => 'El teu compte de Reddit, sense /u/';
+
+  @override
+  String get redditPassword => 'Contrasenya';
+
+  @override
+  String get redditPasswordHint => 'La contrasenya d\'aquest compte';
+
+  @override
+  String get redditCredentialsNote =>
+      'Les credencials es queden en aquest equip i només s\'usen per parlar amb Reddit.';
+
+  @override
+  String get importLimitAll => 'Tots';
+
+  @override
+  String get importLimitSinceLast => 'Nous';
+
+  @override
+  String get importLimitSinceLastTooltip =>
+      'Només el que s\'ha desat des de la darrera importació';
+
+  @override
+  String get importLimitTooltip => 'Màxim d\'elements que porta una exploració';
+
+  @override
+  String get lastImportNever => 'Mai importat';
+
+  @override
+  String get sourceNotConfiguredHint =>
+      'Configura aquesta font als ajustaments abans d\'importar-ne';
+
+  @override
+  String get lastImportHint =>
+      'Quan es va mirar per darrera vegada si hi havia contingut nou';
+
+  @override
+  String lastImportMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Fa $count min',
+      one: 'Fa 1 min',
+      zero: 'Ara mateix',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastImportHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Fa $count h',
+      one: 'Fa 1 h',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastImportDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Fa $count dies',
+      one: 'Fa 1 dia',
+    );
+    return '$_temp0';
+  }
 }

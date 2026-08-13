@@ -5,6 +5,8 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
@@ -17,6 +19,7 @@ import 'package:Fern/features/media/domain/repositories/local_media_repository.d
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:isar/isar.dart';
+import 'package:path/path.dart' as p;
 
 
 class LocalMediaRepositoryImpl implements LocalMediaRepository {
@@ -24,28 +27,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   final Isar _appDatabase;
   final MediaFileOrganizer _fileOrganizer;
   final AvatarStorageService _avatarStorage;
+  final MediaRegistry _registry;
 
   LocalMediaRepositoryImpl({
     required Isar appDatabase,
     required MediaFileOrganizer fileOrganizer,
     required AvatarStorageService avatarStorage,
+    required MediaRegistry registry,
   })  : _appDatabase = appDatabase,
         _fileOrganizer = fileOrganizer,
-        _avatarStorage = avatarStorage;
-
-
-  int _fastHash(String string) {
-    var hash = 0xcbf29ce484222325;
-    var i = 0;
-    while (i < string.length) {
-      final codeUnit = string.codeUnitAt(i++);
-      hash ^= codeUnit >> 8;
-      hash *= 0x100000001b3;
-      hash ^= codeUnit & 0xff;
-      hash *= 0x100000001b3;
-    }
-    return hash;
-  }
+        _avatarStorage = avatarStorage,
+        _registry = registry;
 
 
   Future<void> _saveBatch(List<MediaModel> models) async {
@@ -55,31 +47,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
 
-  /// Creador "Unknown", creándolo la primera vez que hace falta.
-  ///
-  /// Es el creador con el que nacen los contenidos recién escaneados y el
-  /// respaldo cuando el creador de un contenido ya no existe en la base.
-  Future<CreatorModel> _unknownCreator() async {
-    final existing = await _appDatabase.creatorModels
-        .filter()
-        .nameEqualTo(unknownCreator.name)
-        .findFirst();
-    if (existing != null) return existing;
-
-    final model = CreatorModel.fromEntity(unknownCreator);
-    await _appDatabase.writeTxn(() async {
-      model.id = await _appDatabase.creatorModels.put(model);
-    });
-    return model;
-  }
-
-
   @override
   Stream<DataState<MediaSummaryEntity>> selectAndScanDirectory(String rootPath) {
     return scanDirectory(rootPath);
   }
 
 
+  /// Recorre la carpeta y da de alta lo que encuentra y todavía no está.
+  ///
+  /// El alta es la misma que la de cualquier otra fuente (la hace el registro),
+  /// así que lo que se escanea del equipo nace igual que lo que se descarga de
+  /// una plataforma: pendiente de revisar y con el creador desconocido.
   @override
   Stream<DataState<MediaSummaryEntity>> scanDirectory(String rootPath) async* {
     try {
@@ -89,65 +67,18 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         return;
       }
 
-      final validExtensions = {'.jpg', '.jpeg', '.webp', '.gif', '.png', '.mp4', '.mov', '.avi'};
-
       await for (final entity in dir.list(recursive: true, followLinks: false)) {
-        if (entity is File) {
-          final path = entity.path;
-          final lastDotIndex = path.lastIndexOf('.');
+        if (entity is! File) continue;
 
-          if (lastDotIndex != -1) {
-            final extension = path.substring(lastDotIndex).toLowerCase();
-            if (validExtensions.contains(extension)) {
-              final id = _fastHash(path);
+        final path = entity.path;
+        final extension = p.extension(path).toLowerCase();
+        if (!mediaExtensions.contains(extension)) continue;
 
-              // 1. COMPROBAR SI YA EXISTE (Escaneado o Definitivo)
-              //
-              // Se mira por identificador y también por ruta: el
-              // identificador es el hash de la ruta con la que se escaneó, así
-              // que un contenido que la aplicación haya movido a la carpeta de
-              // la biblioteca ya no coincide por hash y volvería a entrar como
-              // si fuera nuevo.
-              final existing = await _appDatabase.mediaSummaryModels.get(id) ??
-                  await _appDatabase.mediaSummaryModels
-                      .filter()
-                      .pathEqualTo(path)
-                      .findFirst();
-
-              if (existing == null) {
-                // 2. CREAR NUEVO SUMARIO
-                final newSummary = MediaSummaryModel()
-                  ..id = id
-                  ..path = path
-                  ..isImported = false;
-
-                // 3. CREAR LOS DETALLES POR DEFECTO: sin descripción, sin
-                // etiquetas, sin origen y con el creador desconocido. Queda
-                // marcado como no importado, es decir, pendiente de revisión.
-                final details = MediaModel(id: id, path: path)
-                  ..downloaded = DateTime.now()
-                  ..isFavorite = false
-                  ..description = null;
-
-                final creator = await _unknownCreator();
-
-                // 4. GUARDAR AUTOMÁTICAMENTE
-                await _appDatabase.writeTxn(() async {
-                  await _appDatabase.mediaSummaryModels.put(newSummary);
-                  await _appDatabase.mediaModels.put(details);
-
-                  details.creator.value = creator;
-                  await details.creator.save();
-
-                  newSummary.details.value = details;
-                  await newSummary.details.save();
-                });
-
-                yield DataSuccess(newSummary.toEntity());
-              }
-            }
-          }
-        }
+        final summary = await _registry.register(
+          path: path,
+          source: ImportSource.local,
+        );
+        if (summary != null) yield DataSuccess(summary);
       }
     } on Exception catch (e) {
       yield DataException(e);
@@ -183,18 +114,28 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
+  /// Contenido pendiente de revisar, el de la pantalla de importación.
+  ///
+  /// [source] es la fuente elegida en su desplegable: con [ImportSource.all] se
+  /// devuelve lo de todas, y con cualquier otra sólo lo que vino de ella.
   @override
-  Future<DataState<List<MediaSummaryEntity>>> getScannedMedia() async {
+  Future<DataState<List<MediaSummaryEntity>>> getScannedMedia({
+    ImportSource source = ImportSource.all,
+  }) async {
     try {
       // Devolvemos solo el contenido ESCANEADO pendiente de importar.
       //
       // Lo pendiente no se llega a marcar nunca (se descarta de la base de datos
       // directamente), pero el filtro se queda: si alguna fila quedara marcada,
       // esta pantalla no es su sitio.
-      final query = await _appDatabase.mediaSummaryModels
+      final filter = _appDatabase.mediaSummaryModels
           .filter()
           .isImportedEqualTo(false)
-          .isDeletedEqualTo(false)
+          .isDeletedEqualTo(false);
+
+      final query = await (source == ImportSource.all
+              ? filter
+              : filter.importSourceEqualTo(source.id))
           .findAll();
 
       return DataSuccess(query.map((e) => e.toEntity()).toList());
@@ -330,7 +271,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     try {
       // 1. Get or fallback for Creator
       final creatorModel = await _appDatabase.creatorModels.get(media.creator.id)
-          ?? await _unknownCreator();
+          ?? await _registry.unknownCreatorModel();
 
       // 2. Handle Tags
       final List<TagModel> tagModels = [];

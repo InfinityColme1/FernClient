@@ -113,9 +113,6 @@ class _DeleteView extends StatelessWidget {
                     // hay nada que forzar.
                     IconButton(
                       tooltip: texts.deleteForeverTooltip,
-                      // El color va en el botón y no en el icono para que se
-                      // atenúe solo cuando no hay nada marcado.
-                      color: AppColors.black,
                       onPressed: hasMedia
                           ? () => context
                               .read<MediaBloc>()

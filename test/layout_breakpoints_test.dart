@@ -21,6 +21,8 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/collapsing_navigation_drawer_widget.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -176,16 +178,43 @@ Widget _deletedHeader(BuildContext context, AppLocalizations texts) {
   );
 }
 
+/// El más largo de los avisos que la cabecera de importación pinta junto a la
+/// fuente. Se miden todos porque cuál es el largo cambia con el idioma.
+String _longestSourceNote(AppLocalizations texts) {
+  return [
+    texts.sourceNotConfigured,
+    texts.lastImportNever,
+    texts.lastImportMinutes(59),
+    texts.lastImportHours(23),
+    texts.lastImportDays(30),
+  ].reduce((a, b) => a.length >= b.length ? a : b);
+}
+
 Widget _importHeader(BuildContext context, AppLocalizations texts) {
   final theme = Theme.of(context);
   return Row(
     children: [
-      FernDropdownPill<String>(
-        value: importSources.first,
-        items: importSources,
-        labelBuilder: (source) =>
-            source == localComputerSource ? texts.sourceLocalComputer : source,
+      FernDropdownPill<ImportSource>(
+        value: ImportSource.local,
+        items: const [ImportSource.all, ...ImportSource.scannable],
+        labelBuilder: (source) => source.name(texts),
         onChanged: (_) {},
+      ),
+      const SizedBox(width: AppSpacing.m),
+      // El aviso de la fuente: lo que se pinta al lado del desplegable cuando
+      // hay algo que decir de ella (aquí, el caso más largo).
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.history,
+              size: AppSizes.iconCompact, color: AppColors.gray),
+          const SizedBox(width: AppSpacing.xs),
+          // El aviso más largo de los que puede pintar la cabecera: es el que
+          // decide cuánto ocupa la fila.
+          Text(_longestSourceNote(texts),
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray)),
+        ],
       ),
       const Spacer(),
       Text(texts.selectedCount(_sampleCount),
@@ -196,6 +225,13 @@ Widget _importHeader(BuildContext context, AppLocalizations texts) {
           style:
               theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
       const Spacer(),
+      FernDropdownPill<int>(
+        value: unlimitedImportLimit,
+        items: importLimitOptions,
+        labelBuilder: (limit) => importLimitLabel(limit, texts),
+        onChanged: (_) {},
+      ),
+      const SizedBox(width: AppSpacing.s),
       IconButton(
           onPressed: () {},
           icon: const Icon(Icons.refresh, color: AppColors.black)),
