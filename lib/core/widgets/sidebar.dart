@@ -100,6 +100,16 @@ class _SidebarState extends State<Sidebar> {
             GoRouter.of(context).go(importRoute);
           }
       ),
+      // Experimental: el navegador de dentro de la aplicación. Quitar este
+      // botón lo deja fuera de la aplicación sin tocar nada más.
+      SidebarItem(
+          id: browserRoute,
+          title: texts.navBrowser,
+          icon: Icons.travel_explore_outlined,
+          onTap: () {
+            context.go(browserRoute);
+          }
+      ),
       SidebarItem(
           id: favoritesRoute,
           title: texts.navFavorites,

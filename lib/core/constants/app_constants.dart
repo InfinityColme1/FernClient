@@ -12,6 +12,20 @@ const deletedRoute = '/deleted';
 const creatorManagerRoute = '/creator-manager';
 const tagManagerRoute = '/tag-manager';
 
+/// El navegador de dentro de la aplicación. Es una prueba: si no convence, se
+/// quita esta ruta, su botón del menú y la carpeta `features/browser`, y la
+/// aplicación se queda como estaba.
+const browserRoute = '/browser';
+
+/// Parámetro de consulta del navegador: con qué dirección se abre. Sin él
+/// arranca por donde arranca siempre.
+const browserUrlQueryParam = 'url';
+
+/// El navegador abierto por una dirección concreta. Es lo que permite mandar al
+/// usuario a iniciar sesión en una plataforma desde donde le hacía falta.
+String browserRouteWithUrl(String url) =>
+    '$browserRoute?$browserUrlQueryParam=${Uri.encodeComponent(url)}';
+
 const viewerRoute = '/viewer';
 
 /// Parámetro de consulta del visor: `true` abre el panel de información al
@@ -74,6 +88,10 @@ const redditClientIdPreferenceKey = 'reddit_client_id';
 const redditClientSecretPreferenceKey = 'reddit_client_secret';
 const redditUsernamePreferenceKey = 'reddit_username';
 const redditPasswordPreferenceKey = 'reddit_password';
+
+/// La cookie de sesión con la que se entra en la cuenta de Pixiv. Es lo único
+/// que hace falta: lleva dentro el identificador del usuario.
+const pixivSessionIdPreferenceKey = 'pixiv_session_id';
 
 // Gestión de ficheros
 /// Carpeta de la biblioteca donde se guardan los avatares mientras el usuario
@@ -180,6 +198,113 @@ const redditMaxPages = 10;
 /// Nombre de la etiqueta de origen con la que nace el contenido de Reddit, para
 /// que la ordenación de ficheros por origen sepa dónde ponerlo.
 const redditSourceTagName = 'Reddit';
+
+// Pixiv
+/// La dirección con la que se nombra lo que hay en Pixiv (una obra, un autor).
+/// Es también por donde se habla con su API: Pixiv no tiene una pública, así
+/// que se usa la misma que su web, la que responde bajo `/ajax`.
+const pixivSiteUrl = 'https://www.pixiv.net';
+const pixivApiHost = 'www.pixiv.net';
+
+/// Con lo que la aplicación se identifica ante Pixiv.
+///
+/// A diferencia de Reddit, que exige uno propio de cada aplicación, Pixiv sólo
+/// atiende a lo que parece un navegador: su `/ajax` es el de su web y responde
+/// a lo que no lo parece con una página de error.
+const pixivUserAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+/// La cookie con la que Pixiv reconoce a quien pide. Es la que el navegador de
+/// la aplicación recoge cuando el usuario ha entrado en su cuenta.
+const pixivSessionCookieName = 'PHPSESSID';
+
+/// La página en la que se entra en Pixiv, que es a donde se manda al usuario
+/// cuando quiere importar de ahí y todavía no hay sesión.
+const pixivLoginUrl = 'https://accounts.pixiv.net/login';
+
+/// Cuántos marcadores se piden por página. Es el tamaño que usa su propia web.
+const pixivPageSize = 48;
+
+/// Tope de páginas que se recorren de una vez por cada listado de marcadores.
+/// Con el tamaño de página son casi dos mil obras, que es de sobra para una
+/// importación completa.
+const pixivMaxPages = 40;
+
+/// Los dos listados de marcadores de una cuenta: los que se ven desde fuera y
+/// los que sólo ve su dueño. Es el valor del parámetro `rest` de su API, y
+/// también con lo que se distingue por dónde se quedó la última importación de
+/// cada uno.
+const pixivPublicBookmarks = 'show';
+const pixivPrivateBookmarks = 'hide';
+const pixivBookmarkCollections = [pixivPublicBookmarks, pixivPrivateBookmarks];
+
+/// El tipo de obra que Pixiv llama *ugoira*: una animación que no se sirve como
+/// vídeo sino como un zip de fotogramas. No hay ahí ningún fichero que la
+/// aplicación pueda reproducir, así que se monta uno al descargarla.
+const pixivUgoiraIllustType = 2;
+
+/// Nombre de la etiqueta de origen con la que nace el contenido de Pixiv, para
+/// que la ordenación de ficheros por origen sepa dónde ponerlo.
+const pixivSourceTagName = 'Pixiv';
+
+// Navegador de la aplicación (experimental)
+/// Por dónde empieza el navegador mientras el usuario no diga otra cosa: un
+/// buscador, que es de donde se sale a cualquier sitio.
+const browserHomeUrl = 'https://www.google.com';
+
+/// La página de inicio que haya elegido el usuario para el navegador.
+const browserHomePreferenceKey = 'browser_home_url';
+
+/// La última página en la que se dejó el navegador. No es un ajuste: es dónde
+/// se estaba, y por eso se guarda solo y no se enseña en ninguna pantalla.
+const browserLastUrlPreferenceKey = 'browser_last_url';
+
+/// A qué tamaño se enseñan las páginas dentro de la aplicación.
+///
+/// Algo más pequeñas que en un navegador de verdad: la ventana ya está
+/// compartida con el menú lateral y la cabecera, y una página a tamaño completo
+/// obliga a desplazarse para ver lo que hay.
+const browserZoom = 0.75;
+
+/// Nombre de la etiqueta de origen del contenido que se prepara desde el
+/// navegador, para que la ordenación de ficheros por origen sepa dónde ponerlo.
+const browserSourceTagName = 'Web';
+
+/// Con lo que se identifica la aplicación al descargar lo que se ha encontrado
+/// navegando.
+///
+/// Aquí no vale el de la aplicación: lo que se pide son los ficheros de una
+/// página que el usuario está viendo en un navegador, y hay servidores de
+/// contenidos que a cualquier otra cosa le responden que no. Se pide como lo
+/// pediría el navegador que los está enseñando.
+const browserUserAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+/// El color con el que se señala en la página el contenido de la lista.
+///
+/// Va aquí y no en la paleta de la aplicación porque no se pinta en la
+/// aplicación sino dentro de una página cualquiera de internet: tiene que verse
+/// sobre lo que sea que haya debajo.
+const browserHighlightColor = '#FF87B3';
+
+// Animaciones por fotogramas
+/// Lo que dura un fotograma cuando la plataforma no dice cuánto, en
+/// milisegundos. Diez por segundo, que es el paso al que suelen ir estas
+/// animaciones.
+const defaultAnimationFrameDelay = 100;
+
+/// Ancho máximo de los fotogramas de una animación montada por la aplicación.
+/// Lo que venga más grande se reduce: un GIF de decenas de fotogramas a tamaño
+/// original ocupa más que el vídeo que nunca fue y tarda una eternidad en
+/// escribirse.
+const maxAnimationFrameWidth = 1000;
+
+/// Tope de lo que se descarga de un paquete de fotogramas. Es mucho menor que
+/// el de un fichero suelto porque este sí entra entero en memoria: hay que
+/// abrirlo para poder montarlo.
+const maxAnimationSourceBytes = 64 * 1024 * 1024;
 
 /// Lo que se espera a que respondan las llamadas a la API antes de darlas por
 /// perdidas.

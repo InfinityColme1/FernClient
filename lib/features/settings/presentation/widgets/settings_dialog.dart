@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/widgets/appearance_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/browser_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/remote_sources_settings_section.dart';
@@ -17,7 +18,10 @@ enum SettingsSection {
   language(icon: Icons.language),
   appearance(icon: Icons.palette_outlined),
   files(icon: Icons.folder_outlined),
-  remoteSources(icon: Icons.cloud_download_outlined);
+  remoteSources(icon: Icons.cloud_download_outlined),
+
+  /// Experimental: los ajustes del navegador de dentro de la aplicación.
+  browser(icon: Icons.travel_explore_outlined);
 
   const SettingsSection({required this.icon});
 
@@ -28,6 +32,7 @@ enum SettingsSection {
         SettingsSection.appearance => texts.settingsAppearance,
         SettingsSection.files => texts.settingsFiles,
         SettingsSection.remoteSources => texts.settingsRemoteSources,
+        SettingsSection.browser => texts.settingsBrowser,
       };
 }
 
@@ -126,11 +131,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
               children: [
                 Icon(section.icon, size: AppSizes.iconMedium),
                 const SizedBox(width: AppSpacing.m),
-                Text(
-                  section.title(AppLocalizations.of(context)),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                // El nombre de una sección se recorta antes que desbordar la
+                // columna: la columna tiene un ancho fijo y los nombres cambian
+                // con el idioma.
+                Expanded(
+                  child: Text(
+                    section.title(AppLocalizations.of(context)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
                   ),
                 ),
               ],
@@ -156,11 +168,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
           ),
           child: Row(
             children: [
-              Text(
-                _section.title(AppLocalizations.of(context)),
-                style: theme.textTheme.headlineMedium,
+              Expanded(
+                child: Text(
+                  _section.title(AppLocalizations.of(context)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.headlineMedium,
+                ),
               ),
-              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),
                 onPressed: () => context.pop(),
@@ -183,6 +198,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
               SettingsSection.files => const FilesSettingsSection(),
               SettingsSection.remoteSources =>
                 const RemoteSourcesSettingsSection(),
+              SettingsSection.browser => const BrowserSettingsSection(),
             },
           ),
         ),

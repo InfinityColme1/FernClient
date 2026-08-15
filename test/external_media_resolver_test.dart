@@ -141,4 +141,133 @@ void main() {
       expect(await resolver.resolve('https://streamable.com/abc'), isNull);
     });
   });
+
+  // Lo mismo, pero pidiendo todo lo que hay en la página y no sólo lo primero:
+  // es lo que hace falta para traerse una galería entera y lo que permite que
+  // esto sirva para cualquier plataforma, sepa o no la aplicación de ella.
+  group('todo lo que hay en una página', () {
+    test('sale lo que la página enseña, y no sólo lo que anuncia', () async {
+      final recorder = _Recorder((_) => _html('''
+        <html><head>
+          <meta property="og:image" content="https://i.imgur.com/portada.jpg">
+        </head><body>
+          <img src="https://i.imgur.com/una.jpg">
+          <video><source src="https://i.imgur.com/un-video.mp4"></video>
+          <a href="https://i.imgur.com/otra.png">la de al lado</a>
+        </body></html>
+      '''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(await resolver.resolveAll('https://imgur.com/a/galeria'), [
+        'https://i.imgur.com/portada.jpg',
+        'https://i.imgur.com/una.jpg',
+        'https://i.imgur.com/un-video.mp4',
+        'https://i.imgur.com/otra.png',
+      ]);
+    });
+
+    test('lo que sale dos veces se descarga una', () async {
+      final recorder = _Recorder((_) => _html('''
+        <meta property="og:image" content="https://i.imgur.com/una.jpg">
+        <img src="https://i.imgur.com/una.jpg">
+      '''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(
+        await resolver.resolveAll('https://imgur.com/a'),
+        ['https://i.imgur.com/una.jpg'],
+      );
+    });
+
+    test('las direcciones a medias se completan con las de la página',
+        () async {
+      final recorder = _Recorder((_) => _html('''
+        <img src="/estaticos/una.jpg">
+        <img src="otra.png">
+      '''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(await resolver.resolveAll('https://imgur.com/a/galeria'), [
+        'https://imgur.com/estaticos/una.jpg',
+        'https://imgur.com/a/otra.png',
+      ]);
+    });
+
+    test('lo que no es un fichero que se pueda pintar se queda fuera',
+        () async {
+      final recorder = _Recorder((_) => _html('''
+        <img src="https://i.imgur.com/una.jpg">
+        <a href="https://imgur.com/a/otra-galeria">más</a>
+        <a href="http://i.imgur.com/insegura.png">sin cifrar</a>
+        <script src="https://imgur.com/app.js"></script>
+      '''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(
+        await resolver.resolveAll('https://imgur.com/a/galeria'),
+        ['https://i.imgur.com/una.jpg'],
+      );
+    });
+
+    test('una página de un sitio desconocido sólo se abre si se pide',
+        () async {
+      final recorder = _Recorder((_) => _html(
+            '<img src="https://cualquier-sitio.test/una.jpg">',
+          ));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(
+        await resolver.resolveAll('https://cualquier-sitio.test/galeria'),
+        isEmpty,
+      );
+      expect(recorder.requests, isEmpty);
+
+      expect(
+        await resolver.resolveAll(
+          'https://cualquier-sitio.test/galeria',
+          anyHost: true,
+        ),
+        ['https://cualquier-sitio.test/una.jpg'],
+      );
+      expect(recorder.requests, hasLength(1));
+    });
+
+    test('las cabeceras que pida el sitio viajan con la petición', () async {
+      late Map<String, String> sent;
+      final client = MockClient((request) async {
+        sent = request.headers;
+        return _html('<img src="https://i.imgur.com/una.jpg">');
+      });
+      final resolver = ExternalMediaResolver(client: client);
+
+      await resolver.resolveAll(
+        'https://imgur.com/a',
+        headers: {'Referer': 'https://imgur.com/'},
+      );
+
+      expect(sent['Referer'], 'https://imgur.com/');
+      // Y sin perder las de casa.
+      expect(sent['User-Agent'], isNotNull);
+    });
+
+    test('lo que encuentre otro pasa por la misma criba', () async {
+      // Es lo que hace el navegador de la aplicación: mira la página él mismo y
+      // pregunta aquí qué de lo que ha visto se puede descargar.
+      final resolver = ExternalMediaResolver(client: _Recorder((_) => _html('')).client);
+
+      expect(resolver.isPlayable('https://i.imgur.com/una.jpg'), isTrue);
+      expect(resolver.isPlayable('https://i.imgur.com/un-video.mp4'), isTrue);
+      // Sin cifrar, sin extensión conocida, o directamente otra cosa.
+      expect(resolver.isPlayable('http://i.imgur.com/una.jpg'), isFalse);
+      expect(resolver.isPlayable('https://imgur.com/a/galeria'), isFalse);
+      expect(resolver.isPlayable('data:image/png;base64,iVBORw0K'), isFalse);
+    });
+
+    test('una página que no se deja leer no da nada', () async {
+      final recorder = _Recorder((_) => http.Response('nope', 500));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(await resolver.resolveAll('https://imgur.com/a'), isEmpty);
+    });
+  });
 }

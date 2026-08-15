@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
@@ -9,7 +10,7 @@ import 'package:Fern/features/media/domain/entities/media/media_summary_entity.d
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 
-/// Las fuentes remotas de la aplicación. Por ahora sólo Reddit.
+/// Las fuentes remotas de la aplicación: Reddit y Pixiv.
 ///
 /// El recorrido es siempre el mismo, dé igual la plataforma: se pregunta a su
 /// API qué tiene guardado el usuario, se descarga lo que aún no está en el
@@ -17,6 +18,7 @@ import 'package:Fern/features/settings/domain/repositories/settings_repository.d
 /// que se escanea del disco.
 class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   final RedditApiClient _reddit;
+  final PixivApiClient _pixiv;
   final RemoteMediaDownloader _downloader;
   final MediaRegistry _registry;
   final SettingsRepository _settingsRepository;
@@ -24,11 +26,13 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
   RemoteMediaRepositoryImpl({
     required RedditApiClient reddit,
+    required PixivApiClient pixiv,
     required RemoteMediaDownloader downloader,
     required MediaRegistry registry,
     required SettingsRepository settingsRepository,
     required PreferencesService preferencesService,
   })  : _reddit = reddit,
+        _pixiv = pixiv,
         _downloader = downloader,
         _registry = registry,
         _settingsRepository = settingsRepository,
@@ -42,8 +46,13 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     switch (source) {
       case ImportSource.reddit:
         yield* _scanReddit(untilLastImport: untilLastImport);
+      case ImportSource.pixiv:
+        yield* _scanPixiv(untilLastImport: untilLastImport);
       case ImportSource.all:
       case ImportSource.local:
+      // El navegador tampoco: de él no se puede pedir nada, es el usuario quien
+      // trae el contenido página a página.
+      case ImportSource.browser:
         yield DataException(
           Exception('${source.id} is not a remote source'),
         );
@@ -121,6 +130,90 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
     if (newest != null) {
       await _preferencesService.setLastImportMarker(ImportSource.reddit, newest);
+    }
+  }
+
+  /// Lo marcado en la cuenta de Pixiv del usuario, tanto lo público como lo
+  /// privado.
+  ///
+  /// Funciona igual que lo de Reddit, y por lo mismo: Pixiv tampoco dice cuándo
+  /// se marcó cada obra, pero sí devuelve lo marcado de lo más reciente a lo más
+  /// antiguo, así que "desde la última vez" se resuelve con una marca.
+  ///
+  /// La diferencia está en que aquí no hay un listado sino dos, el de marcadores
+  /// públicos y el de privados, y cada uno se recorre por su cuenta de lo más
+  /// nuevo a lo más antiguo. Por eso hay una marca por listado: una sola pararía
+  /// el segundo recorrido en la obra en la que se quedó el primero, que no tiene
+  /// nada que ver.
+  ///
+  /// Las marcas sólo se guardan si el recorrido llega hasta el final, igual que
+  /// en Reddit: si se corta antes, dejarlas en lo más nuevo daría por importado
+  /// lo que se ha quedado sin mirar.
+  Stream<DataState<MediaSummaryEntity>> _scanPixiv({
+    required bool untilLastImport,
+  }) async* {
+    final settings = _settingsRepository.getSettings();
+    final credentials = settings.pixiv;
+    if (!credentials.isComplete) {
+      yield DataException(Exception('Pixiv is not configured'));
+      return;
+    }
+
+    final markers = <String, String>{
+      if (untilLastImport)
+        for (final collection in pixivBookmarkCollections)
+          if (_preferencesService.getLastImportMarker(
+                ImportSource.pixiv,
+                collection: collection,
+              )
+              case final marker?)
+            collection: marker,
+    };
+
+    // Lo más nuevo que había en cada listado al empezar, que es lo que quedará
+    // como marca cuando el recorrido termine.
+    final newest = <String, String>{};
+
+    try {
+      await for (final item
+          in _pixiv.bookmarkedMedia(credentials, stopAt: markers)) {
+        final collection = item.collection;
+        if (collection != null) newest.putIfAbsent(collection, () => item.postId);
+
+        final path = await _downloader.download(
+          url: item.url,
+          name: item.id,
+          source: ImportSource.pixiv,
+          // Su servidor de contenidos sólo da la imagen a quien dice venir de
+          // su web, y eso sólo lo sabe la fuente que dio la dirección.
+          headers: item.headers,
+          // Las animaciones no vienen como fichero sino como un paquete de
+          // fotogramas, y hay que montarlas al descargarlas.
+          frameDelays: item.frameDelays,
+        );
+        if (path == null) continue;
+
+        final summary = await _registry.register(
+          path: path,
+          source: ImportSource.pixiv,
+          description: item.title.isEmpty ? null : item.title,
+          sourceTagName:
+              settings.autoTagRemoteSource ? pixivSourceTagName : null,
+          sourceUrls: item.sourceUrls,
+        );
+        if (summary != null) yield DataSuccess(summary);
+      }
+    } on Exception catch (e) {
+      yield DataException(e);
+      return;
+    }
+
+    for (final entry in newest.entries) {
+      await _preferencesService.setLastImportMarker(
+        ImportSource.pixiv,
+        entry.value,
+        collection: entry.key,
+      );
     }
   }
 }

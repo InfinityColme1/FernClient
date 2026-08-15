@@ -74,6 +74,14 @@ abstract class MediaStates extends Equatable {
   /// lo elegido son todas las fuentes (que no tienen un único momento).
   final DateTime? lastImportAt;
 
+  /// La fuente cuya sesión ha rechazado la plataforma durante la importación
+  /// que acaba de terminar, si es que ha pasado.
+  ///
+  /// Es un aviso de una sola vez: no lo arrastra [copyWith], así que vive lo que
+  /// dura el estado que lo trae y desaparece con el siguiente. Es lo que hace
+  /// que se enseñe una vez y no en cada repintado.
+  final ImportSource? expiredSession;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -91,6 +99,7 @@ abstract class MediaStates extends Equatable {
     this.isBusy = false,
     this.importSource = ImportSource.local,
     this.lastImportAt,
+    this.expiredSession,
   });
 
   /// Si el filtro de fuentes deja ver [summary].
@@ -161,11 +170,13 @@ abstract class MediaStates extends Equatable {
     isBusy,
     importSource,
     lastImportAt,
+    expiredSession,
   ];
 }
 
 class MediaLoading extends MediaStates {
   const MediaLoading({
+    super.expiredSession,
     super.mediaList,
     super.showInfo,
     super.isModified,

@@ -16,7 +16,20 @@ enum ImportSource {
 
   /// Contenido guardado en la cuenta de Reddit del usuario, que la aplicación
   /// se descarga a este equipo.
-  reddit(id: 'reddit', isRemote: true, label: 'Reddit');
+  reddit(id: 'reddit', isRemote: true, label: 'Reddit'),
+
+  /// Obras marcadas en la cuenta de Pixiv del usuario, tanto las públicas como
+  /// las privadas.
+  pixiv(id: 'pixiv', isRemote: true, label: 'Pixiv'),
+
+  /// Contenido que el usuario ha traído desde el navegador de la aplicación:
+  /// una página cualquiera de internet de la que se ha sacado lo que enseñaba.
+  ///
+  /// No se escanea ni se configura, así que no está ni en [scannable] ni en
+  /// [remote]: no se le puede pedir nada, es el usuario quien lo trae página a
+  /// página. Sí está en [listed], porque lo que ha traído hay que poder verlo y
+  /// filtrarlo como lo de cualquier otra fuente.
+  browser(id: 'browser');
 
   const ImportSource({
     required this.id,
@@ -42,6 +55,18 @@ enum ImportSource {
   static const List<ImportSource> scannable = [
     ImportSource.local,
     ImportSource.reddit,
+    ImportSource.pixiv,
+  ];
+
+  /// Las fuentes que se enseñan al elegir de dónde se está viendo o trayendo
+  /// contenido: las que se pueden escanear y, además, las que llenan la
+  /// biblioteca por otro camino.
+  ///
+  /// No es lo mismo que [scannable]: del navegador hay contenido que ver y que
+  /// filtrar, pero no hay nada que pedirle.
+  static const List<ImportSource> listed = [
+    ...scannable,
+    ImportSource.browser,
   ];
 
   /// Todas las fuentes de las que puede haber contenido guardado. Es con lo que
@@ -50,10 +75,15 @@ enum ImportSource {
   static const Set<ImportSource> allSources = {
     ImportSource.local,
     ImportSource.reddit,
+    ImportSource.pixiv,
+    ImportSource.browser,
   };
 
   /// Las fuentes remotas, las que necesitan configuración para poder usarse.
-  static const List<ImportSource> remote = [ImportSource.reddit];
+  static const List<ImportSource> remote = [
+    ImportSource.reddit,
+    ImportSource.pixiv,
+  ];
 
   /// Las fuentes que hay que recorrer al escanear con esta opción elegida:
   /// todas si es [all], y si no ella sola.

@@ -39,6 +39,8 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
+    on<BrowserHomeChangedEvent>(onBrowserHomeChanged);
+    on<RemoteSessionCapturedEvent>(onRemoteSessionCaptured);
     on<MigrateLibraryRequestedEvent>(onMigrateLibraryRequested);
   }
 
@@ -160,6 +162,20 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     return _apply(state.settings.copyWith(reddit: event.reddit), emit);
+  }
+
+  Future<void> onBrowserHomeChanged(
+    BrowserHomeChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(state.settings.copyWith(browserHome: event.url), emit);
+  }
+
+  Future<void> onRemoteSessionCaptured(
+    RemoteSessionCapturedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(event.settings, emit);
   }
 
   Future<void> onMigrateLibraryRequested(

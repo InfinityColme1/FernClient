@@ -1,5 +1,7 @@
+import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
+import 'package:Fern/features/media/domain/entities/remote_session_expired.dart';
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
@@ -70,6 +72,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// que la vació a mano.
   final PreferencesService _preferences;
 
+  /// La señal con la que se para una importación en marcha. La levanta el botón
+  /// de la rejilla y la miran los recorridos de las fuentes.
+  final ImportCancellation _cancellation;
+
   /// Punto de partida de la selección por rango: el último elemento que se ha
   /// marcado o desmarcado a mano. No forma parte del estado porque no se pinta,
   /// sólo decide desde dónde se extiende el siguiente mayúsculas + clic.
@@ -101,6 +107,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
     required PreferencesService preferences,
+    required ImportCancellation cancellation,
   })  : _selectAndScanDirectoryUsecase = selectAndScanDirectoryUsecase,
         _scanSourceUseCase = scanSourceUseCase,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
@@ -126,6 +133,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _searchMediaUseCase = searchMediaUseCase,
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
         _preferences = preferences,
+        _cancellation = cancellation,
         super(const MediaLoading()) {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
@@ -143,6 +151,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<ClearMediaSearchEvent>(onClearMediaSearch);
     on<ImportSourceChangedEvent>(onImportSourceChanged);
     on<ScanSourceEvent>(onScanSource);
+    on<StopImportEvent>(onStopImport);
     on<SelectAndScanDirectoryEvent>(onSelectAndScanDirectoryEvent);
     on<MediaClickedEvent>(onMediaClicked);
     on<ToggleMediaSelectionEvent>(onToggleMediaSelection);
@@ -1086,6 +1095,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     );
   }
 
+  /// Parar no emite nada: el recorrido se entera por la señal y termina como
+  /// termina cualquier importación, dejando lo que ya se había traído.
+  void onStopImport(StopImportEvent event, Emitter<MediaStates> emit) {
+    _cancellation.cancel();
+  }
+
   void onScanSource(ScanSourceEvent event, Emitter<MediaStates> emit) async {
     await _scan(
       emit,
@@ -1110,6 +1125,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     Emitter<MediaStates> emit,
     Future<Stream<DataState<MediaSummaryEntity>>> Function() scan,
   ) async {
+    // La importación empieza sin nadie que la haya parado: lo que se pidiera
+    // parar la vez anterior ya se paró.
+    _cancellation.reset();
+
     List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
     final selectedIds = state.selectedIds;
     emit(MediaLoading(
@@ -1121,6 +1140,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     ));
 
     final stream = await scan();
+
+    // Una sesión rechazada no es un contenido que no llega: es que a esa
+    // plataforma no se le puede pedir nada hasta que el usuario vuelva a entrar,
+    // y hay que decírselo al acabar.
+    ImportSource? expiredSession;
 
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
@@ -1135,6 +1159,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
             isBusy: true,
           );
         }
+
+        if (dataState.exception case final RemoteSessionExpiredException error) {
+          expiredSession = error.source;
+        }
+
         return state;
       },
     );
@@ -1142,9 +1171,18 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // El escaneo ha terminado: se queda lo encontrado, se retira el indicador y
     // se recoge la fecha que acaba de sellar el caso de uso.
     if (emit.isDone) return;
-    emit(state.copyWith(
-      isBusy: false,
+    emit(MediaLoading(
+      mediaList: state.mediaList,
+      selectedIds: state.selectedIds,
+      searchQuery: state.searchQuery,
+      searchSections: state.searchSections,
+      searchFilters: state.searchFilters,
+      sourceFilters: state.sourceFilters,
+      searchSuggestion: state.searchSuggestion,
+      favoritesOnly: state.favoritesOnly,
+      importSource: state.importSource,
       lastImportAt: await _getLastImportUseCase(params: state.importSource),
+      expiredSession: expiredSession,
     ));
   }
 

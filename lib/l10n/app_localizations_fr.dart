@@ -33,6 +33,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navTagManager => 'Gestion des tags';
 
   @override
+  String get navBrowser => 'Navigateur';
+
+  @override
   String get searchHint => 'Rechercher';
 
   @override
@@ -196,6 +199,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Si vous la décochez, le contenu quitte la base de données mais ses fichiers restent où ils sont, de sorte qu\'une analyse ultérieure peut les récupérer.';
 
   @override
+  String get actionStopImport => 'Arrêter l\'importation';
+
+  @override
   String get actionImport => 'Importer';
 
   @override
@@ -244,7 +250,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sourceAll => 'Toutes';
 
   @override
+  String get sourceBrowser => 'Navigateur';
+
+  @override
+  String get sourceBrowserNote => 'Ouvrir le navigateur';
+
+  @override
+  String get sourceBrowserHint =>
+      'Ce contenu ne se demande pas d\'ici : il se choisit page par page sur l\'écran du navigateur.';
+
+  @override
   String get sourceNotConfigured => 'Non configurée';
+
+  @override
+  String sourceLogIn(String source) {
+    return 'Connecte-toi à $source';
+  }
+
+  @override
+  String sourceLogInHint(String source) {
+    return 'Ouvre $source dans le navigateur de Fern. Une fois connecté, appuie là-bas sur le bouton de la clé pour enregistrer la session et reviens ici.';
+  }
 
   @override
   String get selectItem => 'Sélectionner';
@@ -529,6 +555,137 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get redditCredentialsNote =>
       'Les identifiants restent sur cet ordinateur et ne servent qu\'à parler à Reddit.';
+
+  @override
+  String get settingsBrowser => 'Navigateur';
+
+  @override
+  String get browserHome => 'Page d\'accueil';
+
+  @override
+  String get browserHomeTitle => 'Page d\'accueil';
+
+  @override
+  String get browserHomeDescription =>
+      'Où démarre le navigateur de Fern quand tu appuies sur le bouton d\'accueil. Cela ne décide pas de son ouverture : en revenant sur l\'écran, le navigateur reste sur la dernière page visitée.';
+
+  @override
+  String get browserHomeLabel => 'Adresse';
+
+  @override
+  String sessionExpiredTitle(String source) {
+    return 'La session $source n\'est plus valable';
+  }
+
+  @override
+  String sessionExpiredDescription(String source) {
+    return 'Rien n\'a pu être importé : $source a rejeté la session enregistrée. Reconnecte-toi dans le navigateur et appuie là-bas sur le bouton de la clé pour enregistrer la nouvelle.';
+  }
+
+  @override
+  String browserImportedInto(int count, String source) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenus prêts à être revus dans $source',
+      one: '1 contenu prêt à être revu dans $source',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImportKnown(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count étaient déjà dans la bibliothèque',
+      one: '1 était déjà dans la bibliothèque',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImportFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count n\'ont pas pu être téléchargés',
+      one: '1 n\'a pas pu être téléchargé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browserImportNothing => 'Rien n\'a été apporté.';
+
+  @override
+  String get browserAddressHint => 'Adresse d\'un site';
+
+  @override
+  String get browserBack => 'Retour';
+
+  @override
+  String get browserForward => 'Suivant';
+
+  @override
+  String get browserReload => 'Recharger';
+
+  @override
+  String get browserSaveSessionHint =>
+      'Enregistrer la session de ce site pour pouvoir en importer';
+
+  @override
+  String get browserFindMediaHint => 'Chercher du contenu sur cette page';
+
+  @override
+  String browserImportAction(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importer $count',
+      one: 'Importer 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browserSelectAll => 'Tout cocher ou décocher';
+
+  @override
+  String get browserClose => 'Fermer';
+
+  @override
+  String get browserNoSession =>
+      'Fern ne peut pas importer depuis ce site, il n\'y a donc aucune session à enregistrer ici.';
+
+  @override
+  String browserSessionSaved(String source) {
+    return 'Session $source enregistrée.';
+  }
+
+  @override
+  String browserSessionMissing(String source) {
+    return 'Il n\'y a pas encore de session $source ici : connecte-toi d\'abord.';
+  }
+
+  @override
+  String get browserNothingFound => 'Aucun contenu trouvé sur cette page.';
+
+  @override
+  String browserFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenus trouvés',
+      one: '1 contenu trouvé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImporting(int done, int total) {
+    return 'Téléchargement de $done sur $total…';
+  }
 
   @override
   String get importLimitAll => 'Tous';

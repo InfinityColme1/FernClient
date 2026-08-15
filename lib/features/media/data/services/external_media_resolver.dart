@@ -4,18 +4,25 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:http/http.dart' as http;
 
-/// Averigua qué fichero hay detrás de un enlace.
+/// Averigua qué ficheros hay detrás de un enlace.
 ///
 /// Lo que el usuario guarda en una plataforma no siempre es un fichero: muchas
 /// veces es un enlace a otro sitio que enseña un vídeo o una imagen. Esto lo
-/// convierte en la dirección del fichero de verdad, que es lo único que se
-/// puede descargar.
+/// convierte en las direcciones de los ficheros de verdad, que es lo único que
+/// se puede descargar.
+///
+/// No sabe de ninguna plataforma en concreto y por eso vale para todas: mira
+/// primero cómo se anuncia la página a las redes sociales y, si eso no da nada,
+/// recorre lo que la página enseña. Lo único que conoce por su nombre es
+/// Redgifs, que arma sus páginas en el navegador y no deja nada que mirar.
 ///
 /// Lo que **no** hace, y es a propósito:
 ///
 /// - No sale de [externalMediaHosts]. Un enlace a cualquier otro sitio se
 ///   descarta sin llegar a pedirlo, así que la aplicación nunca visita una
-///   dirección desconocida por el hecho de estar guardada en una cuenta.
+///   dirección desconocida por el hecho de estar guardada en una cuenta. Una
+///   fuente que sepa lo que hace puede levantar esa restricción con [anyHost],
+///   pero entonces es ella la que responde de a dónde se va.
 /// - No acepta nada que no vaya por `https`.
 /// - No se queda con lo que resuelva si no es un fichero multimedia de los que
 ///   la aplicación reconoce; el tipo se vuelve a comprobar al descargar, con lo
@@ -28,31 +35,70 @@ class ExternalMediaResolver {
 
   /// La dirección del fichero al que lleva [url], o `null` si no lleva a
   /// ninguno o si el sitio no es de los aceptados.
-  Future<String?> resolve(String url) async {
+  ///
+  /// De todo lo que haya en la página se queda con lo primero, que es lo que
+  /// la propia página pone por delante: en una de vídeo, el vídeo.
+  Future<String?> resolve(
+    String url, {
+    Map<String, String> headers = const {},
+    bool anyHost = false,
+  }) async {
+    final found = await resolveAll(url, headers: headers, anyHost: anyHost);
+    return found.isEmpty ? null : found.first;
+  }
+
+  /// Todas las direcciones de contenido que hay detrás de [url], sin repetir y
+  /// en el orden en el que la página las pone.
+  ///
+  /// [headers] son las que pida el sitio, si es que pide alguna. [anyHost]
+  /// salta la lista de sitios conocidos, para cuando quien llama ya sabe a
+  /// dónde está mandando.
+  ///
+  /// Devuelve la lista vacía si no hay nada, si el sitio no es de los aceptados
+  /// o si la página no se deja leer: un enlace que no lleva a contenido no es
+  /// un fallo, es un enlace que no lleva a contenido.
+  Future<List<String>> resolveAll(
+    String url, {
+    Map<String, String> headers = const {},
+    bool anyHost = false,
+  }) async {
     final uri = Uri.tryParse(url);
-    if (uri == null || uri.scheme != 'https') return null;
+    if (uri == null || uri.scheme != 'https') return const [];
 
     // Ya es el fichero: no hay nada que averiguar.
-    if (mediaExtensionOfUrl(url) != null) return url;
+    if (mediaExtensionOfUrl(url) != null) return [url];
 
-    if (!_isAllowed(uri.host)) return null;
+    if (!anyHost && !_isAllowed(uri.host)) return const [];
 
     try {
-      final resolved = _isRedgifs(uri.host)
-          ? await _redgifsUrl(uri)
-          : await _openGraphUrl(uri);
+      if (_isRedgifs(uri.host)) {
+        final gif = await _redgifsUrl(uri);
+        return gif == null ? const [] : _playable([gif]);
+      }
 
-      if (resolved == null) return null;
-
-      // Lo que diga la página tampoco se cree a ciegas: tiene que ser una
-      // dirección segura y apuntar a un fichero que se pueda pintar.
-      final resolvedUri = Uri.tryParse(resolved);
-      if (resolvedUri == null || resolvedUri.scheme != 'https') return null;
-
-      return mediaExtensionOfUrl(resolved) == null ? null : resolved;
+      return await _pageMedia(uri, headers);
     } on Exception {
-      return null;
+      return const [];
     }
+  }
+
+  /// Si [url] es algo que la aplicación pueda descargar y enseñar: una
+  /// dirección segura que apunta a un fichero de los que reconoce.
+  ///
+  /// Es la última palabra sobre qué se descarga, venga de donde venga la
+  /// dirección. Lo de fuera no se cree a ciegas: ni lo que diga una página en
+  /// sus etiquetas, ni lo que encuentre quien mire la página por su cuenta (el
+  /// navegador de la aplicación lo hace, y pregunta aquí).
+  bool isPlayable(String url) {
+    return Uri.tryParse(url)?.scheme == 'https' &&
+        mediaExtensionOfUrl(url) != null;
+  }
+
+  List<String> _playable(Iterable<String> urls) {
+    return [
+      for (final each in urls)
+        if (isPlayable(each)) each,
+    ];
   }
 
   /// Si [host] es uno de los sitios aceptados o un subdominio suyo.
@@ -103,19 +149,28 @@ class ExternalMediaResolver {
     return (urls['hd'] ?? urls['sd']) as String?;
   }
 
-  /// El fichero que la página dice tener, según las etiquetas con las que se
-  /// anuncia a las redes sociales (`og:video`, `og:image`).
+  /// Todo el contenido que hay en una página, en el orden en el que conviene
+  /// mirarlo.
   ///
-  /// Es lo que usa cualquier sitio para que su contenido se vea al compartirlo,
-  /// así que sirve para casi todos sin saber nada de cada uno. Se prefiere el
-  /// vídeo: en una página de vídeo, la imagen es sólo su miniatura.
-  Future<String?> _openGraphUrl(Uri uri) async {
-    final response =
-        await _client.get(uri, headers: _headers).timeout(remoteRequestTimeout);
-    if (response.statusCode != 200) return null;
+  /// Primero lo que la página dice tener, según las etiquetas con las que se
+  /// anuncia a las redes sociales (`og:video`, `og:image`): es lo que usa
+  /// cualquier sitio para que su contenido se vea al compartirlo, así que sirve
+  /// para casi todos sin saber nada de cada uno, y es lo que la página
+  /// considera *su* contenido y no un adorno. Se prefiere el vídeo: en una
+  /// página de vídeo, la imagen es sólo su miniatura.
+  ///
+  /// Después, lo que la página enseña de verdad: sus imágenes, sus vídeos y los
+  /// enlaces que llevan directos a un fichero. Con esto una galería da todas
+  /// sus imágenes y no sólo la de la portada, que es lo que las etiquetas de
+  /// arriba dan.
+  Future<List<String>> _pageMedia(Uri uri, Map<String, String> headers) async {
+    final response = await _client
+        .get(uri, headers: {..._headers, ...headers})
+        .timeout(remoteRequestTimeout);
+    if (response.statusCode != 200) return const [];
 
     final contentType = response.headers['content-type'] ?? '';
-    if (!contentType.contains('text/html')) return null;
+    if (!contentType.contains('text/html')) return const [];
 
     final body = response.bodyBytes.length > maxExternalPageBytes
         ? utf8.decode(
@@ -124,8 +179,21 @@ class ExternalMediaResolver {
           )
         : response.body;
 
-    final tags = _metaTags(body);
+    return _mediaInHtml(body, uri);
+  }
 
+  /// El barrido en sí, sobre el texto de la página.
+  ///
+  /// Es lo único que hay que saber hacer para entender una plataforma que no se
+  /// conoce, así que vale igual para lo que llega por la red y para lo que trae
+  /// ya pintado el navegador.
+  List<String> _mediaInHtml(String body, Uri uri) {
+    // Un `Set` con el orden de inserción: la misma imagen suele estar a la vez
+    // en las etiquetas de la cabecera y en el cuerpo de la página, y basta con
+    // descargarla una vez.
+    final found = <String>{};
+
+    final tags = _metaTags(body);
     for (final property in const [
       'og:video:secure_url',
       'og:video:url',
@@ -135,10 +203,50 @@ class ExternalMediaResolver {
       'og:image',
     ]) {
       final content = tags[property];
-      if (content != null && content.isNotEmpty) return content;
+      if (content != null && content.isNotEmpty) {
+        found.add(_absolute(content, uri));
+      }
     }
 
-    return null;
+    for (final each in _elementUrls(body)) {
+      found.add(_absolute(each, uri));
+    }
+
+    return _playable(found);
+  }
+
+  /// Las direcciones de contenido que salen de las etiquetas del cuerpo de la
+  /// página: lo que enseña (`img`, `video`, `source`) y los enlaces que llevan
+  /// directos a un fichero.
+  ///
+  /// Se leen con expresiones regulares por lo mismo que las de la cabecera:
+  /// aquí no hay que entender la página, sólo sacarle las direcciones. Lo que no
+  /// apunte a un fichero de los que la aplicación reconoce se cae después, al
+  /// comprobar la extensión.
+  Iterable<String> _elementUrls(String html) sync* {
+    final elements = RegExp(
+      r'<(?:img|source|video|a)\s[^>]*>',
+      caseSensitive: false,
+    );
+
+    for (final match in elements.allMatches(html)) {
+      final tag = match.group(0)!;
+
+      // `srcset` no se mira: son varias direcciones de la misma imagen a
+      // distintos tamaños, y la buena ya está en `src`.
+      final url = _attribute(tag, 'src') ?? _attribute(tag, 'href');
+      if (url != null && url.isNotEmpty) yield _unescape(url);
+    }
+  }
+
+  /// Deja una dirección de la página en una absoluta, que es la única que se
+  /// puede pedir. Las páginas escriben las suyas de cualquier manera: enteras,
+  /// colgando de la raíz del sitio o sin protocolo.
+  String _absolute(String url, Uri page) {
+    final resolved = Uri.tryParse(url);
+    if (resolved == null) return url;
+
+    return resolved.hasScheme ? url : page.resolveUri(resolved).toString();
   }
 
   /// Las etiquetas `meta` de la página, por el nombre con el que se identifican.

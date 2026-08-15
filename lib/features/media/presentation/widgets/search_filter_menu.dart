@@ -22,7 +22,12 @@ extension _SearchResultTypeFilterLabel on SearchResultType {
 /// Cómo se nombra cada fuente en el filtro. Las plataformas se llaman igual en
 /// todos los idiomas y traen su nombre puesto; el equipo sí se traduce.
 extension _ImportSourceFilterLabel on ImportSource {
-  String filterLabel(AppLocalizations texts) => label ?? texts.sourceLocal;
+  String filterLabel(AppLocalizations texts) =>
+      label ??
+      switch (this) {
+        ImportSource.browser => texts.sourceBrowser,
+        _ => texts.sourceLocal,
+      };
 }
 
 /// Botón "Filters" de la cabecera de la pantalla de media con su panel de
@@ -83,7 +88,7 @@ class SearchFilterMenu extends StatelessWidget {
                 ),
               const SizedBox(height: AppSpacing.m),
               _groupTitle(context, texts.filtersSource),
-              for (final source in ImportSource.scannable)
+              for (final source in ImportSource.listed)
                 FernCheckboxTile(
                   label: source.filterLabel(texts),
                   value: sourceFilters.contains(source),

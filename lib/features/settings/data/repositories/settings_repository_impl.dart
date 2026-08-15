@@ -1,5 +1,6 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +45,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
         username: _preferences.getString(redditUsernamePreferenceKey) ?? '',
         password: _preferences.getString(redditPasswordPreferenceKey) ?? '',
       ),
+      browserHome: _preferences.getString(browserHomePreferenceKey) ??
+          browserHomeUrl,
+      pixiv: PixivSettingsEntity(
+        sessionId: _preferences.getString(pixivSessionIdPreferenceKey) ?? '',
+      ),
     );
   }
 
@@ -85,6 +91,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
     );
     await _preferences.setString(redditUsernamePreferenceKey, reddit.username);
     await _preferences.setString(redditPasswordPreferenceKey, reddit.password);
+
+    await _preferences.setString(
+      pixivSessionIdPreferenceKey,
+      settings.pixiv.sessionId,
+    );
+
+    await _preferences.setString(
+      browserHomePreferenceKey,
+      settings.browserHome,
+    );
 
     final libraryPath = settings.libraryPath;
     if (libraryPath == null) {

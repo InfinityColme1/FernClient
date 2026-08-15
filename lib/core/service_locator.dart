@@ -1,5 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/repositories/remote_media_repository_impl.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
@@ -72,6 +74,8 @@ Future<void> initializeDependencies() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
   
+  getIt.registerLazySingleton<ImportCancellation>(() => ImportCancellation());
+
   getIt.registerLazySingleton<PreferencesService>(() =>
       PreferencesService(getIt<SharedPreferences>())
   );
@@ -132,6 +136,8 @@ Future<void> initializeDependencies() async {
   // hasta que la gestión de archivos los coloca en la biblioteca.
   getIt.registerLazySingleton<RedditApiClient>(() => RedditApiClient());
 
+  getIt.registerLazySingleton<PixivApiClient>(() => PixivApiClient());
+
   getIt.registerLazySingleton<ExternalMediaResolver>(() =>
       ExternalMediaResolver()
   );
@@ -147,6 +153,7 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<RemoteMediaRepository>(() =>
       RemoteMediaRepositoryImpl(
         reddit: getIt(),
+        pixiv: getIt(),
         downloader: getIt(),
         registry: getIt(),
         settingsRepository: getIt(),
@@ -156,8 +163,9 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<SelectAndScanDirectoryUsecase>(
     SelectAndScanDirectoryUsecase(
-        preferencesService: getIt(), 
-        localMediaRepository: getIt()
+        preferencesService: getIt(),
+        localMediaRepository: getIt(),
+        cancellation: getIt()
     )
   );
 
@@ -165,7 +173,8 @@ Future<void> initializeDependencies() async {
     ScanSourceUseCase(
         localMediaRepository: getIt(),
         remoteMediaRepository: getIt(),
-        preferencesService: getIt()
+        preferencesService: getIt(),
+        cancellation: getIt()
     )
   );
 
@@ -344,6 +353,7 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
+        cancellation: getIt(),
         getScannedMediaUseCase: getIt(),
         getLastImportUseCase: getIt(),
         scanSourceUseCase: getIt(),

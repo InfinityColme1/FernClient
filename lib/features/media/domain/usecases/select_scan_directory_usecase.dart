@@ -1,5 +1,6 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/usecases/usecase.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
@@ -17,12 +18,15 @@ class SelectAndScanDirectoryUsecase
     extends UseCase<Stream<DataState<MediaSummaryEntity>>, int> {
   final LocalMediaRepository _localMediaRepository;
   final PreferencesService _preferencesService;
+  final ImportCancellation _cancellation;
 
   SelectAndScanDirectoryUsecase({
     required LocalMediaRepository localMediaRepository,
     required PreferencesService preferencesService,
+    required ImportCancellation cancellation,
   })  : _localMediaRepository = localMediaRepository,
-        _preferencesService = preferencesService;
+        _preferencesService = preferencesService,
+        _cancellation = cancellation;
 
   @override
   Future<Stream<DataState<MediaSummaryEntity>>> call({int? params}) async {
@@ -46,6 +50,10 @@ class SelectAndScanDirectoryUsecase
     await for (final result
         in _localMediaRepository.selectAndScanDirectory(directory)) {
       yield result;
+
+      // Igual que en el escaneo de una fuente: parar es terminar antes, así
+      // que se sale del recorrido y la carpeta se sella con su fecha.
+      if (_cancellation.isCancelled) break;
 
       if (result is! DataSuccess) continue;
 

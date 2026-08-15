@@ -9,6 +9,7 @@
   "navDeleted": "Eliminados",
   "navCreatorManager": "Gestor de creadores",
   "navTagManager": "Gestor de etiquetas",
+  "navBrowser": "Navegador",
 
   "searchHint": "Buscar",
   "menuNewCreator": "Nuevo creador",
@@ -44,6 +45,7 @@
   "deleteFilesFromDisk": "Borrar también los ficheros del disco",
   "deleteFilesFromDiskDescription": "Si la quitas, el contenido sale de la base de datos pero sus ficheros se quedan donde están, así que un escaneo posterior puede recogerlos otra vez.",
 
+  "actionStopImport": "Detener la importación",
   "actionImport": "Importar",
   "actionRefresh": "Actualizar",
   "actionSelectFolder": "Elegir carpeta",
@@ -60,7 +62,22 @@
   "actionDeleteCreator": "Eliminar creador",
   "sourceLocalComputer": "Equipo local",
   "sourceAll": "Todas",
+  "sourceBrowser": "Navegador",
+  "sourceBrowserNote": "Ir al navegador",
+  "sourceBrowserHint": "Este contenido no se pide desde aquí: se elige página a página en la pantalla del navegador.",
   "sourceNotConfigured": "Sin configurar",
+  "sourceLogIn": "Inicia sesión en {source}",
+  "@sourceLogIn": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "sourceLogInHint": "Abre {source} en el navegador de Fern. Cuando hayas entrado, pulsa allí el botón de la llave para guardar la sesión y vuelve aquí.",
+  "@sourceLogInHint": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
 
   "selectItem": "Seleccionar",
   "deselectItem": "Quitar selección",
@@ -160,6 +177,85 @@
   "redditPassword": "Contraseña",
   "redditPasswordHint": "La contraseña de esa cuenta",
   "redditCredentialsNote": "Las credenciales se quedan en este equipo y sólo se usan para hablar con Reddit.",
+
+  "settingsBrowser": "Navegador",
+  "browserHome": "Página de inicio",
+  "browserHomeTitle": "Página de inicio",
+  "browserHomeDescription": "Por dónde empieza el navegador de Fern al pulsar el botón de inicio. No decide por dónde se abre: al volver a la pantalla, el navegador se queda en la última página que visitaste.",
+  "browserHomeLabel": "Dirección",
+  "sessionExpiredTitle": "La sesión de {source} ya no vale",
+  "@sessionExpiredTitle": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "sessionExpiredDescription": "No se ha podido importar nada: {source} ha rechazado la sesión guardada. Vuelve a iniciar sesión en el navegador y pulsa allí el botón de la llave para guardar la nueva.",
+  "@sessionExpiredDescription": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserImportedInto": "{count, plural, =1{1 contenido listo para revisar en {source}} other{{count} contenidos listos para revisar en {source}}}",
+  "@browserImportedInto": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "source": { "type": "String" }
+    }
+  },
+  "browserImportKnown": "{count, plural, =1{1 ya estaba en la biblioteca} other{{count} ya estaban en la biblioteca}}",
+  "@browserImportKnown": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImportFailed": "{count, plural, =1{1 no se ha podido descargar} other{{count} no se han podido descargar}}",
+  "@browserImportFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImportNothing": "No se ha traído nada.",
+  "browserAddressHint": "Dirección de un sitio",
+  "browserBack": "Atrás",
+  "browserForward": "Adelante",
+  "browserReload": "Recargar",
+  "browserSaveSessionHint": "Guardar la sesión de este sitio para poder importar de él",
+  "browserFindMediaHint": "Buscar contenido en esta página",
+  "browserImportAction": "{count, plural, =1{Importar 1} other{Importar {count}}}",
+  "@browserImportAction": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserSelectAll": "Marcar o desmarcar todo",
+  "browserClose": "Cerrar",
+  "browserNoSession": "De este sitio no se puede importar, así que aquí no hay ninguna sesión que guardar.",
+  "browserSessionSaved": "Sesión de {source} guardada.",
+  "@browserSessionSaved": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserSessionMissing": "Aquí todavía no hay ninguna sesión de {source}: inicia sesión primero.",
+  "@browserSessionMissing": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserNothingFound": "No se ha encontrado contenido en esta página.",
+  "browserFound": "{count, plural, =1{1 contenido encontrado} other{{count} contenidos encontrados}}",
+  "@browserFound": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImporting": "Descargando {done} de {total}…",
+  "@browserImporting": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
 
   "importLimitAll": "Todos",
   "importLimitSinceLast": "Nuevos",

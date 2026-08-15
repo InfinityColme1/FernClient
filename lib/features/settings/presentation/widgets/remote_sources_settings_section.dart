@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Configuración de las plataformas de las que la aplicación puede traerse
-/// contenido. Por ahora sólo Reddit.
+/// contenido: Reddit y Pixiv.
 ///
 /// Los campos son de estado propio y no de un `BlocBuilder`: se guardan según
 /// se escriben, y repintarlos con cada tecla movería el cursor de sitio. El
@@ -35,7 +35,9 @@ class _RemoteSourcesSettingsSectionState
   void initState() {
     super.initState();
 
-    final reddit = getIt<SettingsBloc>().state.settings.reddit;
+    final settings = getIt<SettingsBloc>().state.settings;
+
+    final reddit = settings.reddit;
     _clientId = TextEditingController(text: reddit.clientId);
     _clientSecret = TextEditingController(text: reddit.clientSecret);
     _username = TextEditingController(text: reddit.username);

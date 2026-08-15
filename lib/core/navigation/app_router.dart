@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/main_layout.dart';
 import 'package:Fern/core/navigation/page_transitions.dart';
+import 'package:Fern/features/browser/presentation/pages/browser_page.dart';
 import 'package:Fern/features/media/presentation/pages/creator_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/delete_page.dart';
 import 'package:Fern/features/media/presentation/pages/favorites_page.dart';
@@ -75,6 +76,17 @@ final appRouter = GoRouter(
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const TagManagerPage(),
+            ),
+        ),
+        // Experimental: el navegador de dentro de la aplicación. Se quita de
+        // aquí y del menú lateral, y la aplicación se queda como estaba.
+        GoRoute(
+            path: browserRoute,
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: BrowserPage(
+                initialUrl: state.uri.queryParameters[browserUrlQueryParam],
+              ),
             ),
         ),
       ]

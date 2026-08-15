@@ -150,6 +150,12 @@ abstract class AppLocalizations {
   /// **'Tag Manager'**
   String get navTagManager;
 
+  /// No description provided for @navBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser'**
+  String get navBrowser;
+
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
@@ -324,6 +330,12 @@ abstract class AppLocalizations {
   /// **'If you clear it, the media leaves the database but its files stay where they are, so a later scan can pick them up again.'**
   String get deleteFilesFromDiskDescription;
 
+  /// No description provided for @actionStopImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the import'**
+  String get actionStopImport;
+
   /// No description provided for @actionImport.
   ///
   /// In en, this message translates to:
@@ -420,11 +432,41 @@ abstract class AppLocalizations {
   /// **'All'**
   String get sourceAll;
 
+  /// No description provided for @sourceBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser'**
+  String get sourceBrowser;
+
+  /// No description provided for @sourceBrowserNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the browser'**
+  String get sourceBrowserNote;
+
+  /// No description provided for @sourceBrowserHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This content is not fetched from here: you pick it page by page on the Browser screen.'**
+  String get sourceBrowserHint;
+
   /// No description provided for @sourceNotConfigured.
   ///
   /// In en, this message translates to:
   /// **'Not set up yet'**
   String get sourceNotConfigured;
+
+  /// No description provided for @sourceLogIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to {source}'**
+  String sourceLogIn(String source);
+
+  /// No description provided for @sourceLogInHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens {source} in Fern\'s browser. Once you are in, press the key button there to save the session and come back.'**
+  String sourceLogInHint(String source);
 
   /// No description provided for @selectItem.
   ///
@@ -929,6 +971,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The credentials stay on this computer and are only used to talk to Reddit.'**
   String get redditCredentialsNote;
+
+  /// No description provided for @settingsBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser'**
+  String get settingsBrowser;
+
+  /// No description provided for @browserHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home page'**
+  String get browserHome;
+
+  /// No description provided for @browserHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home page'**
+  String get browserHomeTitle;
+
+  /// No description provided for @browserHomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Where Fern\'s browser starts when you press the home button. It does not affect where it opens: coming back to the screen leaves the browser on the last page you visited.'**
+  String get browserHomeDescription;
+
+  /// No description provided for @browserHomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get browserHomeLabel;
+
+  /// No description provided for @sessionExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {source} session is no longer valid'**
+  String sessionExpiredTitle(String source);
+
+  /// No description provided for @sessionExpiredDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern could not import anything: {source} has rejected the saved session. Log in again in the browser and press the key button there to save the new one.'**
+  String sessionExpiredDescription(String source);
+
+  /// No description provided for @browserImportedInto.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 media ready to review under {source}} other{{count} media ready to review under {source}}}'**
+  String browserImportedInto(int count, String source);
+
+  /// No description provided for @browserImportKnown.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 was already in the library} other{{count} were already in the library}}'**
+  String browserImportKnown(int count);
+
+  /// No description provided for @browserImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 could not be downloaded} other{{count} could not be downloaded}}'**
+  String browserImportFailed(int count);
+
+  /// No description provided for @browserImportNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was brought in.'**
+  String get browserImportNothing;
+
+  /// No description provided for @browserAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Address of a site'**
+  String get browserAddressHint;
+
+  /// No description provided for @browserBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get browserBack;
+
+  /// No description provided for @browserForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get browserForward;
+
+  /// No description provided for @browserReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get browserReload;
+
+  /// No description provided for @browserSaveSessionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the session of this site so Fern can import from it'**
+  String get browserSaveSessionHint;
+
+  /// No description provided for @browserFindMediaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Look for media on this page'**
+  String get browserFindMediaHint;
+
+  /// No description provided for @browserImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Import 1} other{Import {count}}}'**
+  String browserImportAction(int count);
+
+  /// No description provided for @browserSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select or clear all'**
+  String get browserSelectAll;
+
+  /// No description provided for @browserClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get browserClose;
+
+  /// No description provided for @browserNoSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern cannot import from this site, so there is no session to save here.'**
+  String get browserNoSession;
+
+  /// No description provided for @browserSessionSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{source} session saved.'**
+  String browserSessionSaved(String source);
+
+  /// No description provided for @browserSessionMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no {source} session open here yet: log in first.'**
+  String browserSessionMissing(String source);
+
+  /// No description provided for @browserNothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No media found on this page.'**
+  String get browserNothingFound;
+
+  /// No description provided for @browserFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 media found} other{{count} media found}}'**
+  String browserFound(int count);
+
+  /// No description provided for @browserImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {done} of {total}…'**
+  String browserImporting(int done, int total);
 
   /// No description provided for @importLimitAll.
   ///

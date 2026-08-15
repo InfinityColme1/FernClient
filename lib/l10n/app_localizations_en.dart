@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navTagManager => 'Tag Manager';
 
   @override
+  String get navBrowser => 'Browser';
+
+  @override
   String get searchHint => 'Search';
 
   @override
@@ -195,6 +198,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'If you clear it, the media leaves the database but its files stay where they are, so a later scan can pick them up again.';
 
   @override
+  String get actionStopImport => 'Stop the import';
+
+  @override
   String get actionImport => 'Import';
 
   @override
@@ -243,7 +249,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceAll => 'All';
 
   @override
+  String get sourceBrowser => 'Browser';
+
+  @override
+  String get sourceBrowserNote => 'Open the browser';
+
+  @override
+  String get sourceBrowserHint =>
+      'This content is not fetched from here: you pick it page by page on the Browser screen.';
+
+  @override
   String get sourceNotConfigured => 'Not set up yet';
+
+  @override
+  String sourceLogIn(String source) {
+    return 'Log in to $source';
+  }
+
+  @override
+  String sourceLogInHint(String source) {
+    return 'Opens $source in Fern\'s browser. Once you are in, press the key button there to save the session and come back.';
+  }
 
   @override
   String get selectItem => 'Select';
@@ -527,6 +553,137 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get redditCredentialsNote =>
       'The credentials stay on this computer and are only used to talk to Reddit.';
+
+  @override
+  String get settingsBrowser => 'Browser';
+
+  @override
+  String get browserHome => 'Home page';
+
+  @override
+  String get browserHomeTitle => 'Home page';
+
+  @override
+  String get browserHomeDescription =>
+      'Where Fern\'s browser starts when you press the home button. It does not affect where it opens: coming back to the screen leaves the browser on the last page you visited.';
+
+  @override
+  String get browserHomeLabel => 'Address';
+
+  @override
+  String sessionExpiredTitle(String source) {
+    return 'Your $source session is no longer valid';
+  }
+
+  @override
+  String sessionExpiredDescription(String source) {
+    return 'Fern could not import anything: $source has rejected the saved session. Log in again in the browser and press the key button there to save the new one.';
+  }
+
+  @override
+  String browserImportedInto(int count, String source) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media ready to review under $source',
+      one: '1 media ready to review under $source',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImportKnown(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count were already in the library',
+      one: '1 was already in the library',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImportFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count could not be downloaded',
+      one: '1 could not be downloaded',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browserImportNothing => 'Nothing was brought in.';
+
+  @override
+  String get browserAddressHint => 'Address of a site';
+
+  @override
+  String get browserBack => 'Back';
+
+  @override
+  String get browserForward => 'Forward';
+
+  @override
+  String get browserReload => 'Reload';
+
+  @override
+  String get browserSaveSessionHint =>
+      'Save the session of this site so Fern can import from it';
+
+  @override
+  String get browserFindMediaHint => 'Look for media on this page';
+
+  @override
+  String browserImportAction(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Import $count',
+      one: 'Import 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browserSelectAll => 'Select or clear all';
+
+  @override
+  String get browserClose => 'Close';
+
+  @override
+  String get browserNoSession =>
+      'Fern cannot import from this site, so there is no session to save here.';
+
+  @override
+  String browserSessionSaved(String source) {
+    return '$source session saved.';
+  }
+
+  @override
+  String browserSessionMissing(String source) {
+    return 'There is no $source session open here yet: log in first.';
+  }
+
+  @override
+  String get browserNothingFound => 'No media found on this page.';
+
+  @override
+  String browserFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media found',
+      one: '1 media found',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImporting(int done, int total) {
+    return 'Downloading $done of $total…';
+  }
 
   @override
   String get importLimitAll => 'All';

@@ -9,6 +9,7 @@
   "navDeleted": "Eliminats",
   "navCreatorManager": "Gestor de creadors",
   "navTagManager": "Gestor d'etiquetes",
+  "navBrowser": "Navegador",
 
   "searchHint": "Cerca",
   "menuNewCreator": "Nou creador",
@@ -44,6 +45,7 @@
   "deleteFilesFromDisk": "Esborra també els fitxers del disc",
   "deleteFilesFromDiskDescription": "Si la treus, el contingut surt de la base de dades però els seus fitxers es queden on són, de manera que un escaneig posterior els pot tornar a recollir.",
 
+  "actionStopImport": "Atura la importació",
   "actionImport": "Importa",
   "actionRefresh": "Actualitza",
   "actionSelectFolder": "Tria una carpeta",
@@ -60,7 +62,22 @@
   "actionDeleteCreator": "Elimina el creador",
   "sourceLocalComputer": "Equip local",
   "sourceAll": "Totes",
+  "sourceBrowser": "Navegador",
+  "sourceBrowserNote": "Ves al navegador",
+  "sourceBrowserHint": "Aquest contingut no es demana des d'aquí: es tria pàgina a pàgina a la pantalla del navegador.",
   "sourceNotConfigured": "Sense configurar",
+  "sourceLogIn": "Inicia la sessió a {source}",
+  "@sourceLogIn": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "sourceLogInHint": "Obre {source} al navegador del Fern. Quan hi hagis entrat, prem allà el botó de la clau per desar la sessió i torna aquí.",
+  "@sourceLogInHint": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
 
   "selectItem": "Selecciona",
   "deselectItem": "Treu la selecció",
@@ -160,6 +177,85 @@
   "redditPassword": "Contrasenya",
   "redditPasswordHint": "La contrasenya d'aquest compte",
   "redditCredentialsNote": "Les credencials es queden en aquest equip i només s'usen per parlar amb Reddit.",
+
+  "settingsBrowser": "Navegador",
+  "browserHome": "Pàgina d'inici",
+  "browserHomeTitle": "Pàgina d'inici",
+  "browserHomeDescription": "Per on comença el navegador del Fern en prémer el botó d'inici. No decideix per on s'obre: en tornar a la pantalla, el navegador es queda a l'última pàgina que vas visitar.",
+  "browserHomeLabel": "Adreça",
+  "sessionExpiredTitle": "La sessió de {source} ja no val",
+  "@sessionExpiredTitle": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "sessionExpiredDescription": "No s'ha pogut importar res: {source} ha rebutjat la sessió desada. Torna a iniciar la sessió al navegador i prem allà el botó de la clau per desar-ne una de nova.",
+  "@sessionExpiredDescription": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserImportedInto": "{count, plural, =1{1 contingut a punt per revisar a {source}} other{{count} continguts a punt per revisar a {source}}}",
+  "@browserImportedInto": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "source": { "type": "String" }
+    }
+  },
+  "browserImportKnown": "{count, plural, =1{1 ja era a la biblioteca} other{{count} ja eren a la biblioteca}}",
+  "@browserImportKnown": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImportFailed": "{count, plural, =1{1 no s'ha pogut descarregar} other{{count} no s'han pogut descarregar}}",
+  "@browserImportFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImportNothing": "No s'ha portat res.",
+  "browserAddressHint": "Adreça d'un lloc",
+  "browserBack": "Enrere",
+  "browserForward": "Endavant",
+  "browserReload": "Torna a carregar",
+  "browserSaveSessionHint": "Desa la sessió d'aquest lloc per poder-ne importar",
+  "browserFindMediaHint": "Cerca contingut en aquesta pàgina",
+  "browserImportAction": "{count, plural, =1{Importa 1} other{Importa {count}}}",
+  "@browserImportAction": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserSelectAll": "Marca o desmarca-ho tot",
+  "browserClose": "Tanca",
+  "browserNoSession": "D'aquest lloc no se'n pot importar, així que aquí no hi ha cap sessió per desar.",
+  "browserSessionSaved": "Sessió de {source} desada.",
+  "@browserSessionSaved": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserSessionMissing": "Aquí encara no hi ha cap sessió de {source}: inicia-la primer.",
+  "@browserSessionMissing": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserNothingFound": "No s'ha trobat contingut en aquesta pàgina.",
+  "browserFound": "{count, plural, =1{1 contingut trobat} other{{count} continguts trobats}}",
+  "@browserFound": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImporting": "Descarregant {done} de {total}…",
+  "@browserImporting": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
 
   "importLimitAll": "Tots",
   "importLimitSinceLast": "Nous",

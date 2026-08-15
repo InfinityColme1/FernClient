@@ -53,6 +53,9 @@ dependencies:
   crypto: ^3.0.7
   path: ^1.9.1
   http: ^1.6.0
+  archive: ^4.0.9
+  image: ^4.8.0
+  flutter_inappwebview: ^6.1.5
 
 
 dev_dependencies:

@@ -112,6 +112,33 @@ class RedditSettingsChangedEvent extends SettingsEvents {
   List<Object?> get props => [reddit];
 }
 
+/// Página de inicio del navegador de la aplicación, tal y como ha quedado tras
+/// tocar su campo.
+class BrowserHomeChangedEvent extends SettingsEvents {
+  final String url;
+
+  const BrowserHomeChangedEvent(this.url);
+
+  @override
+  List<Object?> get props => [url];
+}
+
+/// Los ajustes tal y como quedan al recoger del navegador de la aplicación la
+/// sesión de una plataforma.
+///
+/// Llegan enteros y no el dato suelto porque quien los trae no sabe de qué
+/// plataforma son: el navegador recoge la cookie que sea y la fuente sabe en
+/// qué ajuste va. Es de la pantalla experimental del navegador; sin ella, este
+/// evento no lo manda nadie.
+class RemoteSessionCapturedEvent extends SettingsEvents {
+  final AppSettingsEntity settings;
+
+  const RemoteSessionCapturedEvent(this.settings);
+
+  @override
+  List<Object?> get props => [settings];
+}
+
 /// Migración a petición: ordena los ficheros que ya están en la biblioteca.
 class MigrateLibraryRequestedEvent extends SettingsEvents {
   const MigrateLibraryRequestedEvent();

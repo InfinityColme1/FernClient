@@ -36,12 +36,18 @@ class MediaGrid extends StatelessWidget {
   /// leyendo no se puede decir que no haya nada, todavía no se sabe.
   final bool isLoading;
 
+  /// Qué hacer si el usuario quiere parar lo que se está haciendo. Con esto
+  /// puesto, el indicador de espera lleva encima el botón de parar; sin ello,
+  /// sólo se espera.
+  final VoidCallback? onStop;
+
   const MediaGrid({
     super.key,
     required this.mediaList,
     required this.columns,
     this.hasSurface = true,
     this.isLoading = false,
+    this.onStop,
   }) : sections = null;
 
   /// Rejilla de resultados de búsqueda: el contenido va separado en grupos
@@ -53,6 +59,7 @@ class MediaGrid extends StatelessWidget {
     required this.columns,
     this.hasSurface = true,
     this.isLoading = false,
+    this.onStop,
   }) : mediaList = const [];
 
   /// Todo el contenido de la rejilla en el orden en el que se pinta, que es el
@@ -81,7 +88,18 @@ class MediaGrid extends StatelessWidget {
       // Mientras se está leyendo, el indicador de espera; sólo cuando ya se sabe
       // que no hay nada se dice que la rejilla está vacía.
       final Widget placeholder = isLoading
-          ? const Center(child: FernProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_stopButton(context) case final stop?) ...[
+                    stop,
+                    const SizedBox(height: AppSpacing.s),
+                  ],
+                  const FernProgressIndicator(),
+                ],
+              ),
+            )
           : FernEmptyState(
               imageAsset: fernEmptyImage,
               message: AppLocalizations.of(context).emptyLibrary,
@@ -103,11 +121,32 @@ class MediaGrid extends StatelessWidget {
       padding: _padding,
       child: FernBusyOverlay(
         isBusy: isLoading,
+        action: _stopButton(context),
         radius: hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,
         child: hasSurface
             ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
             : content,
       ),
+    );
+  }
+
+  /// El botón que para lo que se está haciendo, o `null` si esta rejilla no
+  /// deja pararlo.
+  ///
+  /// Va del color del indicador que tiene debajo porque es parte de él: no es
+  /// una acción de la pantalla, es lo único que se puede hacer con la espera
+  /// que se está mirando.
+  Widget? _stopButton(BuildContext context) {
+    if (onStop == null) return null;
+
+    final color = Theme.of(context).progressIndicatorTheme.color ??
+        Theme.of(context).colorScheme.primary;
+
+    return IconButton(
+      tooltip: AppLocalizations.of(context).actionStopImport,
+      onPressed: onStop,
+      icon: Icon(Icons.stop_circle_outlined, color: color),
+      iconSize: AppSizes.iconLarge,
     );
   }
 

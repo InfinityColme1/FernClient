@@ -1,5 +1,6 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/usecases/usecase.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
@@ -28,14 +29,17 @@ class ScanSourceUseCase
   final LocalMediaRepository _localMediaRepository;
   final RemoteMediaRepository _remoteMediaRepository;
   final PreferencesService _preferencesService;
+  final ImportCancellation _cancellation;
 
   ScanSourceUseCase({
     required LocalMediaRepository localMediaRepository,
     required RemoteMediaRepository remoteMediaRepository,
     required PreferencesService preferencesService,
+    required ImportCancellation cancellation,
   })  : _localMediaRepository = localMediaRepository,
         _remoteMediaRepository = remoteMediaRepository,
-        _preferencesService = preferencesService;
+        _preferencesService = preferencesService,
+        _cancellation = cancellation;
 
   @override
   Future<Stream<DataState<MediaSummaryEntity>>> call({
@@ -72,6 +76,10 @@ class ScanSourceUseCase
     var fetched = 0;
 
     for (final source in sources) {
+      // Si se ha parado, la fuente que estuviera en marcha ya se ha sellado al
+      // salir de su recorrido; a las siguientes ni se entra.
+      if (_cancellation.isCancelled) return;
+
       final stream = switch (source) {
         ImportSource.local => _scanLocal(),
         _ => _remoteMediaRepository.scanRemoteSource(
@@ -82,6 +90,11 @@ class ScanSourceUseCase
 
       await for (final result in stream) {
         yield result;
+
+        // Parar es terminar antes, no fallar: lo traído hasta aquí es una
+        // importación como cualquier otra y la fuente se sella con su fecha,
+        // que es lo que se hace justo debajo al salir del recorrido.
+        if (_cancellation.isCancelled) break;
 
         if (result is! DataSuccess) continue;
 

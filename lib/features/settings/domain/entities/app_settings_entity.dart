@@ -1,3 +1,5 @@
+import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -95,6 +97,16 @@ class AppSettingsEntity extends Equatable {
   /// fuente todavía no se puede usar.
   final RedditSettingsEntity reddit;
 
+  /// La página por la que arranca el navegador de la aplicación cuando se le
+  /// pide volver a empezar. Es lo que el usuario entiende por su página de
+  /// inicio, y por eso la elige él.
+  final String browserHome;
+
+  /// Credenciales de la fuente remota de Pixiv. Viene vacía mientras el usuario
+  /// no la haya rellenado, que es como la aplicación sabe que esa fuente
+  /// todavía no se puede usar.
+  final PixivSettingsEntity pixiv;
+
   const AppSettingsEntity({
     this.language = AppLanguage.english,
     this.syncLocalFiles = false,
@@ -104,7 +116,9 @@ class AppSettingsEntity extends Equatable {
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
+    this.browserHome = browserHomeUrl,
     this.reddit = const RedditSettingsEntity(),
+    this.pixiv = const PixivSettingsEntity(),
   });
 
   /// Los ficheros sólo se reordenan si el usuario lo ha pedido y ha dicho
@@ -120,7 +134,9 @@ class AppSettingsEntity extends Equatable {
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
+    String? browserHome,
     RedditSettingsEntity? reddit,
+    PixivSettingsEntity? pixiv,
   }) {
     return AppSettingsEntity(
       language: language ?? this.language,
@@ -131,7 +147,9 @@ class AppSettingsEntity extends Equatable {
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
+      browserHome: browserHome ?? this.browserHome,
       reddit: reddit ?? this.reddit,
+      pixiv: pixiv ?? this.pixiv,
     );
   }
 
@@ -145,6 +163,8 @@ class AppSettingsEntity extends Equatable {
         organization,
         autoTagRemoteSource,
         showListAvatars,
+        browserHome,
         reddit,
+        pixiv,
       ];
 }

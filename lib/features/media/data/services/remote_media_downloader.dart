@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
+import 'package:Fern/features/media/data/services/animation_encoder.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,7 @@ import 'package:path/path.dart' as p;
 class RemoteMediaDownloader {
   final http.Client _client;
   final ExternalMediaResolver _resolver;
+  final AnimationEncoder _encoder;
 
   /// Carpeta raíz de las descargas, resuelta al arrancar la aplicación.
   final String downloadsPath;
@@ -23,8 +25,10 @@ class RemoteMediaDownloader {
   RemoteMediaDownloader({
     required this.downloadsPath,
     required ExternalMediaResolver resolver,
+    AnimationEncoder encoder = const AnimationEncoder(),
     http.Client? client,
   })  : _resolver = resolver,
+        _encoder = encoder,
         _client = client ?? http.Client();
 
   /// Dónde caen los ficheros de [source].
@@ -36,6 +40,15 @@ class RemoteMediaDownloader {
   /// [url] no tiene por qué ser ya un fichero: si es un enlace a uno de los
   /// sitios aceptados, el resolvedor averigua qué vídeo o qué imagen hay detrás.
   ///
+  /// [headers] son las que pida el servidor del que se baja el fichero, si es
+  /// que pide alguna. Las trae la fuente junto con la dirección porque es la
+  /// única que lo sabe: hay servidores de contenidos que sólo dan el fichero a
+  /// quien dice venir de su web. Lo que traigan manda sobre lo de casa.
+  ///
+  /// [frameDelays] es para lo que no es un fichero sino un paquete de
+  /// fotogramas que hay que montar: entonces lo que se guarda es la animación
+  /// ya armada. Va vacío en lo normal.
+  ///
   /// Si ya existe un fichero con ese nombre se da por descargado y se devuelve
   /// tal cual: lo guardado en la cuenta no cambia, así que volver a pedirlo
   /// sería bajarse lo mismo otra vez.
@@ -43,9 +56,21 @@ class RemoteMediaDownloader {
     required String url,
     required String name,
     required ImportSource source,
+    Map<String, String> headers = const {},
+    List<int>? frameDelays,
   }) async {
     try {
-      final fileUrl = await _resolver.resolve(url);
+      if (frameDelays != null) {
+        return await _downloadAnimation(
+          url: url,
+          name: name,
+          source: source,
+          headers: headers,
+          delays: frameDelays,
+        );
+      }
+
+      final fileUrl = await _resolver.resolve(url, headers: headers);
       if (fileUrl == null) return null;
 
       final extension = mediaExtensionOfUrl(fileUrl);
@@ -58,7 +83,8 @@ class RemoteMediaDownloader {
       if (await File(path).exists()) return path;
 
       final request = http.Request('GET', Uri.parse(fileUrl))
-        ..headers['User-Agent'] = remoteUserAgent.replaceFirst('%s', 'fern');
+        ..headers['User-Agent'] = remoteUserAgent.replaceFirst('%s', 'fern')
+        ..headers.addAll(headers);
       final response = await _client.send(request).timeout(remoteRequestTimeout);
       if (response.statusCode != 200) return null;
 
@@ -77,6 +103,47 @@ class RemoteMediaDownloader {
       // está: la importación sigue con el siguiente.
       return null;
     }
+  }
+
+  /// Se trae un paquete de fotogramas, lo monta en una animación y la guarda.
+  ///
+  /// Lo que se descarga aquí no es contenido todavía: es un zip que hay que
+  /// abrir entero para poder armarlo, así que no se va escribiendo según llega
+  /// como el resto y lleva su propio tope de tamaño. Lo que queda en la carpeta
+  /// es un GIF, que es lo que la aplicación sí sabe enseñar.
+  Future<String?> _downloadAnimation({
+    required String url,
+    required String name,
+    required ImportSource source,
+    required Map<String, String> headers,
+    required List<int> delays,
+  }) async {
+    final directory = Directory(directoryOf(source));
+    await directory.create(recursive: true);
+
+    final path = p.join(directory.path, '$name.gif');
+    if (await File(path).exists()) return path;
+
+    final response = await _client.get(
+      Uri.parse(url),
+      headers: {
+        'User-Agent': remoteUserAgent.replaceFirst('%s', 'fern'),
+        ...headers,
+      },
+    ).timeout(remoteRequestTimeout);
+    if (response.statusCode != 200) return null;
+    if (response.bodyBytes.length > maxAnimationSourceBytes) return null;
+
+    final gif = await _encoder.gifFromZip(response.bodyBytes, delays: delays);
+    if (gif == null) return null;
+
+    // A un fichero aparte y luego se renombra, igual que el resto: así un
+    // montaje a medias no deja en la carpeta algo que parezca contenido.
+    final partial = File('$path.part');
+    await partial.writeAsBytes(gif);
+    await partial.rename(path);
+
+    return path;
   }
 
   /// Vuelca la respuesta en [path] y devuelve la ruta, o `null` si se ha pasado

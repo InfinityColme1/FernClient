@@ -9,6 +9,7 @@
   "navDeleted": "Deleted",
   "navCreatorManager": "Creator Manager",
   "navTagManager": "Tag Manager",
+  "navBrowser": "Browser",
 
   "searchHint": "Search",
   "menuNewCreator": "New creator",
@@ -94,6 +95,7 @@
   "deleteFilesFromDisk": "Delete the files from the disk as well",
   "deleteFilesFromDiskDescription": "If you clear it, the media leaves the database but its files stay where they are, so a later scan can pick them up again.",
 
+  "actionStopImport": "Stop the import",
   "actionImport": "Import",
   "actionRefresh": "Refresh",
   "actionSelectFolder": "Choose folder",
@@ -110,7 +112,22 @@
   "actionDeleteCreator": "Delete creator",
   "sourceLocalComputer": "Local computer",
   "sourceAll": "All",
+  "sourceBrowser": "Browser",
+  "sourceBrowserNote": "Open the browser",
+  "sourceBrowserHint": "This content is not fetched from here: you pick it page by page on the Browser screen.",
   "sourceNotConfigured": "Not set up yet",
+  "sourceLogIn": "Log in to {source}",
+  "@sourceLogIn": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "sourceLogInHint": "Opens {source} in Fern's browser. Once you are in, press the key button there to save the session and come back.",
+  "@sourceLogInHint": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
 
   "selectItem": "Select",
   "deselectItem": "Deselect",
@@ -220,6 +237,85 @@
   "redditPassword": "Password",
   "redditPasswordHint": "The password of that account",
   "redditCredentialsNote": "The credentials stay on this computer and are only used to talk to Reddit.",
+
+  "settingsBrowser": "Browser",
+  "browserHome": "Home page",
+  "browserHomeTitle": "Home page",
+  "browserHomeDescription": "Where Fern's browser starts when you press the home button. It does not affect where it opens: coming back to the screen leaves the browser on the last page you visited.",
+  "browserHomeLabel": "Address",
+  "sessionExpiredTitle": "Your {source} session is no longer valid",
+  "@sessionExpiredTitle": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "sessionExpiredDescription": "Fern could not import anything: {source} has rejected the saved session. Log in again in the browser and press the key button there to save the new one.",
+  "@sessionExpiredDescription": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserImportedInto": "{count, plural, =1{1 media ready to review under {source}} other{{count} media ready to review under {source}}}",
+  "@browserImportedInto": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "source": { "type": "String" }
+    }
+  },
+  "browserImportKnown": "{count, plural, =1{1 was already in the library} other{{count} were already in the library}}",
+  "@browserImportKnown": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImportFailed": "{count, plural, =1{1 could not be downloaded} other{{count} could not be downloaded}}",
+  "@browserImportFailed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImportNothing": "Nothing was brought in.",
+  "browserAddressHint": "Address of a site",
+  "browserBack": "Back",
+  "browserForward": "Forward",
+  "browserReload": "Reload",
+  "browserSaveSessionHint": "Save the session of this site so Fern can import from it",
+  "browserFindMediaHint": "Look for media on this page",
+  "browserImportAction": "{count, plural, =1{Import 1} other{Import {count}}}",
+  "@browserImportAction": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserSelectAll": "Select or clear all",
+  "browserClose": "Close",
+  "browserNoSession": "Fern cannot import from this site, so there is no session to save here.",
+  "browserSessionSaved": "{source} session saved.",
+  "@browserSessionSaved": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserSessionMissing": "There is no {source} session open here yet: log in first.",
+  "@browserSessionMissing": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "browserNothingFound": "No media found on this page.",
+  "browserFound": "{count, plural, =1{1 media found} other{{count} media found}}",
+  "@browserFound": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "browserImporting": "Downloading {done} of {total}…",
+  "@browserImporting": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
 
   "importLimitAll": "All",
   "importLimitSinceLast": "New",

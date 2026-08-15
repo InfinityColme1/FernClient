@@ -1,5 +1,6 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 
@@ -63,6 +64,13 @@ class FernBusyOverlay extends StatelessWidget {
   /// aplicación.
   final Color? indicatorColor;
 
+  /// Lo que se ofrece mientras se espera, encima del indicador: por ejemplo, el
+  /// botón que para lo que se está haciendo.
+  ///
+  /// A diferencia de lo que hay debajo del velo, esto sí se puede pulsar: es lo
+  /// único que tiene sentido hacer mientras dura la espera.
+  final Widget? action;
+
   const FernBusyOverlay({
     super.key,
     required this.isBusy,
@@ -70,6 +78,7 @@ class FernBusyOverlay extends StatelessWidget {
     this.color = AppColors.background,
     this.radius = AppSizes.radiusSurface,
     this.indicatorColor,
+    this.action,
   });
 
   @override
@@ -87,22 +96,42 @@ class FernBusyOverlay extends StatelessWidget {
               // indicador deja incluso de animarse, que no se está esperando.
               if (progress == 0) return const SizedBox.shrink();
 
-              // Mientras se espera, el velo se queda con las pulsaciones: lo que
-              // hay debajo es contenido a punto de cambiar. Cuando el velo ya se
-              // está yendo deja de estorbar, aunque todavía se vea.
-              return AbsorbPointer(
-                absorbing: isBusy,
-                child: Opacity(opacity: progress, child: child),
-              );
+              return Opacity(opacity: progress, child: child);
             },
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: busyOverlayOpacity),
-                borderRadius: BorderRadius.circular(radius),
-              ),
-              child: Center(
-                child: FernProgressIndicator(color: indicatorColor),
-              ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Mientras se espera, el velo se queda con las pulsaciones: lo
+                // que hay debajo es contenido a punto de cambiar. Cuando el velo
+                // ya se está yendo deja de estorbar, aunque todavía se vea.
+                AbsorbPointer(
+                  absorbing: isBusy,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: busyOverlayOpacity),
+                      borderRadius: BorderRadius.circular(radius),
+                    ),
+                  ),
+                ),
+                // El indicador y lo que se ofrezca con él van por encima del
+                // velo y fuera de lo que absorbe: si no, el botón de parar
+                // quedaría tapado por el mismo velo que lo enseña.
+                IgnorePointer(
+                  ignoring: !isBusy,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (action != null) ...[
+                          action!,
+                          const SizedBox(height: AppSpacing.s),
+                        ],
+                        FernProgressIndicator(color: indicatorColor),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

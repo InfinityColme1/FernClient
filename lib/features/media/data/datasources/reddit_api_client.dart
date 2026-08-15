@@ -1,47 +1,9 @@
 import 'dart:convert';
 
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/data/datasources/remote_media_item.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:http/http.dart' as http;
-
-/// Un fichero que hay que descargarse de una fuente remota.
-///
-/// Una publicación puede dar varios (una galería son varias imágenes), y cada
-/// uno acaba siendo un contenido de la aplicación por su cuenta: [id] es único
-/// dentro de la fuente y es lo que se usa para nombrar el fichero.
-class RemoteMediaItem {
-  /// Identificador dentro de la fuente, ya apto para nombrar un fichero.
-  final String id;
-
-  /// De dónde se descarga el fichero.
-  final String url;
-
-  /// Título de la publicación, que es lo que se guarda como descripción.
-  final String title;
-
-  /// Identificador de la publicación de la que sale.
-  ///
-  /// Varios ficheros de una misma galería lo comparten. Es la marca con la que
-  /// se reconoce por dónde se quedó la importación anterior, así que tiene que
-  /// ser el de la publicación y no el del fichero.
-  final String postId;
-
-  /// Direcciones que dicen de dónde sale este contenido dentro de la
-  /// plataforma: la comunidad, la publicación, la galería del autor.
-  ///
-  /// No es de dónde se descarga el fichero ([url], que suele ser un servidor de
-  /// contenidos sin nada que identifique el sitio), sino lo que el usuario
-  /// reconoce como el origen y lo que puede haber vinculado con una etiqueta.
-  final List<String> sourceUrls;
-
-  const RemoteMediaItem({
-    required this.id,
-    required this.url,
-    required this.title,
-    required this.postId,
-    this.sourceUrls = const [],
-  });
-}
 
 /// La API de Reddit, con lo justo para traerse lo que el usuario ha guardado en
 /// su cuenta.

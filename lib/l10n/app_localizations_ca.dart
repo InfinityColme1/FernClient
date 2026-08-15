@@ -33,6 +33,9 @@ class AppLocalizationsCa extends AppLocalizations {
   String get navTagManager => 'Gestor d\'etiquetes';
 
   @override
+  String get navBrowser => 'Navegador';
+
+  @override
   String get searchHint => 'Cerca';
 
   @override
@@ -196,6 +199,9 @@ class AppLocalizationsCa extends AppLocalizations {
       'Si la treus, el contingut surt de la base de dades però els seus fitxers es queden on són, de manera que un escaneig posterior els pot tornar a recollir.';
 
   @override
+  String get actionStopImport => 'Atura la importació';
+
+  @override
   String get actionImport => 'Importa';
 
   @override
@@ -244,7 +250,27 @@ class AppLocalizationsCa extends AppLocalizations {
   String get sourceAll => 'Totes';
 
   @override
+  String get sourceBrowser => 'Navegador';
+
+  @override
+  String get sourceBrowserNote => 'Ves al navegador';
+
+  @override
+  String get sourceBrowserHint =>
+      'Aquest contingut no es demana des d\'aquí: es tria pàgina a pàgina a la pantalla del navegador.';
+
+  @override
   String get sourceNotConfigured => 'Sense configurar';
+
+  @override
+  String sourceLogIn(String source) {
+    return 'Inicia la sessió a $source';
+  }
+
+  @override
+  String sourceLogInHint(String source) {
+    return 'Obre $source al navegador del Fern. Quan hi hagis entrat, prem allà el botó de la clau per desar la sessió i torna aquí.';
+  }
 
   @override
   String get selectItem => 'Selecciona';
@@ -529,6 +555,138 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get redditCredentialsNote =>
       'Les credencials es queden en aquest equip i només s\'usen per parlar amb Reddit.';
+
+  @override
+  String get settingsBrowser => 'Navegador';
+
+  @override
+  String get browserHome => 'Pàgina d\'inici';
+
+  @override
+  String get browserHomeTitle => 'Pàgina d\'inici';
+
+  @override
+  String get browserHomeDescription =>
+      'Per on comença el navegador del Fern en prémer el botó d\'inici. No decideix per on s\'obre: en tornar a la pantalla, el navegador es queda a l\'última pàgina que vas visitar.';
+
+  @override
+  String get browserHomeLabel => 'Adreça';
+
+  @override
+  String sessionExpiredTitle(String source) {
+    return 'La sessió de $source ja no val';
+  }
+
+  @override
+  String sessionExpiredDescription(String source) {
+    return 'No s\'ha pogut importar res: $source ha rebutjat la sessió desada. Torna a iniciar la sessió al navegador i prem allà el botó de la clau per desar-ne una de nova.';
+  }
+
+  @override
+  String browserImportedInto(int count, String source) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts a punt per revisar a $source',
+      one: '1 contingut a punt per revisar a $source',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImportKnown(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ja eren a la biblioteca',
+      one: '1 ja era a la biblioteca',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImportFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count no s\'han pogut descarregar',
+      one: '1 no s\'ha pogut descarregar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browserImportNothing => 'No s\'ha portat res.';
+
+  @override
+  String get browserAddressHint => 'Adreça d\'un lloc';
+
+  @override
+  String get browserBack => 'Enrere';
+
+  @override
+  String get browserForward => 'Endavant';
+
+  @override
+  String get browserReload => 'Torna a carregar';
+
+  @override
+  String get browserSaveSessionHint =>
+      'Desa la sessió d\'aquest lloc per poder-ne importar';
+
+  @override
+  String get browserFindMediaHint => 'Cerca contingut en aquesta pàgina';
+
+  @override
+  String browserImportAction(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importa $count',
+      one: 'Importa 1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browserSelectAll => 'Marca o desmarca-ho tot';
+
+  @override
+  String get browserClose => 'Tanca';
+
+  @override
+  String get browserNoSession =>
+      'D\'aquest lloc no se\'n pot importar, així que aquí no hi ha cap sessió per desar.';
+
+  @override
+  String browserSessionSaved(String source) {
+    return 'Sessió de $source desada.';
+  }
+
+  @override
+  String browserSessionMissing(String source) {
+    return 'Aquí encara no hi ha cap sessió de $source: inicia-la primer.';
+  }
+
+  @override
+  String get browserNothingFound =>
+      'No s\'ha trobat contingut en aquesta pàgina.';
+
+  @override
+  String browserFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts trobats',
+      one: '1 contingut trobat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String browserImporting(int done, int total) {
+    return 'Descarregant $done de $total…';
+  }
 
   @override
   String get importLimitAll => 'Tots';

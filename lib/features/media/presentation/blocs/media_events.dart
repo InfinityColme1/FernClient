@@ -86,6 +86,14 @@ class ScanSourceEvent extends MediaEvents {
   const ScanSourceEvent({this.limit = unlimitedImportLimit});
 }
 
+/// Para la importación que esté en marcha.
+///
+/// Lo que ya se ha traído se queda en la pantalla: parar es dejar de buscar
+/// más, no deshacer lo hecho.
+class StopImportEvent extends MediaEvents {
+  const StopImportEvent();
+}
+
 /// Elige otra carpeta del equipo y la escanea. Sólo tiene sentido con la fuente
 /// local: de una plataforma remota no hay carpeta que elegir.
 ///

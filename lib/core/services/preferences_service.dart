@@ -70,8 +70,9 @@ class PreferencesService {
   }
 
 
-  String _lastImportMarkerKey(ImportSource source) =>
-      '$lastImportMarkerPreferenceKeyPrefix${source.id}';
+  String _lastImportMarkerKey(ImportSource source, String? collection) =>
+      '$lastImportMarkerPreferenceKeyPrefix${source.id}'
+      '${collection == null ? '' : '_$collection'}';
 
 
   /// Guarda por dónde se quedó la última importación de [source]: el
@@ -80,14 +81,41 @@ class PreferencesService {
   /// Es lo que hace posible traerse "lo guardado desde la última vez" sin que la
   /// fuente diga cuándo se guardó cada cosa: al recorrerla de lo más nuevo a lo
   /// más antiguo, llegar a esta marca es llegar a donde se dejó.
-  Future<bool> setLastImportMarker(ImportSource source, String marker) async {
-    return await _prefs.setString(_lastImportMarkerKey(source), marker);
+  ///
+  /// [collection] es para las fuentes que no tienen un solo listado sino
+  /// varios (Pixiv tiene dos, el de marcadores públicos y el de privados): cada
+  /// uno se recorre por su cuenta y por tanto se queda por su sitio, así que
+  /// cada uno lleva su marca. Se omite en las fuentes de un solo listado.
+  Future<bool> setLastImportMarker(
+    ImportSource source,
+    String marker, {
+    String? collection,
+  }) async {
+    return await _prefs.setString(
+      _lastImportMarkerKey(source, collection),
+      marker,
+    );
   }
 
 
   /// Por dónde se quedó la última importación de [source], o `null` si de esa
   /// fuente no se ha llegado a importar nada todavía.
-  String? getLastImportMarker(ImportSource source) {
-    return _prefs.getString(_lastImportMarkerKey(source));
+  String? getLastImportMarker(ImportSource source, {String? collection}) {
+    return _prefs.getString(_lastImportMarkerKey(source, collection));
   }
+
+
+  /// Guarda en qué página se ha quedado el navegador de la aplicación.
+  ///
+  /// No es un ajuste sino dónde se estaba: salir a otra pantalla y volver tiene
+  /// que dejar el navegador como se dejó, igual que cualquier otra pantalla
+  /// vuelve como estaba.
+  Future<bool> setLastBrowserUrl(String url) {
+    return _prefs.setString(browserLastUrlPreferenceKey, url);
+  }
+
+
+  /// La página en la que se dejó el navegador, o `null` si todavía no se ha
+  /// abierto ninguna.
+  String? getLastBrowserUrl() => _prefs.getString(browserLastUrlPreferenceKey);
 }
