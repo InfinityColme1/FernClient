@@ -6,6 +6,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -20,20 +21,27 @@ import 'fern_create_dialog.dart';
 /// Diálogo para asignar etiquetas al contenido.
 ///
 /// A diferencia del de creadores, el panel izquierdo no muestra un avatar sino
-/// la lista de etiquetas del contenido; las que se van eligiendo se añaden a
-/// esa lista en tono apagado y sólo se relacionan con el contenido al pulsar
-/// "Confirm".
+/// la lista de etiquetas que va a llevar el contenido: las que ya tiene y las
+/// que se van eligiendo, éstas en tono apagado. Nada de lo que se hace aquí
+/// toca el contenido hasta pulsar "Confirm", y cualquiera de ellas se puede
+/// quitar con su botón.
+///
+/// Al elegir una etiqueta se proponen también las que están por encima de ella
+/// en la jerarquía, porque una etiqueta hija es un caso de su madre. Es una
+/// propuesta y no una imposición: se quitan como cualquier otra, y quitar la
+/// madre dejando la hija es una decisión del usuario que se respeta.
 class AssignTagDialog extends StatefulWidget {
   final MediaEntity media;
 
-  /// Etiquetas ya elegidas y sin confirmar. Sirve para reabrir el diálogo sin
-  /// perder lo elegido, por ejemplo al volver de crear una etiqueta.
-  final List<TagEntity> pendingTags;
+  /// Etiquetas elegidas en el diálogo, con las del contenido dentro. Sirve para
+  /// reabrirlo sin perder lo hecho, por ejemplo al volver de crear una
+  /// etiqueta. Con `null` se arranca con las que tiene el contenido.
+  final List<TagEntity>? selectedTags;
 
   const AssignTagDialog({
     super.key,
     required this.media,
-    this.pendingTags = const [],
+    this.selectedTags,
   });
 
   @override
@@ -42,42 +50,83 @@ class AssignTagDialog extends StatefulWidget {
 
 class _AssignTagDialogState extends State<AssignTagDialog> {
   final _searchTags = getIt<SearchTagsUseCase>();
+  final _tagAncestors = getIt<GetTagAncestorsUseCase>();
 
-  /// Etiquetas elegidas y todavía sin confirmar.
-  late final List<TagEntity> _pendingTags = [...widget.pendingTags];
+  /// Las etiquetas que va a llevar el contenido al confirmar.
+  late final List<TagEntity> _tags = [...(widget.selectedTags ?? _mediaTags)];
 
-  List<TagEntity> get _assignedTags => widget.media.tags ?? const [];
+  /// Las que el contenido ya tenía al abrir el diálogo.
+  List<TagEntity> get _mediaTags => widget.media.tags ?? const [];
 
-  bool _isAlreadyAdded(TagEntity tag) =>
-      _assignedTags.any((e) => e.id == tag.id) ||
-      _pendingTags.any((e) => e.id == tag.id);
+  /// Una etiqueta está pendiente mientras no sea de las que el contenido ya
+  /// tenía: es lo que la pinta en tono apagado.
+  bool _isPending(TagEntity tag) => !_mediaTags.any((e) => e.id == tag.id);
+
+  bool _isAlreadyAdded(TagEntity tag) => _tags.any((e) => e.id == tag.id);
 
   Future<List<TagEntity>> _search(String query) async {
     final result = await _searchTags(params: query);
     if (result is! DataSuccess) return const [];
 
-    // Las que ya están en el contenido no se sugieren: no se pueden añadir dos
-    // veces.
+    // Las que ya están elegidas no se sugieren: no se pueden añadir dos veces.
     final tags = result.data ?? const <TagEntity>[];
     return tags.where((tag) => !_isAlreadyAdded(tag)).toList();
   }
 
+  /// Elige una etiqueta y propone con ella las que estén por encima en la
+  /// jerarquía: elegir "marinette" propone también "miraculous".
+  Future<void> _addTag(TagEntity tag) async {
+    setState(() => _tags.add(tag));
+
+    final ancestors = await _missingAncestors([tag], _tags);
+    if (!mounted || ancestors.isEmpty) return;
+
+    setState(() => _tags.addAll(ancestors.where((e) => !_isAlreadyAdded(e))));
+  }
+
+  /// Quita una etiqueta de las elegidas, sea de las propuestas o de las que el
+  /// contenido ya tenía. Al confirmar, la que se ha quitado se le quita.
+  void _removeTag(TagEntity tag) {
+    setState(() => _tags.removeWhere((e) => e.id == tag.id));
+  }
+
+  /// Las etiquetas por encima de [tags] que no estén ya en [current].
+  Future<List<TagEntity>> _missingAncestors(
+    List<TagEntity> tags,
+    List<TagEntity> current,
+  ) async {
+    final result = await _tagAncestors(params: tags);
+    if (result is! DataSuccess) return const [];
+
+    final ids = {for (final tag in current) tag.id};
+    return (result.data ?? const <TagEntity>[])
+        .where((ancestor) => ids.add(ancestor.id))
+        .toList();
+  }
+
+  /// Deja en el contenido las etiquetas elegidas, ni más ni menos.
+  ///
+  /// Se avisa aunque la lista se haya quedado vacía o sólo se hayan quitado
+  /// etiquetas: quitar es un cambio igual que añadir.
   void _confirm(BuildContext context) {
-    if (_pendingTags.isNotEmpty) {
+    final unchanged = _tags.length == _mediaTags.length &&
+        _tags.every((tag) => !_isPending(tag));
+
+    if (!unchanged) {
       context.read<MediaBloc>().add(UpdateMediaInfoEvent(
-            widget.media.copyWith(tags: [..._assignedTags, ..._pendingTags]),
+            widget.media.copyWith(tags: List<TagEntity>.of(_tags)),
           ));
     }
     context.pop();
   }
 
   /// Cede el sitio al diálogo de creación y, al cerrarse éste, vuelve aquí: si
-  /// se ha creado una etiqueta llega ya elegida, y las que hubiera elegidas
-  /// antes no se pierden.
+  /// se ha creado una etiqueta llega ya elegida (con las de encima propuestas),
+  /// y lo que hubiera elegido antes no se pierde.
   Future<void> _openCreateTagDialog(BuildContext context) async {
     final bloc = context.read<MediaBloc>();
     final media = widget.media;
-    final pending = List<TagEntity>.from(_pendingTags);
+    final selected = List<TagEntity>.of(_tags);
 
     // Este diálogo desaparece al abrir el de creación, así que para volver hace
     // falta el contexto del navegador, que sigue en pie.
@@ -89,25 +138,34 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
       builder: (_) => const FernCreateDialog.tag(),
     );
 
+    // Las de encima se piden aquí y no al volver: este estado ya no existe, y
+    // proponerlas otra vez sobre toda la lista devolvería las que se hubieran
+    // quitado.
+    if (created != null) {
+      selected
+        ..add(created)
+        ..addAll(await _missingAncestors([created], selected));
+    }
+
     if (!navigatorContext.mounted) return;
 
     showFernDialog(
       context: navigatorContext,
       bloc: bloc,
-      builder: (_) => AssignTagDialog(
-        media: media,
-        pendingTags: [...pending, ?created],
-      ),
+      builder: (_) => AssignTagDialog(media: media, selectedTags: selected),
     );
   }
 
-  /// Píldora de etiqueta igual que la del panel de información; apagada
-  /// mientras la etiqueta esté pendiente de confirmar.
-  Widget _tagChip(TagEntity tag, {required bool isPending}) {
+  /// Píldora de etiqueta igual que la del panel de información, con el botón de
+  /// quitarla; apagada mientras la etiqueta esté pendiente de confirmar.
+  Widget _tagChip(TagEntity tag) {
+    final isPending = _isPending(tag);
+
     return FernChip(
       label: tag.name,
       backgroundColor: isPending ? AppColors.background : AppColors.white,
       labelColor: isPending ? AppColors.unremarked : null,
+      onRemove: () => _removeTag(tag),
       leading: FernAvatar(
         imagePath: tag.picturePath,
         fallbackIcon: Icons.label,
@@ -123,10 +181,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
 
-    final chips = [
-      for (final tag in _assignedTags) _tagChip(tag, isPending: false),
-      for (final tag in _pendingTags) _tagChip(tag, isPending: true),
-    ];
+    final chips = [for (final tag in _tags) _tagChip(tag)];
 
     return FernDialog(
       onClose: () => context.pop(),
@@ -156,7 +211,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
             hintText: texts.tagSearchHint,
             search: _search,
             labelOf: (tag) => tag.name,
-            onSelected: (tag) => setState(() => _pendingTags.add(tag)),
+            onSelected: _addTag,
             debounce: searchDebounceDuration,
           ),
           const SizedBox(height: AppSpacing.xl),

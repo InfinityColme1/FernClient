@@ -3,9 +3,11 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
+import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +17,9 @@ import 'package:go_router/go_router.dart';
 /// Papelera: el contenido marcado para borrar desde cualquier otra pantalla.
 ///
 /// Sigue en la base de datos, así que desde aquí se puede restablecer o forzar
-/// el borrado definitivo; los ficheros del disco no se tocan en ninguno de los
-/// dos casos, de modo que lo borrado se puede volver a escanear.
+/// el borrado definitivo. Antes de lo segundo se avisa, y en ese aviso se decide
+/// si los ficheros del disco se van con las filas o se quedan para poder
+/// volverlos a escanear.
 class DeletePage extends StatefulWidget {
   const DeletePage({super.key});
 
@@ -42,6 +45,23 @@ class _DeletePageState extends State<DeletePage> {
 
 class _DeleteView extends StatelessWidget {
   const _DeleteView();
+
+  /// Vacía la papelera, avisando antes de cuánto se va a borrar y preguntando
+  /// qué se hace con sus ficheros. Si se cancela no se toca nada.
+  Future<void> _purge(BuildContext context, int count) async {
+    final bloc = context.read<MediaBloc>();
+
+    final deleteFiles = await showFernDialog<bool, MediaBloc>(
+      context: context,
+      builder: (_) => ConfirmDeleteDialog(
+        kind: MediaDeletionKind.trash,
+        count: count,
+      ),
+    );
+    if (deleteFiles == null) return;
+
+    bloc.add(PurgeDeletedMediaEvent(deleteFiles: deleteFiles));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,19 +106,21 @@ class _DeleteView extends StatelessWidget {
                     ),
                     if (hasMedia) ...[
                       const SizedBox(width: AppSpacing.m),
-                      // La papelera se vacía sola, y eso hay que decirlo donde se
-                      // ve lo que hay dentro. Flexible para que se recorte si la
-                      // ventana se estrecha en vez de desbordar la fila.
-                      Flexible(
+                      // La papelera se vacía sola, y eso hay que decirlo donde
+                      // se ve lo que hay dentro. Se lleva el hueco que sobra en
+                      // la fila (en vez de sólo el que le hiciera falta) porque
+                      // es el único texto de aquí que se puede quedar sin sitio,
+                      // y un aviso recortado no avisa de nada.
+                      Expanded(
                         child: Text(
                           texts.deletedRetentionNotice(deletedRetention.inDays),
-                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: AppColors.unremarked),
                         ),
                       ),
-                    ],
-                    const Spacer(),
+                      const SizedBox(width: AppSpacing.m),
+                    ] else
+                      const Spacer(),
                     if (hasSelection) ...[
                       Text(
                         texts.selectedCount(selectedCount),
@@ -113,11 +135,8 @@ class _DeleteView extends StatelessWidget {
                     // hay nada que forzar.
                     IconButton(
                       tooltip: texts.deleteForeverTooltip,
-                      onPressed: hasMedia
-                          ? () => context
-                              .read<MediaBloc>()
-                              .add(const PurgeDeletedMediaEvent())
-                          : null,
+                      onPressed:
+                          hasMedia ? () => _purge(context, mediaList.length) : null,
                       icon: const Icon(Icons.delete_forever_outlined),
                     ),
                     const SizedBox(width: AppSpacing.s),

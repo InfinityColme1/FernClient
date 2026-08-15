@@ -7,6 +7,7 @@
   "navImport": "Import",
   "navFavorites": "Favorites",
   "navDeleted": "Deleted",
+  "navCreatorManager": "Creator Manager",
   "navTagManager": "Tag Manager",
 
   "searchHint": "Search",
@@ -54,13 +55,44 @@
       "count": { "type": "int" }
     }
   },
-  "deletedRetentionNotice": "{days, plural, =1{Marked media is deleted for good after 1 day} other{Marked media is deleted for good after {days} days}}",
+  "deletedRetentionNotice": "{days, plural, =1{Deleted for good after 1 day} other{Deleted for good after {days} days}}",
   "@deletedRetentionNotice": {
     "placeholders": {
       "days": { "type": "int" }
     }
   },
   "deleteForeverTooltip": "Delete permanently from the database",
+  "remoteImportWarning": "Media is about to be imported from {source}",
+  "@remoteImportWarning": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "remoteImportAmountAll": "Everything saved in your account will be fetched.",
+  "remoteImportAmountSinceLast": "Whatever you have saved since the last import will be fetched.",
+  "remoteImportAmountLimited": "{count, plural, =1{1 media at most will be fetched.} other{{count} media at most will be fetched.}}",
+  "@remoteImportAmountLimited": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "favoriteSelectedTooltip": "Mark the selection as favourite",
+  "deleteSelectedTooltip": "Move the selection to the deleted screen",
+  "deleteTrashWarning": "{count, plural, =1{1 media is about to be deleted for good} other{{count} media are about to be deleted for good}}",
+  "@deleteTrashWarning": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "deleteDiscardWarning": "{count, plural, =1{1 media is about to be discarded} other{{count} media are about to be discarded}}",
+  "@deleteDiscardWarning": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "deleteFilesFromDisk": "Delete the files from the disk as well",
+  "deleteFilesFromDiskDescription": "If you clear it, the media leaves the database but its files stay where they are, so a later scan can pick them up again.",
 
   "actionImport": "Import",
   "actionRefresh": "Refresh",
@@ -74,6 +106,8 @@
   "actionUnassignTag": "Unassign tag",
   "actionRemoveParentTag": "Remove parent",
   "actionDeleteTag": "Delete tag",
+  "actionUnassignCreator": "Unassign creator",
+  "actionDeleteCreator": "Delete creator",
   "sourceLocalComputer": "Local computer",
   "sourceAll": "All",
   "sourceNotConfigured": "Not set up yet",
@@ -88,6 +122,13 @@
   "addTag": "Add Tag",
 
   "noTagsYet": "No tags yet",
+  "creatorsTitle": "Creators",
+  "noCreatorsYet": "No creators yet",
+  "noSocialProfiles": "No social profiles",
+  "openProfileTooltip": "Open the profile in the browser",
+  "editProfileTooltip": "Edit link",
+  "doneEditingProfileTooltip": "Done editing",
+  "removeProfileTooltip": "Remove link",
   "tagNameSearchLabel": "Tag name",
   "tagSearchHint": "Tag",
   "createTag": "Create Tag",
@@ -115,11 +156,17 @@
 
   "settingsTitle": "Settings",
   "settingsLanguage": "Language",
+  "settingsAppearance": "Appearance",
   "settingsFiles": "Files",
   "settingsRemoteSources": "Remote sources",
 
   "languageSectionTitle": "Application language",
   "languageSectionNote": "Every screen switches over as soon as you pick a language.",
+
+  "sidebarSectionTitle": "Side menu",
+  "sidebarSectionNote": "How the tag list of the side menu is drawn.",
+  "showListAvatars": "Show avatars in the list",
+  "showListAvatarsDescription": "Each tag is drawn with its own picture instead of the shared icon, so you can tell them apart while the menu is collapsed. Tags without a picture keep the icon.",
 
   "filesLocalTitle": "Local files",
   "syncLocalFiles": "Sync local files",
@@ -198,5 +245,26 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "assignUrlsTitle": "Linked addresses",
+  "assignUrlsTo": "Addresses linked to {name}",
+  "@assignUrlsTo": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "assignUrlsDescription": "Whatever is imported from these addresses gets this tag on its own, without asking the platform anything.",
+  "assignUrlsTooltip": "Link addresses to this tag",
+  "assignUrlsCreatorDescription": "Whatever is imported from these addresses gets this creator on its own, without asking the platform anything.",
+  "assignUrlsCreatorTooltip": "Link addresses to this creator",
+  "sourceUrlsLabel": "Addresses",
+  "sourceUrlHint": "reddit.com/r/example",
+  "addSourceUrl": "Add address",
+
+  "filtersSource": "Show media from",
+  "sourceLocal": "This computer",
+
+  "autoTagRemoteSource": "Auto-tag remote source",
+  "autoTagRemoteSourceDescription": "Fern creates a tag for each platform (Reddit, and so on) and puts it on what it imports from it. With this off the source is still recorded, and you filter by it from the Filters button."
 }

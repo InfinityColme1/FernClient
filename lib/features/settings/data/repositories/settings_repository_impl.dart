@@ -33,6 +33,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
       organization: FileOrganizationCriteria.fromId(
         _preferences.getString(fileOrganizationPreferenceKey),
       ),
+      autoTagRemoteSource:
+          _preferences.getBool(autoTagRemoteSourcePreferenceKey) ?? false,
+      showListAvatars:
+          _preferences.getBool(showListAvatarsPreferenceKey) ?? true,
       reddit: RedditSettingsEntity(
         clientId: _preferences.getString(redditClientIdPreferenceKey) ?? '',
         clientSecret:
@@ -61,6 +65,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setString(
       avatarsPathPreferenceKey,
       settings.avatarsPath,
+    );
+
+    await _preferences.setBool(
+      autoTagRemoteSourcePreferenceKey,
+      settings.autoTagRemoteSource,
+    );
+
+    await _preferences.setBool(
+      showListAvatarsPreferenceKey,
+      settings.showListAvatars,
     );
 
     final reddit = settings.reddit;

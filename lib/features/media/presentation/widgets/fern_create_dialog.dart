@@ -12,6 +12,7 @@ import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
+import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
@@ -96,6 +97,12 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   String? _selectedImagePath;
   TagEntity? _parentTag;
 
+  /// Direcciones vinculadas a la etiqueta que se está creando.
+  ///
+  /// Se quedan aquí hasta que se confirma: la etiqueta todavía no existe, así
+  /// que no hay a qué engancharlas. Se guardan con ella de una vez.
+  List<String> _sourceUrls = const [];
+
   /// Hay una escritura en marcha: la de guardar o la de copiar el avatar
   /// elegido. El botón de confirmar pasa a ser el indicador de espera y no admite
   /// una segunda pulsación: sería crear la misma etiqueta (o el mismo creador)
@@ -141,6 +148,24 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     return result.data ?? const [];
   }
 
+  /// Abre el diálogo de las direcciones de la etiqueta, encima de este.
+  ///
+  /// Al cerrarlo se vuelve aquí con lo escrito tal y como estaba: el diálogo de
+  /// creación no se ha ido a ninguna parte, sólo tenía otro delante. Si se cierra
+  /// sin confirmar no llega nada y las direcciones se quedan como estuvieran.
+  Future<void> _assignUrls() async {
+    final urls = await showFernDialog<List<String>, TagsBloc>(
+      context: context,
+      builder: (_) => AssignUrlDialog(
+        urls: _sourceUrls,
+        name: _nameController.text.trim(),
+      ),
+    );
+    if (urls == null || !mounted) return;
+
+    setState(() => _sourceUrls = urls);
+  }
+
   void _addSocialField() {
     setState(() => _socialControllers.add(TextEditingController()));
   }
@@ -173,6 +198,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
               name: name,
               picturePath: _selectedImagePath,
               children: const [],
+              sourceUrls: _sourceUrls,
             ),
             parent: _parentTag,
           ),
@@ -222,6 +248,11 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
     return FernDialog(
       onClose: () => context.pop(),
+      // Sólo las etiquetas se vinculan con direcciones: un creador se relaciona
+      // con el contenido de otra manera.
+      trailingAction: widget.type == CreateDialogType.tag
+          ? _assignUrlsButton(texts)
+          : null,
       leftContent: FernDialogSidePanel(
         // Mientras no haya nombre se enseña el título de la variante, en tono
         // apagado para que se lea como un hueco por rellenar.
@@ -258,6 +289,23 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         isBusy: _isBusy,
         onPressed: _confirm,
       ),
+    );
+  }
+
+  /// Abre el diálogo que vincula direcciones con la etiqueta.
+  ///
+  /// Se marca cuando ya hay alguna escrita: es la única señal de que la etiqueta
+  /// va a etiquetar sola, porque las direcciones no se ven en este formulario.
+  Widget _assignUrlsButton(AppLocalizations texts) {
+    final hasUrls = _sourceUrls.isNotEmpty;
+
+    return IconButton(
+      icon: Icon(
+        hasUrls ? Icons.link : Icons.add_link,
+        size: AppSizes.iconExtraLarge,
+      ),
+      tooltip: texts.assignUrlsTooltip,
+      onPressed: _isBusy ? null : _assignUrls,
     );
   }
 

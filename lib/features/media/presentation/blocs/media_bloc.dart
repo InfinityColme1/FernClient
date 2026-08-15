@@ -1,9 +1,13 @@
+import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/remove_creator_from_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/remove_tag_from_media_usecase.dart';
@@ -18,6 +22,7 @@ import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
 import 'dart:math' as math;
 
@@ -53,9 +58,17 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final GetFavoriteMediaUseCase _getFavoriteMediaUseCase;
   final GetMediaByTagUseCase _getMediaByTagUseCase;
   final RemoveTagFromMediaUseCase _removeTagFromMediaUseCase;
+  final GetMediaByCreatorUseCase _getMediaByCreatorUseCase;
+  final RemoveCreatorFromMediaUseCase _removeCreatorFromMediaUseCase;
   final SetMediaFavoriteUseCase _setMediaFavoriteUseCase;
+  final SetMediaListFavoriteUseCase _setMediaListFavoriteUseCase;
   final SearchMediaUseCase _searchMediaUseCase;
   final SearchMediaBySuggestionUseCase _searchMediaBySuggestionUseCase;
+
+  /// Hace falta para el vaciado automático de la papelera, que es el único
+  /// borrado sin aviso: de aquí sale lo que el usuario respondió la última vez
+  /// que la vació a mano.
+  final PreferencesService _preferences;
 
   /// Punto de partida de la selección por rango: el último elemento que se ha
   /// marcado o desmarcado a mano. No forma parte del estado porque no se pinta,
@@ -81,9 +94,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required GetFavoriteMediaUseCase getFavoriteMediaUseCase,
     required GetMediaByTagUseCase getMediaByTagUseCase,
     required RemoveTagFromMediaUseCase removeTagFromMediaUseCase,
+    required GetMediaByCreatorUseCase getMediaByCreatorUseCase,
+    required RemoveCreatorFromMediaUseCase removeCreatorFromMediaUseCase,
     required SetMediaFavoriteUseCase setMediaFavoriteUseCase,
+    required SetMediaListFavoriteUseCase setMediaListFavoriteUseCase,
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
+    required PreferencesService preferences,
   })  : _selectAndScanDirectoryUsecase = selectAndScanDirectoryUsecase,
         _scanSourceUseCase = scanSourceUseCase,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
@@ -102,9 +119,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _getFavoriteMediaUseCase = getFavoriteMediaUseCase,
         _getMediaByTagUseCase = getMediaByTagUseCase,
         _removeTagFromMediaUseCase = removeTagFromMediaUseCase,
+        _getMediaByCreatorUseCase = getMediaByCreatorUseCase,
+        _removeCreatorFromMediaUseCase = removeCreatorFromMediaUseCase,
         _setMediaFavoriteUseCase = setMediaFavoriteUseCase,
+        _setMediaListFavoriteUseCase = setMediaListFavoriteUseCase,
         _searchMediaUseCase = searchMediaUseCase,
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
+        _preferences = preferences,
         super(const MediaLoading()) {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
@@ -112,10 +133,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<LoadFavoriteMediaEvent>(onLoadFavoriteMedia);
     on<LoadMediaByTagEvent>(onLoadMediaByTag);
     on<RemoveTagFromSelectedMediaEvent>(onRemoveTagFromSelectedMedia);
+    on<LoadMediaByCreatorEvent>(onLoadMediaByCreator);
+    on<RemoveCreatorFromSelectedMediaEvent>(onRemoveCreatorFromSelectedMedia);
     on<ToggleFavoriteEvent>(onToggleFavorite);
     on<SearchMediaEvent>(onSearchMedia);
     on<SearchSuggestionSelectedEvent>(onSearchSuggestionSelected);
     on<ToggleSearchFilterEvent>(onToggleSearchFilter);
+    on<ToggleSourceFilterEvent>(onToggleSourceFilter);
     on<ClearMediaSearchEvent>(onClearMediaSearch);
     on<ImportSourceChangedEvent>(onImportSourceChanged);
     on<ScanSourceEvent>(onScanSource);
@@ -129,8 +153,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<SetInfoVisibilityEvent>(onSetInfoVisibility);
     on<SaveMediaEvent>(onSaveMedia);
     on<DeleteMediaEvent>(onDeleteMedia);
+    on<PurgeMediaEvent>(onPurgeMedia);
+    on<RestoreMediaEvent>(onRestoreMedia);
     on<MediaLoadFailedEvent>(onMediaLoadFailed);
     on<DeleteSelectedMediaEvent>(onDeleteSelectedMedia);
+    on<FavoriteSelectedMediaEvent>(onFavoriteSelectedMedia);
     on<RestoreSelectedMediaEvent>(onRestoreSelectedMedia);
     on<PurgeDeletedMediaEvent>(onPurgeDeletedMedia);
     on<ConfirmSelectedMediaEvent>(onConfirmSelectedMedia);
@@ -203,7 +230,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   void onLoadDeletedMedia(LoadDeletedMediaEvent event, Emitter<MediaStates> emit) async {
     emit(const MediaLoading(isBusy: true));
 
-    await _purgeExpiredDeletedMediaUseCase();
+    // La caducidad se pasa sola, así que no hay aviso en el que preguntar por
+    // los ficheros: se hace lo mismo que la última vez que se vació la papelera
+    // a mano.
+    await _purgeExpiredDeletedMediaUseCase(
+      params: _preferences.getDeleteFiles(MediaDeletionKind.trash),
+    );
 
     final result = await _getDeletedMediaUseCase();
     if (result is DataSuccess && result.data != null) {
@@ -274,6 +306,54 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     emit(_withoutSelection((summary) => selectedIds.contains(summary.id)));
   }
 
+  /// Contenido de un creador, el de la rejilla de la pantalla de gestión de
+  /// creadores.
+  ///
+  /// Como con las etiquetas se parte de un estado limpio: cambiar de creador es
+  /// cambiar de rejilla, así que la selección del anterior no tiene nada que ver
+  /// con la nueva.
+  void onLoadMediaByCreator(
+    LoadMediaByCreatorEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    emit(const MediaLoading(isBusy: true));
+
+    final result = await _getMediaByCreatorUseCase(params: event.creatorId);
+    final mediaList = (result is DataSuccess && result.data != null)
+        ? result.data!
+        : const <MediaSummaryEntity>[];
+
+    emit(MediaLoading(mediaList: mediaList));
+  }
+
+  /// Quita el creador de la selección de la rejilla.
+  ///
+  /// Los contenidos pasan al creador desconocido, así que salen de la rejilla de
+  /// la pantalla de gestión de creadores (que es justo la de ese creador); en la
+  /// base de datos siguen tal cual, con sus etiquetas y su fichero.
+  void onRemoveCreatorFromSelectedMedia(
+    RemoveCreatorFromSelectedMediaEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final selectedIds = state.selectedIds;
+    if (selectedIds.isEmpty) return;
+
+    emit(state.copyWith(isBusy: true));
+
+    final result = await _removeCreatorFromMediaUseCase(
+      params: RemoveCreatorFromMediaParams(
+        creatorId: event.creatorId,
+        mediaIds: selectedIds.toList(),
+      ),
+    );
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
+
+    emit(_withoutSelection((summary) => selectedIds.contains(summary.id)));
+  }
+
   /// El corazón del visor: pone o quita la marca de favorito del contenido que
   /// se está viendo, y la escribe en el momento.
   ///
@@ -314,14 +394,21 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   }
 
   /// Vuelve a la biblioteca completa, sin búsqueda ni selección.
+  ///
+  /// El filtro de fuentes no es de la búsqueda sino de cómo se quiere ver la
+  /// rejilla, así que se mantiene y recorta también la biblioteca.
   Future<void> _loadLibrary(Emitter<MediaStates> emit) async {
-    emit(const MediaLoading(isBusy: true));
+    final sourceFilters = state.sourceFilters;
+
+    emit(MediaLoading(sourceFilters: sourceFilters, isBusy: true));
+
     final result = await _getMediaListUsecase();
-    if (result is DataSuccess && result.data != null) {
-      emit(MediaLoading(mediaList: result.data!));
-    } else {
-      emit(const MediaLoading(mediaList: []));
-    }
+    final mediaList = (result is DataSuccess && result.data != null)
+        ? result.data!.where((summary) =>
+            sourceFilters.contains(summary.importSource)).toList()
+        : const <MediaSummaryEntity>[];
+
+    emit(MediaLoading(mediaList: mediaList, sourceFilters: sourceFilters));
   }
 
   /// Búsqueda por texto: todo lo que se parezca a lo escrito.
@@ -384,10 +471,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     SearchSuggestionEntity? suggestion,
   }) {
     return MediaLoading(
-      mediaList: _visibleMedia(sections, state.searchFilters),
+      mediaList: _visibleMedia(sections, state.searchFilters, state.sourceFilters),
       searchQuery: query,
       searchSections: sections,
       searchFilters: state.searchFilters,
+      sourceFilters: state.sourceFilters,
       searchSuggestion: suggestion,
     );
   }
@@ -408,25 +496,66 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       return;
     }
 
-    final mediaList = _visibleMedia(sections, filters);
-    final visibleIds = {for (final summary in mediaList) summary.id};
-
-    emit(state.copyWith(
-      searchFilters: filters,
-      mediaList: mediaList,
-      selectedIds: state.selectedIds.where(visibleIds.contains).toSet(),
-    ));
+    emit(_refiltered(sections, filters, state.sourceFilters));
   }
 
-  /// El contenido de los grupos que [filters] deja pasar, aplanado en el orden en
-  /// el que la rejilla los pinta.
+  /// Enciende o apaga una fuente en el filtro.
+  ///
+  /// Con una búsqueda en marcha se rehace lo que se ve a partir de los grupos que
+  /// ya están en el estado, como con los tipos. Sin búsqueda hay que volver a la
+  /// base de datos: la rejilla es la biblioteca entera y lo que se ha dejado
+  /// fuera no está guardado en ninguna parte a la que volver.
+  void onToggleSourceFilter(
+    ToggleSourceFilterEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final filters = Set<ImportSource>.from(state.sourceFilters);
+    if (!filters.remove(event.source)) filters.add(event.source);
+
+    final sections = state.searchSections;
+    if (sections == null) {
+      emit(state.copyWith(sourceFilters: filters));
+      await _loadLibrary(emit);
+      return;
+    }
+
+    emit(_refiltered(sections, state.searchFilters, filters));
+  }
+
+  /// El estado con los filtros nuevos aplicados sobre los grupos de la búsqueda.
+  ///
+  /// No se vuelve a buscar: los grupos siguen enteros en el estado, así que
+  /// volver a encender algo lo devuelve a la rejilla tal cual estaba. Lo que se
+  /// esconde deja de estar marcado: las acciones de la cabecera trabajan sobre la
+  /// selección y no pueden llevarse por delante contenido que no está a la vista.
+  MediaStates _refiltered(
+    List<MediaSearchSectionEntity> sections,
+    Set<SearchResultType> searchFilters,
+    Set<ImportSource> sourceFilters,
+  ) {
+    final mediaList = _visibleMedia(sections, searchFilters, sourceFilters);
+    final visibleIds = {for (final summary in mediaList) summary.id};
+
+    return state.copyWith(
+      searchFilters: searchFilters,
+      sourceFilters: sourceFilters,
+      mediaList: mediaList,
+      selectedIds: state.selectedIds.where(visibleIds.contains).toSet(),
+    );
+  }
+
+  /// El contenido de los grupos que [filters] deja pasar, sin lo que venga de una
+  /// fuente apagada, aplanado en el orden en el que la rejilla los pinta.
   List<MediaSummaryEntity> _visibleMedia(
     List<MediaSearchSectionEntity> sections,
     Set<SearchResultType> filters,
+    Set<ImportSource> sourceFilters,
   ) {
     return [
       for (final section in sections)
-        if (filters.contains(section.type)) ...section.media,
+        if (filters.contains(section.type))
+          for (final summary in section.media)
+            if (sourceFilters.contains(summary.importSource)) summary,
     ];
   }
 
@@ -501,16 +630,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// Eliminar desde el visor. El contenido sale de la lista de la pantalla de la
   /// que venía y, al quedarse el estado sin contenido actual, el visor se cierra.
   ///
-  /// Lo que ya estuviera marcado no se toca: en la pantalla de eliminados el
-  /// botón no tiene nada que hacer, el borrado definitivo se fuerza desde su
-  /// cabecera.
+  /// Lo que ya estuviera marcado no pasa por aquí: desde la papelera, borrar es
+  /// borrar del todo, y de eso se encarga [onPurgeMedia].
   void onDeleteMedia(DeleteMediaEvent event, Emitter<MediaStates> emit) async {
     final id = event.media.id;
-
-    final isMarked = state.mediaList
-            ?.any((summary) => summary.id == id && summary.isDeleted) ??
-        false;
-    if (isMarked) return;
+    if (_isMarkedForDeletion(id)) return;
 
     emit(state.copyWith(isBusy: true));
 
@@ -520,12 +644,70 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final removed = await _removedContent(
       discarded: isPending ? [id] : const [],
       marked: isPending ? const [] : [id],
+      deleteFiles: event.deleteFiles,
     );
     if (removed.isEmpty) {
       emit(_idle);
       return;
     }
 
+    _emitWithoutViewerMedia(id, emit);
+  }
+
+  /// Si el contenido [id] está marcado para borrar, según la lista que se está
+  /// viendo. Es lo que distingue el visor abierto desde la papelera del que se
+  /// abre desde cualquier otra pantalla.
+  bool _isMarkedForDeletion(int id) {
+    return state.mediaList
+            ?.any((summary) => summary.id == id && summary.isDeleted) ??
+        false;
+  }
+
+  /// Borrado definitivo desde el visor, el del contenido que ya estaba marcado.
+  ///
+  /// Sale de la base de datos con todo lo demás igual que si se hubiera vaciado
+  /// la papelera entera, sólo que de uno en uno.
+  void onPurgeMedia(PurgeMediaEvent event, Emitter<MediaStates> emit) async {
+    final id = event.media.id;
+    if (!_isMarkedForDeletion(id)) return;
+
+    emit(state.copyWith(isBusy: true));
+
+    final result = await _deleteMediaListUseCase(
+      params: (ids: [id], deleteFiles: event.deleteFiles),
+    );
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
+
+    _emitWithoutViewerMedia(id, emit);
+  }
+
+  /// Restablecer desde el visor: el contenido pierde la marca y vuelve a la
+  /// pantalla que le toque, así que sale de la de eliminados igual que si se
+  /// hubiera borrado desde ella.
+  void onRestoreMedia(RestoreMediaEvent event, Emitter<MediaStates> emit) async {
+    final id = event.media.id;
+    if (!_isMarkedForDeletion(id)) return;
+
+    emit(state.copyWith(isBusy: true));
+
+    final result = await _restoreMediaUseCase(params: [id]);
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
+
+    _emitWithoutViewerMedia(id, emit);
+  }
+
+  /// Deja el estado sin el contenido [id].
+  ///
+  /// Es la salida común de todo lo que quita del visor lo que se está viendo
+  /// (borrarlo, borrarlo del todo o restablecerlo): la lista se recorta y, al
+  /// quedarse el estado sin contenido actual, el visor se cierra solo.
+  void _emitWithoutViewerMedia(int id, Emitter<MediaStates> emit) {
     final newList = List<MediaSummaryEntity>.from(state.mediaList ?? [])
       ..removeWhere((element) => element.id == id);
 
@@ -535,6 +717,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchQuery: state.searchQuery,
       searchSections: _sectionsWithout((summary) => summary.id == id),
       searchFilters: state.searchFilters,
+      sourceFilters: state.sourceFilters,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,
       lastImportAt: state.lastImportAt,
@@ -547,16 +730,21 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// [discarded] se borra de la base de datos y [marked] se marca para borrar. Es
   /// el único sitio donde se decide una cosa u otra: lo pendiente de revisar se
   /// descarta (descartarlo al importar es no quererlo, no guardarlo en la
-  /// papelera, y su fichero sigue en el disco para volver a escanearlo) y lo
-  /// definitivo pasa por la pantalla de eliminados.
+  /// papelera) y lo definitivo pasa por la pantalla de eliminados.
+  ///
+  /// [deleteFiles] sólo afecta a lo que se descarta, que es lo único que sale
+  /// aquí de la base de datos; lo marcado sigue en ella con su fichero.
   Future<Set<int>> _removedContent({
     required List<int> discarded,
     required List<int> marked,
+    bool deleteFiles = false,
   }) async {
     final removed = <int>{};
 
     if (discarded.isNotEmpty) {
-      final result = await _deleteMediaListUseCase(params: discarded);
+      final result = await _deleteMediaListUseCase(
+        params: (ids: discarded, deleteFiles: deleteFiles),
+      );
       if (result is DataSuccess) removed.addAll(discarded);
     }
 
@@ -617,6 +805,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         searchQuery: state.searchQuery,
         searchSections: sections,
         searchFilters: state.searchFilters,
+        sourceFilters: state.sourceFilters,
         searchSuggestion: state.searchSuggestion,
         favoritesOnly: state.favoritesOnly,
         importSource: state.importSource,
@@ -655,6 +844,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final removed = await _removedContent(
       discarded: [for (final summary in selected) if (!summary.isImported) summary.id],
       marked: [for (final summary in selected) if (summary.isImported) summary.id],
+      deleteFiles: event.deleteFiles,
     );
     if (removed.isEmpty) {
       emit(_idle);
@@ -662,6 +852,32 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     }
 
     emit(_withoutSelection((summary) => removed.contains(summary.id)));
+  }
+
+  /// Marcado masivo como favorito de la selección de la rejilla.
+  ///
+  /// No quita la marca a nada: es una acción y no un interruptor, porque el
+  /// sumario que llena la rejilla no dice si un contenido es favorito y no hay
+  /// forma de saber qué habría que alternar. La selección se deshace al
+  /// terminar, como en el resto de acciones masivas.
+  void onFavoriteSelectedMedia(
+    FavoriteSelectedMediaEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final selectedIds = state.selectedIds;
+    if (selectedIds.isEmpty) return;
+
+    emit(state.copyWith(isBusy: true));
+
+    final result = await _setMediaListFavoriteUseCase(
+      params: (ids: selectedIds.toList(), isFavorite: true),
+    );
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
+
+    emit(state.copyWith(selectedIds: const {}, isBusy: false));
   }
 
   /// Restablecimiento de la selección en la pantalla de eliminados: el contenido
@@ -684,12 +900,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// Borrado definitivo de todo lo marcado, forzado desde la pantalla de
   /// eliminados: la pantalla se queda vacía porque ya no queda nada marcado.
   ///
-  /// Los ficheros siguen en el disco, así que un escaneo posterior los recoge
-  /// otra vez como contenido nuevo.
+  /// Si el aviso no ha dicho lo contrario, los ficheros siguen en el disco y un
+  /// escaneo posterior los recoge otra vez como contenido nuevo.
   void onPurgeDeletedMedia(PurgeDeletedMediaEvent event, Emitter<MediaStates> emit) async {
     emit(state.copyWith(isBusy: true));
 
-    final result = await _purgeDeletedMediaUseCase();
+    final result = await _purgeDeletedMediaUseCase(params: event.deleteFiles);
     if (result is! DataSuccess) {
       emit(_idle);
       return;
@@ -731,6 +947,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchQuery: state.searchQuery,
       searchSections: _sectionsWithout(remove),
       searchFilters: state.searchFilters,
+      sourceFilters: state.sourceFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,
@@ -817,6 +1034,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchQuery: state.searchQuery,
       searchSections: state.searchSections,
       searchFilters: state.searchFilters,
+      sourceFilters: state.sourceFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,
@@ -860,6 +1078,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchQuery: state.searchQuery,
       searchSections: state.searchSections,
       searchFilters: state.searchFilters,
+      sourceFilters: state.sourceFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,

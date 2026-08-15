@@ -1,5 +1,8 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
+import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_info.dart';
 import 'package:Fern/features/media/presentation/widgets/media_viewer.dart';
 import 'package:flutter/material.dart';
@@ -74,6 +77,19 @@ class _ViewerPageState extends State<ViewerPage> {
     return KeyEventResult.ignored;
   }
 
+  /// El botón de borrar hace una cosa u otra según dónde esté el contenido: lo
+  /// que ya está en la papelera se borra del todo (desde ahí no hay a dónde
+  /// mandarlo) y el resto se marca o se descarta, según sea definitivo o esté
+  /// pendiente de revisar. Los dos casos avisan antes.
+  void _delete(BuildContext context, MediaEntity media, {required bool isMarked}) {
+    if (isMarked) {
+      purgeMediaWithConfirmation(context, media);
+      return;
+    }
+
+    deleteMediaWithConfirmation(context, media);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<MediaBloc, MediaStates>(
@@ -86,6 +102,18 @@ class _ViewerPageState extends State<ViewerPage> {
       },
       child: BlocBuilder<MediaBloc, MediaStates>(
         builder: (context, state) {
+          final media = state.currentMedia;
+          final isFavorite = media?.isFavorite ?? false;
+
+          // El contenido que ya está en la papelera se trata distinto: su botón
+          // de borrar es el definitivo y, junto a él, aparece el de devolverlo a
+          // su sitio.
+          final isMarked = media != null &&
+              (state.mediaList?.any(
+                    (summary) => summary.id == media.id && summary.isDeleted,
+                  ) ??
+                  false);
+
           return Focus(
           focusNode: _keyboardFocusNode,
           autofocus: true,
@@ -174,21 +202,48 @@ class _ViewerPageState extends State<ViewerPage> {
                               // DISPARAR EL EVENTO DE TOGGLE
                               onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
                             ),
+                            // Lo que ya está en la papelera se restablece desde
+                            // aquí: es la otra salida que tiene, y sin ella
+                            // habría que volver a la rejilla para deshacerlo.
+                            if (isMarked)
+                              IconButton(
+                                tooltip: AppLocalizations.of(context).actionRestore,
+                                // De trazo, como los demás iconos de la barra:
+                                // el de restablecer desde la papelera lleva la
+                                // flecha maciza y desentonaba al lado de ellos.
+                                // Que sea sacar de la papelera ya lo dice el
+                                // sitio, que es el visor de algo que está
+                                // dentro.
+                                icon: const Icon(
+                                  Icons.restore,
+                                  color: AppColors.white,
+                                  size: AppSizes.iconExtraLarge,
+                                ),
+                                onPressed: () => context
+                                    .read<MediaBloc>()
+                                    .add(RestoreMediaEvent(media)),
+                              ),
                             IconButton(
                               icon: Image.asset(icDelete, scale: 2),
-                              onPressed: () => context.read<MediaBloc>().add(DeleteMediaEvent(state.currentMedia!)),
+                              onPressed: media == null
+                                  ? null
+                                  : () => _delete(context, media, isMarked: isMarked),
                             ),
                             IconButton(
-                              // No hay corazón relleno entre los iconos, así
-                              // que lo que dice si el contenido es favorito es
-                              // el color: teñido cuando lo es y tal cual
-                              // cuando no.
-                              icon: Image.asset(
-                                icHeart,
-                                scale: 2,
-                                color: (state.currentMedia?.isFavorite ?? false)
+                              // El corazón se rellena al marcar como favorito:
+                              // relleno o vacío se distingue de un vistazo, que
+                              // es más de lo que decía el color por sí solo.
+                              // Éste no sale de los iconos de la aplicación
+                              // (entre ellos no hay ninguno relleno) sino del
+                              // juego de Material, que tiene las dos versiones.
+                              icon: Icon(
+                                isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: AppSizes.iconExtraLarge,
+                                color: isFavorite
                                     ? AppColors.terciary
-                                    : null,
+                                    : AppColors.white,
                               ),
                               onPressed: state.currentMedia == null
                                   ? null

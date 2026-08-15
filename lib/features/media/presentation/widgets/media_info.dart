@@ -9,6 +9,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_creator_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_tag_dialog.dart';
+import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,6 +33,13 @@ class MediaInfo extends StatelessWidget {
         if (media == null) {
           return const SizedBox.shrink();
         }
+
+        // Lo que ya está en la papelera se borra del todo, igual que con el
+        // botón del visor: es el mismo contenido y el mismo sitio del que sale.
+        final isMarked = state.mediaList?.any(
+              (summary) => summary.id == media.id && summary.isDeleted,
+            ) ??
+            false;
 
         return ColoredBox(
           color: AppColors.background,
@@ -62,9 +70,19 @@ class MediaInfo extends StatelessWidget {
                   label: texts.actionDelete,
                   backgroundColor: AppColors.terciary,
                   foregroundColor: AppColors.white,
-                  onPressed: () {
-                    context.read<MediaBloc>().add(DeleteMediaEvent(media));
-                    context.pop();
+                  onPressed: () async {
+                    if (isMarked) {
+                      // El visor se cierra solo al quedarse el estado sin
+                      // contenido, así que aquí no hay nada más que hacer.
+                      await purgeMediaWithConfirmation(context, media);
+                      return;
+                    }
+
+                    // El visor sólo se cierra si el borrado ha salido adelante:
+                    // cancelar el aviso deja al usuario donde estaba.
+                    final deleted =
+                        await deleteMediaWithConfirmation(context, media);
+                    if (deleted && context.mounted) context.pop();
                   },
                 ),
               ],

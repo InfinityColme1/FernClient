@@ -16,11 +16,16 @@ class CreatorModel {
 
   List<String> ? socialProfiles;
 
+  /// Direcciones vinculadas con el creador, ya normalizadas: lo que se importe
+  /// de debajo de alguna de ellas nace con este creador puesto.
+  List<String> sourceUrls = const [];
+
   CreatorModel({
     required this.id,
     required this.name,
     this.picturePath,
-    this.socialProfiles
+    this.socialProfiles,
+    this.sourceUrls = const []
   });
 
   CreatorEntity toEntity() {
@@ -28,7 +33,8 @@ class CreatorModel {
         id: id,
         name: name,
         picturePath: picturePath,
-        socialProfiles: socialProfiles
+        socialProfiles: socialProfiles,
+        sourceUrls: sourceUrls
     );
   }
 
@@ -40,7 +46,8 @@ class CreatorModel {
         id: entity.id == unsavedId ? Isar.autoIncrement : entity.id,
         name: entity.name,
         picturePath: entity.picturePath,
-        socialProfiles: entity.socialProfiles
+        socialProfiles: entity.socialProfiles,
+        sourceUrls: entity.sourceUrls
     );
   }
 }

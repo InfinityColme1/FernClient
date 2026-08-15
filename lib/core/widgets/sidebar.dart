@@ -10,6 +10,8 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_states.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,6 +46,7 @@ class Sidebar extends StatefulWidget {
 
 class _SidebarState extends State<Sidebar> {
   final _tagsBloc = getIt<TagsBloc>();
+  final _settingsBloc = getIt<SettingsBloc>();
 
   @override
   void initState() {
@@ -106,6 +109,14 @@ class _SidebarState extends State<Sidebar> {
           }
       ),
       SidebarItem(
+          id: creatorManagerRoute,
+          title: texts.navCreatorManager,
+          icon: Icons.person_outline,
+          onTap: () {
+            context.go(creatorManagerRoute);
+          }
+      ),
+      SidebarItem(
           id: tagManagerRoute,
           title: texts.navTagManager,
           icon: Icons.sell_outlined,
@@ -127,17 +138,30 @@ class _SidebarState extends State<Sidebar> {
   /// Las etiquetas en fila, madres antes que hijas, cada una con el nivel que le
   /// toca: el menú es una lista, así que la jerarquía se cuenta con [depth] y se
   /// ve en la sangría de cada botón.
-  List<SidebarItem> _tagItems(List<TagEntity> tags, {int depth = 0}) {
+  ///
+  /// Con [showAvatars] cada una lleva su imagen en lugar del icono común, que es
+  /// lo único que las distingue con el menú plegado. Las que no tengan imagen se
+  /// quedan con el icono.
+  List<SidebarItem> _tagItems(
+    List<TagEntity> tags, {
+    required bool showAvatars,
+    int depth = 0,
+  }) {
     return [
       for (final tag in tags) ...[
         SidebarItem(
           id: 'tag:${tag.id}',
           title: tag.name,
           icon: Icons.sell_outlined,
+          avatarPath: showAvatars ? tag.picturePath : null,
           depth: depth,
           onTap: () => _filterByTag(tag),
         ),
-        ..._tagItems(tag.children, depth: depth + 1),
+        ..._tagItems(
+          tag.children,
+          showAvatars: showAvatars,
+          depth: depth + 1,
+        ),
       ],
     ];
   }
@@ -146,30 +170,41 @@ class _SidebarState extends State<Sidebar> {
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
 
-    return BlocBuilder<TagsBloc, TagsState>(
-      bloc: _tagsBloc,
-      builder: (context, state) => CollapsingNavigationDrawer(
-        textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight(400)),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        selectedColor: Theme.of(context).primaryColor,
-        textSelectedColor: AppColors.black,
-        unselectedColor: Theme.of(context).scaffoldBackgroundColor,
-        textUnselectedColor: AppColors.unremarked,
-        iconSize: widget.iconSize,
-        isCollapsed: widget.isCollapsed,
-        sections: [
-          SidebarSection(
-            title: texts.navGallery,
-            items: _galleryItems(texts),
-          ),
-          SidebarSection(
-            title: texts.navTags,
-            items: _tagItems(state.tags),
-            // Mientras la primera lectura está en marcha no se dice que no haya
-            // etiquetas: todavía no se sabe.
-            emptyMessage: state.isLoaded ? texts.noTagsYet : null,
-          ),
-        ],
+    // Los ajustes se escuchan, no se leen al montar el menú: encender los
+    // avatares tiene que verse en el momento, sin cerrar la pantalla de ajustes.
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      bloc: _settingsBloc,
+      buildWhen: (previous, current) =>
+          previous.settings.showListAvatars !=
+          current.settings.showListAvatars,
+      builder: (context, settings) => BlocBuilder<TagsBloc, TagsState>(
+        bloc: _tagsBloc,
+        builder: (context, state) => CollapsingNavigationDrawer(
+          textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight(400)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          selectedColor: Theme.of(context).primaryColor,
+          textSelectedColor: AppColors.black,
+          unselectedColor: Theme.of(context).scaffoldBackgroundColor,
+          textUnselectedColor: AppColors.unremarked,
+          iconSize: widget.iconSize,
+          isCollapsed: widget.isCollapsed,
+          sections: [
+            SidebarSection(
+              title: texts.navGallery,
+              items: _galleryItems(texts),
+            ),
+            SidebarSection(
+              title: texts.navTags,
+              items: _tagItems(
+                state.tags,
+                showAvatars: settings.settings.showListAvatars,
+              ),
+              // Mientras la primera lectura está en marcha no se dice que no
+              // haya etiquetas: todavía no se sabe.
+              emptyMessage: state.isLoaded ? texts.noTagsYet : null,
+            ),
+          ],
+        ),
       ),
     );
   }

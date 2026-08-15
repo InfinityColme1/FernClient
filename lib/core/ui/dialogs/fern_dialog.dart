@@ -13,12 +13,20 @@ class FernDialog extends StatelessWidget {
   final double maxWidth;
   final double columnSpacing;
 
+  /// Acción secundaria de la esquina superior derecha, enfrente del botón de
+  /// cierre. Es donde va lo que abre otro diálogo sobre este (vincular las
+  /// direcciones de una etiqueta, por ejemplo): no confirma ni cancela lo que se
+  /// está haciendo, así que no tiene sitio en la fila de abajo, y lejos del aspa
+  /// para que no se pulse una por otra.
+  final Widget? trailingAction;
+
   const FernDialog({
     super.key,
     this.leftContent,
     this.rightContent,
     this.actionButton,
     required this.onClose,
+    this.trailingAction,
     this.maxWidth = AppSizes.dialogMaxWidth,
     this.columnSpacing = AppSpacing.xxxl,
   });
@@ -39,12 +47,15 @@ class FernDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),
-                  onPressed: onClose,
-                ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),
+                    onPressed: onClose,
+                  ),
+                  const Spacer(),
+                  if (trailingAction != null) trailingAction!,
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),

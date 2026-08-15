@@ -44,6 +44,14 @@ enum ImportSource {
     ImportSource.reddit,
   ];
 
+  /// Todas las fuentes de las que puede haber contenido guardado. Es con lo que
+  /// arranca el filtro por fuente de la pantalla de media: de partida se ve
+  /// todo.
+  static const Set<ImportSource> allSources = {
+    ImportSource.local,
+    ImportSource.reddit,
+  };
+
   /// Las fuentes remotas, las que necesitan configuración para poder usarse.
   static const List<ImportSource> remote = [ImportSource.reddit];
 

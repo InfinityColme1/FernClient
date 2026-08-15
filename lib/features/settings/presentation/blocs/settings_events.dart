@@ -71,6 +71,34 @@ class FileOrganizationChangedEvent extends SettingsEvents {
   List<Object?> get props => [criteria];
 }
 
+/// Enciende o apaga la etiqueta con el nombre de la plataforma en lo que se
+/// importa de ella.
+///
+/// Vale para todas las fuentes remotas a la vez: es una forma de trabajar, no un
+/// ajuste de una plataforma concreta. Sólo afecta a lo que se importe a partir de
+/// ahora; lo que ya está en la biblioteca se queda como se guardó.
+class AutoTagRemoteSourceToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const AutoTagRemoteSourceToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Enciende o apaga los avatares en la lista de etiquetas del menú lateral.
+///
+/// Sólo afecta a esa lista: las etiquetas de las demás pantallas ya se ven con
+/// su avatar y no dependen de esto.
+class ShowListAvatarsToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ShowListAvatarsToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 /// Credenciales de Reddit tal y como han quedado tras tocar uno de sus campos.
 ///
 /// Llegan las cuatro juntas porque se guardan juntas: la fuente sólo sirve

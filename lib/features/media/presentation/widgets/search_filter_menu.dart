@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
@@ -18,30 +19,46 @@ extension _SearchResultTypeFilterLabel on SearchResultType {
       };
 }
 
+/// Cómo se nombra cada fuente en el filtro. Las plataformas se llaman igual en
+/// todos los idiomas y traen su nombre puesto; el equipo sí se traduce.
+extension _ImportSourceFilterLabel on ImportSource {
+  String filterLabel(AppLocalizations texts) => label ?? texts.sourceLocal;
+}
+
 /// Botón "Filters" de la cabecera de la pantalla de media con su panel de
-/// casillas: una por tipo de resultado (contenidos, etiquetas y creadores).
+/// casillas, en dos grupos:
+///
+/// - **de dónde salen los resultados**: una casilla por tipo (contenidos,
+///   etiquetas y creadores). Recorta lo que ya se ha buscado, así que sin
+///   búsqueda en marcha no hay grupos que esconder y esas casillas quedan
+///   apagadas.
+/// - **de dónde llegó el contenido**: una casilla por fuente. Ésta vale siempre,
+///   con búsqueda y sin ella, porque la fuente es un dato del contenido y no del
+///   resultado. Es lo que sustituye a tener una etiqueta por plataforma: se ve
+///   sólo lo de Reddit sin que nadie lo haya etiquetado.
 ///
 /// El panel no se cierra al marcar una casilla, así que se pueden encender y
-/// apagar varios tipos de una vez y ver la rejilla cambiar por detrás.
-///
-/// Filtra lo que ya se ha buscado, no la biblioteca: sin búsqueda en marcha no
-/// hay grupos que esconder y el botón queda desactivado.
+/// apagar varias de una vez y ver la rejilla cambiar por detrás.
 class SearchFilterMenu extends StatelessWidget {
   /// Tipos de resultado que se están viendo.
   final Set<SearchResultType> filters;
 
-  /// Si hay una búsqueda en marcha, que es lo único que el filtro puede recortar.
+  /// Fuentes de las que se está viendo contenido.
+  final Set<ImportSource> sourceFilters;
+
+  /// Si hay una búsqueda en marcha, que es lo único que el filtro de tipos puede
+  /// recortar.
   final bool hasSearch;
 
   const SearchFilterMenu({
     super.key,
     required this.filters,
+    required this.sourceFilters,
     required this.hasSearch,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final texts = AppLocalizations.of(context);
     final bloc = context.read<MediaBloc>();
 
@@ -52,18 +69,25 @@ class SearchFilterMenu extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                texts.filtersResultsFrom,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.gray,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
+              _groupTitle(context, texts.filtersResultsFrom),
               for (final type in SearchResultType.values)
                 FernCheckboxTile(
                   label: type.filterLabel(texts),
                   value: filters.contains(type),
-                  onChanged: (_) => bloc.add(ToggleSearchFilterEvent(type)),
+                  // Sin búsqueda no hay nada que recortar: la casilla se queda
+                  // atenuada en lugar de desaparecer, que así se entiende que el
+                  // filtro existe y por qué no hace nada.
+                  onChanged: hasSearch
+                      ? (_) => bloc.add(ToggleSearchFilterEvent(type))
+                      : null,
+                ),
+              const SizedBox(height: AppSpacing.m),
+              _groupTitle(context, texts.filtersSource),
+              for (final source in ImportSource.scannable)
+                FernCheckboxTile(
+                  label: source.filterLabel(texts),
+                  value: sourceFilters.contains(source),
+                  onChanged: (_) => bloc.add(ToggleSourceFilterEvent(source)),
                 ),
             ],
           ),
@@ -74,7 +98,20 @@ class SearchFilterMenu extends StatelessWidget {
         icon: Icons.tune,
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.black,
-        onPressed: hasSearch ? toggle : null,
+        onPressed: toggle,
+      ),
+    );
+  }
+
+  Widget _groupTitle(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Text(
+        text,
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(color: AppColors.gray),
       ),
     );
   }

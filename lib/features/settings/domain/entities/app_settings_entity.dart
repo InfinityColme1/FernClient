@@ -73,6 +73,23 @@ class AppSettingsEntity extends Equatable {
 
   final FileOrganizationCriteria organization;
 
+  /// Al contenido que llega de una plataforma se le pone además una etiqueta con
+  /// el nombre de ésta.
+  ///
+  /// Apagado de fábrica: de dónde vino el contenido ya se guarda con él
+  /// (`MediaSummaryEntity.importSource`) y se filtra por ello desde el botón de
+  /// filtros, así que crear una etiqueta por plataforma es una decisión del
+  /// usuario y no algo que la aplicación haga por su cuenta.
+  final bool autoTagRemoteSource;
+
+  /// La lista de etiquetas del menú lateral enseña el avatar de cada una en vez
+  /// del icono de siempre.
+  ///
+  /// Encendido de fábrica: con el menú plegado el icono es igual para todas y no
+  /// dice cuál es cuál, que es justo cuando el avatar hace falta. Las etiquetas
+  /// sin avatar se quedan con su icono.
+  final bool showListAvatars;
+
   /// Credenciales de la fuente remota de Reddit. Vienen vacías mientras el
   /// usuario no las haya rellenado, que es como la aplicación sabe que esa
   /// fuente todavía no se puede usar.
@@ -85,6 +102,8 @@ class AppSettingsEntity extends Equatable {
     this.libraryPath,
     required this.avatarsPath,
     this.organization = FileOrganizationCriteria.flat,
+    this.autoTagRemoteSource = false,
+    this.showListAvatars = true,
     this.reddit = const RedditSettingsEntity(),
   });
 
@@ -99,6 +118,8 @@ class AppSettingsEntity extends Equatable {
     String? libraryPath,
     String? avatarsPath,
     FileOrganizationCriteria? organization,
+    bool? autoTagRemoteSource,
+    bool? showListAvatars,
     RedditSettingsEntity? reddit,
   }) {
     return AppSettingsEntity(
@@ -108,6 +129,8 @@ class AppSettingsEntity extends Equatable {
       libraryPath: libraryPath ?? this.libraryPath,
       avatarsPath: avatarsPath ?? this.avatarsPath,
       organization: organization ?? this.organization,
+      autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
+      showListAvatars: showListAvatars ?? this.showListAvatars,
       reddit: reddit ?? this.reddit,
     );
   }
@@ -120,6 +143,8 @@ class AppSettingsEntity extends Equatable {
         libraryPath,
         avatarsPath,
         organization,
+        autoTagRemoteSource,
+        showListAvatars,
         reddit,
       ];
 }

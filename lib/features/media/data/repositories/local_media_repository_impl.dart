@@ -2,10 +2,13 @@ import 'dart:io';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/utils/file_utils.dart';
+import 'package:Fern/core/utils/source_url.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
@@ -28,16 +31,19 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   final MediaFileOrganizer _fileOrganizer;
   final AvatarStorageService _avatarStorage;
   final MediaRegistry _registry;
+  final TagHierarchy _tagHierarchy;
 
   LocalMediaRepositoryImpl({
     required Isar appDatabase,
     required MediaFileOrganizer fileOrganizer,
     required AvatarStorageService avatarStorage,
     required MediaRegistry registry,
+    required TagHierarchy tagHierarchy,
   })  : _appDatabase = appDatabase,
         _fileOrganizer = fileOrganizer,
         _avatarStorage = avatarStorage,
-        _registry = registry;
+        _registry = registry,
+        _tagHierarchy = tagHierarchy;
 
 
   Future<void> _saveBatch(List<MediaModel> models) async {
@@ -202,6 +208,38 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
+  /// Marca de favorito de varios contenidos, en una sola transacción.
+  ///
+  /// Los que ya estuvieran como se pide se dejan en paz: reescribirlos no
+  /// cambiaría nada y son los más, porque marcar una selección entera casi
+  /// siempre alcanza a alguno que ya lo era.
+  @override
+  Future<DataState> setMediaListFavorite(
+    List<int> ids, {
+    required bool isFavorite,
+  }) async {
+    try {
+      if (ids.isEmpty) return DataSuccess(null);
+
+      await _appDatabase.writeTxn(() async {
+        final models = await _appDatabase.mediaModels.getAll(ids);
+        final pending = models.nonNulls
+            .where((model) => model.isFavorite != isFavorite)
+            .toList();
+        if (pending.isEmpty) return;
+
+        for (final model in pending) {
+          model.isFavorite = isFavorite;
+        }
+        await _appDatabase.mediaModels.putAll(pending);
+      });
+
+      return DataSuccess(null);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   @override
   Future<DataState<MediaEntity>> getMediaDetails(int id) async {
     try {
@@ -233,7 +271,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
     final summary = await _appDatabase.mediaSummaryModels.get(id);
 
-    return model.toEntity(isImported: summary?.isImported ?? false);
+    return model.toEntity(
+      isImported: summary?.isImported ?? false,
+      // De dónde llegó el contenido: lo mira el organizador de ficheros para
+      // saber en qué carpeta va cuando se ordena por origen y la etiqueta de
+      // plataforma no está puesta.
+      importSource: ImportSource.fromId(summary?.importSource),
+    );
   }
 
 
@@ -316,9 +360,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         model.creator.value = creatorModel;
         await model.creator.save();
 
-        // Las etiquetas que llegan son las que tiene que tener: `reset` quita
-        // las de antes en la base de datos, que es algo que `clear()` no hace
-        // (sólo vacía lo que Isar tiene en memoria).
+        // Las etiquetas que llegan son las que tiene que tener, sin añadir
+        // ninguna por su cuenta: las de encima en la jerarquía se proponen al
+        // elegirlas, y quitar la madre dejando la hija es una decisión del
+        // usuario que aquí se respeta. `reset` quita las de antes en la base de
+        // datos, que es algo que `clear()` no hace (sólo vacía lo que Isar tiene
+        // en memoria).
         await model.tags.update(link: tagModels, reset: true);
 
         if (sourceModel != null) {
@@ -366,15 +413,21 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
-  /// Borrado real de varios contenidos, en una sola transacción.
-  ///
-  /// El fichero del disco **no se toca**: al desaparecer su fila, la ruta vuelve
-  /// a estar disponible y el siguiente escaneo la recoge otra vez. Es lo que se
+  /// Borrado real de varios contenidos, en una sola transacción. Es lo que se
   /// hace al descartar contenido pendiente de revisar desde importación.
+  ///
+  /// Sin [deleteFiles] el fichero del disco no se toca: al desaparecer su fila,
+  /// la ruta vuelve a estar disponible y el siguiente escaneo la recoge otra
+  /// vez. Con él, el fichero se va con la fila y no vuelve.
   @override
-  Future<DataState> deleteMediaList(List<int> ids) async {
+  Future<DataState> deleteMediaList(
+    List<int> ids, {
+    bool deleteFiles = false,
+  }) async {
     try {
       if (ids.isEmpty) return DataSuccess(null);
+
+      if (deleteFiles) await _deleteFilesOf(ids);
 
       await _appDatabase.writeTxn(() async {
         await _appDatabase.mediaSummaryModels.deleteAll(ids);
@@ -384,6 +437,19 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       return DataSuccess(null);
     } on Exception catch (e) {
       return DataException(e);
+    }
+  }
+
+  /// Borra del disco los ficheros de [ids].
+  ///
+  /// Va antes de la baja porque la ruta está en la fila, y lo que no se pueda
+  /// borrar (ya no está, lo tiene abierto otro programa) no detiene nada: el
+  /// contenido sale de la aplicación igual.
+  Future<void> _deleteFilesOf(List<int> ids) async {
+    final summaries = await _appDatabase.mediaSummaryModels.getAll(ids);
+
+    for (final summary in summaries.nonNulls) {
+      await deleteFileAt(summary.path);
     }
   }
 
@@ -437,14 +503,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Vacía la papelera de lo que ya ha cumplido su semana y devuelve cuántos
   /// contenidos han salido de la base de datos.
   ///
-  /// Como en el resto de borrados, los ficheros del disco no se tocan: lo que
-  /// caduca vuelve a estar disponible para el siguiente escaneo.
+  /// Con [deleteFiles] se llevan también sus ficheros. Aquí no hay nadie a quien
+  /// preguntar (la caducidad se pasa sola), así que manda lo último que el
+  /// usuario eligiera al vaciar la papelera a mano.
   ///
   /// Lo marcado **sin fecha** se queda: no se puede saber cuándo caduca algo que
   /// no dice cuándo se marcó, y borrarlo por si acaso sería justo el error que
   /// esta pantalla existe para evitar.
   @override
-  Future<DataState<int>> purgeExpiredDeletedMedia() async {
+  Future<DataState<int>> purgeExpiredDeletedMedia({
+    bool deleteFiles = false,
+  }) async {
     try {
       final cutoff = DateTime.now().subtract(deletedRetention);
 
@@ -460,6 +529,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (ids.isEmpty) return const DataSuccess(0);
 
+      if (deleteFiles) await _deleteFilesOf(ids);
+
       await _appDatabase.writeTxn(() async {
         await _appDatabase.mediaSummaryModels.deleteAll(ids);
         await _appDatabase.mediaModels.deleteAll(ids);
@@ -474,10 +545,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Borrado definitivo de todo lo que estuviera marcado, en una sola
   /// transacción.
   ///
-  /// Los ficheros del disco **no se tocan**: al desaparecer sus filas, sus rutas
-  /// vuelven a estar libres y el siguiente escaneo las recoge otra vez.
+  /// Sin [deleteFiles] los ficheros del disco no se tocan: al desaparecer sus
+  /// filas, sus rutas vuelven a estar libres y el siguiente escaneo las recoge
+  /// otra vez. Con él, este borrado es definitivo también en el disco.
   @override
-  Future<DataState<int>> purgeDeletedMedia() async {
+  Future<DataState<int>> purgeDeletedMedia({bool deleteFiles = false}) async {
     try {
       final ids = await _appDatabase.mediaSummaryModels
           .filter()
@@ -486,6 +558,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .findAll();
 
       if (ids.isEmpty) return const DataSuccess(0);
+
+      if (deleteFiles) await _deleteFilesOf(ids);
 
       await _appDatabase.writeTxn(() async {
         await _appDatabase.mediaSummaryModels.deleteAll(ids);
@@ -629,7 +703,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<TagEntity>> saveTag(TagEntity tag, {TagEntity? parent}) async {
     try {
-      final model = TagModel.fromEntity(tag);
+      final model = TagModel.fromEntity(tag)
+        ..sourceUrls = normalizedSourceUrls(tag.sourceUrls);
 
       await _appDatabase.writeTxn(() async {
         model.id = await _appDatabase.tagModels.put(model);
@@ -669,6 +744,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       await _appDatabase.writeTxn(() async {
         model.name = tag.name;
         model.picturePath = tag.picturePath;
+        model.sourceUrls = normalizedSourceUrls(tag.sourceUrls);
         await _appDatabase.tagModels.put(model);
 
         // Quien la tuviera entre sus hijas la suelta, menos el padre nuevo si ya
@@ -765,6 +841,60 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     return false;
   }
 
+  /// Deja en la etiqueta las direcciones de las que sale su contenido.
+  ///
+  /// Es lo único que se toca: el nombre, el avatar y la jerarquía se quedan como
+  /// estaban, porque esto se guarda desde su propio diálogo y no desde el
+  /// formulario de la etiqueta. Las direcciones llegan tal y como las escribió el
+  /// usuario y se guardan normalizadas, que es la forma en la que se comparan al
+  /// importar.
+  @override
+  Future<DataState<TagEntity>> saveTagSourceUrls(
+    int tagId,
+    List<String> urls,
+  ) async {
+    try {
+      final model = await _appDatabase.tagModels.get(tagId);
+      if (model == null) return DataException(Exception("Tag not found"));
+
+      await _appDatabase.writeTxn(() async {
+        model.sourceUrls = normalizedSourceUrls(urls);
+        await _appDatabase.tagModels.put(model);
+      });
+
+      await model.children.load();
+
+      return DataSuccess(model.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Las etiquetas por encima de las indicadas.
+  ///
+  /// Llegan sin sus hijas: quien las pide es para ponerlas en un contenido, y
+  /// para eso lo único que hace falta es el identificador y cómo se pintan.
+  @override
+  Future<DataState<List<TagEntity>>> getTagAncestors(List<TagEntity> tags) async {
+    try {
+      final ancestors =
+          await _tagHierarchy.ancestorsOf(tags.map((tag) => tag.id));
+
+      return DataSuccess([
+        for (final model in ancestors)
+          TagEntity(
+            id: model.id,
+            name: model.name,
+            picturePath: model.picturePath,
+            sourceUrls: model.sourceUrls,
+            children: const [],
+          ),
+      ]);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   /// Borra una etiqueta y la quita de los contenidos que la tenían.
   ///
   /// Los contenidos se quedan donde están, con sus demás etiquetas: borrar una
@@ -772,11 +902,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// etiquetas que colgaban de ella pasan a ser raíces, porque el árbol se arma
   /// por descarte (raíz es la que no es hija de ninguna) y ya no hay quien las
   /// tenga.
+  ///
+  /// Su avatar sí desaparece del disco: es una copia que hizo la aplicación al
+  /// ponerlo y no la usa nadie más, así que dejarlo sería ir llenando la carpeta
+  /// de avatares de imágenes de etiquetas que ya no existen.
   @override
   Future<DataState> deleteTag(int tagId) async {
     try {
       final model = await _appDatabase.tagModels.get(tagId);
       if (model == null) return DataSuccess(null);
+
+      final picturePath = model.picturePath;
 
       await _appDatabase.writeTxn(() async {
         // El enlace de vuelta da justo los contenidos que la tienen.
@@ -790,6 +926,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
         await _appDatabase.tagModels.delete(tagId);
       });
+
+      // Después de la baja: si el disco falla, la etiqueta ya no está y lo peor
+      // que queda es una imagen suelta.
+      await _avatarStorage.remove(picturePath);
 
       return DataSuccess(null);
     } on Exception catch (e) {
@@ -848,13 +988,173 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<CreatorEntity>> saveCreator(CreatorEntity creator) async {
     try {
-      final model = CreatorModel.fromEntity(creator);
+      final model = CreatorModel.fromEntity(creator)
+        ..sourceUrls = normalizedSourceUrls(creator.sourceUrls);
 
       await _appDatabase.writeTxn(() async {
         model.id = await _appDatabase.creatorModels.put(model);
       });
 
       return DataSuccess(model.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Cambia los datos de un creador que ya existe: su nombre, su avatar y sus
+  /// enlaces de redes sociales.
+  ///
+  /// El identificador no se toca, así que los contenidos que lo tienen lo siguen
+  /// teniendo. Las direcciones vinculadas no se tocan aquí: se guardan desde su
+  /// propio diálogo ([saveCreatorSourceUrls]), no desde el formulario del
+  /// creador.
+  @override
+  Future<DataState<CreatorEntity>> updateCreator(CreatorEntity creator) async {
+    try {
+      final model = await _appDatabase.creatorModels.get(creator.id);
+      if (model == null) return DataException(Exception("Creator not found"));
+
+      await _appDatabase.writeTxn(() async {
+        model.name = creator.name;
+        model.picturePath = creator.picturePath;
+        model.socialProfiles = creator.socialProfiles;
+        await _appDatabase.creatorModels.put(model);
+      });
+
+      return DataSuccess(model.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Deja en el creador las direcciones de las que sale su contenido.
+  ///
+  /// Es lo único que se toca: el nombre, el avatar y los enlaces se quedan como
+  /// estaban, porque esto se guarda desde su propio diálogo y no desde el
+  /// formulario del creador. Las direcciones llegan tal y como las escribió el
+  /// usuario y se guardan normalizadas, que es la forma en la que se comparan al
+  /// importar.
+  @override
+  Future<DataState<CreatorEntity>> saveCreatorSourceUrls(
+    int creatorId,
+    List<String> urls,
+  ) async {
+    try {
+      final model = await _appDatabase.creatorModels.get(creatorId);
+      if (model == null) return DataException(Exception("Creator not found"));
+
+      await _appDatabase.writeTxn(() async {
+        model.sourceUrls = normalizedSourceUrls(urls);
+        await _appDatabase.creatorModels.put(model);
+      });
+
+      return DataSuccess(model.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Borra un creador y deja sus contenidos con el creador desconocido.
+  ///
+  /// Los contenidos se quedan donde están: borrar un creador es dejar de
+  /// distinguirlo, no perder lo suyo. Y no pueden quedarse sin ninguno, que un
+  /// contenido siempre tiene creador; el desconocido es justo el respaldo para
+  /// eso.
+  ///
+  /// Su avatar sí desaparece del disco: es una copia que hizo la aplicación al
+  /// ponerlo y no la usa nadie más, así que dejarlo sería ir llenando la carpeta
+  /// de avatares de imágenes de creadores que ya no existen.
+  @override
+  Future<DataState> deleteCreator(int creatorId) async {
+    try {
+      final model = await _appDatabase.creatorModels.get(creatorId);
+      if (model == null) return DataSuccess(null);
+
+      final picturePath = model.picturePath;
+
+      // El creador desconocido se resuelve (creándolo si hiciera falta) antes de
+      // la transacción: darlo de alta abre la suya propia.
+      final unknown = await _registry.unknownCreatorModel();
+      if (unknown.id == creatorId) {
+        return DataException(Exception("The unknown creator cannot be deleted"));
+      }
+
+      await _appDatabase.writeTxn(() async {
+        final media = await _appDatabase.mediaModels
+            .filter()
+            .creator((q) => q.idEqualTo(creatorId))
+            .findAll();
+
+        for (final item in media) {
+          item.creator.value = unknown;
+          await item.creator.save();
+        }
+
+        await _appDatabase.creatorModels.delete(creatorId);
+      });
+
+      // Después de la baja: si el disco falla, el creador ya no está y lo peor
+      // que queda es una imagen suelta.
+      await _avatarStorage.remove(picturePath);
+
+      return DataSuccess(null);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Contenido definitivo de un creador, el de la rejilla de la pantalla de
+  /// gestión de creadores.
+  @override
+  Future<DataState<List<MediaSummaryEntity>>> getMediaByCreator(
+    int creatorId,
+  ) async {
+    try {
+      final media = await _appDatabase.mediaModels
+          .filter()
+          .creator((q) => q.idEqualTo(creatorId))
+          .findAll();
+
+      return DataSuccess(await _importedSummaries(media));
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Deshace la relación entre un creador y unos contenidos, en una sola
+  /// transacción.
+  ///
+  /// Los contenidos pasan al creador desconocido: no se quedan sin ninguno,
+  /// porque un contenido siempre tiene creador. El creador sigue existiendo, con
+  /// el resto de sus contenidos.
+  @override
+  Future<DataState> removeCreatorFromMedia(
+    int creatorId,
+    List<int> mediaIds,
+  ) async {
+    try {
+      if (mediaIds.isEmpty) return DataSuccess(null);
+
+      // Igual que al borrar: darlo de alta abre su propia transacción, así que
+      // se resuelve antes.
+      final unknown = await _registry.unknownCreatorModel();
+      if (unknown.id == creatorId) return DataSuccess(null);
+
+      await _appDatabase.writeTxn(() async {
+        final models = await _appDatabase.mediaModels.getAll(mediaIds);
+
+        for (final model in models.nonNulls) {
+          // Los que no fueran suyos no hace falta descartarlos: al cargar el
+          // enlace se ve de quién son y sólo se cambian los que toca.
+          await model.creator.load();
+          if (model.creator.value?.id != creatorId) continue;
+
+          model.creator.value = unknown;
+          await model.creator.save();
+        }
+      });
+
+      return DataSuccess(null);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -933,7 +1233,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<List<CreatorEntity>>> getCreators() async {
     try {
-      final query = await _appDatabase.creatorModels.where().findAll();
+      // Ordenados por nombre, como las etiquetas: el orden en el que los lee
+      // Isar es el de creación, que en un listado no dice nada.
+      final query = await _appDatabase.creatorModels.where().findAll()
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
       return DataSuccess(query.map((e) => e.toEntity()).toList());
     } on Exception catch (e) {
       return DataException(e);

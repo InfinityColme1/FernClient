@@ -73,7 +73,8 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   Stream<DataState<MediaSummaryEntity>> _scanReddit({
     required bool untilLastImport,
   }) async* {
-    final credentials = _settingsRepository.getSettings().reddit;
+    final settings = _settingsRepository.getSettings();
+    final credentials = settings.reddit;
     if (!credentials.isComplete) {
       yield DataException(Exception('Reddit is not configured'));
       return;
@@ -104,7 +105,12 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           path: path,
           source: ImportSource.reddit,
           description: item.title.isEmpty ? null : item.title,
-          sourceTagName: redditSourceTagName,
+          // La etiqueta de la plataforma sólo si el usuario la ha pedido: por
+          // defecto la fuente se guarda en el sumario y se filtra por ella, sin
+          // llenar el menú lateral de etiquetas que no ha creado nadie.
+          sourceTagName:
+              settings.autoTagRemoteSource ? redditSourceTagName : null,
+          sourceUrls: item.sourceUrls,
         );
         if (summary != null) yield DataSuccess(summary);
       }

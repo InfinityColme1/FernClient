@@ -27,6 +27,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDeleted => 'Deleted';
 
   @override
+  String get navCreatorManager => 'Creator Manager';
+
+  @override
   String get navTagManager => 'Tag Manager';
 
   @override
@@ -122,14 +125,74 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       days,
       locale: localeName,
-      other: 'Marked media is deleted for good after $days days',
-      one: 'Marked media is deleted for good after 1 day',
+      other: 'Deleted for good after $days days',
+      one: 'Deleted for good after 1 day',
     );
     return '$_temp0';
   }
 
   @override
   String get deleteForeverTooltip => 'Delete permanently from the database';
+
+  @override
+  String remoteImportWarning(String source) {
+    return 'Media is about to be imported from $source';
+  }
+
+  @override
+  String get remoteImportAmountAll =>
+      'Everything saved in your account will be fetched.';
+
+  @override
+  String get remoteImportAmountSinceLast =>
+      'Whatever you have saved since the last import will be fetched.';
+
+  @override
+  String remoteImportAmountLimited(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media at most will be fetched.',
+      one: '1 media at most will be fetched.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get favoriteSelectedTooltip => 'Mark the selection as favourite';
+
+  @override
+  String get deleteSelectedTooltip =>
+      'Move the selection to the deleted screen';
+
+  @override
+  String deleteTrashWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media are about to be deleted for good',
+      one: '1 media is about to be deleted for good',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deleteDiscardWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media are about to be discarded',
+      one: '1 media is about to be discarded',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteFilesFromDisk => 'Delete the files from the disk as well';
+
+  @override
+  String get deleteFilesFromDiskDescription =>
+      'If you clear it, the media leaves the database but its files stay where they are, so a later scan can pick them up again.';
 
   @override
   String get actionImport => 'Import';
@@ -168,6 +231,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionDeleteTag => 'Delete tag';
 
   @override
+  String get actionUnassignCreator => 'Unassign creator';
+
+  @override
+  String get actionDeleteCreator => 'Delete creator';
+
+  @override
   String get sourceLocalComputer => 'Local computer';
 
   @override
@@ -199,6 +268,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTagsYet => 'No tags yet';
+
+  @override
+  String get creatorsTitle => 'Creators';
+
+  @override
+  String get noCreatorsYet => 'No creators yet';
+
+  @override
+  String get noSocialProfiles => 'No social profiles';
+
+  @override
+  String get openProfileTooltip => 'Open the profile in the browser';
+
+  @override
+  String get editProfileTooltip => 'Edit link';
+
+  @override
+  String get doneEditingProfileTooltip => 'Done editing';
+
+  @override
+  String get removeProfileTooltip => 'Remove link';
 
   @override
   String get tagNameSearchLabel => 'Tag name';
@@ -270,6 +360,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguage => 'Language';
 
   @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
   String get settingsFiles => 'Files';
 
   @override
@@ -281,6 +374,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get languageSectionNote =>
       'Every screen switches over as soon as you pick a language.';
+
+  @override
+  String get sidebarSectionTitle => 'Side menu';
+
+  @override
+  String get sidebarSectionNote =>
+      'How the tag list of the side menu is drawn.';
+
+  @override
+  String get showListAvatars => 'Show avatars in the list';
+
+  @override
+  String get showListAvatarsDescription =>
+      'Each tag is drawn with its own picture instead of the shared icon, so you can tell them apart while the menu is collapsed. Tags without a picture keep the icon.';
 
   @override
   String get filesLocalTitle => 'Local files';
@@ -478,4 +585,48 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get assignUrlsTitle => 'Linked addresses';
+
+  @override
+  String assignUrlsTo(String name) {
+    return 'Addresses linked to $name';
+  }
+
+  @override
+  String get assignUrlsDescription =>
+      'Whatever is imported from these addresses gets this tag on its own, without asking the platform anything.';
+
+  @override
+  String get assignUrlsTooltip => 'Link addresses to this tag';
+
+  @override
+  String get assignUrlsCreatorDescription =>
+      'Whatever is imported from these addresses gets this creator on its own, without asking the platform anything.';
+
+  @override
+  String get assignUrlsCreatorTooltip => 'Link addresses to this creator';
+
+  @override
+  String get sourceUrlsLabel => 'Addresses';
+
+  @override
+  String get sourceUrlHint => 'reddit.com/r/example';
+
+  @override
+  String get addSourceUrl => 'Add address';
+
+  @override
+  String get filtersSource => 'Show media from';
+
+  @override
+  String get sourceLocal => 'This computer';
+
+  @override
+  String get autoTagRemoteSource => 'Auto-tag remote source';
+
+  @override
+  String get autoTagRemoteSourceDescription =>
+      'Fern creates a tag for each platform (Reddit, and so on) and puts it on what it imports from it. With this off the source is still recorded, and you filter by it from the Filters button.';
 }

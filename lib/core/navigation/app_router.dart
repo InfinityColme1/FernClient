@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/main_layout.dart';
 import 'package:Fern/core/navigation/page_transitions.dart';
+import 'package:Fern/features/media/presentation/pages/creator_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/delete_page.dart';
 import 'package:Fern/features/media/presentation/pages/favorites_page.dart';
 import 'package:Fern/features/media/presentation/pages/import_page.dart';
@@ -29,42 +30,49 @@ final appRouter = GoRouter(
           child: MainLayout(child: child),
         );
       },
-      // Todas las pantallas del armazón entran y salen con la misma transición
-      // (`fernTransitionPage`), así que pasar de una a otra es un fundido y no un
-      // cambio seco. El armazón no se mueve: lo que se desvanece es sólo lo que
-      // hay dentro.
+      // Las pantallas del armazón se cambian sin transición: se pasa de una a
+      // otra por el menú lateral, tantas veces como haga falta, y cualquier
+      // animación por corta que sea se interpone entre pulsar y ver. El armazón
+      // no se mueve, así que lo único que cambia es lo de dentro.
       routes: [
         GoRoute(
             path: mediaRoute,
-            pageBuilder: (context, state) => fernTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const MediaPage(),
             ),
         ),
         GoRoute(
             path: importRoute,
-            pageBuilder: (context, state) => fernTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const ImportPage(),
             ),
         ),
         GoRoute(
             path: deletedRoute,
-            pageBuilder: (context, state) => fernTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const DeletePage(),
             ),
         ),
         GoRoute(
             path: favoritesRoute,
-            pageBuilder: (context, state) => fernTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const FavoritesPage(),
             ),
         ),
         GoRoute(
+            path: creatorManagerRoute,
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CreatorManagerPage(),
+            ),
+        ),
+        GoRoute(
             path: tagManagerRoute,
-            pageBuilder: (context, state) => fernTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const TagManagerPage(),
             ),

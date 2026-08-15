@@ -8,7 +8,18 @@ class SidebarItem {
   final String id;
 
   final String title;
+
+  /// El icono con el que se pinta el botón. Es lo que se ve siempre, salvo que
+  /// haya [avatarPath].
   final IconData icon;
+
+  /// Imagen con la que se pinta el botón en lugar del icono.
+  ///
+  /// La llevan las etiquetas que tienen avatar cuando el ajuste de apariencia lo
+  /// pide; sin ella el botón se queda con su icono, que es lo que pasa también
+  /// con las etiquetas que no tienen imagen puesta.
+  final String? avatarPath;
+
   final VoidCallback onTap;
 
   /// Nivel del botón en la jerarquía: 0 el de las opciones normales y las
@@ -20,6 +31,7 @@ class SidebarItem {
     required this.title,
     required this.icon,
     required this.onTap,
+    this.avatarPath,
     this.depth = 0,
   });
 }

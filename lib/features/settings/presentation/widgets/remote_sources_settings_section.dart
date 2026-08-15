@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -70,6 +71,22 @@ class _RemoteSourcesSettingsSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Arriba del todo y fuera de los apartados de cada plataforma: vale para
+        // todas, y por eso no cuelga de ninguna. Esta sí es de `BlocSelector`,
+        // que una casilla se repinta entera con cada cambio sin mover ningún
+        // cursor de sitio.
+        BlocSelector<SettingsBloc, SettingsState, bool>(
+          selector: (state) => state.settings.autoTagRemoteSource,
+          builder: (context, enabled) => FernCheckboxTile(
+            label: texts.autoTagRemoteSource,
+            description: texts.autoTagRemoteSourceDescription,
+            value: enabled,
+            onChanged: (value) => context
+                .read<SettingsBloc>()
+                .add(AutoTagRemoteSourceToggledEvent(value)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
         _title(context, texts.redditTitle),
         _description(context, texts.redditDescription),
         const SizedBox(height: AppSpacing.l),

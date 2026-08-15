@@ -16,6 +16,10 @@ class FernChip extends StatelessWidget {
   final Widget? leading;
   final VoidCallback? onTap;
 
+  /// Si se indica, la píldora lleva a la derecha el botón de quitarla: el mismo
+  /// icono con el que se vacía un campo de texto.
+  final VoidCallback? onRemove;
+
   /// Fondo y color del texto. Se dejan abiertos para poder pintar en tono
   /// apagado las píldoras que todavía no están confirmadas.
   final Color backgroundColor;
@@ -29,6 +33,7 @@ class FernChip extends StatelessWidget {
     required this.label,
     this.leading,
     this.onTap,
+    this.onRemove,
     this.backgroundColor = AppColors.white,
     this.labelColor,
   }) : isPlain = false;
@@ -38,6 +43,7 @@ class FernChip extends StatelessWidget {
     required this.label,
     this.leading,
     this.onTap,
+    this.onRemove,
     this.labelColor,
   })  : backgroundColor = Colors.transparent,
         isPlain = true;
@@ -61,6 +67,22 @@ class FernChip extends StatelessWidget {
                 color: labelColor,
               ),
         ),
+        if (onRemove != null) ...[
+          const SizedBox(width: AppSpacing.s),
+          // El botón va dentro de la píldora, así que se pinta a mano en vez de
+          // con un `IconButton`: el hueco que éste reserva alrededor la
+          // deformaría.
+          InkWell(
+            onTap: onRemove,
+            mouseCursor: WidgetStateMouseCursor.clickable,
+            customBorder: const CircleBorder(),
+            child: Icon(
+              Icons.cancel,
+              size: AppSizes.iconCompact,
+              color: labelColor ?? AppColors.black,
+            ),
+          ),
+        ],
       ],
     );
 

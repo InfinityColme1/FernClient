@@ -1,7 +1,7 @@
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 
-const appName = "Fern";
+const appName = "FeRN";
 const appLogo = 'assets/images/Fern_logo.png';
 
 // Routes
@@ -9,6 +9,7 @@ const mediaRoute = '/media';
 const importRoute = '/import';
 const favoritesRoute = '/favorites';
 const deletedRoute = '/deleted';
+const creatorManagerRoute = '/creator-manager';
 const tagManagerRoute = '/tag-manager';
 
 const viewerRoute = '/viewer';
@@ -49,6 +50,25 @@ const fileOrganizationPreferenceKey = 'file_organization';
 /// Prefijo de la preferencia que guarda cuándo se importó por última vez de una
 /// fuente. Se completa con el identificador de la fuente.
 const lastImportPreferenceKeyPrefix = 'last_import_';
+
+/// Si al importar de una plataforma se le pone además una etiqueta con su
+/// nombre. Apagado por defecto: la fuente ya queda anotada en el sumario, y
+/// filtrar por ella es cosa del botón de filtros, no de una etiqueta.
+const autoTagRemoteSourcePreferenceKey = 'auto_tag_remote_source';
+
+/// Si la lista de etiquetas del menú lateral enseña los avatares. Encendido de
+/// fábrica: es lo que permite reconocerlas con el menú plegado.
+const showListAvatarsPreferenceKey = 'show_list_avatars';
+
+/// Cómo quedó la casilla del aviso de borrado la última vez, una por cada
+/// borrado que la enseña.
+///
+/// Se recuerda para no obligar a marcarla en cada operación, y son dos claves
+/// porque los dos borrados no significan lo mismo: vaciar la papelera es
+/// definitivo y se lleva los ficheros de fábrica, mientras que descartar al
+/// importar los deja donde están mientras nadie diga lo contrario.
+const deleteTrashFilesPreferenceKey = 'delete_trash_files';
+const deleteDiscardedFilesPreferenceKey = 'delete_discarded_files';
 
 const redditClientIdPreferenceKey = 'reddit_client_id';
 const redditClientSecretPreferenceKey = 'reddit_client_secret';
@@ -140,6 +160,12 @@ const redgifsTokenUrl = 'https://api.redgifs.com/v2/auth/temporary';
 const redgifsGifUrl = 'https://api.redgifs.com/v2/gifs/';
 
 // Reddit
+/// La dirección con la que se nombra lo que hay en Reddit (una comunidad, un
+/// autor, una publicación). No es por donde se habla con su API: es lo que el
+/// usuario ve en la barra del navegador, y por tanto lo que escribiría al
+/// vincular una dirección con una etiqueta.
+const redditSiteUrl = 'https://www.reddit.com';
+
 const redditTokenUrl = 'https://www.reddit.com/api/v1/access_token';
 const redditApiHost = 'oauth.reddit.com';
 
@@ -254,6 +280,41 @@ const tagListDepthIndent = 16.0;
 /// las demás pantallas: los elementos salen algo más pequeños, y así caben más a
 /// la vista en el hueco que la rejilla comparte con la ficha y con la lista.
 const tagManagerGridColumns = 5;
+
+// Gestión de creadores
+/// Columnas de la rejilla de la pantalla de gestión de creadores. Las mismas que
+/// en la de etiquetas: las dos pantallas reparten el hueco igual (ficha arriba,
+/// rejilla debajo y lista al lado).
+const creatorManagerGridColumns = tagManagerGridColumns;
+
+/// Alto de la ficha de la pantalla de gestión de creadores.
+///
+/// Va fijo y no lo pone su contenido: así la ficha mide lo mismo tenga el
+/// creador los enlaces que tenga, y cambiar de uno a otro (o añadirle un enlace)
+/// no mueve de sitio la rejilla que hay debajo. El bloque de enlaces se queda con
+/// el hueco que sobra y desplaza lo que no quepa.
+const creatorCardHeight = 360.0;
+
+/// Hasta dónde puede encogerse esa ficha.
+///
+/// Es lo que miden su avatar y su formulario, así que por debajo de aquí lo que
+/// lleva dentro ya no cabe: en una ventana más baja que eso lo que se queda sin
+/// sitio es la rejilla.
+const creatorCardMinHeight = 330.0;
+
+/// Lo que se le deja como mínimo a la rejilla de esa pantalla.
+///
+/// La ficha es lo primero que cede: en una ventana baja se queda con lo que haya
+/// hasta aquí en vez de empujar la rejilla fuera de la pantalla.
+const creatorGridMinHeight = 220.0;
+
+/// Alto de una fila de enlace de la ficha del creador, y de los botones que la
+/// acompañan.
+///
+/// Más apretado que el de un `IconButton` suelto (48): son varias filas dentro
+/// de una ficha que comparte el alto de la pantalla con la rejilla, y con el
+/// hueco de por defecto sólo cabría una.
+const creatorProfileRowHeight = 32.0;
 
 // Media grid
 const mediaHoverScale = 1.04;

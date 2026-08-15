@@ -36,6 +36,8 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<LibraryDirectoryChangedEvent>(onLibraryDirectoryChanged);
     on<AvatarsDirectoryChangedEvent>(onAvatarsDirectoryChanged);
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
+    on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
+    on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<MigrateLibraryRequestedEvent>(onMigrateLibraryRequested);
   }
@@ -123,6 +125,31 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     return _apply(state.settings.copyWith(organization: event.criteria), emit);
+  }
+
+  /// Vale para la próxima importación: lo que ya está guardado no se reetiqueta
+  /// hacia atrás, igual que cambiar el criterio de carpetas no mueve nada hasta
+  /// que se pide la migración.
+  Future<void> onAutoTagRemoteSourceToggled(
+    AutoTagRemoteSourceToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(autoTagRemoteSource: event.enabled),
+      emit,
+    );
+  }
+
+  /// Se ve en el momento: el menú lateral escucha estos ajustes, así que la
+  /// lista de etiquetas cambia sin salir de los ajustes.
+  Future<void> onShowListAvatarsToggled(
+    ShowListAvatarsToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(showListAvatars: event.enabled),
+      emit,
+    );
   }
 
   /// Las credenciales se guardan según se escriben, como el resto de ajustes.

@@ -7,6 +7,7 @@
   "navImport": "Importer",
   "navFavorites": "Favoris",
   "navDeleted": "Supprimés",
+  "navCreatorManager": "Gestion des créateurs",
   "navTagManager": "Gestion des tags",
 
   "searchHint": "Rechercher",
@@ -29,8 +30,19 @@
   "selectedCount": "{count} sélectionnés",
 
   "deletedCount": "{count, plural, =0{Rien à supprimer} =1{1 média marqué pour suppression} other{{count} médias marqués pour suppression}}",
-  "deletedRetentionNotice": "{days, plural, =1{Le contenu marqué est supprimé définitivement au bout d'1 jour} other{Le contenu marqué est supprimé définitivement au bout de {days} jours}}",
+  "deletedRetentionNotice": "{days, plural, =1{Supprimé définitivement au bout d'1 jour} other{Supprimé définitivement au bout de {days} jours}}",
   "deleteForeverTooltip": "Supprimer définitivement de la base de données",
+  "remoteImportWarning": "Du contenu va être importé depuis {source}",
+  "remoteImportAmountAll": "Tout ce que vous avez enregistré sur votre compte sera récupéré.",
+  "remoteImportAmountSinceLast": "Ce que vous avez enregistré depuis la dernière importation sera récupéré.",
+  "remoteImportAmountLimited": "{count, plural, =1{1 contenu au maximum sera récupéré.} other{{count} contenus au maximum seront récupérés.}}",
+
+  "favoriteSelectedTooltip": "Marquer la sélection comme favorite",
+  "deleteSelectedTooltip": "Envoyer la sélection vers l'écran des supprimés",
+  "deleteTrashWarning": "{count, plural, =1{1 fichier va être supprimé définitivement} other{{count} fichiers vont être supprimés définitivement}}",
+  "deleteDiscardWarning": "{count, plural, =1{1 fichier va être écarté} other{{count} fichiers vont être écartés}}",
+  "deleteFilesFromDisk": "Supprimer aussi les fichiers du disque",
+  "deleteFilesFromDiskDescription": "Si vous la décochez, le contenu quitte la base de données mais ses fichiers restent où ils sont, de sorte qu'une analyse ultérieure peut les récupérer.",
 
   "actionImport": "Importer",
   "actionRefresh": "Actualiser",
@@ -44,6 +56,8 @@
   "actionUnassignTag": "Retirer le tag",
   "actionRemoveParentTag": "Retirer le parent",
   "actionDeleteTag": "Supprimer le tag",
+  "actionUnassignCreator": "Retirer le créateur",
+  "actionDeleteCreator": "Supprimer le créateur",
   "sourceLocalComputer": "Ordinateur local",
   "sourceAll": "Toutes",
   "sourceNotConfigured": "Non configurée",
@@ -58,6 +72,13 @@
   "addTag": "Ajouter un tag",
 
   "noTagsYet": "Aucun tag pour l'instant",
+  "creatorsTitle": "Créateurs",
+  "noCreatorsYet": "Aucun créateur pour l'instant",
+  "noSocialProfiles": "Aucun profil social",
+  "openProfileTooltip": "Ouvrir le profil dans le navigateur",
+  "editProfileTooltip": "Modifier le lien",
+  "doneEditingProfileTooltip": "Terminer la modification",
+  "removeProfileTooltip": "Retirer le lien",
   "tagNameSearchLabel": "Nom du tag",
   "tagSearchHint": "Tag",
   "createTag": "Créer un tag",
@@ -85,11 +106,17 @@
 
   "settingsTitle": "Paramètres",
   "settingsLanguage": "Langue",
+  "settingsAppearance": "Apparence",
   "settingsFiles": "Fichiers",
   "settingsRemoteSources": "Sources distantes",
 
   "languageSectionTitle": "Langue de l'application",
   "languageSectionNote": "Toute l'application change de langue dès que vous en choisissez une.",
+
+  "sidebarSectionTitle": "Menu latéral",
+  "sidebarSectionNote": "Comment la liste des tags du menu latéral est dessinée.",
+  "showListAvatars": "Afficher les avatars dans la liste",
+  "showListAvatarsDescription": "Chaque tag est dessiné avec sa propre image au lieu de l'icône commune, ce qui permet de les distinguer quand le menu est replié. Les tags sans image gardent l'icône.",
 
   "filesLocalTitle": "Fichiers locaux",
   "syncLocalFiles": "Synchroniser les fichiers locaux",
@@ -158,5 +185,26 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "assignUrlsTitle": "Adresses liées",
+  "assignUrlsTo": "Adresses liées à {name}",
+  "@assignUrlsTo": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "assignUrlsDescription": "Ce qui est importé depuis ces adresses reçoit cette étiquette tout seul, sans rien demander à la plateforme.",
+  "assignUrlsTooltip": "Lier des adresses à cette étiquette",
+  "assignUrlsCreatorDescription": "Ce qui est importé depuis ces adresses reçoit ce créateur tout seul, sans rien demander à la plateforme.",
+  "assignUrlsCreatorTooltip": "Lier des adresses à ce créateur",
+  "sourceUrlsLabel": "Adresses",
+  "sourceUrlHint": "reddit.com/r/exemple",
+  "addSourceUrl": "Ajouter une adresse",
+
+  "filtersSource": "Afficher le contenu de",
+  "sourceLocal": "Cet ordinateur",
+
+  "autoTagRemoteSource": "Étiqueter la source distante",
+  "autoTagRemoteSourceDescription": "Fern crée une étiquette par plateforme (Reddit, et les suivantes) et la pose sur ce qu'il en importe. Désactivé, la source est quand même enregistrée et se filtre depuis le bouton Filtres."
 }

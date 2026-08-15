@@ -26,11 +26,20 @@ class RemoteMediaItem {
   /// ser el de la publicación y no el del fichero.
   final String postId;
 
+  /// Direcciones que dicen de dónde sale este contenido dentro de la
+  /// plataforma: la comunidad, la publicación, la galería del autor.
+  ///
+  /// No es de dónde se descarga el fichero ([url], que suele ser un servidor de
+  /// contenidos sin nada que identifique el sitio), sino lo que el usuario
+  /// reconoce como el origen y lo que puede haber vinculado con una etiqueta.
+  final List<String> sourceUrls;
+
   const RemoteMediaItem({
     required this.id,
     required this.url,
     required this.title,
     required this.postId,
+    this.sourceUrls = const [],
   });
 }
 
@@ -180,6 +189,7 @@ class RedditApiClient {
     final subreddit = post['subreddit'] as String? ?? 'reddit';
     final title = post['title'] as String? ?? '';
     final name = _fileSafe('${subreddit}_$id');
+    final sourceUrls = _sourceUrls(post, subreddit: subreddit);
 
     final gallery = _galleryUrls(post);
     if (gallery.isNotEmpty) {
@@ -190,6 +200,7 @@ class RedditApiClient {
             url: gallery[i],
             title: title,
             postId: id,
+            sourceUrls: sourceUrls,
           ),
       ];
     }
@@ -197,7 +208,38 @@ class RedditApiClient {
     final url = _singleUrl(post);
     if (url == null) return const [];
 
-    return [RemoteMediaItem(id: name, url: url, title: title, postId: id)];
+    return [
+      RemoteMediaItem(
+        id: name,
+        url: url,
+        title: title,
+        postId: id,
+        sourceUrls: sourceUrls,
+      ),
+    ];
+  }
+
+  /// De dónde sale la publicación, en direcciones que el usuario reconoce y
+  /// puede haber vinculado con una etiqueta.
+  ///
+  /// De la más general a la más concreta: la comunidad, el autor y la propia
+  /// publicación. Se dan las tres porque una etiqueta puede estar vinculada a
+  /// cualquiera de ellas, y quien las compara ya sabe que una regla recoge todo
+  /// lo que cuelga de ella.
+  List<String> _sourceUrls(
+    Map<String, dynamic> post, {
+    required String subreddit,
+  }) {
+    final author = post['author'] as String?;
+    final permalink = post['permalink'] as String?;
+
+    return [
+      '$redditSiteUrl/r/$subreddit',
+      if (author != null && author.isNotEmpty && author != '[deleted]')
+        '$redditSiteUrl/user/$author',
+      if (permalink != null && permalink.isNotEmpty)
+        '$redditSiteUrl$permalink',
+    ];
   }
 
   /// Las imágenes de una galería, en el orden en el que las puso quien publicó.

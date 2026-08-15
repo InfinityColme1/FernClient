@@ -1,4 +1,5 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:isar/isar.dart';
 
@@ -30,16 +31,21 @@ class MediaModel {
   MediaModel({this.id, required this.path});
 
 
-  /// [isImported] vive en el sumario, así que se pasa desde el repositorio.
+  /// [isImported] e [importSource] viven en el sumario, así que se pasan desde
+  /// el repositorio.
   ///
   /// Los enlaces son perezosos en Isar: hay que haberlos cargado antes de
   /// llamar a este método, y aun así el creador puede faltar en filas
   /// antiguas, de ahí el `unknownCreator` de reserva.
-  MediaEntity toEntity({bool isImported = false}) {
+  MediaEntity toEntity({
+    bool isImported = false,
+    ImportSource importSource = ImportSource.local,
+  }) {
     return MediaEntity(
       id: id!,
       path: path,
       isImported: isImported,
+      importSource: importSource,
       downloaded: downloaded,
       isFavorite: isFavorite,
       description: description,

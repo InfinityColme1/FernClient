@@ -27,6 +27,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navDeleted => 'Supprimés';
 
   @override
+  String get navCreatorManager => 'Gestion des créateurs';
+
+  @override
   String get navTagManager => 'Gestion des tags';
 
   @override
@@ -122,9 +125,8 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       days,
       locale: localeName,
-      other:
-          'Le contenu marqué est supprimé définitivement au bout de $days jours',
-      one: 'Le contenu marqué est supprimé définitivement au bout d\'1 jour',
+      other: 'Supprimé définitivement au bout de $days jours',
+      one: 'Supprimé définitivement au bout d\'1 jour',
     );
     return '$_temp0';
   }
@@ -132,6 +134,66 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get deleteForeverTooltip =>
       'Supprimer définitivement de la base de données';
+
+  @override
+  String remoteImportWarning(String source) {
+    return 'Du contenu va être importé depuis $source';
+  }
+
+  @override
+  String get remoteImportAmountAll =>
+      'Tout ce que vous avez enregistré sur votre compte sera récupéré.';
+
+  @override
+  String get remoteImportAmountSinceLast =>
+      'Ce que vous avez enregistré depuis la dernière importation sera récupéré.';
+
+  @override
+  String remoteImportAmountLimited(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenus au maximum seront récupérés.',
+      one: '1 contenu au maximum sera récupéré.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get favoriteSelectedTooltip => 'Marquer la sélection comme favorite';
+
+  @override
+  String get deleteSelectedTooltip =>
+      'Envoyer la sélection vers l\'écran des supprimés';
+
+  @override
+  String deleteTrashWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers vont être supprimés définitivement',
+      one: '1 fichier va être supprimé définitivement',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deleteDiscardWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers vont être écartés',
+      one: '1 fichier va être écarté',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteFilesFromDisk => 'Supprimer aussi les fichiers du disque';
+
+  @override
+  String get deleteFilesFromDiskDescription =>
+      'Si vous la décochez, le contenu quitte la base de données mais ses fichiers restent où ils sont, de sorte qu\'une analyse ultérieure peut les récupérer.';
 
   @override
   String get actionImport => 'Importer';
@@ -170,6 +232,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get actionDeleteTag => 'Supprimer le tag';
 
   @override
+  String get actionUnassignCreator => 'Retirer le créateur';
+
+  @override
+  String get actionDeleteCreator => 'Supprimer le créateur';
+
+  @override
   String get sourceLocalComputer => 'Ordinateur local';
 
   @override
@@ -201,6 +269,27 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noTagsYet => 'Aucun tag pour l\'instant';
+
+  @override
+  String get creatorsTitle => 'Créateurs';
+
+  @override
+  String get noCreatorsYet => 'Aucun créateur pour l\'instant';
+
+  @override
+  String get noSocialProfiles => 'Aucun profil social';
+
+  @override
+  String get openProfileTooltip => 'Ouvrir le profil dans le navigateur';
+
+  @override
+  String get editProfileTooltip => 'Modifier le lien';
+
+  @override
+  String get doneEditingProfileTooltip => 'Terminer la modification';
+
+  @override
+  String get removeProfileTooltip => 'Retirer le lien';
 
   @override
   String get tagNameSearchLabel => 'Nom du tag';
@@ -272,6 +361,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsLanguage => 'Langue';
 
   @override
+  String get settingsAppearance => 'Apparence';
+
+  @override
   String get settingsFiles => 'Fichiers';
 
   @override
@@ -283,6 +375,20 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get languageSectionNote =>
       'Toute l\'application change de langue dès que vous en choisissez une.';
+
+  @override
+  String get sidebarSectionTitle => 'Menu latéral';
+
+  @override
+  String get sidebarSectionNote =>
+      'Comment la liste des tags du menu latéral est dessinée.';
+
+  @override
+  String get showListAvatars => 'Afficher les avatars dans la liste';
+
+  @override
+  String get showListAvatarsDescription =>
+      'Chaque tag est dessiné avec sa propre image au lieu de l\'icône commune, ce qui permet de les distinguer quand le menu est replié. Les tags sans image gardent l\'icône.';
 
   @override
   String get filesLocalTitle => 'Fichiers locaux';
@@ -480,4 +586,48 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get assignUrlsTitle => 'Adresses liées';
+
+  @override
+  String assignUrlsTo(String name) {
+    return 'Adresses liées à $name';
+  }
+
+  @override
+  String get assignUrlsDescription =>
+      'Ce qui est importé depuis ces adresses reçoit cette étiquette tout seul, sans rien demander à la plateforme.';
+
+  @override
+  String get assignUrlsTooltip => 'Lier des adresses à cette étiquette';
+
+  @override
+  String get assignUrlsCreatorDescription =>
+      'Ce qui est importé depuis ces adresses reçoit ce créateur tout seul, sans rien demander à la plateforme.';
+
+  @override
+  String get assignUrlsCreatorTooltip => 'Lier des adresses à ce créateur';
+
+  @override
+  String get sourceUrlsLabel => 'Adresses';
+
+  @override
+  String get sourceUrlHint => 'reddit.com/r/exemple';
+
+  @override
+  String get addSourceUrl => 'Ajouter une adresse';
+
+  @override
+  String get filtersSource => 'Afficher le contenu de';
+
+  @override
+  String get sourceLocal => 'Cet ordinateur';
+
+  @override
+  String get autoTagRemoteSource => 'Étiqueter la source distante';
+
+  @override
+  String get autoTagRemoteSourceDescription =>
+      'Fern crée une étiquette par plateforme (Reddit, et les suivantes) et la pose sur ce qu\'il en importe. Désactivé, la source est quand même enregistrée et se filtre depuis le bouton Filtres.';
 }

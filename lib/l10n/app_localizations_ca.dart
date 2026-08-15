@@ -27,6 +27,9 @@ class AppLocalizationsCa extends AppLocalizations {
   String get navDeleted => 'Eliminats';
 
   @override
+  String get navCreatorManager => 'Gestor de creadors';
+
+  @override
   String get navTagManager => 'Gestor d\'etiquetes';
 
   @override
@@ -122,9 +125,8 @@ class AppLocalizationsCa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       days,
       locale: localeName,
-      other:
-          'El contingut marcat s\'esborra definitivament al cap de $days dies',
-      one: 'El contingut marcat s\'esborra definitivament al cap d\'1 dia',
+      other: 'S\'esborra definitivament al cap de $days dies',
+      one: 'S\'esborra definitivament al cap d\'1 dia',
     );
     return '$_temp0';
   }
@@ -132,6 +134,66 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get deleteForeverTooltip =>
       'Esborra definitivament de la base de dades';
+
+  @override
+  String remoteImportWarning(String source) {
+    return 'S\'importarà contingut de $source';
+  }
+
+  @override
+  String get remoteImportAmountAll =>
+      'Es descarregarà tot el que tinguis desat al teu compte.';
+
+  @override
+  String get remoteImportAmountSinceLast =>
+      'Es descarregarà el que tinguis desat des de la darrera importació.';
+
+  @override
+  String remoteImportAmountLimited(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Es descarregaran $count continguts com a màxim.',
+      one: 'Es descarregarà 1 contingut com a màxim.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get favoriteSelectedTooltip => 'Marca la selecció com a preferida';
+
+  @override
+  String get deleteSelectedTooltip =>
+      'Envia la selecció a la pantalla d\'eliminats';
+
+  @override
+  String deleteTrashWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'S\'esborraran definitivament $count arxius',
+      one: 'S\'esborrarà definitivament 1 arxiu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deleteDiscardWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Es descartaran $count arxius',
+      one: 'Es descartarà 1 arxiu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteFilesFromDisk => 'Esborra també els fitxers del disc';
+
+  @override
+  String get deleteFilesFromDiskDescription =>
+      'Si la treus, el contingut surt de la base de dades però els seus fitxers es queden on són, de manera que un escaneig posterior els pot tornar a recollir.';
 
   @override
   String get actionImport => 'Importa';
@@ -170,6 +232,12 @@ class AppLocalizationsCa extends AppLocalizations {
   String get actionDeleteTag => 'Elimina l\'etiqueta';
 
   @override
+  String get actionUnassignCreator => 'Treu el creador';
+
+  @override
+  String get actionDeleteCreator => 'Elimina el creador';
+
+  @override
   String get sourceLocalComputer => 'Equip local';
 
   @override
@@ -201,6 +269,27 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get noTagsYet => 'Encara no hi ha etiquetes';
+
+  @override
+  String get creatorsTitle => 'Creadors';
+
+  @override
+  String get noCreatorsYet => 'Encara no hi ha creadors';
+
+  @override
+  String get noSocialProfiles => 'Sense perfils socials';
+
+  @override
+  String get openProfileTooltip => 'Obre el perfil al navegador';
+
+  @override
+  String get editProfileTooltip => 'Edita l\'enllaç';
+
+  @override
+  String get doneEditingProfileTooltip => 'Acaba d\'editar';
+
+  @override
+  String get removeProfileTooltip => 'Treu l\'enllaç';
 
   @override
   String get tagNameSearchLabel => 'Nom de l\'etiqueta';
@@ -272,6 +361,9 @@ class AppLocalizationsCa extends AppLocalizations {
   String get settingsLanguage => 'Idioma';
 
   @override
+  String get settingsAppearance => 'Aparença';
+
+  @override
   String get settingsFiles => 'Fitxers';
 
   @override
@@ -283,6 +375,20 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get languageSectionNote =>
       'Tota l\'aplicació canvia d\'idioma tan bon punt en tries un.';
+
+  @override
+  String get sidebarSectionTitle => 'Menú lateral';
+
+  @override
+  String get sidebarSectionNote =>
+      'Com es pinta la llista d\'etiquetes del menú lateral.';
+
+  @override
+  String get showListAvatars => 'Mostra avatars a la llista';
+
+  @override
+  String get showListAvatarsDescription =>
+      'Cada etiqueta es pinta amb la seva pròpia imatge en comptes de la icona comuna, així es distingeixen amb el menú plegat. Les etiquetes sense imatge es queden amb la icona.';
 
   @override
   String get filesLocalTitle => 'Fitxers locals';
@@ -481,4 +587,48 @@ class AppLocalizationsCa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get assignUrlsTitle => 'Adreces vinculades';
+
+  @override
+  String assignUrlsTo(String name) {
+    return 'Adreces vinculades a $name';
+  }
+
+  @override
+  String get assignUrlsDescription =>
+      'El que s\'importi d\'aquestes adreces s\'endú aquesta etiqueta tot sol, sense preguntar res a la plataforma.';
+
+  @override
+  String get assignUrlsTooltip => 'Vincular adreces amb aquesta etiqueta';
+
+  @override
+  String get assignUrlsCreatorDescription =>
+      'El que s\'importi d\'aquestes adreces s\'endú aquest creador tot sol, sense preguntar res a la plataforma.';
+
+  @override
+  String get assignUrlsCreatorTooltip => 'Vincular adreces amb aquest creador';
+
+  @override
+  String get sourceUrlsLabel => 'Adreces';
+
+  @override
+  String get sourceUrlHint => 'reddit.com/r/exemple';
+
+  @override
+  String get addSourceUrl => 'Afegir adreça';
+
+  @override
+  String get filtersSource => 'Mostrar contingut de';
+
+  @override
+  String get sourceLocal => 'Aquest equip';
+
+  @override
+  String get autoTagRemoteSource => 'Autoetiquetar font remota';
+
+  @override
+  String get autoTagRemoteSourceDescription =>
+      'Fern crea una etiqueta per plataforma (Reddit, i les que vinguin) i la posa al que n\'importa. Apagat, la font es continua desant i s\'hi filtra des del botó de filtres.';
 }

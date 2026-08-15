@@ -58,6 +58,18 @@ class ToggleSearchFilterEvent extends MediaEvents {
   const ToggleSearchFilterEvent(this.type);
 }
 
+/// Enciende o apaga una fuente en el filtro de la cabecera de la pantalla de
+/// media.
+///
+/// Es lo que sustituye a tener una etiqueta por plataforma: de dónde llegó cada
+/// contenido se guarda con él, así que la rejilla puede enseñar sólo lo de una
+/// fuente sin que nadie haya tenido que etiquetarlo.
+class ToggleSourceFilterEvent extends MediaEvents {
+  final ImportSource source;
+
+  const ToggleSourceFilterEvent(this.source);
+}
+
 /// Deshace la búsqueda: la rejilla vuelve a mostrar la biblioteca completa.
 class ClearMediaSearchEvent extends MediaEvents {
   const ClearMediaSearchEvent();
@@ -145,6 +157,25 @@ class RemoveTagFromSelectedMediaEvent extends MediaEvents {
   const RemoveTagFromSelectedMediaEvent(this.tagId);
 }
 
+/// Carga el contenido del creador [creatorId]: el de la rejilla de la pantalla
+/// de gestión de creadores.
+class LoadMediaByCreatorEvent extends MediaEvents {
+  final int creatorId;
+
+  const LoadMediaByCreatorEvent(this.creatorId);
+}
+
+/// Quita el creador [creatorId] de todo lo que esté seleccionado en la rejilla.
+///
+/// No borra nada: los contenidos pasan al creador desconocido (siempre tienen
+/// uno), así que salen de la rejilla de la pantalla de gestión de creadores y
+/// siguen en la biblioteca.
+class RemoveCreatorFromSelectedMediaEvent extends MediaEvents {
+  final int creatorId;
+
+  const RemoveCreatorFromSelectedMediaEvent(this.creatorId);
+}
+
 /// Pone o quita la marca de favorito del contenido que se está viendo en el
 /// visor, que es lo que hace su corazón.
 class ToggleFavoriteEvent extends MediaEvents {
@@ -153,10 +184,21 @@ class ToggleFavoriteEvent extends MediaEvents {
 
 /// Marca para borrar todo lo que esté seleccionado en la rejilla.
 ///
-/// No borra nada de la base de datos: el contenido sale de la pantalla en la que
-/// esté y aparece en la de eliminados.
+/// Lo definitivo no sale de la base de datos: cambia de pantalla y aparece en la
+/// de eliminados. Lo que está pendiente de revisar sí se borra, y [deleteFiles]
+/// dice si sus ficheros se van con él; es lo que se ha respondido en el aviso.
 class DeleteSelectedMediaEvent extends MediaEvents {
-  const DeleteSelectedMediaEvent();
+  final bool deleteFiles;
+
+  const DeleteSelectedMediaEvent({this.deleteFiles = false});
+}
+
+/// Marca como favorito todo lo que esté seleccionado en la rejilla.
+///
+/// Es una acción, no un interruptor: lo que ya lo era se queda como está. Para
+/// quitarlo está el corazón del visor, que sí sabe cómo está cada contenido.
+class FavoriteSelectedMediaEvent extends MediaEvents {
+  const FavoriteSelectedMediaEvent();
 }
 
 /// Quita la marca de borrado de la selección de la rejilla, que vuelve a la
@@ -166,10 +208,14 @@ class RestoreSelectedMediaEvent extends MediaEvents {
 }
 
 /// Borrado definitivo de **todo** lo marcado, el que se fuerza desde la
-/// pantalla de eliminados. Los ficheros del disco no se tocan, así que se
-/// pueden volver a escanear.
+/// pantalla de eliminados.
+///
+/// [deleteFiles] dice si los ficheros del disco se van con las filas; sin él se
+/// quedan y un escaneo posterior los recoge otra vez.
 class PurgeDeletedMediaEvent extends MediaEvents {
-  const PurgeDeletedMediaEvent();
+  final bool deleteFiles;
+
+  const PurgeDeletedMediaEvent({this.deleteFiles = false});
 }
 
 /// El contenido [id] no se ha podido cargar para pintarlo.
@@ -214,9 +260,34 @@ class SaveMediaEvent extends MediaEvents {
 }
 
 /// Marca para borrar el contenido que se está viendo en el visor.
+///
+/// Si todavía está pendiente de revisar no se marca, se descarta, y entonces
+/// [deleteFiles] dice si su fichero se va con él.
 class DeleteMediaEvent extends MediaEvents {
   final MediaEntity media;
-  const DeleteMediaEvent(this.media);
+  final bool deleteFiles;
+
+  const DeleteMediaEvent(this.media, {this.deleteFiles = false});
+}
+
+/// Borrado definitivo del contenido que se está viendo en el visor.
+///
+/// Es lo que hace el botón de borrar cuando lo que se está viendo ya estaba
+/// marcado: desde la papelera, borrar es borrar del todo. [deleteFiles] dice si
+/// su fichero se va con él, que es lo que se ha respondido en el aviso.
+class PurgeMediaEvent extends MediaEvents {
+  final MediaEntity media;
+  final bool deleteFiles;
+
+  const PurgeMediaEvent(this.media, {this.deleteFiles = false});
+}
+
+/// Quita la marca de borrado del contenido que se está viendo en el visor, que
+/// vuelve a la pantalla que le toque y sale de la de eliminados.
+class RestoreMediaEvent extends MediaEvents {
+  final MediaEntity media;
+
+  const RestoreMediaEvent(this.media);
 }
 
 /// Guarda en el estado los datos editados del contenido actual, pendientes de

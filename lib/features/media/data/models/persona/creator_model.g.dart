@@ -31,6 +31,11 @@ const CreatorModelSchema = CollectionSchema(
       id: 2,
       name: r'socialProfiles',
       type: IsarType.stringList,
+    ),
+    r'sourceUrls': PropertySchema(
+      id: 3,
+      name: r'sourceUrls',
+      type: IsarType.stringList,
     )
   },
   estimateSize: _creatorModelEstimateSize,
@@ -72,6 +77,13 @@ int _creatorModelEstimateSize(
       }
     }
   }
+  bytesCount += 3 + object.sourceUrls.length * 3;
+  {
+    for (var i = 0; i < object.sourceUrls.length; i++) {
+      final value = object.sourceUrls[i];
+      bytesCount += value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -84,6 +96,7 @@ void _creatorModelSerialize(
   writer.writeString(offsets[0], object.name);
   writer.writeString(offsets[1], object.picturePath);
   writer.writeStringList(offsets[2], object.socialProfiles);
+  writer.writeStringList(offsets[3], object.sourceUrls);
 }
 
 CreatorModel _creatorModelDeserialize(
@@ -97,6 +110,7 @@ CreatorModel _creatorModelDeserialize(
     name: reader.readString(offsets[0]),
     picturePath: reader.readStringOrNull(offsets[1]),
     socialProfiles: reader.readStringList(offsets[2]),
+    sourceUrls: reader.readStringList(offsets[3]) ?? const [],
   );
   return object;
 }
@@ -114,6 +128,8 @@ P _creatorModelDeserializeProp<P>(
       return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readStringList(offset)) as P;
+    case 3:
+      return (reader.readStringList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -797,6 +813,231 @@ extension CreatorModelQueryFilter
       );
     });
   }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sourceUrls',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'sourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'sourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'sourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'sourceUrls',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceUrls',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'sourceUrls',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sourceUrls',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sourceUrls',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sourceUrls',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sourceUrls',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sourceUrls',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      sourceUrlsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'sourceUrls',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
 }
 
 extension CreatorModelQueryObject
@@ -895,6 +1136,12 @@ extension CreatorModelQueryWhereDistinct
       return query.addDistinctBy(r'socialProfiles');
     });
   }
+
+  QueryBuilder<CreatorModel, CreatorModel, QDistinct> distinctBySourceUrls() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sourceUrls');
+    });
+  }
 }
 
 extension CreatorModelQueryProperty
@@ -921,6 +1168,13 @@ extension CreatorModelQueryProperty
       socialProfilesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'socialProfiles');
+    });
+  }
+
+  QueryBuilder<CreatorModel, List<String>, QQueryOperations>
+      sourceUrlsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceUrls');
     });
   }
 }

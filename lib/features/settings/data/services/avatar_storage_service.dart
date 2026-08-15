@@ -41,6 +41,19 @@ class AvatarStorageService {
     }
   }
 
+  /// Borra la imagen de [path] si es una de las nuestras.
+  ///
+  /// Se comprueba que esté en la carpeta de avatares porque no todas lo están:
+  /// cuando [store] no puede copiar (la imagen ha desaparecido, no hay permisos)
+  /// se guarda la ruta original, que apunta a un fichero del usuario. Ése no se
+  /// toca: la aplicación borra sus copias, no los originales de nadie.
+  Future<void> remove(String? path) async {
+    if (path == null || path.isEmpty) return;
+    if (!p.equals(p.dirname(path), avatarsDirectory)) return;
+
+    await deleteFileAt(path);
+  }
+
   /// Lleva la imagen [currentPath] a [targetDirectory].
   ///
   /// Se mueve cuando venía de la carpeta de avatares anterior (es una copia

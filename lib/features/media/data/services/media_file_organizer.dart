@@ -162,7 +162,12 @@ class MediaFileOrganizer {
       FileOrganizationCriteria.flat => null,
       FileOrganizationCriteria.byTag =>
         (tags == null || tags.isEmpty) ? null : tags.first.name,
-      FileOrganizationCriteria.bySource => media.source?.name,
+      // La etiqueta de origen manda cuando está puesta; si no, se usa el nombre
+      // de la plataforma de la que llegó, que se guarda siempre. Así ordenar por
+      // origen sigue separando lo remoto aunque no se estén creando etiquetas
+      // por plataforma.
+      FileOrganizationCriteria.bySource =>
+        media.source?.name ?? media.importSource.label,
       FileOrganizationCriteria.byCreator => media.creator.name,
     };
 

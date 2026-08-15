@@ -5,6 +5,7 @@ import 'package:Fern/features/media/data/repositories/remote_media_repository_im
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart';
@@ -22,7 +23,15 @@ import 'package:Fern/features/media/domain/repositories/local_media_repository.d
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_creators_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/remove_creator_from_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_creator_source_urls_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/update_creator_usecase.dart';
+import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
+import 'package:Fern/features/media/domain/usecases/save_tag_source_urls_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_deleted_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_favorite_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
@@ -30,6 +39,7 @@ import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.da
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
 import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_deleted_media_usecase.dart';
@@ -45,6 +55,7 @@ import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_u
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
@@ -95,9 +106,15 @@ Future<void> initializeDependencies() async {
   getIt.registerSingleton<AppDatabase>(AppDatabase());
   getIt.registerSingleton<Isar>(await getIt<AppDatabase>().getIsar());
 
+  // Etiquetar con una etiqueta es etiquetar con toda su rama, y de eso se
+  // encarga esto: lo usan por igual el guardado a mano y el automático.
+  getIt.registerLazySingleton<TagHierarchy>(() =>
+      TagHierarchy(database: getIt<Isar>())
+  );
+
   // Por aquí entra todo el contenido nuevo, venga del disco o de una API.
   getIt.registerLazySingleton<MediaRegistry>(() =>
-      MediaRegistry(database: getIt<Isar>())
+      MediaRegistry(database: getIt<Isar>(), tagHierarchy: getIt())
   );
 
   getIt.registerLazySingleton<LocalMediaRepository>(() =>
@@ -106,6 +123,7 @@ Future<void> initializeDependencies() async {
         fileOrganizer: getIt(),
         avatarStorage: getIt(),
         registry: getIt(),
+        tagHierarchy: getIt(),
       )
   );
 
@@ -175,6 +193,10 @@ Future<void> initializeDependencies() async {
     SetMediaFavoriteUseCase(getIt())
   );
 
+  getIt.registerSingleton<SetMediaListFavoriteUseCase>(
+    SetMediaListFavoriteUseCase(getIt())
+  );
+
   getIt.registerSingleton<GetMediaDetailsUsecase>(
     GetMediaDetailsUsecase(localMediaRepository: getIt())
   );
@@ -219,6 +241,10 @@ Future<void> initializeDependencies() async {
     UpdateTagUseCase(getIt())
   );
 
+  getIt.registerSingleton<SaveTagSourceUrlsUseCase>(
+    SaveTagSourceUrlsUseCase(getIt())
+  );
+
   getIt.registerSingleton<DeleteTagUseCase>(
     DeleteTagUseCase(getIt())
   );
@@ -235,8 +261,36 @@ Future<void> initializeDependencies() async {
     SaveCreatorUseCase(getIt())
   );
 
+  getIt.registerSingleton<UpdateCreatorUseCase>(
+    UpdateCreatorUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SaveCreatorSourceUrlsUseCase>(
+    SaveCreatorSourceUrlsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<DeleteCreatorUseCase>(
+    DeleteCreatorUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetCreatorsUseCase>(
+    GetCreatorsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetMediaByCreatorUseCase>(
+    GetMediaByCreatorUseCase(getIt())
+  );
+
+  getIt.registerSingleton<RemoveCreatorFromMediaUseCase>(
+    RemoveCreatorFromMediaUseCase(getIt())
+  );
+
   getIt.registerSingleton<SearchTagsUseCase>(
     SearchTagsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetTagAncestorsUseCase>(
+    GetTagAncestorsUseCase(getIt())
   );
 
   getIt.registerSingleton<GetTagTreeUseCase>(
@@ -282,6 +336,12 @@ Future<void> initializeDependencies() async {
       TagsBloc(getTagTree: getIt())
   );
 
+  // Único como el de etiquetas: la lista de creadores se lee una vez y la
+  // pantalla de gestión se la encuentra hecha al volver a ella.
+  getIt.registerSingleton<CreatorsBloc>(
+      CreatorsBloc(getCreators: getIt())
+  );
+
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
         getScannedMediaUseCase: getIt(),
@@ -302,9 +362,13 @@ Future<void> initializeDependencies() async {
         getFavoriteMediaUseCase: getIt(),
         getMediaByTagUseCase: getIt(),
         removeTagFromMediaUseCase: getIt(),
+        getMediaByCreatorUseCase: getIt(),
+        removeCreatorFromMediaUseCase: getIt(),
         setMediaFavoriteUseCase: getIt(),
+        setMediaListFavoriteUseCase: getIt(),
         searchMediaUseCase: getIt(),
         searchMediaBySuggestionUseCase: getIt(),
+        preferences: getIt(),
       )
   );
 }

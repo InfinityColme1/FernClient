@@ -90,11 +90,16 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "fernclient" "\0"
+            VALUE "FileDescription", "FeRN" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "fernclient" "\0"
+            VALUE "InternalName", "FeRN" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "fernclient.exe" "\0"
+            VALUE "OriginalFilename", "FeRN.exe" "\0"
+            // OJO: "ProductName" no es sólo un rótulo. `path_provider` compone
+            // con él (y con "CompanyName") la carpeta de datos de la
+            // aplicación, %APPDATA%\CompanyName\ProductName, que es donde viven
+            // la base de datos y los ajustes. Cambiarlo aquí deja atrás lo que
+            // ya haya guardado el usuario, así que se queda como estaba.
             VALUE "ProductName", "fernclient" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END

@@ -7,6 +7,7 @@
 
 import 'package:Fern/config/theme/app_theme.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
@@ -14,8 +15,13 @@ import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-MediaSummaryEntity _media(int id) =>
-    MediaSummaryEntity(id: id, path: 'media_$id.png', isImported: true);
+MediaSummaryEntity _media(int id, {ImportSource source = ImportSource.local}) =>
+    MediaSummaryEntity(
+      id: id,
+      path: 'media_$id.png',
+      isImported: true,
+      importSource: source,
+    );
 
 /// Un grupo de cada tipo, como los que devuelve una búsqueda por texto.
 final _sections = [
@@ -71,6 +77,54 @@ void main() {
     );
 
     expect(state.visibleSearchSections, isNull);
+  });
+
+  // El filtro por fuente es lo que sustituye a tener una etiqueta por
+  // plataforma: recorta el contenido por de dónde llegó, que se guarda con él.
+  group('filtro por fuente', () {
+    // Un grupo con contenido de las dos fuentes, como el de una etiqueta que se
+    // ha puesto tanto a lo del equipo como a lo descargado.
+    final mixed = [
+      MediaSearchSectionEntity(
+        type: SearchResultType.tag,
+        title: 'Paisajes',
+        media: [_media(1), _media(2, source: ImportSource.reddit)],
+      ),
+    ];
+
+    test('de partida se ven todas las fuentes', () {
+      expect(const MediaLoading().sourceFilters, ImportSource.allSources);
+    });
+
+    test('apagar una fuente recorta el grupo sin quitarle la cabecera', () {
+      final state = MediaLoading(searchSections: mixed)
+          .copyWith(sourceFilters: const {ImportSource.reddit});
+
+      expect(state.visibleSearchSections?.single.media, [
+        _media(2, source: ImportSource.reddit),
+      ]);
+      // El grupo entero sigue en el estado: volver a encender la fuente lo
+      // recupera sin repetir la búsqueda.
+      expect(state.searchSections, mixed);
+    });
+
+    test('un grupo que se queda sin nada desaparece con su cabecera', () {
+      final state = MediaLoading(searchSections: _sections)
+          .copyWith(sourceFilters: const {ImportSource.reddit});
+
+      expect(state.visibleSearchSections, isEmpty);
+    });
+
+    test('los dos filtros se aplican a la vez', () {
+      final state = MediaLoading(searchSections: [..._sections, ...mixed])
+          .copyWith(
+        searchFilters: const {SearchResultType.tag},
+        sourceFilters: const {ImportSource.reddit},
+      );
+
+      expect(state.visibleSearchSections?.map((section) => section.title),
+          ['Paisajes']);
+    });
   });
 
   // El panel del filtro es un FernPopupPanel con casillas dentro: al contrario

@@ -7,6 +7,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_tag_source_urls_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
@@ -14,6 +15,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
+import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
@@ -52,6 +54,7 @@ class _TagCardState extends State<TagCard> {
   final _searchTags = getIt<SearchTagsUseCase>();
   final _updateTag = getIt<UpdateTagUseCase>();
   final _deleteTag = getIt<DeleteTagUseCase>();
+  final _saveTagSourceUrls = getIt<SaveTagSourceUrlsUseCase>();
   final _avatarStorage = getIt<AvatarStorageService>();
 
   late final TextEditingController _nameController =
@@ -59,6 +62,12 @@ class _TagCardState extends State<TagCard> {
 
   late String? _picturePath = widget.tag.picturePath;
   late TagEntity? _parent = widget.parent;
+
+  /// Direcciones de las que sale el contenido de la etiqueta.
+  ///
+  /// Se guardan desde su propio diálogo, así que aquí sólo se llevan para saber
+  /// con cuáles abrirlo y para no perderlas al guardar el formulario.
+  late List<String> _sourceUrls = widget.tag.sourceUrls;
 
   /// Lo que hay escrito en el buscador de etiqueta padre.
   ///
@@ -153,6 +162,9 @@ class _TagCardState extends State<TagCard> {
           name: name,
           picturePath: _picturePath,
           children: widget.tag.children,
+          // Las direcciones no están en este formulario, pero `updateTag` manda
+          // lo que le llega: sin ellas, guardar el nombre las borraría.
+          sourceUrls: _sourceUrls,
         ),
         parent: parent,
       ),
@@ -161,6 +173,37 @@ class _TagCardState extends State<TagCard> {
 
     getIt<TagsBloc>().add(const LoadTagsEvent());
     context.read<MediaBloc>().add(LoadMediaByTagEvent(widget.tag.id));
+  }
+
+  /// Abre el diálogo de las direcciones de la etiqueta y guarda lo que se
+  /// confirme.
+  ///
+  /// Aquí la etiqueta ya existe, así que se escribe en el momento y no espera al
+  /// botón de guardar de la ficha: el diálogo tiene el suyo, y lo que se confirma
+  /// en él queda confirmado. Al cerrarlo sin confirmar no llega nada y las
+  /// direcciones se quedan como estaban.
+  Future<void> _assignUrls() async {
+    final urls = await showFernDialog<List<String>, MediaBloc>(
+      context: context,
+      builder: (_) => AssignUrlDialog(
+        urls: _sourceUrls,
+        name: widget.tag.name,
+      ),
+    );
+    if (urls == null || !mounted) return;
+
+    await _run(() async {
+      final result = await _saveTagSourceUrls(
+        params: SaveTagSourceUrlsParams(tagId: widget.tag.id, urls: urls),
+      );
+
+      final tag = result.data;
+      if (result is! DataSuccess || tag == null || !mounted) return;
+
+      // Se recogen ya normalizadas: son las que se van a comparar al importar, y
+      // así el diálogo se vuelve a abrir con lo que de verdad hay guardado.
+      setState(() => _sourceUrls = tag.sourceUrls);
+    });
   }
 
   /// Suelta la etiqueta de su padre: deja de estar entre las hijas de aquél.
@@ -214,6 +257,12 @@ class _TagCardState extends State<TagCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // En la esquina superior derecha, como en el diálogo de creación: es
+            // la misma acción y se busca en el mismo sitio.
+            Align(
+              alignment: Alignment.topRight,
+              child: _assignUrlsButton(texts),
+            ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -290,6 +339,21 @@ class _TagCardState extends State<TagCard> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Abre el diálogo que vincula direcciones con la etiqueta.
+  ///
+  /// Cambia de icono cuando ya hay alguna: es la única señal de que la etiqueta
+  /// etiqueta sola, porque las direcciones no se ven en el formulario.
+  Widget _assignUrlsButton(AppLocalizations texts) {
+    return IconButton(
+      icon: Icon(
+        _sourceUrls.isEmpty ? Icons.add_link : Icons.link,
+        size: AppSizes.iconExtraLarge,
+      ),
+      tooltip: texts.assignUrlsTooltip,
+      onPressed: _isBusy ? null : _assignUrls,
     );
   }
 

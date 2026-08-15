@@ -1,5 +1,6 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -44,6 +45,28 @@ class PreferencesService {
     if (value == null) return null;
 
     return DateTime.tryParse(value);
+  }
+
+
+  String _deleteFilesKey(MediaDeletionKind kind) => switch (kind) {
+        MediaDeletionKind.trash => deleteTrashFilesPreferenceKey,
+        MediaDeletionKind.discard => deleteDiscardedFilesPreferenceKey,
+      };
+
+
+  /// Si el próximo borrado de [kind] se lleva también los ficheros del disco.
+  ///
+  /// Es cómo quedó la casilla del aviso la última vez; mientras no se haya
+  /// borrado nada de esa manera, lo que dice [MediaDeletionKind.deletesFiles].
+  bool getDeleteFiles(MediaDeletionKind kind) {
+    return _prefs.getBool(_deleteFilesKey(kind)) ?? kind.deletesFiles;
+  }
+
+
+  /// Recuerda cómo ha quedado la casilla del aviso, que es con lo que sale la
+  /// próxima vez.
+  Future<bool> setDeleteFiles(MediaDeletionKind kind, bool deleteFiles) async {
+    return await _prefs.setBool(_deleteFilesKey(kind), deleteFiles);
   }
 
 

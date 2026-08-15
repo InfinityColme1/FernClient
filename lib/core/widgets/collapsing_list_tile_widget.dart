@@ -1,12 +1,19 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class CollapsingListTile extends StatefulWidget {
   final String title;
   final IconData icon;
+
+  /// Imagen con la que se pinta el botón en lugar del icono. Es lo que deja
+  /// reconocer una etiqueta con el menú plegado, cuando el icono es el único que
+  /// se ve y es igual para todas.
+  final String? avatarPath;
+
   final AnimationController animationController;
   final bool isSelected;
 
@@ -33,6 +40,7 @@ class CollapsingListTile extends StatefulWidget {
     super.key,
     required this.title,
     required this.icon,
+    this.avatarPath,
     required this.animationController,
     this.isSelected = false,
     this.isExpanded = true,
@@ -98,6 +106,25 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
   bool get _showsDepthMark =>
       widget.isExpanded && widget.depth > sidebarMaxIndentDepth;
 
+  /// La imagen del botón, o su icono si no tiene ninguna.
+  ///
+  /// El avatar ocupa lo mismo que el icono al que sustituye: los botones con
+  /// imagen y sin ella se alinean igual y la lista no se descuadra.
+  Widget _leading() {
+    final avatarPath = widget.avatarPath;
+
+    if (avatarPath == null) {
+      return Icon(widget.icon, color: AppColors.black, size: widget.iconSize);
+    }
+
+    return FernAvatar(
+      imagePath: avatarPath,
+      fallbackIcon: widget.icon,
+      radius: widget.iconSize / 2,
+      iconSize: widget.iconSize,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -124,11 +151,7 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
                 ),
                 SizedBox(width: sizedBoxAnimation.value),
               ],
-              Icon(
-                widget.icon,
-                color: AppColors.black,
-                size: widget.iconSize,
-              ),
+              _leading(),
               SizedBox(width: sizedBoxAnimation.value),
               if (widget.isExpanded)
                 Expanded(

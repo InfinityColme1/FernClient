@@ -39,6 +39,23 @@ String uniqueFilePath(String targetPath) {
   }
 }
 
+/// Borra el fichero de [path] y dice si se ha llegado a borrar.
+///
+/// Lo que ya no está (o no se deja borrar porque otro programa lo tiene abierto,
+/// o por permisos) no es un error: quien borra contenido está quitándolo de la
+/// aplicación, y eso tiene que salir adelante aunque el disco no acompañe.
+Future<bool> deleteFileAt(String path) async {
+  try {
+    final file = File(path);
+    if (!await file.exists()) return false;
+
+    await file.delete();
+    return true;
+  } on FileSystemException {
+    return false;
+  }
+}
+
 /// Deja [source] en [targetPath], copiándolo o moviéndolo.
 ///
 /// El movimiento se intenta primero con `rename`, que es instantáneo, y se cae

@@ -46,6 +46,13 @@ abstract class LocalMediaRepository {
   /// pendiente de guardar.
   Future<DataState> setMediaFavorite(int id, {required bool isFavorite});
 
+  /// Pone o quita la marca de favorito de varios contenidos a la vez, que es lo
+  /// que hace el corazón de la rejilla sobre lo que esté seleccionado.
+  Future<DataState> setMediaListFavorite(
+    List<int> ids, {
+    required bool isFavorite,
+  });
+
   Future<DataState<MediaEntity>> getMediaDetails(int id);
 
   /// Borra el contenido [id] **sólo** si su fichero ya no está en la ruta
@@ -59,9 +66,10 @@ abstract class LocalMediaRepository {
   /// Borra de la base de datos los contenidos indicados, sumario y detalles.
   ///
   /// Es lo que se hace con lo que todavía está pendiente de revisar: descartarlo
-  /// al importar no es guardarlo en la papelera, es no quererlo. Su fichero
-  /// sigue en el disco, así que el siguiente escaneo lo recoge otra vez.
-  Future<DataState> deleteMediaList(List<int> ids);
+  /// al importar no es guardarlo en la papelera, es no quererlo. Sin
+  /// [deleteFiles] su fichero sigue en el disco, así que el siguiente escaneo lo
+  /// recoge otra vez; con él, el fichero se borra y no vuelve.
+  Future<DataState> deleteMediaList(List<int> ids, {bool deleteFiles});
 
   /// Marca los contenidos indicados para borrar: siguen en la base de datos,
   /// pero salen de contenido y de las búsquedas para pasar a la pantalla de
@@ -76,14 +84,16 @@ abstract class LocalMediaRepository {
   /// (`deletedRetention`) y devuelve cuántos contenidos se han borrado.
   ///
   /// Es el vaciado automático de la papelera. Lo marcado sin fecha no se toca.
-  Future<DataState<int>> purgeExpiredDeletedMedia();
+  /// Con [deleteFiles] se llevan también sus ficheros del disco.
+  Future<DataState<int>> purgeExpiredDeletedMedia({bool deleteFiles});
 
   /// Borra de la base de datos **todo** lo que esté marcado para borrar y
   /// devuelve cuántos contenidos se han borrado.
   ///
-  /// Es el borrado definitivo de la pantalla de eliminados: los ficheros del
-  /// disco no se tocan, así que el siguiente escaneo puede recogerlos otra vez.
-  Future<DataState<int>> purgeDeletedMedia();
+  /// Es el borrado definitivo de la pantalla de eliminados. Sin [deleteFiles]
+  /// los ficheros del disco no se tocan, así que el siguiente escaneo puede
+  /// recogerlos otra vez; con él desaparecen con sus filas.
+  Future<DataState<int>> purgeDeletedMedia({bool deleteFiles});
 
   /// Marca como definitivos los contenidos indicados dejando sus detalles tal
   /// y como están (los del escaneo si nadie los ha revisado).
@@ -117,6 +127,22 @@ abstract class LocalMediaRepository {
   /// datos.
   Future<DataState<TagEntity>> updateTag(TagEntity tag, {TagEntity? parent});
 
+  /// Deja en la etiqueta [tagId] las direcciones de las que sale su contenido.
+  ///
+  /// Manda lo que llega: las que había antes y no vengan en [urls] se pierden,
+  /// que es cómo se quita una desde el diálogo. Las direcciones se normalizan
+  /// aquí, así que da igual cómo las haya escrito el usuario.
+  Future<DataState<TagEntity>> saveTagSourceUrls(int tagId, List<String> urls);
+
+  /// Las etiquetas que están por encima de [tags] en la jerarquía, a cualquier
+  /// profundidad y sin [tags] mismas.
+  ///
+  /// Etiquetar con una es etiquetar con toda su rama, cosa que el guardado ya
+  /// hace por su cuenta; esto es para que la pantalla pueda enseñar las que se
+  /// van a poner **antes** de guardar, en vez de que aparezcan de la nada al
+  /// recargar.
+  Future<DataState<List<TagEntity>>> getTagAncestors(List<TagEntity> tags);
+
   /// Borra la etiqueta [tagId] de la base de datos.
   ///
   /// Los contenidos que la tenían **no se borran**: lo que se les quita es la
@@ -138,7 +164,45 @@ abstract class LocalMediaRepository {
   Future<DataState> removeTagFromMedia(int tagId, List<int> mediaIds);
 
   Future<DataState<CreatorEntity>> saveCreator(CreatorEntity creator);
-  
+
+  /// Cambia el nombre, el avatar y los enlaces de un creador que ya está en la
+  /// base de datos.
+  ///
+  /// El identificador no se toca, así que los contenidos que lo tienen lo
+  /// siguen teniendo: sólo cambian sus datos.
+  Future<DataState<CreatorEntity>> updateCreator(CreatorEntity creator);
+
+  /// Deja en el creador [creatorId] las direcciones de las que sale su
+  /// contenido.
+  ///
+  /// Manda lo que llega: las que había antes y no vengan en [urls] se pierden,
+  /// que es cómo se quita una desde el diálogo. Las direcciones se normalizan
+  /// aquí, así que da igual cómo las haya escrito el usuario.
+  Future<DataState<CreatorEntity>> saveCreatorSourceUrls(
+    int creatorId,
+    List<String> urls,
+  );
+
+  /// Borra el creador [creatorId] de la base de datos.
+  ///
+  /// Los contenidos que lo tenían **no se borran**: pasan al creador
+  /// desconocido, porque un contenido siempre tiene creador.
+  Future<DataState> deleteCreator(int creatorId);
+
+  /// Contenido definitivo del creador [creatorId].
+  ///
+  /// Es lo que enseña la rejilla de la pantalla de gestión de creadores. Como en
+  /// las búsquedas, lo pendiente de revisar y lo marcado para borrar se quedan
+  /// fuera: cada uno tiene su pantalla.
+  Future<DataState<List<MediaSummaryEntity>>> getMediaByCreator(int creatorId);
+
+  /// Quita el creador [creatorId] de los contenidos indicados, que pasan al
+  /// creador desconocido.
+  ///
+  /// Ni el creador ni los contenidos desaparecen: lo único que se deshace es la
+  /// relación entre ellos.
+  Future<DataState> removeCreatorFromMedia(int creatorId, List<int> mediaIds);
+
   Future<DataState<List<TagEntity>>> getTags();
 
   /// Las etiquetas en forma de árbol: sólo las que no cuelgan de ninguna otra,

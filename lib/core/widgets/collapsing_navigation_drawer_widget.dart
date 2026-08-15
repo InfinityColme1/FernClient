@@ -190,6 +190,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             isExpanded: _isExpanded,
             title: item.title,
             icon: item.icon,
+            avatarPath: item.avatarPath,
             depth: item.depth,
             animationController: _animationController,
             textStyle: widget.textStyle,

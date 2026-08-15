@@ -4,6 +4,9 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
+import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
+import 'package:Fern/features/media/presentation/widgets/confirm_remote_import_dialog.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
@@ -134,6 +137,51 @@ class _ImportViewState extends State<_ImportView> {
       hint: texts.lastImportHint,
       icon: Icons.history,
     );
+  }
+
+  /// Busca contenido en la fuente elegida.
+  ///
+  /// Si hay alguna plataforma de por medio se avisa antes: eso sale a internet
+  /// con las credenciales del usuario y descarga ficheros a su equipo, así que
+  /// no puede pasar por un clic de más. Escanear una carpeta del propio equipo
+  /// no tiene nada de eso y arranca sin preguntar.
+  Future<void> _scan(BuildContext context, ImportSource source) async {
+    final bloc = context.read<MediaBloc>();
+
+    final remote = [
+      for (final each in source.sources)
+        if (each.isRemote) each,
+    ];
+
+    if (remote.isNotEmpty) {
+      final confirmed = await showFernDialog<bool, MediaBloc>(
+        context: context,
+        builder: (_) => ConfirmRemoteImportDialog(
+          sources: remote,
+          limit: _limit,
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    bloc.add(ScanSourceEvent(limit: _limit));
+  }
+
+  /// Descarta la selección, avisando antes de que va a salir de la aplicación y
+  /// preguntando qué se hace con sus ficheros. Si se cancela no se toca nada.
+  Future<void> _discardSelection(BuildContext context, int count) async {
+    final bloc = context.read<MediaBloc>();
+
+    final deleteFiles = await showFernDialog<bool, MediaBloc>(
+      context: context,
+      builder: (_) => ConfirmDeleteDialog(
+        kind: MediaDeletionKind.discard,
+        count: count,
+      ),
+    );
+    if (deleteFiles == null) return;
+
+    bloc.add(DeleteSelectedMediaEvent(deleteFiles: deleteFiles));
   }
 
   @override
@@ -272,11 +320,8 @@ class _ImportViewState extends State<_ImportView> {
                           tooltip: hasMedia
                               ? texts.actionRefresh
                               : texts.actionImport,
-                          onPressed: isConfigured
-                              ? () => context
-                                  .read<MediaBloc>()
-                                  .add(ScanSourceEvent(limit: _limit))
-                              : null,
+                          onPressed:
+                              isConfigured ? () => _scan(context, source) : null,
                           icon: Icon(
                             hasMedia ? Icons.refresh : Icons.download_outlined,
                           ),
@@ -298,9 +343,7 @@ class _ImportViewState extends State<_ImportView> {
                             backgroundColor: AppColors.terciary,
                             foregroundColor: AppColors.white,
                             onPressed: hasSelection
-                                ? () => context
-                                    .read<MediaBloc>()
-                                    .add(const DeleteSelectedMediaEvent())
+                                ? () => _discardSelection(context, selectedCount)
                                 : null,
                           ),
                           const SizedBox(width: AppSpacing.s),

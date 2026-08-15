@@ -7,6 +7,7 @@
   "navImport": "Importar",
   "navFavorites": "Favoritos",
   "navDeleted": "Eliminados",
+  "navCreatorManager": "Gestor de creadores",
   "navTagManager": "Gestor de etiquetas",
 
   "searchHint": "Buscar",
@@ -29,8 +30,19 @@
   "selectedCount": "{count} seleccionados",
 
   "deletedCount": "{count, plural, =0{Nada marcado para borrar} =1{1 archivo marcado para borrar} other{{count} archivos marcados para borrar}}",
-  "deletedRetentionNotice": "{days, plural, =1{El contenido marcado se borra definitivamente al cabo de 1 día} other{El contenido marcado se borra definitivamente al cabo de {days} días}}",
+  "deletedRetentionNotice": "{days, plural, =1{Se borra definitivamente al cabo de 1 día} other{Se borra definitivamente al cabo de {days} días}}",
   "deleteForeverTooltip": "Borrar definitivamente de la base de datos",
+  "remoteImportWarning": "Se va a importar contenido de {source}",
+  "remoteImportAmountAll": "Se traerá todo lo que tengas guardado en tu cuenta.",
+  "remoteImportAmountSinceLast": "Se traerá lo que tengas guardado desde la última importación.",
+  "remoteImportAmountLimited": "{count, plural, =1{Se traerá 1 contenido como mucho.} other{Se traerán {count} contenidos como mucho.}}",
+
+  "favoriteSelectedTooltip": "Marcar la selección como favorita",
+  "deleteSelectedTooltip": "Mandar la selección a la pantalla de eliminados",
+  "deleteTrashWarning": "{count, plural, =1{Se va a borrar definitivamente 1 archivo} other{Se van a borrar definitivamente {count} archivos}}",
+  "deleteDiscardWarning": "{count, plural, =1{Se va a descartar 1 archivo} other{Se van a descartar {count} archivos}}",
+  "deleteFilesFromDisk": "Borrar también los ficheros del disco",
+  "deleteFilesFromDiskDescription": "Si la quitas, el contenido sale de la base de datos pero sus ficheros se quedan donde están, así que un escaneo posterior puede recogerlos otra vez.",
 
   "actionImport": "Importar",
   "actionRefresh": "Actualizar",
@@ -44,6 +56,8 @@
   "actionUnassignTag": "Quitar etiqueta",
   "actionRemoveParentTag": "Quitar padre",
   "actionDeleteTag": "Eliminar etiqueta",
+  "actionUnassignCreator": "Quitar creador",
+  "actionDeleteCreator": "Eliminar creador",
   "sourceLocalComputer": "Equipo local",
   "sourceAll": "Todas",
   "sourceNotConfigured": "Sin configurar",
@@ -58,6 +72,13 @@
   "addTag": "Añadir etiqueta",
 
   "noTagsYet": "Todavía no hay etiquetas",
+  "creatorsTitle": "Creadores",
+  "noCreatorsYet": "Todavía no hay creadores",
+  "noSocialProfiles": "Sin perfiles sociales",
+  "openProfileTooltip": "Abrir el perfil en el navegador",
+  "editProfileTooltip": "Editar el enlace",
+  "doneEditingProfileTooltip": "Terminar de editar",
+  "removeProfileTooltip": "Quitar el enlace",
   "tagNameSearchLabel": "Nombre de la etiqueta",
   "tagSearchHint": "Etiqueta",
   "createTag": "Crear etiqueta",
@@ -85,11 +106,17 @@
 
   "settingsTitle": "Configuración",
   "settingsLanguage": "Idioma",
+  "settingsAppearance": "Apariencia",
   "settingsFiles": "Archivos",
   "settingsRemoteSources": "Fuentes remotas",
 
   "languageSectionTitle": "Idioma de la aplicación",
   "languageSectionNote": "Toda la aplicación cambia de idioma en cuanto eliges uno.",
+
+  "sidebarSectionTitle": "Menú lateral",
+  "sidebarSectionNote": "Cómo se pinta la lista de etiquetas del menú lateral.",
+  "showListAvatars": "Mostrar avatares en lista",
+  "showListAvatarsDescription": "Cada etiqueta se pinta con su propia imagen en vez del icono común, así se distinguen con el menú plegado. Las etiquetas sin imagen se quedan con el icono.",
 
   "filesLocalTitle": "Archivos locales",
   "syncLocalFiles": "Sincronizar archivos locales",
@@ -158,5 +185,26 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "assignUrlsTitle": "Direcciones vinculadas",
+  "assignUrlsTo": "Direcciones vinculadas a {name}",
+  "@assignUrlsTo": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "assignUrlsDescription": "Lo que se importe de estas direcciones se lleva esta etiqueta solo, sin preguntarle nada a la plataforma.",
+  "assignUrlsTooltip": "Vincular direcciones con esta etiqueta",
+  "assignUrlsCreatorDescription": "Lo que se importe de estas direcciones se lleva este creador solo, sin preguntarle nada a la plataforma.",
+  "assignUrlsCreatorTooltip": "Vincular direcciones con este creador",
+  "sourceUrlsLabel": "Direcciones",
+  "sourceUrlHint": "reddit.com/r/ejemplo",
+  "addSourceUrl": "Añadir dirección",
+
+  "filtersSource": "Mostrar contenido de",
+  "sourceLocal": "Este equipo",
+
+  "autoTagRemoteSource": "Auto-etiquetar fuente remota",
+  "autoTagRemoteSourceDescription": "Fern crea una etiqueta por plataforma (Reddit, y las que vengan) y se la pone a lo que importa de ella. Apagado, la fuente se sigue guardando y se filtra por ella desde el botón de filtros."
 }

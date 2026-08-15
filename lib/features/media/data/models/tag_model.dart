@@ -17,6 +17,10 @@ class TagModel {
 
   String ? picturePath;
 
+  /// Direcciones de las que sale contenido que lleva esta etiqueta, ya
+  /// normalizadas. Es lo que mira el etiquetado automático al importar.
+  List<String> sourceUrls = const [];
+
   final children = IsarLinks<TagModel>();
   
   @Backlink(to: 'tags')
@@ -30,6 +34,7 @@ class TagModel {
     required this.id,
     required this.name,
     this.picturePath,
+    this.sourceUrls = const [],
   });
 
   TagEntity toEntity() {
@@ -37,6 +42,7 @@ class TagModel {
       id: id,
       name: name,
       picturePath: picturePath,
+      sourceUrls: sourceUrls,
       children: children.map((tag) {return tag.toEntity();}).toList(),
     );
   }
@@ -49,6 +55,7 @@ class TagModel {
       id: entity.id == unsavedId ? Isar.autoIncrement : entity.id,
       picturePath: entity.picturePath,
       name: entity.name,
+      sourceUrls: entity.sourceUrls,
     );
   }
 }

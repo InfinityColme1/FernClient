@@ -91,6 +91,14 @@ class _MainLayoutState extends State<MainLayout> {
     return _sidebar!;
   }
 
+  /// Si el menú va plegado, y el veredicto del ancho con el que se decidió.
+  ///
+  /// El menú arranca siempre desplegado: el ancho sólo lo pliega al cruzar el
+  /// umbral, así que abrir la aplicación en una ventana estrecha lo deja abierto
+  /// y es el botón del menú quien manda hasta que la ventana cambie de lado.
+  bool _isSidebarCollapsed = false;
+  bool? _lastWidthVerdict;
+
   /// La mitad del ancho de la pantalla del dispositivo, en píxeles lógicos.
   ///
   /// Es la pantalla, no la ventana: el menú se pliega cuando la ventana ocupa
@@ -114,10 +122,16 @@ class _MainLayoutState extends State<MainLayout> {
           AppSizes.sidebarAutoCollapseMinWidth,
         );
 
+        final verdict = constraints.maxWidth <= collapseWidth;
+        if (_lastWidthVerdict != null && verdict != _lastWidthVerdict) {
+          _isSidebarCollapsed = verdict;
+        }
+        _lastWidthVerdict = verdict;
+
         return _buildLargeScreenLayout(
           context,
           widget.child,
-          isSidebarCollapsed: constraints.maxWidth <= collapseWidth,
+          isSidebarCollapsed: _isSidebarCollapsed,
         );
       }
 

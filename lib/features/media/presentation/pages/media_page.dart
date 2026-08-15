@@ -1,3 +1,4 @@
+import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
@@ -76,6 +77,11 @@ class _MediaView extends StatelessWidget {
         // igual, así que el contador cuenta lo que de verdad hay en la rejilla.
         final sections = state.visibleSearchSections;
 
+        // Las acciones masivas actúan sobre la selección de la rejilla, así que
+        // sin selección no hay nada sobre lo que actuar.
+        final selectedCount = state.selectedIds.length;
+        final hasSelection = selectedCount > 0;
+
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
           child: Column(
@@ -94,8 +100,41 @@ class _MediaView extends StatelessWidget {
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const Spacer(),
+                    if (hasSelection) ...[
+                      Text(
+                        texts.selectedCount(selectedCount),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.terciary,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.l),
+                    ],
+                    // Marcar como favorito y mandar a la papelera toda la
+                    // selección de una vez. Sin selección se quedan apagados en
+                    // su sitio, que es como se ve que hay que elegir algo antes.
+                    IconButton(
+                      tooltip: texts.favoriteSelectedTooltip,
+                      onPressed: hasSelection
+                          ? () => context
+                              .read<MediaBloc>()
+                              .add(const FavoriteSelectedMediaEvent())
+                          : null,
+                      icon: const Icon(Icons.favorite_border),
+                    ),
+                    IconButton(
+                      tooltip: texts.deleteSelectedTooltip,
+                      onPressed: hasSelection
+                          ? () => context
+                              .read<MediaBloc>()
+                              .add(const DeleteSelectedMediaEvent())
+                          : null,
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                    const SizedBox(width: AppSpacing.s),
                     SearchFilterMenu(
                       filters: state.searchFilters,
+                      sourceFilters: state.sourceFilters,
                       hasSearch: state.searchSections != null,
                     ),
                   ],

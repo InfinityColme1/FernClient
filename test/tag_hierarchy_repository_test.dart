@@ -11,6 +11,7 @@ import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/data/repositories/local_media_repository_impl.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
@@ -58,11 +59,14 @@ void main() {
       inspector: false,
     );
 
+    final hierarchy = TagHierarchy(database: isar);
+
     repository = LocalMediaRepositoryImpl(
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: _NoSettings()),
       avatarStorage: AvatarStorageService(settingsRepository: _NoSettings()),
-      registry: MediaRegistry(database: isar),
+      registry: MediaRegistry(database: isar, tagHierarchy: hierarchy),
+      tagHierarchy: hierarchy,
     );
   });
 
@@ -277,6 +281,44 @@ void main() {
     await repository.deleteTag(deleted.id);
 
     expect(await tagsOf(mediaId), ['Queda']);
+  });
+
+  Future<List<String>> ancestorsOf(List<TagEntity> tags) async {
+    final result = await repository.getTagAncestors(tags);
+    return (result as DataSuccess<List<TagEntity>>)
+        .data!
+        .map((tag) => tag.name)
+        .toList();
+  }
+
+  test('las etiquetas de encima suben hasta la raíz', () async {
+    final grandparent = await newTag('Abuela');
+    final parent = await newTag('Madre', parent: grandparent);
+    final child = await newTag('Hija', parent: parent);
+
+    expect(await ancestorsOf([child]), ['Madre', 'Abuela']);
+  });
+
+  test('una etiqueta raíz no tiene ninguna encima', () async {
+    final tag = await newTag('Sola');
+
+    expect(await ancestorsOf([tag]), isEmpty);
+  });
+
+  test('las ramas que se juntan no repiten etiqueta', () async {
+    final root = await newTag('Serie');
+    final first = await newTag('Personaje', parent: root);
+    final second = await newTag('Escenario', parent: root);
+
+    expect(await ancestorsOf([first, second]), ['Serie']);
+  });
+
+  test('la que ya está elegida no vuelve como ancestro', () async {
+    final grandparent = await newTag('Abuela');
+    final parent = await newTag('Madre', parent: grandparent);
+    final child = await newTag('Hija', parent: parent);
+
+    expect(await ancestorsOf([child, parent]), ['Abuela']);
   });
 }
 

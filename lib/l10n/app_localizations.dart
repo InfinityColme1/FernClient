@@ -138,6 +138,12 @@ abstract class AppLocalizations {
   /// **'Deleted'**
   String get navDeleted;
 
+  /// No description provided for @navCreatorManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator Manager'**
+  String get navCreatorManager;
+
   /// No description provided for @navTagManager.
   ///
   /// In en, this message translates to:
@@ -249,7 +255,7 @@ abstract class AppLocalizations {
   /// No description provided for @deletedRetentionNotice.
   ///
   /// In en, this message translates to:
-  /// **'{days, plural, =1{Marked media is deleted for good after 1 day} other{Marked media is deleted for good after {days} days}}'**
+  /// **'{days, plural, =1{Deleted for good after 1 day} other{Deleted for good after {days} days}}'**
   String deletedRetentionNotice(int days);
 
   /// No description provided for @deleteForeverTooltip.
@@ -257,6 +263,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete permanently from the database'**
   String get deleteForeverTooltip;
+
+  /// No description provided for @remoteImportWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Media is about to be imported from {source}'**
+  String remoteImportWarning(String source);
+
+  /// No description provided for @remoteImportAmountAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything saved in your account will be fetched.'**
+  String get remoteImportAmountAll;
+
+  /// No description provided for @remoteImportAmountSinceLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Whatever you have saved since the last import will be fetched.'**
+  String get remoteImportAmountSinceLast;
+
+  /// No description provided for @remoteImportAmountLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 media at most will be fetched.} other{{count} media at most will be fetched.}}'**
+  String remoteImportAmountLimited(int count);
+
+  /// No description provided for @favoriteSelectedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the selection as favourite'**
+  String get favoriteSelectedTooltip;
+
+  /// No description provided for @deleteSelectedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the selection to the deleted screen'**
+  String get deleteSelectedTooltip;
+
+  /// No description provided for @deleteTrashWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 media is about to be deleted for good} other{{count} media are about to be deleted for good}}'**
+  String deleteTrashWarning(int count);
+
+  /// No description provided for @deleteDiscardWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 media is about to be discarded} other{{count} media are about to be discarded}}'**
+  String deleteDiscardWarning(int count);
+
+  /// No description provided for @deleteFilesFromDisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the files from the disk as well'**
+  String get deleteFilesFromDisk;
+
+  /// No description provided for @deleteFilesFromDiskDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'If you clear it, the media leaves the database but its files stay where they are, so a later scan can pick them up again.'**
+  String get deleteFilesFromDiskDescription;
 
   /// No description provided for @actionImport.
   ///
@@ -330,6 +396,18 @@ abstract class AppLocalizations {
   /// **'Delete tag'**
   String get actionDeleteTag;
 
+  /// No description provided for @actionUnassignCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassign creator'**
+  String get actionUnassignCreator;
+
+  /// No description provided for @actionDeleteCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete creator'**
+  String get actionDeleteCreator;
+
   /// No description provided for @sourceLocalComputer.
   ///
   /// In en, this message translates to:
@@ -395,6 +473,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No tags yet'**
   String get noTagsYet;
+
+  /// No description provided for @creatorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Creators'**
+  String get creatorsTitle;
+
+  /// No description provided for @noCreatorsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No creators yet'**
+  String get noCreatorsYet;
+
+  /// No description provided for @noSocialProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'No social profiles'**
+  String get noSocialProfiles;
+
+  /// No description provided for @openProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the profile in the browser'**
+  String get openProfileTooltip;
+
+  /// No description provided for @editProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit link'**
+  String get editProfileTooltip;
+
+  /// No description provided for @doneEditingProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Done editing'**
+  String get doneEditingProfileTooltip;
+
+  /// No description provided for @removeProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link'**
+  String get removeProfileTooltip;
 
   /// No description provided for @tagNameSearchLabel.
   ///
@@ -534,6 +654,12 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get settingsLanguage;
 
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
   /// No description provided for @settingsFiles.
   ///
   /// In en, this message translates to:
@@ -557,6 +683,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Every screen switches over as soon as you pick a language.'**
   String get languageSectionNote;
+
+  /// No description provided for @sidebarSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Side menu'**
+  String get sidebarSectionTitle;
+
+  /// No description provided for @sidebarSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'How the tag list of the side menu is drawn.'**
+  String get sidebarSectionNote;
+
+  /// No description provided for @showListAvatars.
+  ///
+  /// In en, this message translates to:
+  /// **'Show avatars in the list'**
+  String get showListAvatars;
+
+  /// No description provided for @showListAvatarsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Each tag is drawn with its own picture instead of the shared icon, so you can tell them apart while the menu is collapsed. Tags without a picture keep the icon.'**
+  String get showListAvatarsDescription;
 
   /// No description provided for @filesLocalTitle.
   ///
@@ -839,6 +989,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
   String lastImportDays(int count);
+
+  /// No description provided for @assignUrlsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked addresses'**
+  String get assignUrlsTitle;
+
+  /// No description provided for @assignUrlsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses linked to {name}'**
+  String assignUrlsTo(String name);
+
+  /// No description provided for @assignUrlsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Whatever is imported from these addresses gets this tag on its own, without asking the platform anything.'**
+  String get assignUrlsDescription;
+
+  /// No description provided for @assignUrlsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Link addresses to this tag'**
+  String get assignUrlsTooltip;
+
+  /// No description provided for @assignUrlsCreatorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Whatever is imported from these addresses gets this creator on its own, without asking the platform anything.'**
+  String get assignUrlsCreatorDescription;
+
+  /// No description provided for @assignUrlsCreatorTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Link addresses to this creator'**
+  String get assignUrlsCreatorTooltip;
+
+  /// No description provided for @sourceUrlsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses'**
+  String get sourceUrlsLabel;
+
+  /// No description provided for @sourceUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'reddit.com/r/example'**
+  String get sourceUrlHint;
+
+  /// No description provided for @addSourceUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Add address'**
+  String get addSourceUrl;
+
+  /// No description provided for @filtersSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Show media from'**
+  String get filtersSource;
+
+  /// No description provided for @sourceLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer'**
+  String get sourceLocal;
+
+  /// No description provided for @autoTagRemoteSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-tag remote source'**
+  String get autoTagRemoteSource;
+
+  /// No description provided for @autoTagRemoteSourceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern creates a tag for each platform (Reddit, and so on) and puts it on what it imports from it. With this off the source is still recorded, and you filter by it from the Filters button.'**
+  String get autoTagRemoteSourceDescription;
 }
 
 class _AppLocalizationsDelegate
