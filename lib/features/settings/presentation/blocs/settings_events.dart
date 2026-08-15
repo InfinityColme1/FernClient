@@ -1,4 +1,6 @@
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -110,6 +112,29 @@ class RedditSettingsChangedEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [reddit];
+}
+
+/// Credenciales de Danbooru tal y como han quedado tras tocar uno de sus
+/// campos. Llegan las dos juntas porque se guardan juntas: la fuente sólo sirve
+/// cuando están las dos.
+class DanbooruSettingsChangedEvent extends SettingsEvents {
+  final DanbooruSettingsEntity danbooru;
+
+  const DanbooruSettingsChangedEvent(this.danbooru);
+
+  @override
+  List<Object?> get props => [danbooru];
+}
+
+/// Credenciales de Gelbooru tal y como han quedado tras tocar uno de sus
+/// campos.
+class GelbooruSettingsChangedEvent extends SettingsEvents {
+  final GelbooruSettingsEntity gelbooru;
+
+  const GelbooruSettingsChangedEvent(this.gelbooru);
+
+  @override
+  List<Object?> get props => [gelbooru];
 }
 
 /// Página de inicio del navegador de la aplicación, tal y como ha quedado tras

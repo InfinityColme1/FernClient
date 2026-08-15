@@ -43,14 +43,22 @@ enum SettingsSection {
 /// estado de la pantalla y no del bloc: no hay nada que guardar ni que
 /// compartir con nadie.
 class SettingsDialog extends StatefulWidget {
-  const SettingsDialog({super.key});
+  /// Por qué sección se abre. La de siempre es la primera; se pide otra cuando
+  /// se llega aquí a arreglar algo concreto (unas credenciales que la
+  /// plataforma ha rechazado, por ejemplo).
+  final SettingsSection initialSection;
+
+  const SettingsDialog({
+    super.key,
+    this.initialSection = SettingsSection.language,
+  });
 
   @override
   State<SettingsDialog> createState() => _SettingsDialogState();
 }
 
 class _SettingsDialogState extends State<SettingsDialog> {
-  SettingsSection _section = SettingsSection.language;
+  late SettingsSection _section = widget.initialSection;
 
   @override
   Widget build(BuildContext context) {

@@ -82,6 +82,15 @@ abstract class MediaStates extends Equatable {
   /// que se enseñe una vez y no en cada repintado.
   final ImportSource? expiredSession;
 
+  /// Lo que ha fallado durante la importación que acaba de terminar, si es que
+  /// ha fallado algo y no era cosa de las credenciales.
+  ///
+  /// Es un aviso de una sola vez, igual que [expiredSession]: no lo arrastra
+  /// [copyWith], así que se enseña una vez y no en cada repintado. Sin esto, una
+  /// fuente que contesta mal deja la pantalla exactamente igual que una fuente
+  /// que no tenía nada nuevo, y no hay forma de distinguirlas.
+  final String? importError;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -100,6 +109,7 @@ abstract class MediaStates extends Equatable {
     this.importSource = ImportSource.local,
     this.lastImportAt,
     this.expiredSession,
+    this.importError,
   });
 
   /// Si el filtro de fuentes deja ver [summary].
@@ -171,12 +181,14 @@ abstract class MediaStates extends Equatable {
     importSource,
     lastImportAt,
     expiredSession,
+    importError,
   ];
 }
 
 class MediaLoading extends MediaStates {
   const MediaLoading({
     super.expiredSession,
+    super.importError,
     super.mediaList,
     super.showInfo,
     super.isModified,

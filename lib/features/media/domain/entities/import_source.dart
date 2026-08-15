@@ -22,6 +22,12 @@ enum ImportSource {
   /// las privadas.
   pixiv(id: 'pixiv', isRemote: true, label: 'Pixiv'),
 
+  /// Publicaciones que el usuario tiene en favoritos en su cuenta de Danbooru.
+  danbooru(id: 'danbooru', isRemote: true, label: 'Danbooru'),
+
+  /// Publicaciones que el usuario tiene en favoritos en su cuenta de Gelbooru.
+  gelbooru(id: 'gelbooru', isRemote: true, label: 'Gelbooru'),
+
   /// Contenido que el usuario ha traído desde el navegador de la aplicación:
   /// una página cualquiera de internet de la que se ha sacado lo que enseñaba.
   ///
@@ -56,6 +62,8 @@ enum ImportSource {
     ImportSource.local,
     ImportSource.reddit,
     ImportSource.pixiv,
+    ImportSource.danbooru,
+    ImportSource.gelbooru,
   ];
 
   /// Las fuentes que se enseñan al elegir de dónde se está viendo o trayendo
@@ -76,6 +84,8 @@ enum ImportSource {
     ImportSource.local,
     ImportSource.reddit,
     ImportSource.pixiv,
+    ImportSource.danbooru,
+    ImportSource.gelbooru,
     ImportSource.browser,
   };
 
@@ -83,6 +93,8 @@ enum ImportSource {
   static const List<ImportSource> remote = [
     ImportSource.reddit,
     ImportSource.pixiv,
+    ImportSource.danbooru,
+    ImportSource.gelbooru,
   ];
 
   /// Las fuentes que hay que recorrer al escanear con esta opción elegida:

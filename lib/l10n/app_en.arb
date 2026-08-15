@@ -243,6 +243,19 @@
   "browserHomeTitle": "Home page",
   "browserHomeDescription": "Where Fern's browser starts when you press the home button. It does not affect where it opens: coming back to the screen leaves the browser on the last page you visited.",
   "browserHomeLabel": "Address",
+  "credentialsRejectedTitle": "{source} did not accept your credentials",
+  "@credentialsRejectedTitle": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "credentialsRejectedDescription": "Nothing could be imported: {source} turned down the account or the key it was given. Check them in Settings, under Remote sources.",
+  "@credentialsRejectedDescription": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "actionOpenRemoteSettings": "Open settings",
   "sessionExpiredTitle": "Your {source} session is no longer valid",
   "@sessionExpiredTitle": {
     "placeholders": {
@@ -275,6 +288,22 @@
     }
   },
   "browserImportNothing": "Nothing was brought in.",
+  "danbooruTitle": "Danbooru",
+  "danbooruDescription": "Fern downloads the posts you have favourited on Danbooru. Its API is public: all it needs is your account name and an API key.",
+  "danbooruUsername": "Account name",
+  "danbooruUsernameHint": "Your Danbooru user name",
+  "danbooruApiKey": "API key",
+  "danbooruApiKeyHint": "A key from your Danbooru profile",
+  "danbooruApiKeyNote": "On Danbooru, open your profile, go to API Key and create one. It is not your password: you can revoke it whenever you like without changing anything else. It stays on this computer and is only used to talk to Danbooru.",
+
+  "gelbooruTitle": "Gelbooru",
+  "gelbooruDescription": "Fern downloads the posts you have favourited on Gelbooru. Its favourites API is slower than the rest: it hands out references rather than posts, so each one has to be asked for separately.",
+  "gelbooruUserId": "Account id",
+  "gelbooruUserIdHint": "The number of your Gelbooru account",
+  "gelbooruApiKey": "API key",
+  "gelbooruApiKeyHint": "The key of that account",
+  "gelbooruApiKeyNote": "On Gelbooru, go to My Account, then Options, and look for API Access Credentials: both the id and the key are there. They stay on this computer and are only used to talk to Gelbooru.",
+
   "browserAddressHint": "Address of a site",
   "browserBack": "Back",
   "browserForward": "Forward",
@@ -314,6 +343,13 @@
     "placeholders": {
       "done": { "type": "int" },
       "total": { "type": "int" }
+    }
+  },
+
+  "importFailed": "The import could not be completed: {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
     }
   },
 

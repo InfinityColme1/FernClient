@@ -248,6 +248,68 @@ const pixivUgoiraIllustType = 2;
 /// que la ordenación de ficheros por origen sepa dónde ponerlo.
 const pixivSourceTagName = 'Pixiv';
 
+// Danbooru
+/// La dirección con la que se nombra lo que hay en Danbooru, y también por
+/// donde responde su API: es pública y se pide a las mismas direcciones que se
+/// ven en el navegador, añadiéndoles `.json`.
+const danbooruSiteUrl = 'https://danbooru.donmai.us';
+const danbooruApiHost = 'danbooru.donmai.us';
+
+/// Cuántas publicaciones se piden por página. Es el máximo que admite su
+/// listado de publicaciones; otros listados admiten más, pero éste no.
+const danbooruPageSize = 200;
+
+/// Tope de páginas que se recorren de una vez. Con el tamaño de página son
+/// veinte mil publicaciones, de sobra para una importación completa.
+const danbooruMaxPages = 100;
+
+/// Lo que se espera entre página y página.
+///
+/// Danbooru pide no pasar de una petición por segundo en una sesión larga, y
+/// una importación lo es. No hace falta esperar entre las descargas de los
+/// ficheros: eso no va contra su API.
+const danbooruPageDelay = Duration(seconds: 1);
+
+/// Nombre de la etiqueta de origen con la que nace el contenido de Danbooru,
+/// para que la ordenación de ficheros por origen sepa dónde ponerlo.
+const danbooruSourceTagName = 'Danbooru';
+
+/// Las credenciales de la API de Danbooru: el nombre de la cuenta y la clave
+/// que se saca del perfil del usuario.
+const danbooruUsernamePreferenceKey = 'danbooru_username';
+const danbooruApiKeyPreferenceKey = 'danbooru_api_key';
+
+// Gelbooru
+/// La dirección con la que se nombra lo que hay en Gelbooru, y por donde
+/// responde su API: todo cuelga de la misma página, distinguida por parámetros.
+const gelbooruSiteUrl = 'https://gelbooru.com';
+const gelbooruApiHost = 'gelbooru.com';
+const gelbooruApiPath = '/index.php';
+
+/// Cuántos favoritos se piden por página.
+const gelbooruPageSize = 100;
+
+/// Tope de páginas del listado de favoritos que se recorren de una vez. Con el
+/// tamaño de página son diez mil favoritos.
+const gelbooruMaxPages = 100;
+
+/// Cuántas publicaciones seguidas puede dejar de dar Gelbooru antes de dar la
+/// importación por rota.
+///
+/// Que una publicación marcada ya no exista es normal; que no llegue ninguna de
+/// las primeras es que algo no va, y es mejor decirlo que devolver una
+/// importación vacía como si la cuenta no tuviera favoritos.
+const gelbooruMinAskedToGiveUp = 5;
+
+/// Nombre de la etiqueta de origen con la que nace el contenido de Gelbooru,
+/// para que la ordenación de ficheros por origen sepa dónde ponerlo.
+const gelbooruSourceTagName = 'Gelbooru';
+
+/// Las credenciales de la API de Gelbooru: el identificador de la cuenta (un
+/// número) y su clave. Los dos salen de las opciones de la cuenta.
+const gelbooruUserIdPreferenceKey = 'gelbooru_user_id';
+const gelbooruApiKeyPreferenceKey = 'gelbooru_api_key';
+
 // Navegador de la aplicación (experimental)
 /// Por dónde empieza el navegador mientras el usuario no diga otra cosa: un
 /// buscador, que es de donde se sale a cualquier sitio.

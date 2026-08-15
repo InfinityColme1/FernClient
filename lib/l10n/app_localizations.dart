@@ -1002,6 +1002,24 @@ abstract class AppLocalizations {
   /// **'Address'**
   String get browserHomeLabel;
 
+  /// No description provided for @credentialsRejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{source} did not accept your credentials'**
+  String credentialsRejectedTitle(String source);
+
+  /// No description provided for @credentialsRejectedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing could be imported: {source} turned down the account or the key it was given. Check them in Settings, under Remote sources.'**
+  String credentialsRejectedDescription(String source);
+
+  /// No description provided for @actionOpenRemoteSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get actionOpenRemoteSettings;
+
   /// No description provided for @sessionExpiredTitle.
   ///
   /// In en, this message translates to:
@@ -1037,6 +1055,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing was brought in.'**
   String get browserImportNothing;
+
+  /// No description provided for @danbooruTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Danbooru'**
+  String get danbooruTitle;
+
+  /// No description provided for @danbooruDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern downloads the posts you have favourited on Danbooru. Its API is public: all it needs is your account name and an API key.'**
+  String get danbooruDescription;
+
+  /// No description provided for @danbooruUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get danbooruUsername;
+
+  /// No description provided for @danbooruUsernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Danbooru user name'**
+  String get danbooruUsernameHint;
+
+  /// No description provided for @danbooruApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get danbooruApiKey;
+
+  /// No description provided for @danbooruApiKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A key from your Danbooru profile'**
+  String get danbooruApiKeyHint;
+
+  /// No description provided for @danbooruApiKeyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'On Danbooru, open your profile, go to API Key and create one. It is not your password: you can revoke it whenever you like without changing anything else. It stays on this computer and is only used to talk to Danbooru.'**
+  String get danbooruApiKeyNote;
+
+  /// No description provided for @gelbooruTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gelbooru'**
+  String get gelbooruTitle;
+
+  /// No description provided for @gelbooruDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern downloads the posts you have favourited on Gelbooru. Its favourites API is slower than the rest: it hands out references rather than posts, so each one has to be asked for separately.'**
+  String get gelbooruDescription;
+
+  /// No description provided for @gelbooruUserId.
+  ///
+  /// In en, this message translates to:
+  /// **'Account id'**
+  String get gelbooruUserId;
+
+  /// No description provided for @gelbooruUserIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The number of your Gelbooru account'**
+  String get gelbooruUserIdHint;
+
+  /// No description provided for @gelbooruApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get gelbooruApiKey;
+
+  /// No description provided for @gelbooruApiKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The key of that account'**
+  String get gelbooruApiKeyHint;
+
+  /// No description provided for @gelbooruApiKeyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'On Gelbooru, go to My Account, then Options, and look for API Access Credentials: both the id and the key are there. They stay on this computer and are only used to talk to Gelbooru.'**
+  String get gelbooruApiKeyNote;
 
   /// No description provided for @browserAddressHint.
   ///
@@ -1127,6 +1229,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Downloading {done} of {total}…'**
   String browserImporting(int done, int total);
+
+  /// No description provided for @importFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The import could not be completed: {error}'**
+  String importFailed(String error);
 
   /// No description provided for @importLimitAll.
   ///

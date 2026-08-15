@@ -1,4 +1,6 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
@@ -97,6 +99,16 @@ class AppSettingsEntity extends Equatable {
   /// fuente todavía no se puede usar.
   final RedditSettingsEntity reddit;
 
+  /// Credenciales de la fuente remota de Danbooru. Viene vacía mientras el
+  /// usuario no la haya rellenado, que es como la aplicación sabe que esa
+  /// fuente todavía no se puede usar.
+  final DanbooruSettingsEntity danbooru;
+
+  /// Credenciales de la fuente remota de Gelbooru. Viene vacía mientras el
+  /// usuario no la haya rellenado, que es como la aplicación sabe que esa
+  /// fuente todavía no se puede usar.
+  final GelbooruSettingsEntity gelbooru;
+
   /// La página por la que arranca el navegador de la aplicación cuando se le
   /// pide volver a empezar. Es lo que el usuario entiende por su página de
   /// inicio, y por eso la elige él.
@@ -119,6 +131,8 @@ class AppSettingsEntity extends Equatable {
     this.browserHome = browserHomeUrl,
     this.reddit = const RedditSettingsEntity(),
     this.pixiv = const PixivSettingsEntity(),
+    this.danbooru = const DanbooruSettingsEntity(),
+    this.gelbooru = const GelbooruSettingsEntity(),
   });
 
   /// Los ficheros sólo se reordenan si el usuario lo ha pedido y ha dicho
@@ -137,6 +151,8 @@ class AppSettingsEntity extends Equatable {
     String? browserHome,
     RedditSettingsEntity? reddit,
     PixivSettingsEntity? pixiv,
+    DanbooruSettingsEntity? danbooru,
+    GelbooruSettingsEntity? gelbooru,
   }) {
     return AppSettingsEntity(
       language: language ?? this.language,
@@ -150,6 +166,8 @@ class AppSettingsEntity extends Equatable {
       browserHome: browserHome ?? this.browserHome,
       reddit: reddit ?? this.reddit,
       pixiv: pixiv ?? this.pixiv,
+      danbooru: danbooru ?? this.danbooru,
+      gelbooru: gelbooru ?? this.gelbooru,
     );
   }
 
@@ -166,5 +184,7 @@ class AppSettingsEntity extends Equatable {
         browserHome,
         reddit,
         pixiv,
+        danbooru,
+        gelbooru,
       ];
 }

@@ -573,6 +573,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get browserHomeLabel => 'Adresse';
 
   @override
+  String credentialsRejectedTitle(String source) {
+    return '$source n\'a pas accepté tes identifiants';
+  }
+
+  @override
+  String credentialsRejectedDescription(String source) {
+    return 'Rien n\'a pu être importé : $source a rejeté le compte ou la clé qu\'on lui donnait. Vérifie-les dans Réglages, dans Sources distantes.';
+  }
+
+  @override
+  String get actionOpenRemoteSettings => 'Ouvrir les réglages';
+
+  @override
   String sessionExpiredTitle(String source) {
     return 'La session $source n\'est plus valable';
   }
@@ -617,6 +630,52 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get browserImportNothing => 'Rien n\'a été apporté.';
+
+  @override
+  String get danbooruTitle => 'Danbooru';
+
+  @override
+  String get danbooruDescription =>
+      'Fern télécharge les publications que tu as mises en favoris sur Danbooru. Son API est publique : il suffit du nom de ton compte et d\'une clé d\'API.';
+
+  @override
+  String get danbooruUsername => 'Nom du compte';
+
+  @override
+  String get danbooruUsernameHint => 'Ton nom d\'utilisateur sur Danbooru';
+
+  @override
+  String get danbooruApiKey => 'Clé d\'API';
+
+  @override
+  String get danbooruApiKeyHint => 'Une clé de ton profil Danbooru';
+
+  @override
+  String get danbooruApiKeyNote =>
+      'Sur Danbooru, ouvre ton profil, va dans API Key et crées-en une. Ce n\'est pas ton mot de passe : tu peux la révoquer quand tu veux sans rien changer d\'autre. Elle reste sur cet ordinateur et ne sert qu\'à parler à Danbooru.';
+
+  @override
+  String get gelbooruTitle => 'Gelbooru';
+
+  @override
+  String get gelbooruDescription =>
+      'Fern télécharge les publications que tu as mises en favoris sur Gelbooru. Son API de favoris est plus lente que les autres : elle donne des références au lieu des publications, il faut donc demander chacune séparément.';
+
+  @override
+  String get gelbooruUserId => 'Identifiant du compte';
+
+  @override
+  String get gelbooruUserIdHint => 'Le numéro de ton compte Gelbooru';
+
+  @override
+  String get gelbooruApiKey => 'Clé d\'API';
+
+  @override
+  String get gelbooruApiKeyHint => 'La clé de ce compte';
+
+  @override
+  String get gelbooruApiKeyNote =>
+      'Sur Gelbooru, va dans My Account, puis Options, et cherche API Access Credentials : l\'identifiant et la clé y sont. Ils restent sur cet ordinateur et ne servent qu\'à parler à Gelbooru.';
 
   @override
   String get browserAddressHint => 'Adresse d\'un site';
@@ -685,6 +744,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String browserImporting(int done, int total) {
     return 'Téléchargement de $done sur $total…';
+  }
+
+  @override
+  String importFailed(String error) {
+    return 'L\'importation n\'a pas pu être terminée : $error';
   }
 
   @override

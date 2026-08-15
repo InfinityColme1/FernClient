@@ -573,6 +573,19 @@ class AppLocalizationsCa extends AppLocalizations {
   String get browserHomeLabel => 'Adreça';
 
   @override
+  String credentialsRejectedTitle(String source) {
+    return '$source no ha acceptat les teves credencials';
+  }
+
+  @override
+  String credentialsRejectedDescription(String source) {
+    return 'No s\'ha pogut importar res: $source ha rebutjat el compte o la clau que se li donaven. Revisa\'ls a Configuració, a Fonts remotes.';
+  }
+
+  @override
+  String get actionOpenRemoteSettings => 'Obre la configuració';
+
+  @override
   String sessionExpiredTitle(String source) {
     return 'La sessió de $source ja no val';
   }
@@ -617,6 +630,52 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get browserImportNothing => 'No s\'ha portat res.';
+
+  @override
+  String get danbooruTitle => 'Danbooru';
+
+  @override
+  String get danbooruDescription =>
+      'El Fern es descarrega les publicacions que tinguis als preferits de Danbooru. La seva API és pública: només calen el nom del teu compte i una clau d\'API.';
+
+  @override
+  String get danbooruUsername => 'Nom del compte';
+
+  @override
+  String get danbooruUsernameHint => 'El teu nom d\'usuari a Danbooru';
+
+  @override
+  String get danbooruApiKey => 'Clau d\'API';
+
+  @override
+  String get danbooruApiKeyHint => 'Una clau del teu perfil de Danbooru';
+
+  @override
+  String get danbooruApiKeyNote =>
+      'A Danbooru, obre el teu perfil, ves a API Key i crea\'n una. No és la teva contrasenya: pots revocar-la quan vulguis sense tocar res més. Es queda en aquest equip i només s\'usa per parlar amb Danbooru.';
+
+  @override
+  String get gelbooruTitle => 'Gelbooru';
+
+  @override
+  String get gelbooruDescription =>
+      'El Fern es descarrega les publicacions que tinguis als preferits de Gelbooru. La seva API de preferits és més lenta que les altres: dona referències en lloc de publicacions, així que cal demanar cadascuna a part.';
+
+  @override
+  String get gelbooruUserId => 'Identificador del compte';
+
+  @override
+  String get gelbooruUserIdHint => 'El número del teu compte de Gelbooru';
+
+  @override
+  String get gelbooruApiKey => 'Clau d\'API';
+
+  @override
+  String get gelbooruApiKeyHint => 'La clau d\'aquest compte';
+
+  @override
+  String get gelbooruApiKeyNote =>
+      'A Gelbooru, entra a My Account, després a Options, i busca API Access Credentials: allà hi ha l\'identificador i la clau. Es queden en aquest equip i només s\'usen per parlar amb Gelbooru.';
 
   @override
   String get browserAddressHint => 'Adreça d\'un lloc';
@@ -686,6 +745,11 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String browserImporting(int done, int total) {
     return 'Descarregant $done de $total…';
+  }
+
+  @override
+  String importFailed(String error) {
+    return 'La importació no s\'ha pogut completar: $error';
   }
 
   @override

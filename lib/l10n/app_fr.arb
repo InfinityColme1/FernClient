@@ -183,6 +183,19 @@
   "browserHomeTitle": "Page d'accueil",
   "browserHomeDescription": "Où démarre le navigateur de Fern quand tu appuies sur le bouton d'accueil. Cela ne décide pas de son ouverture : en revenant sur l'écran, le navigateur reste sur la dernière page visitée.",
   "browserHomeLabel": "Adresse",
+  "credentialsRejectedTitle": "{source} n'a pas accepté tes identifiants",
+  "@credentialsRejectedTitle": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "credentialsRejectedDescription": "Rien n'a pu être importé : {source} a rejeté le compte ou la clé qu'on lui donnait. Vérifie-les dans Réglages, dans Sources distantes.",
+  "@credentialsRejectedDescription": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "actionOpenRemoteSettings": "Ouvrir les réglages",
   "sessionExpiredTitle": "La session {source} n'est plus valable",
   "@sessionExpiredTitle": {
     "placeholders": {
@@ -215,6 +228,22 @@
     }
   },
   "browserImportNothing": "Rien n'a été apporté.",
+  "danbooruTitle": "Danbooru",
+  "danbooruDescription": "Fern télécharge les publications que tu as mises en favoris sur Danbooru. Son API est publique : il suffit du nom de ton compte et d'une clé d'API.",
+  "danbooruUsername": "Nom du compte",
+  "danbooruUsernameHint": "Ton nom d'utilisateur sur Danbooru",
+  "danbooruApiKey": "Clé d'API",
+  "danbooruApiKeyHint": "Une clé de ton profil Danbooru",
+  "danbooruApiKeyNote": "Sur Danbooru, ouvre ton profil, va dans API Key et crées-en une. Ce n'est pas ton mot de passe : tu peux la révoquer quand tu veux sans rien changer d'autre. Elle reste sur cet ordinateur et ne sert qu'à parler à Danbooru.",
+
+  "gelbooruTitle": "Gelbooru",
+  "gelbooruDescription": "Fern télécharge les publications que tu as mises en favoris sur Gelbooru. Son API de favoris est plus lente que les autres : elle donne des références au lieu des publications, il faut donc demander chacune séparément.",
+  "gelbooruUserId": "Identifiant du compte",
+  "gelbooruUserIdHint": "Le numéro de ton compte Gelbooru",
+  "gelbooruApiKey": "Clé d'API",
+  "gelbooruApiKeyHint": "La clé de ce compte",
+  "gelbooruApiKeyNote": "Sur Gelbooru, va dans My Account, puis Options, et cherche API Access Credentials : l'identifiant et la clé y sont. Ils restent sur cet ordinateur et ne servent qu'à parler à Gelbooru.",
+
   "browserAddressHint": "Adresse d'un site",
   "browserBack": "Retour",
   "browserForward": "Suivant",
@@ -254,6 +283,13 @@
     "placeholders": {
       "done": { "type": "int" },
       "total": { "type": "int" }
+    }
+  },
+
+  "importFailed": "L'importation n'a pas pu être terminée : {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
     }
   },
 

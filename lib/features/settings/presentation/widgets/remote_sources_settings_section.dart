@@ -2,6 +2,8 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
@@ -11,7 +13,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Configuración de las plataformas de las que la aplicación puede traerse
-/// contenido: Reddit y Pixiv.
+/// contenido con sus propias credenciales: Reddit, Danbooru y Gelbooru.
+///
+/// Las plataformas en las que se entra desde el navegador de la aplicación no
+/// están aquí: su sesión no se escribe, se recoge.
 ///
 /// Los campos son de estado propio y no de un `BlocBuilder`: se guardan según
 /// se escriben, y repintarlos con cada tecla movería el cursor de sitio. El
@@ -30,6 +35,10 @@ class _RemoteSourcesSettingsSectionState
   late final TextEditingController _clientSecret;
   late final TextEditingController _username;
   late final TextEditingController _password;
+  late final TextEditingController _danbooruUsername;
+  late final TextEditingController _danbooruApiKey;
+  late final TextEditingController _gelbooruUserId;
+  late final TextEditingController _gelbooruApiKey;
 
   @override
   void initState() {
@@ -42,6 +51,14 @@ class _RemoteSourcesSettingsSectionState
     _clientSecret = TextEditingController(text: reddit.clientSecret);
     _username = TextEditingController(text: reddit.username);
     _password = TextEditingController(text: reddit.password);
+
+    final danbooru = settings.danbooru;
+    _danbooruUsername = TextEditingController(text: danbooru.username);
+    _danbooruApiKey = TextEditingController(text: danbooru.apiKey);
+
+    final gelbooru = settings.gelbooru;
+    _gelbooruUserId = TextEditingController(text: gelbooru.userId);
+    _gelbooruApiKey = TextEditingController(text: gelbooru.apiKey);
   }
 
   @override
@@ -50,6 +67,10 @@ class _RemoteSourcesSettingsSectionState
     _clientSecret.dispose();
     _username.dispose();
     _password.dispose();
+    _danbooruUsername.dispose();
+    _danbooruApiKey.dispose();
+    _gelbooruUserId.dispose();
+    _gelbooruApiKey.dispose();
     super.dispose();
   }
 
@@ -62,6 +83,26 @@ class _RemoteSourcesSettingsSectionState
             clientSecret: _clientSecret.text,
             username: _username.text,
             password: _password.text,
+          ),
+        ));
+  }
+
+  /// Guarda las dos credenciales de Danbooru tal y como están en sus campos.
+  void _saveDanbooru() {
+    context.read<SettingsBloc>().add(DanbooruSettingsChangedEvent(
+          DanbooruSettingsEntity(
+            username: _danbooruUsername.text,
+            apiKey: _danbooruApiKey.text,
+          ),
+        ));
+  }
+
+  /// Guarda las dos credenciales de Gelbooru tal y como están en sus campos.
+  void _saveGelbooru() {
+    context.read<SettingsBloc>().add(GelbooruSettingsChangedEvent(
+          GelbooruSettingsEntity(
+            userId: _gelbooruUserId.text,
+            apiKey: _gelbooruApiKey.text,
           ),
         ));
   }
@@ -123,6 +164,46 @@ class _RemoteSourcesSettingsSectionState
         ),
         const SizedBox(height: AppSpacing.l),
         _description(context, texts.redditCredentialsNote),
+        const SizedBox(height: AppSpacing.xl),
+        _title(context, texts.danbooruTitle),
+        _description(context, texts.danbooruDescription),
+        const SizedBox(height: AppSpacing.l),
+        FernLabeledTextField(
+          label: texts.danbooruUsername,
+          hintText: texts.danbooruUsernameHint,
+          controller: _danbooruUsername,
+          onChanged: (_) => _saveDanbooru(),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        FernLabeledTextField(
+          label: texts.danbooruApiKey,
+          hintText: texts.danbooruApiKeyHint,
+          controller: _danbooruApiKey,
+          obscureText: true,
+          onChanged: (_) => _saveDanbooru(),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        _description(context, texts.danbooruApiKeyNote),
+        const SizedBox(height: AppSpacing.xl),
+        _title(context, texts.gelbooruTitle),
+        _description(context, texts.gelbooruDescription),
+        const SizedBox(height: AppSpacing.l),
+        FernLabeledTextField(
+          label: texts.gelbooruUserId,
+          hintText: texts.gelbooruUserIdHint,
+          controller: _gelbooruUserId,
+          onChanged: (_) => _saveGelbooru(),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        FernLabeledTextField(
+          label: texts.gelbooruApiKey,
+          hintText: texts.gelbooruApiKeyHint,
+          controller: _gelbooruApiKey,
+          obscureText: true,
+          onChanged: (_) => _saveGelbooru(),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        _description(context, texts.gelbooruApiKeyNote),
       ],
     );
   }

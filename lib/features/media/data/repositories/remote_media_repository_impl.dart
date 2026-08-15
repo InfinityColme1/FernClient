@@ -1,6 +1,8 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
+import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
@@ -10,7 +12,7 @@ import 'package:Fern/features/media/domain/entities/media/media_summary_entity.d
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 
-/// Las fuentes remotas de la aplicación: Reddit y Pixiv.
+/// Las fuentes remotas de la aplicación: Reddit, Pixiv, Danbooru y Gelbooru.
 ///
 /// El recorrido es siempre el mismo, dé igual la plataforma: se pregunta a su
 /// API qué tiene guardado el usuario, se descarga lo que aún no está en el
@@ -19,6 +21,8 @@ import 'package:Fern/features/settings/domain/repositories/settings_repository.d
 class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   final RedditApiClient _reddit;
   final PixivApiClient _pixiv;
+  final DanbooruApiClient _danbooru;
+  final GelbooruApiClient _gelbooru;
   final RemoteMediaDownloader _downloader;
   final MediaRegistry _registry;
   final SettingsRepository _settingsRepository;
@@ -27,12 +31,16 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   RemoteMediaRepositoryImpl({
     required RedditApiClient reddit,
     required PixivApiClient pixiv,
+    required DanbooruApiClient danbooru,
+    required GelbooruApiClient gelbooru,
     required RemoteMediaDownloader downloader,
     required MediaRegistry registry,
     required SettingsRepository settingsRepository,
     required PreferencesService preferencesService,
   })  : _reddit = reddit,
         _pixiv = pixiv,
+        _danbooru = danbooru,
+        _gelbooru = gelbooru,
         _downloader = downloader,
         _registry = registry,
         _settingsRepository = settingsRepository,
@@ -48,6 +56,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         yield* _scanReddit(untilLastImport: untilLastImport);
       case ImportSource.pixiv:
         yield* _scanPixiv(untilLastImport: untilLastImport);
+      case ImportSource.danbooru:
+        yield* _scanDanbooru(untilLastImport: untilLastImport);
+      case ImportSource.gelbooru:
+        yield* _scanGelbooru(untilLastImport: untilLastImport);
       case ImportSource.all:
       case ImportSource.local:
       // El navegador tampoco: de él no se puede pedir nada, es el usuario quien
@@ -93,6 +105,8 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         ? _preferencesService.getLastImportMarker(ImportSource.reddit)
         : null;
     String? newest;
+    var imported = 0;
+    var failed = 0;
 
     try {
       await for (final item in _reddit.savedMedia(credentials)) {
@@ -108,7 +122,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           name: item.id,
           source: ImportSource.reddit,
         );
-        if (path == null) continue;
+        if (path == null) {
+          failed++;
+          continue;
+        }
 
         final summary = await _registry.register(
           path: path,
@@ -121,10 +138,19 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? redditSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) yield DataSuccess(summary);
+        if (summary != null) {
+          imported++;
+          yield DataSuccess(summary);
+        }
       }
     } on Exception catch (e) {
       yield DataException(e);
+      return;
+    }
+
+    if (_nothingCameThrough(ImportSource.reddit, failed: failed, imported: imported)
+        case final error?) {
+      yield error;
       return;
     }
 
@@ -173,6 +199,8 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     // Lo más nuevo que había en cada listado al empezar, que es lo que quedará
     // como marca cuando el recorrido termine.
     final newest = <String, String>{};
+    var imported = 0;
+    var failed = 0;
 
     try {
       await for (final item
@@ -191,7 +219,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           // fotogramas, y hay que montarlas al descargarlas.
           frameDelays: item.frameDelays,
         );
-        if (path == null) continue;
+        if (path == null) {
+          failed++;
+          continue;
+        }
 
         final summary = await _registry.register(
           path: path,
@@ -201,10 +232,19 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? pixivSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) yield DataSuccess(summary);
+        if (summary != null) {
+          imported++;
+          yield DataSuccess(summary);
+        }
       }
     } on Exception catch (e) {
       yield DataException(e);
+      return;
+    }
+
+    if (_nothingCameThrough(ImportSource.pixiv, failed: failed, imported: imported)
+        case final error?) {
+      yield error;
       return;
     }
 
@@ -215,5 +255,171 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         collection: entry.key,
       );
     }
+  }
+
+  /// Lo que el usuario tiene en favoritos en Danbooru.
+  ///
+  /// Es el más sencillo de los tres: su API es pública y devuelve los favoritos
+  /// en el orden en el que se marcaron, así que "desde la última vez" se
+  /// resuelve con una marca igual que en las otras dos, y una publicación es
+  /// siempre un fichero, así que no hay galerías que repartir.
+  Stream<DataState<MediaSummaryEntity>> _scanDanbooru({
+    required bool untilLastImport,
+  }) async* {
+    final settings = _settingsRepository.getSettings();
+    final credentials = settings.danbooru;
+    if (!credentials.isComplete) {
+      yield DataException(Exception('Danbooru is not configured'));
+      return;
+    }
+
+    final marker = untilLastImport
+        ? _preferencesService.getLastImportMarker(ImportSource.danbooru)
+        : null;
+
+    // Lo más nuevo que había al empezar, que es lo que quedará como marca
+    // cuando el recorrido termine.
+    String? newest;
+    var imported = 0;
+    var failed = 0;
+
+    try {
+      await for (final item
+          in _danbooru.favoriteMedia(credentials, stopAt: marker)) {
+        newest ??= item.postId;
+
+        final path = await _downloader.download(
+          url: item.url,
+          name: item.id,
+          source: ImportSource.danbooru,
+        );
+        if (path == null) {
+          failed++;
+          continue;
+        }
+
+        final summary = await _registry.register(
+          path: path,
+          source: ImportSource.danbooru,
+          sourceTagName:
+              settings.autoTagRemoteSource ? danbooruSourceTagName : null,
+          sourceUrls: item.sourceUrls,
+        );
+        if (summary != null) {
+          imported++;
+          yield DataSuccess(summary);
+        }
+      }
+    } on Exception catch (e) {
+      yield DataException(e);
+      return;
+    }
+
+    if (_nothingCameThrough(ImportSource.danbooru, failed: failed, imported: imported)
+        case final error?) {
+      yield error;
+      return;
+    }
+
+    if (newest != null) {
+      await _preferencesService.setLastImportMarker(
+        ImportSource.danbooru,
+        newest,
+      );
+    }
+  }
+
+  /// Lo que el usuario tiene en favoritos en Gelbooru.
+  ///
+  /// Por fuera es igual que Danbooru; por dentro, su listado de favoritos es
+  /// bastante peor (ni devuelve las publicaciones ni las da siempre en el mismo
+  /// orden), pero de eso se encarga su cliente. Aquí llega lo mismo que de
+  /// cualquier otra fuente: contenido de lo más reciente a lo más antiguo.
+  Stream<DataState<MediaSummaryEntity>> _scanGelbooru({
+    required bool untilLastImport,
+  }) async* {
+    final settings = _settingsRepository.getSettings();
+    final credentials = settings.gelbooru;
+    if (!credentials.isComplete) {
+      yield DataException(Exception('Gelbooru is not configured'));
+      return;
+    }
+
+    final marker = untilLastImport
+        ? _preferencesService.getLastImportMarker(ImportSource.gelbooru)
+        : null;
+
+    String? newest;
+    var imported = 0;
+    var failed = 0;
+
+    try {
+      await for (final item
+          in _gelbooru.favoriteMedia(credentials, stopAt: marker)) {
+        newest ??= item.postId;
+
+        final path = await _downloader.download(
+          url: item.url,
+          name: item.id,
+          source: ImportSource.gelbooru,
+          // Su servidor de imágenes sólo las da a quien dice venir de su web.
+          headers: item.headers,
+        );
+        if (path == null) {
+          failed++;
+          continue;
+        }
+
+        final summary = await _registry.register(
+          path: path,
+          source: ImportSource.gelbooru,
+          sourceTagName:
+              settings.autoTagRemoteSource ? gelbooruSourceTagName : null,
+          sourceUrls: item.sourceUrls,
+        );
+        if (summary != null) {
+          imported++;
+          yield DataSuccess(summary);
+        }
+      }
+    } on Exception catch (e) {
+      yield DataException(e);
+      return;
+    }
+
+    if (_nothingCameThrough(ImportSource.gelbooru, failed: failed, imported: imported)
+        case final error?) {
+      yield error;
+      return;
+    }
+
+    if (newest != null) {
+      await _preferencesService.setLastImportMarker(
+        ImportSource.gelbooru,
+        newest,
+      );
+    }
+  }
+
+  /// El fallo que hay que contar cuando se ha encontrado contenido y no ha
+  /// entrado nada de nada, o `null` si no hay nada que contar.
+  ///
+  /// Una descarga que falla se pasa por alto de una en una, y está bien: es
+  /// contenido que no llega. Pero si fallan **todas**, lo que hay no es una
+  /// importación sin novedades sino una importación rota, y las dos se ven
+  /// exactamente igual en la pantalla si no se dice.
+  ///
+  /// Además, en ese caso no se guarda la marca de por dónde se iba: darla por
+  /// buena dejaría fuera para siempre lo que no se ha llegado a descargar.
+  DataException<MediaSummaryEntity>? _nothingCameThrough(
+    ImportSource source, {
+    required int failed,
+    required int imported,
+  }) {
+    if (failed == 0 || imported > 0) return null;
+
+    return DataException(Exception(
+      'None of the $failed files found in ${source.id} could be downloaded',
+    ));
   }
 }

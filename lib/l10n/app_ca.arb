@@ -183,6 +183,19 @@
   "browserHomeTitle": "Pàgina d'inici",
   "browserHomeDescription": "Per on comença el navegador del Fern en prémer el botó d'inici. No decideix per on s'obre: en tornar a la pantalla, el navegador es queda a l'última pàgina que vas visitar.",
   "browserHomeLabel": "Adreça",
+  "credentialsRejectedTitle": "{source} no ha acceptat les teves credencials",
+  "@credentialsRejectedTitle": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "credentialsRejectedDescription": "No s'ha pogut importar res: {source} ha rebutjat el compte o la clau que se li donaven. Revisa'ls a Configuració, a Fonts remotes.",
+  "@credentialsRejectedDescription": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "actionOpenRemoteSettings": "Obre la configuració",
   "sessionExpiredTitle": "La sessió de {source} ja no val",
   "@sessionExpiredTitle": {
     "placeholders": {
@@ -215,6 +228,22 @@
     }
   },
   "browserImportNothing": "No s'ha portat res.",
+  "danbooruTitle": "Danbooru",
+  "danbooruDescription": "El Fern es descarrega les publicacions que tinguis als preferits de Danbooru. La seva API és pública: només calen el nom del teu compte i una clau d'API.",
+  "danbooruUsername": "Nom del compte",
+  "danbooruUsernameHint": "El teu nom d'usuari a Danbooru",
+  "danbooruApiKey": "Clau d'API",
+  "danbooruApiKeyHint": "Una clau del teu perfil de Danbooru",
+  "danbooruApiKeyNote": "A Danbooru, obre el teu perfil, ves a API Key i crea'n una. No és la teva contrasenya: pots revocar-la quan vulguis sense tocar res més. Es queda en aquest equip i només s'usa per parlar amb Danbooru.",
+
+  "gelbooruTitle": "Gelbooru",
+  "gelbooruDescription": "El Fern es descarrega les publicacions que tinguis als preferits de Gelbooru. La seva API de preferits és més lenta que les altres: dona referències en lloc de publicacions, així que cal demanar cadascuna a part.",
+  "gelbooruUserId": "Identificador del compte",
+  "gelbooruUserIdHint": "El número del teu compte de Gelbooru",
+  "gelbooruApiKey": "Clau d'API",
+  "gelbooruApiKeyHint": "La clau d'aquest compte",
+  "gelbooruApiKeyNote": "A Gelbooru, entra a My Account, després a Options, i busca API Access Credentials: allà hi ha l'identificador i la clau. Es queden en aquest equip i només s'usen per parlar amb Gelbooru.",
+
   "browserAddressHint": "Adreça d'un lloc",
   "browserBack": "Enrere",
   "browserForward": "Endavant",
@@ -254,6 +283,13 @@
     "placeholders": {
       "done": { "type": "int" },
       "total": { "type": "int" }
+    }
+  },
+
+  "importFailed": "La importació no s'ha pogut completar: {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
     }
   },
 

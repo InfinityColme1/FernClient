@@ -1146,6 +1146,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // y hay que decírselo al acabar.
     ImportSource? expiredSession;
 
+    // Lo que haya fallado por el camino. Se queda el primero: es el que explica
+    // por qué lo demás no ha llegado.
+    String? importError;
+
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
       onData: (dataState) {
@@ -1160,8 +1164,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
           );
         }
 
-        if (dataState.exception case final RemoteSessionExpiredException error) {
-          expiredSession = error.source;
+        switch (dataState.exception) {
+          case final RemoteSessionExpiredException error:
+            expiredSession = error.source;
+          case final Exception error:
+            importError ??= error.toString();
+          case null:
+            break;
         }
 
         return state;
@@ -1183,6 +1192,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       importSource: state.importSource,
       lastImportAt: await _getLastImportUseCase(params: state.importSource),
       expiredSession: expiredSession,
+      importError: importError,
     ));
   }
 

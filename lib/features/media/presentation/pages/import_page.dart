@@ -15,6 +15,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
+import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -92,6 +93,8 @@ class _ImportViewState extends State<_ImportView> {
     return switch (source) {
       ImportSource.reddit => settings.settings.reddit.isComplete,
       ImportSource.pixiv => settings.settings.pixiv.isComplete,
+      ImportSource.danbooru => settings.settings.danbooru.isComplete,
+      ImportSource.gelbooru => settings.settings.gelbooru.isComplete,
       _ => true,
     };
   }
@@ -255,21 +258,36 @@ class _ImportViewState extends State<_ImportView> {
     bloc.add(ScanSourceEvent(limit: _limit));
   }
 
-  /// Avisa de que la sesión de [source] ya no vale y, si el usuario quiere,
-  /// le lleva al navegador a volver a entrar.
+  /// Avisa de que [source] no ha aceptado lo que se le daba para entrar y, si
+  /// el usuario quiere, le lleva a donde se arregla.
+  ///
+  /// Y ese sitio no es el mismo en todas: las plataformas en las que se entra
+  /// desde el navegador de la aplicación mandan ahí, a volver a iniciar sesión;
+  /// las que se configuran con una clave de API mandan a sus ajustes, que es
+  /// donde está lo que hay que repasar.
   Future<void> _onSessionExpired(
     BuildContext context,
     ImportSource source,
   ) async {
     final login = browserSessionFor(source);
 
-    final goToLogin = await showFernDialog<bool, MediaBloc>(
+    final goToFix = await showFernDialog<bool, MediaBloc>(
       context: context,
       builder: (_) => SessionExpiredDialog(source: source),
     );
-    if (goToLogin != true || login == null || !context.mounted) return;
+    if (goToFix != true || !context.mounted) return;
 
-    context.go(browserRouteWithUrl(login.loginUrl));
+    if (login != null) {
+      context.go(browserRouteWithUrl(login.loginUrl));
+      return;
+    }
+
+    await showFernDialog<void, MediaBloc>(
+      context: context,
+      builder: (_) => const SettingsDialog(
+        initialSection: SettingsSection.remoteSources,
+      ),
+    );
   }
 
   /// Descarta la selección, avisando antes de que va a salir de la aplicación y
@@ -297,7 +315,8 @@ class _ImportViewState extends State<_ImportView> {
     return BlocConsumer<MediaBloc, MediaStates>(
       listenWhen: (previous, current) =>
           (previous is! DetailedMedia && current is DetailedMedia) ||
-          current.expiredSession != null,
+          current.expiredSession != null ||
+          current.importError != null,
       listener: (context, state) {
         if (state is DetailedMedia) {
           // El contenido escaneado se abre con la información desplegada: es
@@ -310,6 +329,19 @@ class _ImportViewState extends State<_ImportView> {
         // sesión: se dice, y se ofrece ir a donde se arregla.
         if (state.expiredSession case final source?) {
           _onSessionExpired(context, source);
+          return;
+        }
+
+        // Cualquier otro fallo de la fuente: no se puede arreglar desde aquí,
+        // pero callarlo deja la pantalla igual que si no hubiera nada nuevo.
+        if (state.importError case final error?) {
+          showFernDialog<void, MediaBloc>(
+            context: context,
+            builder: (_) => FernMessageDialog(
+              imageAsset: fernEmptyImage,
+              message: texts.importFailed(error),
+            ),
+          );
         }
       },
       builder: (context, state) {

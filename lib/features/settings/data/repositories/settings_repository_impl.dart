@@ -1,5 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
@@ -47,6 +49,14 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ),
       browserHome: _preferences.getString(browserHomePreferenceKey) ??
           browserHomeUrl,
+      gelbooru: GelbooruSettingsEntity(
+        userId: _preferences.getString(gelbooruUserIdPreferenceKey) ?? '',
+        apiKey: _preferences.getString(gelbooruApiKeyPreferenceKey) ?? '',
+      ),
+      danbooru: DanbooruSettingsEntity(
+        username: _preferences.getString(danbooruUsernamePreferenceKey) ?? '',
+        apiKey: _preferences.getString(danbooruApiKeyPreferenceKey) ?? '',
+      ),
       pixiv: PixivSettingsEntity(
         sessionId: _preferences.getString(pixivSessionIdPreferenceKey) ?? '',
       ),
@@ -96,6 +106,17 @@ class SettingsRepositoryImpl implements SettingsRepository {
       pixivSessionIdPreferenceKey,
       settings.pixiv.sessionId,
     );
+
+    final danbooru = settings.danbooru;
+    await _preferences.setString(
+      danbooruUsernamePreferenceKey,
+      danbooru.username,
+    );
+    await _preferences.setString(danbooruApiKeyPreferenceKey, danbooru.apiKey);
+
+    final gelbooru = settings.gelbooru;
+    await _preferences.setString(gelbooruUserIdPreferenceKey, gelbooru.userId);
+    await _preferences.setString(gelbooruApiKeyPreferenceKey, gelbooru.apiKey);
 
     await _preferences.setString(
       browserHomePreferenceKey,
