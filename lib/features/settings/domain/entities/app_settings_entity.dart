@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
@@ -109,6 +110,10 @@ class AppSettingsEntity extends Equatable {
   /// fuente todavía no se puede usar.
   final GelbooruSettingsEntity gelbooru;
 
+  /// Lo que hace falta para traerse lo guardado en Pinterest: sólo el nombre de
+  /// la cuenta, y la sesión si el usuario la ha recogido.
+  final PinterestSettingsEntity pinterest;
+
   /// La página por la que arranca el navegador de la aplicación cuando se le
   /// pide volver a empezar. Es lo que el usuario entiende por su página de
   /// inicio, y por eso la elige él.
@@ -133,6 +138,7 @@ class AppSettingsEntity extends Equatable {
     this.pixiv = const PixivSettingsEntity(),
     this.danbooru = const DanbooruSettingsEntity(),
     this.gelbooru = const GelbooruSettingsEntity(),
+    this.pinterest = const PinterestSettingsEntity(),
   });
 
   /// Los ficheros sólo se reordenan si el usuario lo ha pedido y ha dicho
@@ -153,6 +159,7 @@ class AppSettingsEntity extends Equatable {
     PixivSettingsEntity? pixiv,
     DanbooruSettingsEntity? danbooru,
     GelbooruSettingsEntity? gelbooru,
+    PinterestSettingsEntity? pinterest,
   }) {
     return AppSettingsEntity(
       language: language ?? this.language,
@@ -168,6 +175,7 @@ class AppSettingsEntity extends Equatable {
       pixiv: pixiv ?? this.pixiv,
       danbooru: danbooru ?? this.danbooru,
       gelbooru: gelbooru ?? this.gelbooru,
+      pinterest: pinterest ?? this.pinterest,
     );
   }
 
@@ -186,5 +194,6 @@ class AppSettingsEntity extends Equatable {
         pixiv,
         danbooru,
         gelbooru,
+        pinterest,
       ];
 }

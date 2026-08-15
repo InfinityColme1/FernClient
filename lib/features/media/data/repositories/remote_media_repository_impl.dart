@@ -3,6 +3,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
+import 'package:Fern/features/media/data/datasources/pinterest_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
@@ -12,7 +13,8 @@ import 'package:Fern/features/media/domain/entities/media/media_summary_entity.d
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 
-/// Las fuentes remotas de la aplicación: Reddit, Pixiv, Danbooru y Gelbooru.
+/// Las fuentes remotas de la aplicación: Reddit, Pixiv, Danbooru, Gelbooru y
+/// Pinterest.
 ///
 /// El recorrido es siempre el mismo, dé igual la plataforma: se pregunta a su
 /// API qué tiene guardado el usuario, se descarga lo que aún no está en el
@@ -23,6 +25,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   final PixivApiClient _pixiv;
   final DanbooruApiClient _danbooru;
   final GelbooruApiClient _gelbooru;
+  final PinterestApiClient _pinterest;
   final RemoteMediaDownloader _downloader;
   final MediaRegistry _registry;
   final SettingsRepository _settingsRepository;
@@ -33,6 +36,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     required PixivApiClient pixiv,
     required DanbooruApiClient danbooru,
     required GelbooruApiClient gelbooru,
+    required PinterestApiClient pinterest,
     required RemoteMediaDownloader downloader,
     required MediaRegistry registry,
     required SettingsRepository settingsRepository,
@@ -41,6 +45,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         _pixiv = pixiv,
         _danbooru = danbooru,
         _gelbooru = gelbooru,
+        _pinterest = pinterest,
         _downloader = downloader,
         _registry = registry,
         _settingsRepository = settingsRepository,
@@ -60,6 +65,8 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         yield* _scanDanbooru(untilLastImport: untilLastImport);
       case ImportSource.gelbooru:
         yield* _scanGelbooru(untilLastImport: untilLastImport);
+      case ImportSource.pinterest:
+        yield* _scanPinterest(untilLastImport: untilLastImport);
       case ImportSource.all:
       case ImportSource.local:
       // El navegador tampoco: de él no se puede pedir nada, es el usuario quien
@@ -421,5 +428,76 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     return DataException(Exception(
       'None of the $failed files found in ${source.id} could be downloaded',
     ));
+  }
+
+  /// Lo que el usuario tiene guardado en Pinterest.
+  ///
+  /// Igual que las demás: llega de lo más reciente a lo más antiguo, así que
+  /// "desde la última vez" se resuelve con una marca. Lo que cambia es que aquí
+  /// basta el nombre de la cuenta, sin entrar en ninguna parte: la sesión sólo
+  /// añade lo que el usuario tenga en tableros secretos.
+  Stream<DataState<MediaSummaryEntity>> _scanPinterest({
+    required bool untilLastImport,
+  }) async* {
+    final settings = _settingsRepository.getSettings();
+    final credentials = settings.pinterest;
+    if (!credentials.isComplete) {
+      yield DataException(Exception('Pinterest is not configured'));
+      return;
+    }
+
+    final marker = untilLastImport
+        ? _preferencesService.getLastImportMarker(ImportSource.pinterest)
+        : null;
+
+    String? newest;
+    var imported = 0;
+    var failed = 0;
+
+    try {
+      await for (final item
+          in _pinterest.savedMedia(credentials, stopAt: marker)) {
+        newest ??= item.postId;
+
+        final path = await _downloader.download(
+          url: item.url,
+          name: item.id,
+          source: ImportSource.pinterest,
+        );
+        if (path == null) {
+          failed++;
+          continue;
+        }
+
+        final summary = await _registry.register(
+          path: path,
+          source: ImportSource.pinterest,
+          description: item.title.isEmpty ? null : item.title,
+          sourceTagName:
+              settings.autoTagRemoteSource ? pinterestSourceTagName : null,
+          sourceUrls: item.sourceUrls,
+        );
+        if (summary != null) {
+          imported++;
+          yield DataSuccess(summary);
+        }
+      }
+    } on Exception catch (e) {
+      yield DataException(e);
+      return;
+    }
+
+    if (_nothingCameThrough(ImportSource.pinterest, failed: failed, imported: imported)
+        case final error?) {
+      yield error;
+      return;
+    }
+
+    if (newest != null) {
+      await _preferencesService.setLastImportMarker(
+        ImportSource.pinterest,
+        newest,
+      );
+    }
   }
 }

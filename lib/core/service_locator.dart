@@ -3,6 +3,7 @@ import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
+import 'package:Fern/features/media/data/datasources/pinterest_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/repositories/remote_media_repository_impl.dart';
@@ -144,6 +145,8 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<GelbooruApiClient>(() => GelbooruApiClient());
 
+  getIt.registerLazySingleton<PinterestApiClient>(() => PinterestApiClient());
+
   getIt.registerLazySingleton<ExternalMediaResolver>(() =>
       ExternalMediaResolver()
   );
@@ -162,6 +165,7 @@ Future<void> initializeDependencies() async {
         pixiv: getIt(),
         danbooru: getIt(),
         gelbooru: getIt(),
+        pinterest: getIt(),
         downloader: getIt(),
         registry: getIt(),
         settingsRepository: getIt(),

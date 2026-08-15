@@ -28,6 +28,9 @@ enum ImportSource {
   /// Publicaciones que el usuario tiene en favoritos en su cuenta de Gelbooru.
   gelbooru(id: 'gelbooru', isRemote: true, label: 'Gelbooru'),
 
+  /// Lo que el usuario tiene guardado en su cuenta de Pinterest.
+  pinterest(id: 'pinterest', isRemote: true, label: 'Pinterest'),
+
   /// Contenido que el usuario ha traído desde el navegador de la aplicación:
   /// una página cualquiera de internet de la que se ha sacado lo que enseñaba.
   ///
@@ -64,6 +67,7 @@ enum ImportSource {
     ImportSource.pixiv,
     ImportSource.danbooru,
     ImportSource.gelbooru,
+    ImportSource.pinterest,
   ];
 
   /// Las fuentes que se enseñan al elegir de dónde se está viendo o trayendo
@@ -72,9 +76,17 @@ enum ImportSource {
   ///
   /// No es lo mismo que [scannable]: del navegador hay contenido que ver y que
   /// filtrar, pero no hay nada que pedirle.
+  ///
+  /// El orden es el de la pantalla y no el de [scannable]: lo que más se usa va
+  /// primero, porque es lo que se ve sin desplegar del todo la lista.
   static const List<ImportSource> listed = [
-    ...scannable,
+    ImportSource.local,
+    ImportSource.reddit,
+    ImportSource.pixiv,
     ImportSource.browser,
+    ImportSource.danbooru,
+    ImportSource.gelbooru,
+    ImportSource.pinterest,
   ];
 
   /// Todas las fuentes de las que puede haber contenido guardado. Es con lo que
@@ -86,6 +98,7 @@ enum ImportSource {
     ImportSource.pixiv,
     ImportSource.danbooru,
     ImportSource.gelbooru,
+    ImportSource.pinterest,
     ImportSource.browser,
   };
 
@@ -95,6 +108,7 @@ enum ImportSource {
     ImportSource.pixiv,
     ImportSource.danbooru,
     ImportSource.gelbooru,
+    ImportSource.pinterest,
   ];
 
   /// Las fuentes que hay que recorrer al escanear con esta opción elegida:

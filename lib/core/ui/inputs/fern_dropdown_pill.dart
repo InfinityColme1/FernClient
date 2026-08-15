@@ -6,6 +6,11 @@ import 'package:flutter/material.dart';
 
 /// Desplegable compacto sobre fondo de color, del mismo alto que
 /// [FernPillButton], para las cabeceras de las pantallas.
+///
+/// Las opciones que no caben en [maxVisibleItems] no se quedan fuera: el
+/// desplegable se queda de ese alto y se desplaza. Es lo que permite que una
+/// lista siga creciendo (las fuentes de las que se importa, sin ir más lejos)
+/// sin comerse la pantalla de arriba abajo.
 class FernDropdownPill<T> extends StatefulWidget {
   final T value;
   final List<T> items;
@@ -13,6 +18,9 @@ class FernDropdownPill<T> extends StatefulWidget {
   final String Function(T value)? labelBuilder;
   final Color backgroundColor;
   final double height;
+
+  /// Cuántas opciones se ven a la vez antes de que haya que desplazarse.
+  final int maxVisibleItems;
 
   const FernDropdownPill({
     super.key,
@@ -22,6 +30,7 @@ class FernDropdownPill<T> extends StatefulWidget {
     this.labelBuilder,
     this.backgroundColor = AppColors.secondary,
     this.height = AppSizes.buttonHeightSmall,
+    this.maxVisibleItems = dropdownMaxVisibleItems,
   });
 
   @override
@@ -76,6 +85,11 @@ class _FernDropdownPillState<T> extends State<FernDropdownPill<T>> {
                 .bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w600),
             onChanged: widget.onChanged,
+            // Alto fijo por opción para que el tope de altura del desplegable
+            // sea justo el de [maxVisibleItems] y no una aproximación.
+            itemHeight: kMinInteractiveDimension,
+            menuMaxHeight: widget.maxVisibleItems * kMinInteractiveDimension +
+                dropdownMenuPadding,
             items: widget.items
                 .map((item) => DropdownMenuItem<T>(
                       value: item,

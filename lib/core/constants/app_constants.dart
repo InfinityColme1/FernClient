@@ -35,6 +35,12 @@ const viewerInfoQueryParam = 'info';
 String viewerRouteWithInfo(bool showInfo) =>
     '$viewerRoute?$viewerInfoQueryParam=$showInfo';
 
+/// Cuántas opciones enseña un desplegable antes de desplazarse, y el relleno
+/// que el propio desplegable pone por arriba y por abajo. Con los dos sale el
+/// alto exacto de esas opciones.
+const dropdownMaxVisibleItems = 5;
+const dropdownMenuPadding = 16.0;
+
 // Images
 const fernEmptyImage = 'assets/images/fern_empty.png';
 
@@ -309,6 +315,47 @@ const gelbooruSourceTagName = 'Gelbooru';
 /// número) y su clave. Los dos salen de las opciones de la cuenta.
 const gelbooruUserIdPreferenceKey = 'gelbooru_user_id';
 const gelbooruApiKeyPreferenceKey = 'gelbooru_api_key';
+
+// Pinterest
+/// La dirección con la que se nombra lo que hay en Pinterest, y por donde
+/// responde la API con la que se pinta su web.
+const pinterestSiteUrl = 'https://www.pinterest.com';
+const pinterestApiHost = 'www.pinterest.com';
+const pinterestResourcePath = '/resource/UserPinsResource/get/';
+
+/// La página en la que se entra en Pinterest. Sólo hace falta para los tableros
+/// secretos: lo público se pide sin cuenta.
+const pinterestLoginUrl = 'https://www.pinterest.com/login/';
+
+/// Con lo que su web se identifica ante su propia API. Sin estas dos, la
+/// petición se rechaza aunque el resto esté bien: dicen qué pantalla suya se
+/// supone que está pidiendo.
+const pinterestAppVersion = 'a89153f';
+const pinterestPwsHandler = 'www/[username].js';
+
+/// Lo que se manda a la vez en la galleta y en la cabecera para su protección
+/// contra peticiones de terceros. Sólo se comprueba que coincidan.
+const pinterestCsrfToken = 'FernClientFernClientFernClient00';
+
+/// La galleta con la que Pinterest reconoce una sesión. Es la que recoge el
+/// navegador de la aplicación.
+const pinterestSessionCookieName = '_pinterest_sess';
+
+/// Tope de páginas que se recorren de una vez. Pinterest da unos veinte pines
+/// por página, así que son unos dos mil.
+const pinterestMaxPages = 100;
+
+/// Lo que Pinterest devuelve como marca de página cuando ya no queda nada.
+const pinterestEndBookmark = '-end-';
+
+/// Nombre de la etiqueta de origen con la que nace el contenido de Pinterest,
+/// para que la ordenación de ficheros por origen sepa dónde ponerlo.
+const pinterestSourceTagName = 'Pinterest';
+
+/// Las credenciales de Pinterest: el nombre de la cuenta y, si el usuario la ha
+/// recogido, su sesión.
+const pinterestUsernamePreferenceKey = 'pinterest_username';
+const pinterestSessionIdPreferenceKey = 'pinterest_session_id';
 
 // Navegador de la aplicación (experimental)
 /// Por dónde empieza el navegador mientras el usuario no diga otra cosa: un

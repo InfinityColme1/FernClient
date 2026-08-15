@@ -41,6 +41,15 @@ class BrowserSessionSource {
   /// El nombre de la cookie que es la sesión.
   final String cookieName;
 
+  /// Sin sesión no se puede importar de esta plataforma.
+  ///
+  /// Lo normal es que sí (es lo único que la identifica), pero hay alguna de la
+  /// que se puede traer lo público sin entrar, y ahí la sesión es un extra. La
+  /// diferencia importa en la pantalla de importación: a una fuente a la que
+  /// sólo le falta la sesión se la manda a iniciarla, y a la que le falta otra
+  /// cosa, no.
+  final bool isSessionRequired;
+
   /// Dónde va lo recogido dentro de los ajustes de la aplicación.
   final AppSettingsEntity Function(AppSettingsEntity settings, String value)
       apply;
@@ -53,6 +62,7 @@ class BrowserSessionSource {
     required this.cookieName,
     required this.tagName,
     required this.apply,
+    this.isSessionRequired = true,
     this.downloadHeaders = const {},
   });
 
@@ -74,6 +84,17 @@ AppSettingsEntity _withPixivSession(AppSettingsEntity settings, String value) {
   return settings.copyWith(pixiv: settings.pixiv.copyWith(sessionId: value));
 }
 
+/// La de Pinterest se guarda junto al nombre de la cuenta, que es lo que se
+/// escribe a mano: la sesión sólo añade los tableros secretos.
+AppSettingsEntity _withPinterestSession(
+  AppSettingsEntity settings,
+  String value,
+) {
+  return settings.copyWith(
+    pinterest: settings.pinterest.copyWith(sessionId: value),
+  );
+}
+
 /// Las plataformas de las que el navegador sabe recoger la sesión.
 const browserSessionSources = <BrowserSessionSource>[
   BrowserSessionSource(
@@ -86,6 +107,17 @@ const browserSessionSources = <BrowserSessionSource>[
     apply: _withPixivSession,
     // Su servidor de contenidos sólo da la imagen a quien dice venir de su web.
     downloadHeaders: PixivApiClient.imageHeaders,
+  ),
+  BrowserSessionSource(
+    source: ImportSource.pinterest,
+    siteUrl: pinterestSiteUrl,
+    loginUrl: pinterestLoginUrl,
+    host: pinterestApiHost,
+    cookieName: pinterestSessionCookieName,
+    tagName: pinterestSourceTagName,
+    apply: _withPinterestSession,
+    // Lo guardado en tableros públicos se trae sólo con el nombre de la cuenta.
+    isSessionRequired: false,
   ),
 ];
 

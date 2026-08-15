@@ -1,6 +1,7 @@
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -135,6 +136,17 @@ class GelbooruSettingsChangedEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [gelbooru];
+}
+
+/// Credenciales de Pinterest tal y como han quedado tras tocar su campo. La
+/// sesión no se escribe aquí: ésa la recoge el navegador.
+class PinterestSettingsChangedEvent extends SettingsEvents {
+  final PinterestSettingsEntity pinterest;
+
+  const PinterestSettingsChangedEvent(this.pinterest);
+
+  @override
+  List<Object?> get props => [pinterest];
 }
 
 /// Página de inicio del navegador de la aplicación, tal y como ha quedado tras

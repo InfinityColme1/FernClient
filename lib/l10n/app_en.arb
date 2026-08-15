@@ -304,6 +304,12 @@
   "gelbooruApiKeyHint": "The key of that account",
   "gelbooruApiKeyNote": "On Gelbooru, go to My Account, then Options, and look for API Access Credentials: both the id and the key are there. They stay on this computer and are only used to talk to Gelbooru.",
 
+  "pinterestTitle": "Pinterest",
+  "pinterestDescription": "Fern downloads what you have saved on Pinterest. Whatever is in public boards needs nothing but your account name.",
+  "pinterestUsername": "Account name",
+  "pinterestUsernameHint": "Your Pinterest user name",
+  "pinterestSecretBoardsNote": "To bring in what you keep in secret boards, log in to Pinterest from Fern’s browser and press the key button there: the session is saved along with the name.",
+
   "browserAddressHint": "Address of a site",
   "browserBack": "Back",
   "browserForward": "Forward",

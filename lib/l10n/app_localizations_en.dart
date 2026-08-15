@@ -676,6 +676,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'On Gelbooru, go to My Account, then Options, and look for API Access Credentials: both the id and the key are there. They stay on this computer and are only used to talk to Gelbooru.';
 
   @override
+  String get pinterestTitle => 'Pinterest';
+
+  @override
+  String get pinterestDescription =>
+      'Fern downloads what you have saved on Pinterest. Whatever is in public boards needs nothing but your account name.';
+
+  @override
+  String get pinterestUsername => 'Account name';
+
+  @override
+  String get pinterestUsernameHint => 'Your Pinterest user name';
+
+  @override
+  String get pinterestSecretBoardsNote =>
+      'To bring in what you keep in secret boards, log in to Pinterest from Fern’s browser and press the key button there: the session is saved along with the name.';
+
+  @override
   String get browserAddressHint => 'Address of a site';
 
   @override

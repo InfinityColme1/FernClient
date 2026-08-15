@@ -244,6 +244,12 @@
   "gelbooruApiKeyHint": "La clau d'aquest compte",
   "gelbooruApiKeyNote": "A Gelbooru, entra a My Account, després a Options, i busca API Access Credentials: allà hi ha l'identificador i la clau. Es queden en aquest equip i només s'usen per parlar amb Gelbooru.",
 
+  "pinterestTitle": "Pinterest",
+  "pinterestDescription": "El Fern es descarrega el que tinguis desat a Pinterest. Per al que sigui en taulers públics no cal res més que el nom del teu compte.",
+  "pinterestUsername": "Nom del compte",
+  "pinterestUsernameHint": "El teu nom d'usuari a Pinterest",
+  "pinterestSecretBoardsNote": "Per portar-te també el que deses en taulers secrets, inicia la sessió a Pinterest des del navegador del Fern i prem allà el botó de la clau: la sessió es desa al costat del nom.",
+
   "browserAddressHint": "Adreça d'un lloc",
   "browserBack": "Enrere",
   "browserForward": "Endavant",

@@ -244,6 +244,12 @@
   "gelbooruApiKeyHint": "La clave de esa cuenta",
   "gelbooruApiKeyNote": "En Gelbooru, entra en My Account, luego en Options, y busca API Access Credentials: ahí están el identificador y la clave. Se quedan en este equipo y sólo se usan para hablar con Gelbooru.",
 
+  "pinterestTitle": "Pinterest",
+  "pinterestDescription": "Fern se descarga lo que tengas guardado en Pinterest. Para lo que esté en tableros públicos no hace falta nada más que el nombre de tu cuenta.",
+  "pinterestUsername": "Nombre de la cuenta",
+  "pinterestUsernameHint": "Tu nombre de usuario en Pinterest",
+  "pinterestSecretBoardsNote": "Para traerte también lo que guardas en tableros secretos, inicia sesión en Pinterest desde el navegador de Fern y pulsa allí el botón de la llave: la sesión se guarda junto al nombre.",
+
   "browserAddressHint": "Dirección de un sitio",
   "browserBack": "Atrás",
   "browserForward": "Adelante",

@@ -95,6 +95,7 @@ class _ImportViewState extends State<_ImportView> {
       ImportSource.pixiv => settings.settings.pixiv.isComplete,
       ImportSource.danbooru => settings.settings.danbooru.isComplete,
       ImportSource.gelbooru => settings.settings.gelbooru.isComplete,
+      ImportSource.pinterest => settings.settings.pinterest.isComplete,
       _ => true,
     };
   }
@@ -135,7 +136,7 @@ class _ImportViewState extends State<_ImportView> {
       // Las plataformas en las que se entra desde el navegador de la
       // aplicación mandan ahí, a su página de inicio de sesión.
       final login = browserSessionFor(state.importSource);
-      if (login != null) {
+      if (login != null && login.isSessionRequired) {
         return (
           label: texts.sourceLogIn(state.importSource.name(texts)),
           hint: texts.sourceLogInHint(state.importSource.name(texts)),

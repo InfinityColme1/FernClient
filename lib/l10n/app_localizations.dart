@@ -1140,6 +1140,36 @@ abstract class AppLocalizations {
   /// **'On Gelbooru, go to My Account, then Options, and look for API Access Credentials: both the id and the key are there. They stay on this computer and are only used to talk to Gelbooru.'**
   String get gelbooruApiKeyNote;
 
+  /// No description provided for @pinterestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinterest'**
+  String get pinterestTitle;
+
+  /// No description provided for @pinterestDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern downloads what you have saved on Pinterest. Whatever is in public boards needs nothing but your account name.'**
+  String get pinterestDescription;
+
+  /// No description provided for @pinterestUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get pinterestUsername;
+
+  /// No description provided for @pinterestUsernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Pinterest user name'**
+  String get pinterestUsernameHint;
+
+  /// No description provided for @pinterestSecretBoardsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'To bring in what you keep in secret boards, log in to Pinterest from Fern’s browser and press the key button there: the session is saved along with the name.'**
+  String get pinterestSecretBoardsNote;
+
   /// No description provided for @browserAddressHint.
   ///
   /// In en, this message translates to:

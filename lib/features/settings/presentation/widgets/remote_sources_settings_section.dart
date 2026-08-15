@@ -4,6 +4,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
@@ -13,7 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Configuración de las plataformas de las que la aplicación puede traerse
-/// contenido con sus propias credenciales: Reddit, Danbooru y Gelbooru.
+/// contenido con sus propias credenciales: Reddit, Danbooru, Gelbooru y
+/// Pinterest.
 ///
 /// Las plataformas en las que se entra desde el navegador de la aplicación no
 /// están aquí: su sesión no se escribe, se recoge.
@@ -39,6 +41,7 @@ class _RemoteSourcesSettingsSectionState
   late final TextEditingController _danbooruApiKey;
   late final TextEditingController _gelbooruUserId;
   late final TextEditingController _gelbooruApiKey;
+  late final TextEditingController _pinterestUsername;
 
   @override
   void initState() {
@@ -59,6 +62,9 @@ class _RemoteSourcesSettingsSectionState
     final gelbooru = settings.gelbooru;
     _gelbooruUserId = TextEditingController(text: gelbooru.userId);
     _gelbooruApiKey = TextEditingController(text: gelbooru.apiKey);
+
+    _pinterestUsername =
+        TextEditingController(text: settings.pinterest.username);
   }
 
   @override
@@ -71,6 +77,7 @@ class _RemoteSourcesSettingsSectionState
     _danbooruApiKey.dispose();
     _gelbooruUserId.dispose();
     _gelbooruApiKey.dispose();
+    _pinterestUsername.dispose();
     super.dispose();
   }
 
@@ -104,6 +111,16 @@ class _RemoteSourcesSettingsSectionState
             userId: _gelbooruUserId.text,
             apiKey: _gelbooruApiKey.text,
           ),
+        ));
+  }
+
+  /// Guarda el nombre de la cuenta de Pinterest, sin tocar la sesión: ésa la
+  /// recoge el navegador y no se escribe aquí.
+  void _savePinterest() {
+    final pinterest = getIt<SettingsBloc>().state.settings.pinterest;
+
+    context.read<SettingsBloc>().add(PinterestSettingsChangedEvent(
+          pinterest.copyWith(username: _pinterestUsername.text),
         ));
   }
 
@@ -204,6 +221,18 @@ class _RemoteSourcesSettingsSectionState
         ),
         const SizedBox(height: AppSpacing.l),
         _description(context, texts.gelbooruApiKeyNote),
+        const SizedBox(height: AppSpacing.xl),
+        _title(context, texts.pinterestTitle),
+        _description(context, texts.pinterestDescription),
+        const SizedBox(height: AppSpacing.l),
+        FernLabeledTextField(
+          label: texts.pinterestUsername,
+          hintText: texts.pinterestUsernameHint,
+          controller: _pinterestUsername,
+          onChanged: (_) => _savePinterest(),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        _description(context, texts.pinterestSecretBoardsNote),
       ],
     );
   }
