@@ -169,6 +169,12 @@ const externalMediaHosts = {
 /// Con la cabecera basta; el resto no se descarga.
 const maxExternalPageBytes = 512 * 1024;
 
+/// Cuántos ficheros se descargan a la vez.
+///
+/// Bajar de uno en uno desperdicia casi todo el tiempo esperando a la red, y
+/// bajar sin tope castiga a la conexión y al sitio del que se descarga.
+const maxParallelDownloads = 4;
+
 /// Tope de lo que se descarga de un solo contenido. Lo que pese más se descarta:
 /// una descarga sin fin no es contenido, es un problema.
 const maxRemoteDownloadBytes = 512 * 1024 * 1024;
@@ -356,6 +362,91 @@ const pinterestSourceTagName = 'Pinterest';
 /// recogido, su sesión.
 const pinterestUsernamePreferenceKey = 'pinterest_username';
 const pinterestSessionIdPreferenceKey = 'pinterest_session_id';
+
+// Pawchive
+/// La dirección con la que se nombra lo que hay en Pawchive, y por donde
+/// responde su API. Es un sitio hecho sobre Kemono, así que habla como él: todo
+/// cuelga de `/api/v1`.
+const pawchiveSiteUrl = 'https://pawchive.pw';
+const pawchiveApiHost = 'pawchive.pw';
+const pawchiveFavoritesPath = '/api/v1/account/favorites';
+
+/// Los ficheros no los sirve el sitio sino un servidor propio, y no piden nada
+/// especial para darlos.
+const pawchiveFileUrl = 'https://file.pawchive.pw/data';
+
+/// La página en la que se entra en Pawchive. Sin cuenta no hay favoritos que
+/// pedir, así que aquí la sesión no es un extra.
+const pawchiveLoginUrl = 'https://pawchive.pw/account/login';
+
+/// La galleta con la que reconoce una sesión, la que recoge el navegador de la
+/// aplicación.
+const pawchiveSessionCookieName = 'session';
+
+/// Nombre de la etiqueta de origen con la que nace el contenido de Pawchive,
+/// para que la ordenación de ficheros por origen sepa dónde ponerlo.
+const pawchiveSourceTagName = 'Pawchive';
+
+/// Cuántas publicaciones devuelve el listado de un creador por página, y tope
+/// de páginas que se recorren de una vez por autor.
+const pawchivePageSize = 50;
+const pawchiveMaxPages = 40;
+
+/// Con qué se identifica el recorrido de un creador para llevar su marca
+/// aparte: cada autor se recorre por su cuenta, así que dónde se quedó uno no
+/// dice nada de los demás.
+String pawchiveCreatorCollection({
+  required String service,
+  required String id,
+}) =>
+    '$service-$id';
+
+/// El campo con el que cada favorito dice qué número le tocó al marcarlo. Es lo
+/// único que dice en qué orden se marcaron.
+const pawchiveFavoriteSequence = 'faved_seq';
+
+/// Si de Pawchive se importa lo de los creadores marcados en lugar de las
+/// publicaciones marcadas.
+const pawchiveByCreatorsPreferenceKey = 'pawchive_by_creators';
+
+/// La sesión de Pawchive, recogida del navegador.
+const pawchiveSessionIdPreferenceKey = 'pawchive_session_id';
+
+// Enlaces dentro de las publicaciones
+/// Sitios que guardan ficheros para que cualquiera se los baje.
+///
+/// De aquí no se descarga solo: son páginas que hay que abrir (tienen su propia
+/// espera, su captcha o su desplegable de ficheros), así que lo que se hace es
+/// avisar al usuario y ofrecerle ir con el navegador.
+const fileRepositoryHosts = {
+  'mega.nz',
+  'mega.io',
+  'pixeldrain.com',
+  'gofile.io',
+  'mediafire.com',
+  'drive.google.com',
+  'dropbox.com',
+  'workupload.com',
+  'sendspace.com',
+  'anonfiles.com',
+  'bunkr.si',
+  'bunkrr.su',
+  'catbox.moe',
+  'krakenfiles.com',
+  'saint2.su',
+  'cyberdrop.me',
+};
+
+/// Extensiones de fichero comprimido que la aplicación sabe abrir.
+///
+/// Sólo la primera: las demás se reconocen para no darlas por contenido, pero
+/// no se descomprimen (harían falta más librerías, y son mucho menos comunes).
+const archiveExtensions = {'.zip', '.rar', '.7z'};
+const extractableArchiveExtensions = {'.zip'};
+
+/// Tope de lo que se saca de un comprimido. Un fichero que dice pesar poco y al
+/// abrirlo llena el disco es un problema conocido, y esto lo corta.
+const maxArchiveContentBytes = 2 * 1024 * 1024 * 1024;
 
 // Navegador de la aplicación (experimental)
 /// Por dónde empieza el navegador mientras el usuario no diga otra cosa: un

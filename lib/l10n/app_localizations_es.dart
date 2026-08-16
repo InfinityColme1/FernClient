@@ -695,6 +695,91 @@ class AppLocalizationsEs extends AppLocalizations {
       'Para traerte también lo que guardas en tableros secretos, inicia sesión en Pinterest desde el navegador de Fern y pulsa allí el botón de la llave: la sesión se guarda junto al nombre.';
 
   @override
+  String get pawchiveTitle => 'Pawchive';
+
+  @override
+  String get pawchiveDescription =>
+      'Fern se descarga las publicaciones que tengas en favoritos en Pawchive. Aquí no hay nada que rellenar: inicia sesión desde el navegador de Fern y pulsa allí el botón de la llave, y la sesión se guarda sola.';
+
+  @override
+  String linkChoiceTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Esta publicación trae $count enlaces',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkChoiceUntitledPost => 'Publicación sin título';
+
+  @override
+  String get linkChoiceApplyToAll => 'Aplicar al resto de la importación';
+
+  @override
+  String get linkChoiceApplyToAllDescription =>
+      'Se usa la misma respuesta para todas las publicaciones que queden, y no se vuelve a preguntar.';
+
+  @override
+  String get linkChoiceIgnore => 'Ignorar publicación';
+
+  @override
+  String linkChoiceSelection(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Descargar $count',
+      zero: 'Descargar selección',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkChoiceAll => 'Descargar todo';
+
+  @override
+  String get linkChoiceOpen => 'Ver en el navegador';
+
+  @override
+  String repositoryLinkTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Esta publicación lleva a $count repositorios de contenido',
+      one: 'Esta publicación lleva a un repositorio de contenido',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repositoryLinkDescription =>
+      'Fern no puede traerse esto por su cuenta: son páginas con su propia espera y sus comprobaciones. Puedes abrirlas en el navegador de Fern y traerte desde ahí lo que quieras. Mientras tanto la importación sigue.';
+
+  @override
+  String get repositoryLinkOpen => 'Ver en el navegador';
+
+  @override
+  String get pawchiveByCreators => 'Importar por creadores favoritos';
+
+  @override
+  String get pawchiveByCreatorsDescription =>
+      'En lugar de las publicaciones que hayas marcado, Fern recorre todo lo que publiquen los creadores que tengas en favoritos. Trae bastante más, y cada creador se sigue por su cuenta.';
+
+  @override
+  String get remoteImportHeavyWarning =>
+      'Esto puede tardar bastante: sin tope, Fern recorre la cuenta entera y se trae todo, incluidos los ficheros que haya dentro de las publicaciones. Puedes pararlo cuando quieras desde la pantalla de importación, y lo que ya haya llegado se queda.';
+
+  @override
+  String emptySource(String source) {
+    return 'No había nada que traer de $source.';
+  }
+
+  @override
+  String get emptySourcePawchiveCreators =>
+      'No tienes publicaciones marcadas en Pawchive, pero sí creadores favoritos. Activa «Importar por creadores favoritos» en Ajustes, dentro de Fuentes remotas, y Fern recorrerá todo lo que publiquen.';
+
+  @override
   String get browserAddressHint => 'Dirección de un sitio';
 
   @override

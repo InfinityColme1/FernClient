@@ -250,6 +250,48 @@
   "pinterestUsernameHint": "Tu nombre de usuario en Pinterest",
   "pinterestSecretBoardsNote": "Para traerte también lo que guardas en tableros secretos, inicia sesión en Pinterest desde el navegador de Fern y pulsa allí el botón de la llave: la sesión se guarda junto al nombre.",
 
+  "pawchiveTitle": "Pawchive",
+  "pawchiveDescription": "Fern se descarga las publicaciones que tengas en favoritos en Pawchive. Aquí no hay nada que rellenar: inicia sesión desde el navegador de Fern y pulsa allí el botón de la llave, y la sesión se guarda sola.",
+
+  "linkChoiceTitle": "{count, plural, other{Esta publicación trae {count} enlaces}}",
+  "@linkChoiceTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "linkChoiceUntitledPost": "Publicación sin título",
+  "linkChoiceApplyToAll": "Aplicar al resto de la importación",
+  "linkChoiceApplyToAllDescription": "Se usa la misma respuesta para todas las publicaciones que queden, y no se vuelve a preguntar.",
+  "linkChoiceIgnore": "Ignorar publicación",
+  "linkChoiceSelection": "{count, plural, =0{Descargar selección} other{Descargar {count}}}",
+  "@linkChoiceSelection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "linkChoiceAll": "Descargar todo",
+  "linkChoiceOpen": "Ver en el navegador",
+  "repositoryLinkTitle": "{count, plural, =1{Esta publicación lleva a un repositorio de contenido} other{Esta publicación lleva a {count} repositorios de contenido}}",
+  "@repositoryLinkTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "repositoryLinkDescription": "Fern no puede traerse esto por su cuenta: son páginas con su propia espera y sus comprobaciones. Puedes abrirlas en el navegador de Fern y traerte desde ahí lo que quieras. Mientras tanto la importación sigue.",
+  "repositoryLinkOpen": "Ver en el navegador",
+
+  "pawchiveByCreators": "Importar por creadores favoritos",
+  "pawchiveByCreatorsDescription": "En lugar de las publicaciones que hayas marcado, Fern recorre todo lo que publiquen los creadores que tengas en favoritos. Trae bastante más, y cada creador se sigue por su cuenta.",
+  "remoteImportHeavyWarning": "Esto puede tardar bastante: sin tope, Fern recorre la cuenta entera y se trae todo, incluidos los ficheros que haya dentro de las publicaciones. Puedes pararlo cuando quieras desde la pantalla de importación, y lo que ya haya llegado se queda.",
+
+  "emptySource": "No había nada que traer de {source}.",
+  "@emptySource": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "emptySourcePawchiveCreators": "No tienes publicaciones marcadas en Pawchive, pero sí creadores favoritos. Activa «Importar por creadores favoritos» en Ajustes, dentro de Fuentes remotas, y Fern recorrerá todo lo que publiquen.",
+
   "browserAddressHint": "Dirección de un sitio",
   "browserBack": "Atrás",
   "browserForward": "Adelante",

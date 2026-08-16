@@ -105,6 +105,22 @@ class PreferencesService {
   }
 
 
+  /// Todas las marcas guardadas de [source], por listado.
+  ///
+  /// Hace falta cuando los listados no se saben de antemano: los creadores que
+  /// alguien sigue son los que son, y cambian.
+  Map<String, String> importMarkers(ImportSource source) {
+    final prefix = _lastImportMarkerKey(source, null);
+
+    return {
+      for (final key in _prefs.getKeys())
+        if (key.startsWith('${prefix}_'))
+          if (_prefs.getString(key) case final marker?)
+            key.substring(prefix.length + 1): marker,
+    };
+  }
+
+
   /// Guarda en qué página se ha quedado el navegador de la aplicación.
   ///
   /// No es un ajuste sino dónde se estaba: salir a otra pantalla y volver tiene

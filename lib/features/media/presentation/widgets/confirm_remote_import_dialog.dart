@@ -14,6 +14,11 @@ import 'package:flutter/material.dart';
 /// equipo, cosas las dos que conviene que no pasen por un clic de más. Por eso
 /// dice de dónde va a traer y cuánto antes de hacer nada.
 ///
+/// Cuando lo que se va a pedir es mucho (una fuente que devuelve cuentas
+/// enteras, sin tope), se dice además: no es lo mismo traerse cincuenta
+/// contenidos que dejar la aplicación descargando durante horas, y eso conviene
+/// saberlo **antes**.
+///
 /// Se cierra con `true` al confirmar y con `null` al cancelar.
 class ConfirmRemoteImportDialog extends StatelessWidget {
   /// Las plataformas de las que se va a importar. Son varias cuando está
@@ -37,6 +42,15 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
         untilLastImportLimit => texts.remoteImportAmountSinceLast,
         _ => texts.remoteImportAmountLimited(limit),
       };
+
+  /// Esto va a traer mucho y va a tardar.
+  ///
+  /// Pasa cuando se pide una fuente entera sin tope y esa fuente devuelve
+  /// publicaciones con todo lo que llevan dentro (Pawchive es el caso: puede ser
+  /// la obra completa de varios autores). Con un tope puesto no hace falta
+  /// avisar de nada, que el usuario ya ha dicho hasta dónde.
+  bool get _isHeavy =>
+      limit == unlimitedImportLimit && sources.contains(ImportSource.pawchive);
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +78,27 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
             _amount(texts),
             style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
           ),
+          if (_isHeavy) ...[
+            const SizedBox(height: AppSpacing.m),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.schedule,
+                  size: AppSizes.iconCompact,
+                  color: AppColors.terciary,
+                ),
+                const SizedBox(width: AppSpacing.s),
+                Expanded(
+                  child: Text(
+                    texts.remoteImportHeavyWarning,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.terciary),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
       actionButton: FernPillButton(

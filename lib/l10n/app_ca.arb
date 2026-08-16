@@ -250,6 +250,48 @@
   "pinterestUsernameHint": "El teu nom d'usuari a Pinterest",
   "pinterestSecretBoardsNote": "Per portar-te també el que deses en taulers secrets, inicia la sessió a Pinterest des del navegador del Fern i prem allà el botó de la clau: la sessió es desa al costat del nom.",
 
+  "pawchiveTitle": "Pawchive",
+  "pawchiveDescription": "El Fern es descarrega les publicacions que tinguis als preferits de Pawchive. Aquí no hi ha res a omplir: inicia la sessió des del navegador del Fern i prem allà el botó de la clau, i la sessió es desa sola.",
+
+  "linkChoiceTitle": "{count, plural, other{Aquesta publicació porta {count} enllaços}}",
+  "@linkChoiceTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "linkChoiceUntitledPost": "Publicació sense títol",
+  "linkChoiceApplyToAll": "Aplica-ho a la resta de la importació",
+  "linkChoiceApplyToAllDescription": "S'usa la mateixa resposta per a totes les publicacions que quedin, i no es torna a preguntar.",
+  "linkChoiceIgnore": "Ignora la publicació",
+  "linkChoiceSelection": "{count, plural, =0{Descarrega la selecció} other{Descarrega {count}}}",
+  "@linkChoiceSelection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "linkChoiceAll": "Descarrega-ho tot",
+  "linkChoiceOpen": "Mostra al navegador",
+  "repositoryLinkTitle": "{count, plural, =1{Aquesta publicació porta a un repositori de contingut} other{Aquesta publicació porta a {count} repositoris de contingut}}",
+  "@repositoryLinkTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "repositoryLinkDescription": "El Fern no pot portar-s'ho tot sol: són pàgines amb la seva pròpia espera i comprovacions. Les pots obrir al navegador del Fern i endur-te'n el que vulguis. Mentrestant la importació continua.",
+  "repositoryLinkOpen": "Mostra al navegador",
+
+  "pawchiveByCreators": "Importa per creadors preferits",
+  "pawchiveByCreatorsDescription": "En comptes de les publicacions que hagis marcat, el Fern recorre tot el que publiquin els creadors que tinguis als preferits. Porta força més, i cada creador se segueix pel seu compte.",
+  "remoteImportHeavyWarning": "Això pot trigar força: sense límit, el Fern recorre el compte sencer i s'ho porta tot, inclosos els fitxers que hi hagi dins de les publicacions. El pots aturar quan vulguis des de la pantalla d'importació, i el que ja hagi arribat es queda.",
+
+  "emptySource": "No hi havia res a portar de {source}.",
+  "@emptySource": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "emptySourcePawchiveCreators": "No tens publicacions marcades a Pawchive, però sí creadors preferits. Activa «Importa per creadors preferits» a Configuració, dins de Fonts remotes, i el Fern recorrerà tot el que publiquin.",
+
   "browserAddressHint": "Adreça d'un lloc",
   "browserBack": "Enrere",
   "browserForward": "Endavant",

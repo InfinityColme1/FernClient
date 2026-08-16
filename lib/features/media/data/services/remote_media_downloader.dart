@@ -58,8 +58,18 @@ class RemoteMediaDownloader {
     required ImportSource source,
     Map<String, String> headers = const {},
     List<int>? frameDelays,
+    bool asArchive = false,
   }) async {
     try {
+      if (asArchive) {
+        return await _downloadArchive(
+          url: url,
+          name: name,
+          source: source,
+          headers: headers,
+        );
+      }
+
       if (frameDelays != null) {
         return await _downloadAnimation(
           url: url,
@@ -103,6 +113,39 @@ class RemoteMediaDownloader {
       // está: la importación sigue con el siguiente.
       return null;
     }
+  }
+
+  /// Se trae un fichero comprimido tal cual.
+  ///
+  /// No pasa por las comprobaciones de lo demás porque no es contenido: es una
+  /// caja, y lo que importa es lo que traiga dentro. Quien la abra decidirá qué
+  /// se queda.
+  Future<String?> _downloadArchive({
+    required String url,
+    required String name,
+    required ImportSource source,
+    required Map<String, String> headers,
+  }) async {
+    final extension = p.extension(Uri.parse(url).path).toLowerCase();
+    if (!archiveExtensions.contains(extension)) return null;
+
+    final directory = Directory(directoryOf(source));
+    await directory.create(recursive: true);
+
+    final path = p.join(directory.path, '$name$extension');
+    if (await File(path).exists()) return path;
+
+    final request = http.Request('GET', Uri.parse(url))
+      ..headers['User-Agent'] = remoteUserAgent.replaceFirst('%s', 'fern')
+      ..headers.addAll(headers);
+
+    final response = await _client.send(request).timeout(remoteRequestTimeout);
+    if (response.statusCode != 200) return null;
+
+    final length = response.contentLength;
+    if (length != null && length > maxRemoteDownloadBytes) return null;
+
+    return await _write(response, path);
   }
 
   /// Se trae un paquete de fotogramas, lo monta en una animación y la guarda.

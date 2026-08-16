@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
@@ -114,6 +115,9 @@ class AppSettingsEntity extends Equatable {
   /// la cuenta, y la sesión si el usuario la ha recogido.
   final PinterestSettingsEntity pinterest;
 
+  /// La sesión de Pawchive, que se recoge del navegador y no se escribe.
+  final PawchiveSettingsEntity pawchive;
+
   /// La página por la que arranca el navegador de la aplicación cuando se le
   /// pide volver a empezar. Es lo que el usuario entiende por su página de
   /// inicio, y por eso la elige él.
@@ -139,6 +143,7 @@ class AppSettingsEntity extends Equatable {
     this.danbooru = const DanbooruSettingsEntity(),
     this.gelbooru = const GelbooruSettingsEntity(),
     this.pinterest = const PinterestSettingsEntity(),
+    this.pawchive = const PawchiveSettingsEntity(),
   });
 
   /// Los ficheros sólo se reordenan si el usuario lo ha pedido y ha dicho
@@ -160,6 +165,7 @@ class AppSettingsEntity extends Equatable {
     DanbooruSettingsEntity? danbooru,
     GelbooruSettingsEntity? gelbooru,
     PinterestSettingsEntity? pinterest,
+    PawchiveSettingsEntity? pawchive,
   }) {
     return AppSettingsEntity(
       language: language ?? this.language,
@@ -176,6 +182,7 @@ class AppSettingsEntity extends Equatable {
       danbooru: danbooru ?? this.danbooru,
       gelbooru: gelbooru ?? this.gelbooru,
       pinterest: pinterest ?? this.pinterest,
+      pawchive: pawchive ?? this.pawchive,
     );
   }
 
@@ -195,5 +202,6 @@ class AppSettingsEntity extends Equatable {
         danbooru,
         gelbooru,
         pinterest,
+        pawchive,
       ];
 }

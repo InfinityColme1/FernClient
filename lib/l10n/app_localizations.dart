@@ -1170,6 +1170,114 @@ abstract class AppLocalizations {
   /// **'To bring in what you keep in secret boards, log in to Pinterest from Fern’s browser and press the key button there: the session is saved along with the name.'**
   String get pinterestSecretBoardsNote;
 
+  /// No description provided for @pawchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pawchive'**
+  String get pawchiveTitle;
+
+  /// No description provided for @pawchiveDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern downloads the posts you have favourited on Pawchive. There is nothing to fill in here: log in from Fern’s browser and press the key button there, and the session is saved.'**
+  String get pawchiveDescription;
+
+  /// No description provided for @linkChoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{This post has {count} links}}'**
+  String linkChoiceTitle(int count);
+
+  /// No description provided for @linkChoiceUntitledPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled post'**
+  String get linkChoiceUntitledPost;
+
+  /// No description provided for @linkChoiceApplyToAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to the rest of the import'**
+  String get linkChoiceApplyToAll;
+
+  /// No description provided for @linkChoiceApplyToAllDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The same answer is used for every post left, so you are not asked again.'**
+  String get linkChoiceApplyToAllDescription;
+
+  /// No description provided for @linkChoiceIgnore.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip post'**
+  String get linkChoiceIgnore;
+
+  /// No description provided for @linkChoiceSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Download selection} other{Download {count}}}'**
+  String linkChoiceSelection(int count);
+
+  /// No description provided for @linkChoiceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Download all'**
+  String get linkChoiceAll;
+
+  /// No description provided for @linkChoiceOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in the browser'**
+  String get linkChoiceOpen;
+
+  /// No description provided for @repositoryLinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{This post links to a file host} other{This post links to {count} file hosts}}'**
+  String repositoryLinkTitle(int count);
+
+  /// No description provided for @repositoryLinkDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern cannot fetch from these on its own: they have their own waits and checks. You can open them in Fern’s browser and bring in what you want from there. The import carries on meanwhile.'**
+  String get repositoryLinkDescription;
+
+  /// No description provided for @repositoryLinkOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in the browser'**
+  String get repositoryLinkOpen;
+
+  /// No description provided for @pawchiveByCreators.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from favourited creators'**
+  String get pawchiveByCreators;
+
+  /// No description provided for @pawchiveByCreatorsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Instead of the posts you have favourited, Fern goes through everything published by the creators you have favourited. It brings in a great deal more, and each creator is followed on its own.'**
+  String get pawchiveByCreatorsDescription;
+
+  /// No description provided for @remoteImportHeavyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This may take a long while: with no cap, Fern goes through the whole account and brings in everything, files inside posts included. You can stop it at any time from the import screen, and what has already arrived stays.'**
+  String get remoteImportHeavyWarning;
+
+  /// No description provided for @emptySource.
+  ///
+  /// In en, this message translates to:
+  /// **'There was nothing to bring in from {source}.'**
+  String emptySource(String source);
+
+  /// No description provided for @emptySourcePawchiveCreators.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no favourited posts on Pawchive, but you do have favourited creators. Turn on \"Import from favourited creators\" in Settings, under Remote sources, and Fern will go through everything they publish.'**
+  String get emptySourcePawchiveCreators;
+
   /// No description provided for @browserAddressHint.
   ///
   /// In en, this message translates to:

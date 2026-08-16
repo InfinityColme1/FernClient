@@ -233,6 +233,27 @@ class _RemoteSourcesSettingsSectionState
         ),
         const SizedBox(height: AppSpacing.l),
         _description(context, texts.pinterestSecretBoardsNote),
+        const SizedBox(height: AppSpacing.xl),
+        _title(context, texts.pawchiveTitle),
+        _description(context, texts.pawchiveDescription),
+        const SizedBox(height: AppSpacing.l),
+        // Esta sí es de `BlocSelector`: es una casilla, se repinta entera con
+        // cada cambio y no hay ningún cursor que mover de sitio.
+        BlocSelector<SettingsBloc, SettingsState, bool>(
+          selector: (state) => state.settings.pawchive.byFavoriteCreators,
+          builder: (context, enabled) => FernCheckboxTile(
+            label: texts.pawchiveByCreators,
+            description: texts.pawchiveByCreatorsDescription,
+            value: enabled,
+            onChanged: (value) {
+              final pawchive = getIt<SettingsBloc>().state.settings.pawchive;
+
+              context.read<SettingsBloc>().add(PawchiveSettingsChangedEvent(
+                    pawchive.copyWith(byFavoriteCreators: value),
+                  ));
+            },
+          ),
+        ),
       ],
     );
   }

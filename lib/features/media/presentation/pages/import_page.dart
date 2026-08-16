@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 // Experimental: de aquí sale a dónde se manda al usuario a iniciar sesión.
 import 'package:Fern/features/browser/domain/entities/browser_session_source.dart';
 import 'package:Fern/features/browser/presentation/widgets/session_expired_dialog.dart';
+import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
@@ -96,6 +97,7 @@ class _ImportViewState extends State<_ImportView> {
       ImportSource.danbooru => settings.settings.danbooru.isComplete,
       ImportSource.gelbooru => settings.settings.gelbooru.isComplete,
       ImportSource.pinterest => settings.settings.pinterest.isComplete,
+      ImportSource.pawchive => settings.settings.pawchive.isComplete,
       _ => true,
     };
   }
@@ -317,7 +319,8 @@ class _ImportViewState extends State<_ImportView> {
       listenWhen: (previous, current) =>
           (previous is! DetailedMedia && current is DetailedMedia) ||
           current.expiredSession != null ||
-          current.importError != null,
+          current.importError != null ||
+          current.emptySource != null,
       listener: (context, state) {
         if (state is DetailedMedia) {
           // El contenido escaneado se abre con la información desplegada: es
@@ -330,6 +333,23 @@ class _ImportViewState extends State<_ImportView> {
         // sesión: se dice, y se ofrece ir a donde se arregla.
         if (state.expiredSession case final source?) {
           _onSessionExpired(context, source);
+          return;
+        }
+
+        // La fuente no tenía nada. No es un fallo, pero decirlo evita que una
+        // importación vacía se confunda con una rota.
+        if (state.emptySource case final source?) {
+          showFernDialog<void, MediaBloc>(
+            context: context,
+            builder: (_) => FernMessageDialog(
+              imageAsset: fernEmptyImage,
+              message: switch (state.emptyHint) {
+                EmptySourceHint.pawchiveHasCreatorsInstead =>
+                  texts.emptySourcePawchiveCreators,
+                null => texts.emptySource(source.name(texts)),
+              },
+            ),
+          );
           return;
         }
 

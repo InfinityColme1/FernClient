@@ -1,7 +1,9 @@
 import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
+import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/remote_session_expired.dart';
+import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
@@ -76,6 +78,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// de la rejilla y la miran los recorridos de las fuentes.
   final ImportCancellation _cancellation;
 
+  /// Por donde la importación pregunta al usuario qué hacer con lo que no puede
+  /// decidir sola.
+  final ImportDecisions _decisions;
+
   /// Punto de partida de la selección por rango: el último elemento que se ha
   /// marcado o desmarcado a mano. No forma parte del estado porque no se pinta,
   /// sólo decide desde dónde se extiende el siguiente mayúsculas + clic.
@@ -108,6 +114,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
     required PreferencesService preferences,
     required ImportCancellation cancellation,
+    required ImportDecisions decisions,
   })  : _selectAndScanDirectoryUsecase = selectAndScanDirectoryUsecase,
         _scanSourceUseCase = scanSourceUseCase,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
@@ -134,6 +141,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
         _preferences = preferences,
         _cancellation = cancellation,
+        _decisions = decisions,
         super(const MediaLoading()) {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
@@ -1129,6 +1137,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // parar la vez anterior ya se paró.
     _cancellation.reset();
 
+    // Y sin respuestas heredadas: lo que se dijo que valía "para todo" valía
+    // para la importación anterior, no para ésta.
+    _decisions.reset();
+
     List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
     final selectedIds = state.selectedIds;
     emit(MediaLoading(
@@ -1150,6 +1162,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // por qué lo demás no ha llegado.
     String? importError;
 
+    // Y la fuente que no tenía nada, que no es lo mismo que un fallo.
+    EmptySourceException? empty;
+
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
       onData: (dataState) {
@@ -1167,6 +1182,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         switch (dataState.exception) {
           case final RemoteSessionExpiredException error:
             expiredSession = error.source;
+          case final EmptySourceException error:
+            empty = error;
           case final Exception error:
             importError ??= error.toString();
           case null:
@@ -1193,6 +1210,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       lastImportAt: await _getLastImportUseCase(params: state.importSource),
       expiredSession: expiredSession,
       importError: importError,
+      emptySource: empty?.source,
+      emptyHint: empty?.hint,
     ));
   }
 

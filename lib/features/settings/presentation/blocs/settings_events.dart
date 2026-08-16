@@ -1,6 +1,7 @@
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:equatable/equatable.dart';
@@ -147,6 +148,17 @@ class PinterestSettingsChangedEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [pinterest];
+}
+
+/// Ajustes de Pawchive tal y como han quedado. La sesión no se escribe aquí:
+/// ésa la recoge el navegador.
+class PawchiveSettingsChangedEvent extends SettingsEvents {
+  final PawchiveSettingsEntity pawchive;
+
+  const PawchiveSettingsChangedEvent(this.pawchive);
+
+  @override
+  List<Object?> get props => [pawchive];
 }
 
 /// Página de inicio del navegador de la aplicación, tal y como ha quedado tras

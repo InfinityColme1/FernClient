@@ -95,6 +95,16 @@ AppSettingsEntity _withPinterestSession(
   );
 }
 
+/// La de Pawchive es lo único que su fuente necesita.
+AppSettingsEntity _withPawchiveSession(
+  AppSettingsEntity settings,
+  String value,
+) {
+  return settings.copyWith(
+    pawchive: settings.pawchive.copyWith(sessionId: value),
+  );
+}
+
 /// Las plataformas de las que el navegador sabe recoger la sesión.
 const browserSessionSources = <BrowserSessionSource>[
   BrowserSessionSource(
@@ -118,6 +128,15 @@ const browserSessionSources = <BrowserSessionSource>[
     apply: _withPinterestSession,
     // Lo guardado en tableros públicos se trae sólo con el nombre de la cuenta.
     isSessionRequired: false,
+  ),
+  BrowserSessionSource(
+    source: ImportSource.pawchive,
+    siteUrl: pawchiveSiteUrl,
+    loginUrl: pawchiveLoginUrl,
+    host: pawchiveApiHost,
+    cookieName: pawchiveSessionCookieName,
+    tagName: pawchiveSourceTagName,
+    apply: _withPawchiveSession,
   ),
 ];
 

@@ -1,5 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/domain/usecases/purge_expired_deleted_media_usecase.dart';
+import 'package:Fern/features/media/presentation/services/dialog_import_decisions.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -16,6 +18,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await initializeDependencies();
+
+  // Una importación puede necesitar preguntarle algo al usuario por el camino
+  // (una publicación con varios enlaces, por ejemplo). Aquí se dice quién
+  // contesta: con diálogos, y por encima de la pantalla que esté puesta.
+  getIt<ImportDecisions>().handler = const DialogImportDecisions();
 
   // La papelera se vacía sola: lo que lleve más de una semana marcado sale de la
   // base de datos al arrancar, sin que haya que entrar en la pantalla de

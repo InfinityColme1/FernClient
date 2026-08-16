@@ -31,6 +31,9 @@ enum ImportSource {
   /// Lo que el usuario tiene guardado en su cuenta de Pinterest.
   pinterest(id: 'pinterest', isRemote: true, label: 'Pinterest'),
 
+  /// Las publicaciones que el usuario tiene en favoritos en Pawchive.
+  pawchive(id: 'pawchive', isRemote: true, label: 'Pawchive'),
+
   /// Contenido que el usuario ha traído desde el navegador de la aplicación:
   /// una página cualquiera de internet de la que se ha sacado lo que enseñaba.
   ///
@@ -68,6 +71,7 @@ enum ImportSource {
     ImportSource.danbooru,
     ImportSource.gelbooru,
     ImportSource.pinterest,
+    ImportSource.pawchive,
   ];
 
   /// Las fuentes que se enseñan al elegir de dónde se está viendo o trayendo
@@ -87,6 +91,7 @@ enum ImportSource {
     ImportSource.danbooru,
     ImportSource.gelbooru,
     ImportSource.pinterest,
+    ImportSource.pawchive,
   ];
 
   /// Todas las fuentes de las que puede haber contenido guardado. Es con lo que
@@ -99,6 +104,7 @@ enum ImportSource {
     ImportSource.danbooru,
     ImportSource.gelbooru,
     ImportSource.pinterest,
+    ImportSource.pawchive,
     ImportSource.browser,
   };
 
@@ -109,6 +115,7 @@ enum ImportSource {
     ImportSource.danbooru,
     ImportSource.gelbooru,
     ImportSource.pinterest,
+    ImportSource.pawchive,
   ];
 
   /// Las fuentes que hay que recorrer al escanear con esta opción elegida:

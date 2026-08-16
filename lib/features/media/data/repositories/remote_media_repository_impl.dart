@@ -1,20 +1,29 @@
+import 'dart:async';
+
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
+import 'package:Fern/features/media/data/datasources/pawchive_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pinterest_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
+import 'package:Fern/features/media/data/services/archive_extractor.dart';
+import 'package:Fern/features/media/data/services/download_pool.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/data/datasources/remote_post.dart';
+import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/post_link.dart';
+import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 
-/// Las fuentes remotas de la aplicación: Reddit, Pixiv, Danbooru, Gelbooru y
-/// Pinterest.
+/// Las fuentes remotas de la aplicación: Reddit, Pixiv, Danbooru, Gelbooru,
+/// Pinterest y Pawchive.
 ///
 /// El recorrido es siempre el mismo, dé igual la plataforma: se pregunta a su
 /// API qué tiene guardado el usuario, se descarga lo que aún no está en el
@@ -26,6 +35,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   final DanbooruApiClient _danbooru;
   final GelbooruApiClient _gelbooru;
   final PinterestApiClient _pinterest;
+  final PawchiveApiClient _pawchive;
+  final ArchiveExtractor _archives;
+  final ImportDecisions _decisions;
   final RemoteMediaDownloader _downloader;
   final MediaRegistry _registry;
   final SettingsRepository _settingsRepository;
@@ -37,6 +49,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     required DanbooruApiClient danbooru,
     required GelbooruApiClient gelbooru,
     required PinterestApiClient pinterest,
+    required PawchiveApiClient pawchive,
+    required ImportDecisions decisions,
+    ArchiveExtractor archives = const ArchiveExtractor(),
     required RemoteMediaDownloader downloader,
     required MediaRegistry registry,
     required SettingsRepository settingsRepository,
@@ -46,6 +61,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         _danbooru = danbooru,
         _gelbooru = gelbooru,
         _pinterest = pinterest,
+        _pawchive = pawchive,
+        _decisions = decisions,
+        _archives = archives,
         _downloader = downloader,
         _registry = registry,
         _settingsRepository = settingsRepository,
@@ -67,6 +85,8 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         yield* _scanGelbooru(untilLastImport: untilLastImport);
       case ImportSource.pinterest:
         yield* _scanPinterest(untilLastImport: untilLastImport);
+      case ImportSource.pawchive:
+        yield* _scanPawchive(untilLastImport: untilLastImport);
       case ImportSource.all:
       case ImportSource.local:
       // El navegador tampoco: de él no se puede pedir nada, es el usuario quien
@@ -499,5 +519,267 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         newest,
       );
     }
+  }
+
+  /// Lo que el usuario tiene marcado en Pawchive.
+  ///
+  /// Según el ajuste, se recorren sus publicaciones marcadas o todo lo de los
+  /// creadores que sigue. Lo segundo lleva una marca por autor, porque cada uno
+  /// se recorre por su cuenta.
+  ///
+  /// Aquí no se va de una en una: lo que es contenido sin más (lo que la
+  /// publicación trae adjunto, y lo que enlaza cuando el enlace es uno y lleva
+  /// directo a un fichero) se pone a descargar y se sigue mirando la siguiente
+  /// publicación mientras tanto. Lo que hay que decidir o abrir (varios enlaces,
+  /// un comprimido) sí se hace en su turno: preguntarle dos cosas a la vez al
+  /// usuario no tendría sentido, y abrir comprimidos a la vez sólo pelearía por
+  /// el disco.
+  Stream<DataState<MediaSummaryEntity>> _scanPawchive({
+    required bool untilLastImport,
+  }) {
+    // El recorrido va por su cuenta y va soltando lo que sale, en lugar de
+    // producir y consumir al mismo paso: es lo que permite que unas descargas
+    // sigan en marcha mientras se mira la publicación siguiente.
+    final out = StreamController<DataState<MediaSummaryEntity>>();
+    var isCancelled = false;
+
+    out.onCancel = () => isCancelled = true;
+
+    unawaited(
+      _pawchiveInto(
+        out,
+        untilLastImport: untilLastImport,
+        isCancelled: () => isCancelled,
+      ).whenComplete(out.close),
+    );
+
+    return out.stream;
+  }
+
+  /// El recorrido de Pawchive, soltando en [out] lo que va entrando.
+  Future<void> _pawchiveInto(
+    StreamController<DataState<MediaSummaryEntity>> out, {
+    required bool untilLastImport,
+    required bool Function() isCancelled,
+  }) async {
+    final settings = _settingsRepository.getSettings();
+    final credentials = settings.pawchive;
+    if (!credentials.isComplete) {
+      out.add(DataException(Exception('Pawchive is not configured')));
+      return;
+    }
+
+    final byCreators = credentials.byFavoriteCreators;
+
+    // La marca es una por autor cuando se va por creadores, y una sola cuando
+    // se buscan las publicaciones marcadas.
+    final markers = <String, String>{};
+    String? marker;
+    if (untilLastImport) {
+      if (byCreators) {
+        markers.addAll(_preferencesService.importMarkers(ImportSource.pawchive));
+      } else {
+        marker = _preferencesService.getLastImportMarker(ImportSource.pawchive);
+      }
+    }
+
+    final newest = <String, String>{};
+    String? newestPost;
+    var imported = 0;
+    var failed = 0;
+
+    final tagName = settings.autoTagRemoteSource ? pawchiveSourceTagName : null;
+    final pool = DownloadPool();
+
+    /// Se trae un fichero y lo da de alta. Es lo que corre en paralelo.
+    Future<void> bring(
+      String url,
+      String name,
+      String description,
+      List<String> sourceUrls,
+    ) async {
+      final path = await _downloader.download(
+        url: url,
+        name: name,
+        source: ImportSource.pawchive,
+      );
+      if (path == null) {
+        failed++;
+        return;
+      }
+
+      final summary = await _registry.register(
+        path: path,
+        source: ImportSource.pawchive,
+        description: description.isEmpty ? null : description,
+        sourceTagName: tagName,
+        sourceUrls: sourceUrls,
+      );
+
+      if (summary != null && !out.isClosed) {
+        imported++;
+        out.add(DataSuccess(summary));
+      }
+    }
+
+    try {
+      final posts = byCreators
+          ? _pawchive.creatorPosts(credentials, stopAt: markers)
+          : _pawchive.favoritePosts(credentials, stopAt: marker);
+
+      await for (final post in posts) {
+        if (isCancelled()) break;
+
+        final collection = post.collection;
+        if (collection == null) {
+          newestPost ??= post.id;
+        } else {
+          newest.putIfAbsent(collection, () => post.id);
+        }
+
+        // Lo que la publicación trae puesto: a descargar, y seguimos.
+        for (final item in post.media) {
+          await pool.add(
+            () => bring(item.url, item.id, item.title, item.sourceUrls),
+          );
+        }
+
+        // El aviso de los sitios de descargas no espera a nadie.
+        _decisions.noticeRepository(post.title, post.repositoryLinks);
+
+        final links = post.downloadableLinks;
+        if (links.isEmpty) continue;
+
+        // Un solo enlace a un fichero es contenido sin más: no hay nada que
+        // preguntar ni que abrir, así que se descarga como lo adjunto.
+        if (links.length == 1 && links.single.kind == PostLinkKind.media) {
+          await pool.add(() => bring(
+                links.single.url,
+                'pawchive_${post.id}_link0',
+                post.title,
+                post.sourceUrls,
+              ));
+          continue;
+        }
+
+        // Y lo que hay que decidir o abrir, en su turno.
+        final choice = await _decisions.chooseLinks(post.title, links);
+
+        for (final (index, link) in links.indexed) {
+          if (isCancelled()) break;
+          if (!choice.accepts(link)) continue;
+
+          if (link.kind != PostLinkKind.archive) {
+            await pool.add(() => bring(
+                  link.url,
+                  'pawchive_${post.id}_link$index',
+                  post.title,
+                  post.sourceUrls,
+                ));
+            continue;
+          }
+
+          final entered = await _importArchive(
+            link.url,
+            name: 'pawchive_${post.id}_link$index',
+            description: post.title,
+            tagName: tagName,
+            sourceUrls: post.sourceUrls,
+            out: out,
+          );
+
+          entered == 0 ? failed++ : imported += entered;
+        }
+      }
+
+      // Lo que quede bajando termina antes de dar la importación por acabada.
+      await pool.drain();
+
+      // Ni una publicación en todo el recorrido: eso no es un fallo, pero
+      // tampoco es "ya estaba todo", y hay una explicación que suele ser la
+      // buena.
+      if (!byCreators && newestPost == null && imported == 0) {
+        final hasCreators = await _pawchive.hasFavoriteCreators(credentials);
+
+        if (!out.isClosed) {
+          out.add(DataException(EmptySourceException(
+            ImportSource.pawchive,
+            hint: hasCreators
+                ? EmptySourceHint.pawchiveHasCreatorsInstead
+                : null,
+          )));
+        }
+        return;
+      }
+    } on Exception catch (e) {
+      await pool.drain();
+      if (!out.isClosed) out.add(DataException(e));
+      return;
+    }
+
+    if (_nothingCameThrough(ImportSource.pawchive,
+            failed: failed, imported: imported)
+        case final error?) {
+      if (!out.isClosed) out.add(error);
+      return;
+    }
+
+    for (final entry in newest.entries) {
+      await _preferencesService.setLastImportMarker(
+        ImportSource.pawchive,
+        entry.value,
+        collection: entry.key,
+      );
+    }
+
+    if (newestPost != null) {
+      await _preferencesService.setLastImportMarker(
+        ImportSource.pawchive,
+        newestPost,
+      );
+    }
+  }
+
+  /// Se trae un comprimido, lo abre y da de alta lo que traía dentro.
+  ///
+  /// Devuelve cuántos contenidos han entrado. Esto no se solapa con nada: abrir
+  /// un comprimido es trabajo de disco, y varios a la vez sólo se estorbarían.
+  Future<int> _importArchive(
+    String url, {
+    required String name,
+    required String description,
+    required String? tagName,
+    required List<String> sourceUrls,
+    required StreamController<DataState<MediaSummaryEntity>> out,
+  }) async {
+    final path = await _downloader.download(
+      url: url,
+      name: name,
+      source: ImportSource.pawchive,
+      asArchive: true,
+    );
+    if (path == null) return 0;
+
+    // De un comprimido no se queda el comprimido: se abre, se saca lo que es
+    // contenido y lo demás se tira.
+    final files = await _archives.extract(path);
+
+    var entered = 0;
+    for (final file in files) {
+      final summary = await _registry.register(
+        path: file,
+        source: ImportSource.pawchive,
+        description: description.isEmpty ? null : description,
+        sourceTagName: tagName,
+        sourceUrls: sourceUrls,
+      );
+
+      if (summary != null && !out.isClosed) {
+        entered++;
+        out.add(DataSuccess(summary));
+      }
+    }
+
+    return entered;
   }
 }

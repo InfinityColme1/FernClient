@@ -310,6 +310,48 @@
   "pinterestUsernameHint": "Your Pinterest user name",
   "pinterestSecretBoardsNote": "To bring in what you keep in secret boards, log in to Pinterest from Fern’s browser and press the key button there: the session is saved along with the name.",
 
+  "pawchiveTitle": "Pawchive",
+  "pawchiveDescription": "Fern downloads the posts you have favourited on Pawchive. There is nothing to fill in here: log in from Fern’s browser and press the key button there, and the session is saved.",
+
+  "linkChoiceTitle": "{count, plural, other{This post has {count} links}}",
+  "@linkChoiceTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "linkChoiceUntitledPost": "Untitled post",
+  "linkChoiceApplyToAll": "Apply to the rest of the import",
+  "linkChoiceApplyToAllDescription": "The same answer is used for every post left, so you are not asked again.",
+  "linkChoiceIgnore": "Skip post",
+  "linkChoiceSelection": "{count, plural, =0{Download selection} other{Download {count}}}",
+  "@linkChoiceSelection": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "linkChoiceAll": "Download all",
+  "linkChoiceOpen": "Open in the browser",
+  "repositoryLinkTitle": "{count, plural, =1{This post links to a file host} other{This post links to {count} file hosts}}",
+  "@repositoryLinkTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "repositoryLinkDescription": "Fern cannot fetch from these on its own: they have their own waits and checks. You can open them in Fern’s browser and bring in what you want from there. The import carries on meanwhile.",
+  "repositoryLinkOpen": "Open in the browser",
+
+  "pawchiveByCreators": "Import from favourited creators",
+  "pawchiveByCreatorsDescription": "Instead of the posts you have favourited, Fern goes through everything published by the creators you have favourited. It brings in a great deal more, and each creator is followed on its own.",
+  "remoteImportHeavyWarning": "This may take a long while: with no cap, Fern goes through the whole account and brings in everything, files inside posts included. You can stop it at any time from the import screen, and what has already arrived stays.",
+
+  "emptySource": "There was nothing to bring in from {source}.",
+  "@emptySource": {
+    "placeholders": {
+      "source": { "type": "String" }
+    }
+  },
+  "emptySourcePawchiveCreators": "You have no favourited posts on Pawchive, but you do have favourited creators. Turn on \"Import from favourited creators\" in Settings, under Remote sources, and Fern will go through everything they publish.",
+
   "browserAddressHint": "Address of a site",
   "browserBack": "Back",
   "browserForward": "Forward",

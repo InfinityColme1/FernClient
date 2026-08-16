@@ -695,6 +695,91 @@ class AppLocalizationsCa extends AppLocalizations {
       'Per portar-te també el que deses en taulers secrets, inicia la sessió a Pinterest des del navegador del Fern i prem allà el botó de la clau: la sessió es desa al costat del nom.';
 
   @override
+  String get pawchiveTitle => 'Pawchive';
+
+  @override
+  String get pawchiveDescription =>
+      'El Fern es descarrega les publicacions que tinguis als preferits de Pawchive. Aquí no hi ha res a omplir: inicia la sessió des del navegador del Fern i prem allà el botó de la clau, i la sessió es desa sola.';
+
+  @override
+  String linkChoiceTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Aquesta publicació porta $count enllaços',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkChoiceUntitledPost => 'Publicació sense títol';
+
+  @override
+  String get linkChoiceApplyToAll => 'Aplica-ho a la resta de la importació';
+
+  @override
+  String get linkChoiceApplyToAllDescription =>
+      'S\'usa la mateixa resposta per a totes les publicacions que quedin, i no es torna a preguntar.';
+
+  @override
+  String get linkChoiceIgnore => 'Ignora la publicació';
+
+  @override
+  String linkChoiceSelection(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Descarrega $count',
+      zero: 'Descarrega la selecció',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkChoiceAll => 'Descarrega-ho tot';
+
+  @override
+  String get linkChoiceOpen => 'Mostra al navegador';
+
+  @override
+  String repositoryLinkTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Aquesta publicació porta a $count repositoris de contingut',
+      one: 'Aquesta publicació porta a un repositori de contingut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repositoryLinkDescription =>
+      'El Fern no pot portar-s\'ho tot sol: són pàgines amb la seva pròpia espera i comprovacions. Les pots obrir al navegador del Fern i endur-te\'n el que vulguis. Mentrestant la importació continua.';
+
+  @override
+  String get repositoryLinkOpen => 'Mostra al navegador';
+
+  @override
+  String get pawchiveByCreators => 'Importa per creadors preferits';
+
+  @override
+  String get pawchiveByCreatorsDescription =>
+      'En comptes de les publicacions que hagis marcat, el Fern recorre tot el que publiquin els creadors que tinguis als preferits. Porta força més, i cada creador se segueix pel seu compte.';
+
+  @override
+  String get remoteImportHeavyWarning =>
+      'Això pot trigar força: sense límit, el Fern recorre el compte sencer i s\'ho porta tot, inclosos els fitxers que hi hagi dins de les publicacions. El pots aturar quan vulguis des de la pantalla d\'importació, i el que ja hagi arribat es queda.';
+
+  @override
+  String emptySource(String source) {
+    return 'No hi havia res a portar de $source.';
+  }
+
+  @override
+  String get emptySourcePawchiveCreators =>
+      'No tens publicacions marcades a Pawchive, però sí creadors preferits. Activa «Importa per creadors preferits» a Configuració, dins de Fonts remotes, i el Fern recorrerà tot el que publiquin.';
+
+  @override
   String get browserAddressHint => 'Adreça d\'un lloc';
 
   @override

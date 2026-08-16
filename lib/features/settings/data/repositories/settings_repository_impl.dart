@@ -2,6 +2,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
@@ -50,6 +51,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ),
       browserHome: _preferences.getString(browserHomePreferenceKey) ??
           browserHomeUrl,
+      pawchive: PawchiveSettingsEntity(
+        sessionId:
+            _preferences.getString(pawchiveSessionIdPreferenceKey) ?? '',
+        byFavoriteCreators:
+            _preferences.getBool(pawchiveByCreatorsPreferenceKey) ?? false,
+      ),
       pinterest: PinterestSettingsEntity(
         username: _preferences.getString(pinterestUsernamePreferenceKey) ?? '',
         sessionId:
@@ -132,6 +139,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setString(
       pinterestSessionIdPreferenceKey,
       pinterest.sessionId,
+    );
+
+    await _preferences.setString(
+      pawchiveSessionIdPreferenceKey,
+      settings.pawchive.sessionId,
+    );
+    await _preferences.setBool(
+      pawchiveByCreatorsPreferenceKey,
+      settings.pawchive.byFavoriteCreators,
     );
 
     await _preferences.setString(

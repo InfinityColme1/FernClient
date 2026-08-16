@@ -1,3 +1,4 @@
+import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
@@ -91,6 +92,13 @@ abstract class MediaStates extends Equatable {
   /// que no tenía nada nuevo, y no hay forma de distinguirlas.
   final String? importError;
 
+  /// La fuente que no tenía nada que traer, y por qué, si es que se sabe.
+  ///
+  /// Es otro aviso de una sola vez. Sin él, una importación que acaba en cero se
+  /// ve igual que una que no ha llegado a funcionar.
+  final ImportSource? emptySource;
+  final EmptySourceHint? emptyHint;
+
   const MediaStates({
     this.currentMedia,
     this.mediaList,
@@ -110,6 +118,8 @@ abstract class MediaStates extends Equatable {
     this.lastImportAt,
     this.expiredSession,
     this.importError,
+    this.emptySource,
+    this.emptyHint,
   });
 
   /// Si el filtro de fuentes deja ver [summary].
@@ -182,6 +192,8 @@ abstract class MediaStates extends Equatable {
     lastImportAt,
     expiredSession,
     importError,
+    emptySource,
+    emptyHint,
   ];
 }
 
@@ -189,6 +201,8 @@ class MediaLoading extends MediaStates {
   const MediaLoading({
     super.expiredSession,
     super.importError,
+    super.emptySource,
+    super.emptyHint,
     super.mediaList,
     super.showInfo,
     super.isModified,

@@ -693,6 +693,91 @@ class AppLocalizationsEn extends AppLocalizations {
       'To bring in what you keep in secret boards, log in to Pinterest from Fern’s browser and press the key button there: the session is saved along with the name.';
 
   @override
+  String get pawchiveTitle => 'Pawchive';
+
+  @override
+  String get pawchiveDescription =>
+      'Fern downloads the posts you have favourited on Pawchive. There is nothing to fill in here: log in from Fern’s browser and press the key button there, and the session is saved.';
+
+  @override
+  String linkChoiceTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'This post has $count links',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkChoiceUntitledPost => 'Untitled post';
+
+  @override
+  String get linkChoiceApplyToAll => 'Apply to the rest of the import';
+
+  @override
+  String get linkChoiceApplyToAllDescription =>
+      'The same answer is used for every post left, so you are not asked again.';
+
+  @override
+  String get linkChoiceIgnore => 'Skip post';
+
+  @override
+  String linkChoiceSelection(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Download $count',
+      zero: 'Download selection',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkChoiceAll => 'Download all';
+
+  @override
+  String get linkChoiceOpen => 'Open in the browser';
+
+  @override
+  String repositoryLinkTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'This post links to $count file hosts',
+      one: 'This post links to a file host',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repositoryLinkDescription =>
+      'Fern cannot fetch from these on its own: they have their own waits and checks. You can open them in Fern’s browser and bring in what you want from there. The import carries on meanwhile.';
+
+  @override
+  String get repositoryLinkOpen => 'Open in the browser';
+
+  @override
+  String get pawchiveByCreators => 'Import from favourited creators';
+
+  @override
+  String get pawchiveByCreatorsDescription =>
+      'Instead of the posts you have favourited, Fern goes through everything published by the creators you have favourited. It brings in a great deal more, and each creator is followed on its own.';
+
+  @override
+  String get remoteImportHeavyWarning =>
+      'This may take a long while: with no cap, Fern goes through the whole account and brings in everything, files inside posts included. You can stop it at any time from the import screen, and what has already arrived stays.';
+
+  @override
+  String emptySource(String source) {
+    return 'There was nothing to bring in from $source.';
+  }
+
+  @override
+  String get emptySourcePawchiveCreators =>
+      'You have no favourited posts on Pawchive, but you do have favourited creators. Turn on \"Import from favourited creators\" in Settings, under Remote sources, and Fern will go through everything they publish.';
+
+  @override
   String get browserAddressHint => 'Address of a site';
 
   @override

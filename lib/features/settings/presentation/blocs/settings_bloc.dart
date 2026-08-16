@@ -42,6 +42,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<DanbooruSettingsChangedEvent>(onDanbooruSettingsChanged);
     on<GelbooruSettingsChangedEvent>(onGelbooruSettingsChanged);
     on<PinterestSettingsChangedEvent>(onPinterestSettingsChanged);
+    on<PawchiveSettingsChangedEvent>(onPawchiveSettingsChanged);
     on<BrowserHomeChangedEvent>(onBrowserHomeChanged);
     on<RemoteSessionCapturedEvent>(onRemoteSessionCaptured);
     on<MigrateLibraryRequestedEvent>(onMigrateLibraryRequested);
@@ -186,6 +187,13 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     return _apply(state.settings.copyWith(pinterest: event.pinterest), emit);
+  }
+
+  Future<void> onPawchiveSettingsChanged(
+    PawchiveSettingsChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(state.settings.copyWith(pawchive: event.pawchive), emit);
   }
 
   Future<void> onBrowserHomeChanged(

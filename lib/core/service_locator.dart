@@ -3,11 +3,13 @@ import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
+import 'package:Fern/features/media/data/datasources/pawchive_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pinterest_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/repositories/remote_media_repository_impl.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
@@ -147,6 +149,12 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<PinterestApiClient>(() => PinterestApiClient());
 
+  getIt.registerLazySingleton<PawchiveApiClient>(() => PawchiveApiClient());
+
+  // Por aquí le pregunta al usuario una importación en marcha. Quien contesta
+  // lo pone la interfaz al arrancar.
+  getIt.registerLazySingleton<ImportDecisions>(() => ImportDecisions());
+
   getIt.registerLazySingleton<ExternalMediaResolver>(() =>
       ExternalMediaResolver()
   );
@@ -166,6 +174,8 @@ Future<void> initializeDependencies() async {
         danbooru: getIt(),
         gelbooru: getIt(),
         pinterest: getIt(),
+        pawchive: getIt(),
+        decisions: getIt(),
         downloader: getIt(),
         registry: getIt(),
         settingsRepository: getIt(),
@@ -366,6 +376,7 @@ Future<void> initializeDependencies() async {
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
         cancellation: getIt(),
+        decisions: getIt(),
         getScannedMediaUseCase: getIt(),
         getLastImportUseCase: getIt(),
         scanSourceUseCase: getIt(),
