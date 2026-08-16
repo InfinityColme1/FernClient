@@ -21,6 +21,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/collapsing_navigation_drawer_widget.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
+import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -123,8 +124,8 @@ Widget _countAndFiltersHeader(BuildContext context, String count) {
       FernPillButton(
         label: AppLocalizations.of(context).filters,
         icon: Icons.tune,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: AppColors.light.primary,
+        foregroundColor: AppColors.light.black,
         onPressed: () {},
       ),
     ],
@@ -153,16 +154,16 @@ Widget _deletedHeader(BuildContext context, AppLocalizations texts) {
           texts.deletedRetentionNotice(deletedRetention.inDays),
           overflow: TextOverflow.ellipsis,
           style:
-              theme.textTheme.bodySmall?.copyWith(color: AppColors.unremarked),
+              theme.textTheme.bodySmall?.copyWith(color: AppColors.light.unremarked),
         ),
       ),
       const Spacer(),
       Text(texts.selectedCount(_sampleCount),
           style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600, color: AppColors.terciary)),
+              fontWeight: FontWeight.w600, color: AppColors.light.terciary)),
       const SizedBox(width: AppSpacing.l),
       IconButton(
-        color: AppColors.black,
+        color: AppColors.light.black,
         onPressed: () {},
         icon: const Icon(Icons.delete_forever_outlined),
       ),
@@ -170,8 +171,8 @@ Widget _deletedHeader(BuildContext context, AppLocalizations texts) {
       FernPillButton(
         label: texts.actionRestore,
         icon: Icons.restore_from_trash_outlined,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: AppColors.light.primary,
+        foregroundColor: AppColors.light.black,
         onPressed: () {},
       ),
     ],
@@ -206,20 +207,20 @@ Widget _importHeader(BuildContext context, AppLocalizations texts) {
       Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.history,
-              size: AppSizes.iconCompact, color: AppColors.gray),
+          Icon(Icons.history,
+              size: AppSizes.iconCompact, color: AppColors.light.gray),
           const SizedBox(width: AppSpacing.xs),
           // El aviso más largo de los que puede pintar la cabecera: es el que
           // decide cuánto ocupa la fila.
           Text(_longestSourceNote(texts),
               style:
-                  theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray)),
+                  theme.textTheme.bodyMedium?.copyWith(color: AppColors.light.gray)),
         ],
       ),
       const Spacer(),
       Text(texts.selectedCount(_sampleCount),
           style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600, color: AppColors.terciary)),
+              fontWeight: FontWeight.w600, color: AppColors.light.terciary)),
       const SizedBox(width: AppSpacing.l),
       Text(texts.mediaFetched(_sampleCount),
           style:
@@ -234,24 +235,24 @@ Widget _importHeader(BuildContext context, AppLocalizations texts) {
       const SizedBox(width: AppSpacing.s),
       IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.refresh, color: AppColors.black)),
+          icon: Icon(Icons.refresh, color: AppColors.light.black)),
       IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.folder_open_outlined, color: AppColors.black)),
+          icon: Icon(Icons.folder_open_outlined, color: AppColors.light.black)),
       const SizedBox(width: AppSpacing.s),
       FernPillButton(
         label: texts.actionDelete,
         icon: Icons.delete_outline,
-        backgroundColor: AppColors.terciary,
-        foregroundColor: AppColors.white,
+        backgroundColor: AppColors.light.terciary,
+        foregroundColor: AppColors.light.white,
         onPressed: () {},
       ),
       const SizedBox(width: AppSpacing.s),
       FernPillButton(
         label: texts.actionConfirm,
         icon: Icons.check,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: AppColors.light.primary,
+        foregroundColor: AppColors.light.black,
         onPressed: () {},
       ),
     ],
@@ -352,6 +353,24 @@ Future<void> _pumpDrawer(WidgetTester tester, {required bool isCollapsed}) {
   ));
 }
 
+Future<void> _pumpToggle(
+  WidgetTester tester, {
+  required bool isCollapsed,
+  required VoidCallback onPressed,
+}) {
+  return tester.pumpWidget(MaterialApp(
+    theme: AppTheme.lightTheme,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(
+      body: SidebarToggleButton(
+        isCollapsed: isCollapsed,
+        onPressed: onPressed,
+      ),
+    ),
+  ));
+}
+
 double _drawerWidth(WidgetTester tester) =>
     tester.getSize(find.byType(CollapsingNavigationDrawer)).width;
 
@@ -410,19 +429,54 @@ void main() {
       expect(_drawerWidth(tester), _sidebarExpandedWidth);
     });
 
-    testWidgets('su botón sigue mandando sin que lo deshaga la reconstrucción',
+    testWidgets('una reconstrucción con lo mismo no lo mueve', (tester) async {
+      await _pumpDrawer(tester, isCollapsed: true);
+      await tester.pumpAndSettle();
+
+      await _pumpDrawer(tester, isCollapsed: true);
+      await tester.pumpAndSettle();
+
+      expect(_drawerWidth(tester), _sidebarCollapsedWidth);
+    });
+
+    testWidgets('el botón de plegarlo ya no está dentro del menú',
         (tester) async {
+      // Está en la cabecera, junto al logo: dentro del menú no se alcanzaba sin
+      // bajar hasta el final de la lista de etiquetas.
       await _pumpDrawer(tester, isCollapsed: false);
 
-      await tester.tap(find.byType(AnimatedIcon));
-      await tester.pumpAndSettle();
-      expect(_drawerWidth(tester), _sidebarCollapsedWidth);
+      expect(find.byType(AnimatedIcon), findsNothing);
+    });
+  });
 
-      // Una reconstrucción con la misma petición no toca lo que se ha hecho a
-      // mano: sólo lo hace un cambio de la petición.
-      await _pumpDrawer(tester, isCollapsed: false);
+  group('el botón que pliega el menú', () {
+    testWidgets('avisa de que se le ha pulsado', (tester) async {
+      var pulsado = 0;
+
+      await _pumpToggle(
+        tester,
+        isCollapsed: false,
+        onPressed: () => pulsado++,
+      );
+
+      await tester.tap(find.byType(SidebarToggleButton));
       await tester.pumpAndSettle();
-      expect(_drawerWidth(tester), _sidebarCollapsedWidth);
+
+      // No decide él: sólo avisa, y quien monta la pantalla es quien pliega.
+      expect(pulsado, 1);
+    });
+
+    testWidgets('dice lo que va a hacer según cómo esté el menú',
+        (tester) async {
+      await _pumpToggle(tester, isCollapsed: false, onPressed: () {});
+      var button = tester.widget<IconButton>(find.byType(IconButton));
+      expect(button.tooltip, isNotNull);
+      final abierto = button.tooltip;
+
+      await _pumpToggle(tester, isCollapsed: true, onPressed: () {});
+      button = tester.widget<IconButton>(find.byType(IconButton));
+
+      expect(button.tooltip, isNot(abierto));
     });
   });
 }

@@ -53,8 +53,8 @@ class FernBusyOverlay extends StatelessWidget {
   final bool isBusy;
   final Widget child;
 
-  /// Color del velo. Por defecto el fondo de la aplicación.
-  final Color color;
+  /// Color del velo. Sin decir nada, el fondo de la aplicación.
+  final Color? color;
 
   /// Redondeo del velo, para que no asome por las esquinas de la superficie que
   /// tapa.
@@ -75,7 +75,7 @@ class FernBusyOverlay extends StatelessWidget {
     super.key,
     required this.isBusy,
     required this.child,
-    this.color = AppColors.background,
+    this.color,
     this.radius = AppSizes.radiusSurface,
     this.indicatorColor,
     this.action,
@@ -108,7 +108,8 @@ class FernBusyOverlay extends StatelessWidget {
                   absorbing: isBusy,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: busyOverlayOpacity),
+                      color: (color ?? context.colors.background)
+                          .withValues(alpha: busyOverlayOpacity),
                       borderRadius: BorderRadius.circular(radius),
                     ),
                   ),

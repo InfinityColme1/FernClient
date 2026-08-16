@@ -114,9 +114,9 @@ class _MediaViewerState extends State<MediaViewer> {
           filterQuality: FilterQuality.high,
           errorBuilder: (_, _, _) {
             _reportLoadFailure();
-            return const Icon(
+            return Icon(
               Icons.broken_image_outlined,
-              color: AppColors.lightgray,
+              color: context.colors.lightgray,
               size: AppSizes.iconExtraLarge,
             );
           },

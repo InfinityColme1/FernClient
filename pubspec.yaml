@@ -56,6 +56,13 @@ dependencies:
   archive: ^4.0.9
   image: ^4.8.0
   flutter_inappwebview: ^6.1.5
+  # Para hablar con Windows sin complementos de por medio: la pantalla completa
+  # de la ventana y la copia al portapapeles se piden al sistema directamente.
+  ffi: ^2.1.4
+  # Los iconos de la barra del visor. Son de trazo variable: se les puede pedir
+  # el grosor, que es lo que los iconos que trae Flutter (de grosor fijo) no
+  # permiten.
+  material_symbols_icons: ^4.2960.0
 
 
 dev_dependencies:

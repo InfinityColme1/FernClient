@@ -9,6 +9,12 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get sidebarCollapse => 'Plegar el menú';
+
+  @override
+  String get sidebarExpand => 'Desplegar el menú';
+
+  @override
   String get navGallery => 'Galería';
 
   @override
@@ -279,6 +285,30 @@ class AppLocalizationsEs extends AppLocalizations {
   String get deselectItem => 'Quitar selección';
 
   @override
+  String get viewerBack => 'Volver';
+
+  @override
+  String get viewerShare => 'Copiar al portapapeles';
+
+  @override
+  String get viewerFullscreen => 'Pantalla completa';
+
+  @override
+  String get viewerExitFullscreen => 'Salir de pantalla completa';
+
+  @override
+  String get viewerFavorite => 'Marcar como favorito';
+
+  @override
+  String get viewerUnfavorite => 'Quitar de favoritos';
+
+  @override
+  String get viewerCopied => 'Copiado al portapapeles';
+
+  @override
+  String get viewerCopyFailed => 'No se ha podido copiar el contenido';
+
+  @override
   String get mediaInfoTitle => 'Información';
 
   @override
@@ -351,6 +381,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get creatorNameLabel => 'Nombre del creador';
 
   @override
+  String get creatorNameTaken => 'Ya hay un creador con ese nombre';
+
+  @override
   String get socialProfilesLabel => 'Perfiles sociales';
 
   @override
@@ -390,6 +423,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsAppearance => 'Apariencia';
 
   @override
+  String get settingsViewer => 'Visor';
+
+  @override
   String get settingsFiles => 'Archivos';
 
   @override
@@ -415,6 +451,101 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get showListAvatarsDescription =>
       'Cada etiqueta se pinta con su propia imagen en vez del icono común, así se distinguen con el menú plegado. Las etiquetas sin imagen se quedan con el icono.';
+
+  @override
+  String get viewerSaveSectionTitle => 'Al guardar contenido importado';
+
+  @override
+  String get viewerSaveSectionNote =>
+      'Qué hace el visor cuando das por definitivo un contenido importado. Sea como sea deja de estar en la rejilla de importación, así que el visor no puede quedarse donde estaba.';
+
+  @override
+  String get viewerSaveNext => 'Ir al siguiente contenido';
+
+  @override
+  String get viewerSaveNextDescription =>
+      'El visor pasa al siguiente contenido, igual que si hubieras pulsado la flecha. Si no queda nada por revisar, se cierra.';
+
+  @override
+  String get viewerSaveClose => 'Cerrar la visualización';
+
+  @override
+  String get viewerSaveCloseDescription =>
+      'El visor se cierra y vuelves a la rejilla de importación, ya sin ese contenido.';
+
+  @override
+  String get themeSectionTitle => 'Tema';
+
+  @override
+  String get themeSectionNote =>
+      'Los colores con los que se pinta toda la aplicación.';
+
+  @override
+  String get themeSystem => 'Seguir al sistema';
+
+  @override
+  String get themeSystemDescription =>
+      'Claro u oscuro, el que esté usando tu escritorio.';
+
+  @override
+  String get themeLight => 'Claro';
+
+  @override
+  String get themeLightDescription => 'Los colores de siempre de Fern.';
+
+  @override
+  String get themeDark => 'Oscuro';
+
+  @override
+  String get themeDarkDescription =>
+      'La misma aplicación, para un escritorio oscuro.';
+
+  @override
+  String get themeCustom => 'A medida';
+
+  @override
+  String get themeCustomDescription =>
+      'Tus colores, los que elijas aquí debajo.';
+
+  @override
+  String get customColorsTitle => 'Tus colores';
+
+  @override
+  String get customColorsNote =>
+      'Sólo se pueden tocar con el tema a medida. Lo que no cambies se toma del tema claro o del oscuro, el que le vaya al fondo que hayas elegido.';
+
+  @override
+  String get customColorPrimary => 'Primario';
+
+  @override
+  String get customColorSecondary => 'Secundario';
+
+  @override
+  String get customColorTerciary => 'Acento';
+
+  @override
+  String get customColorError => 'Error';
+
+  @override
+  String get customColorBackground => 'Fondo';
+
+  @override
+  String get customColorSurface => 'Superficie';
+
+  @override
+  String get customColorForeground => 'Texto';
+
+  @override
+  String get customColorPick => 'Elegir color';
+
+  @override
+  String get customColorReset => 'Volver al color de fábrica';
+
+  @override
+  String get colorPickerTitle => 'Elige un color';
+
+  @override
+  String get colorPickerHex => 'Código hexadecimal';
 
   @override
   String get filesLocalTitle => 'Archivos locales';

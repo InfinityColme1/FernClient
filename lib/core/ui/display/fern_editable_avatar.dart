@@ -1,4 +1,3 @@
-import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +12,9 @@ class FernEditableAvatar extends StatefulWidget {
   final VoidCallback? onTap;
   final IconData overlayIcon;
   final double overlayIconSize;
-  final Color backgroundColor;
-  final Color iconColor;
+  /// Sin decir nada, los colores de la paleta que esté puesta.
+  final Color? backgroundColor;
+  final Color? iconColor;
 
   const FernEditableAvatar({
     super.key,
@@ -25,8 +25,8 @@ class FernEditableAvatar extends StatefulWidget {
     this.onTap,
     this.overlayIcon = Icons.edit,
     this.overlayIconSize = AppSizes.iconLarge,
-    this.backgroundColor = AppColors.secondary,
-    this.iconColor = AppColors.primary,
+    this.backgroundColor,
+    this.iconColor,
   });
 
   @override
@@ -67,7 +67,7 @@ class _FernEditableAvatarState extends State<FernEditableAvatar> {
                 ),
                 child: Icon(
                   widget.overlayIcon,
-                  color: AppColors.white,
+                  color: Colors.white,
                   size: widget.overlayIconSize,
                 ),
               ),

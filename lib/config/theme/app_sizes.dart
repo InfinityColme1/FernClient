@@ -62,6 +62,22 @@ class AppSizes {
   static const double settingsDialogHeight = 620.0;
   static const double settingsNavWidth = 240.0;
 
+  // Ajustes: tema
+  /// Lado de la muestra de color de una fila de color y de la que enseña el
+  /// selector.
+  static const double colorSwatch = 36.0;
+
+  /// El selector de color: lo que mide de ancho, el alto de la zona donde se
+  /// elige el tono claro u oscuro y el de la barra de matices.
+  static const double colorPickerWidth = 340.0;
+  static const double colorPickerAreaHeight = 180.0;
+  static const double colorPickerHueHeight = 24.0;
+
+  /// La previsualización que acompaña a cada tema: es una ventana de la
+  /// aplicación en pequeño, así que guarda su proporción.
+  static const double themePreviewWidth = 168.0;
+  static const double themePreviewHeight = 104.0;
+
   // Buscador de la barra superior
   static const double searchBarWidth = 420.0;
   static const double searchBarHeight = 48.0;

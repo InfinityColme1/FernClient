@@ -5,6 +5,10 @@ const appName = "FeRN";
 const appLogo = 'assets/images/Fern_logo.png';
 
 // Routes
+/// La pantalla de bienvenida, que es por donde entra la aplicación. Va en la
+/// raíz porque no se navega a ella: se sale de ella y no se vuelve.
+const splashRoute = '/';
+
 const mediaRoute = '/media';
 const importRoute = '/import';
 const favoritesRoute = '/favorites';
@@ -79,6 +83,21 @@ const autoTagRemoteSourcePreferenceKey = 'auto_tag_remote_source';
 /// Si la lista de etiquetas del menú lateral enseña los avatares. Encendido de
 /// fábrica: es lo que permite reconocerlas con el menú plegado.
 const showListAvatarsPreferenceKey = 'show_list_avatars';
+
+/// Con qué colores se pinta la aplicación: el claro, el oscuro, el del sistema
+/// o el del usuario. De fábrica, el del sistema.
+const themeModePreferenceKey = 'theme_mode';
+
+/// Prefijo de las preferencias que guardan los colores del tema a medida. Se
+/// completa con el identificador del color (`custom_color_primary`, y así con
+/// los demás). Los que el usuario no haya tocado no tienen preferencia: es lo
+/// que los distingue de los que sí, y lo que hace que se hereden del tema de
+/// fábrica.
+const customColorPreferenceKeyPrefix = 'custom_color_';
+
+/// Qué hace el visor al dar por definitivo un contenido importado: cerrarse o
+/// pasar al siguiente. De fábrica, pasar al siguiente.
+const viewerSaveBehaviorPreferenceKey = 'viewer_save_behavior';
 
 /// Cómo quedó la casilla del aviso de borrado la última vez, una por cada
 /// borrado que la enseña.
@@ -539,6 +558,29 @@ const pageTransitionDuration = Duration(milliseconds: 220);
 /// que no puede provocar desbordes mientras la transición está en marcha.
 const pageTransitionScale = 0.98;
 
+// Pantalla de bienvenida
+/// Lo que dura la animación del logo.
+///
+/// Con la transición de salida que la sigue, la pantalla entera se queda por
+/// debajo de los dos segundos: es una presentación, no una espera, y pasado ese
+/// punto lo único que hace es retrasar la entrada a la biblioteca.
+const splashDuration = Duration(milliseconds: 1600);
+
+/// Ancho al que se pinta el logo.
+const splashLogoWidth = 260.0;
+
+/// Tamaño con el que aparece el logo, antes de asentarse en el suyo. Entra
+/// creciendo, que es lo que le da el rebote del final.
+const splashLogoInitialScale = 0.72;
+
+/// El círculo que se abre por detrás del logo: su tamaño, hasta dónde crece y
+/// con cuánto empieza. Se va apagando mientras se abre, así que no llega a
+/// taparlo en ningún momento.
+const splashHaloSize = 240.0;
+const splashHaloMinScale = 0.4;
+const splashHaloMaxScale = 2.2;
+const splashHaloOpacity = 0.55;
+
 // Indicador de progreso
 /// Lo que tarda el velo de ocupado en aparecer y en irse. Bastante más corto que
 /// la transición de pantalla: lo que se quiere es que no parpadee, no que se note.
@@ -640,6 +682,44 @@ const creatorGridMinHeight = 220.0;
 /// de una ficha que comparte el alto de la pantalla con la rejilla, y con el
 /// hueco de por defecto sólo cabría una.
 const creatorProfileRowHeight = 32.0;
+
+// Avisos breves
+/// Lo que se queda a la vista un aviso breve, y lo que tarda en aparecer y en
+/// irse. Lo justo para leer una línea sin que estorbe.
+const toastDuration = Duration(seconds: 3);
+const toastFadeDuration = Duration(milliseconds: 200);
+
+/// Desde dónde entra, en alturas suyas, y cuánto tapa lo que hay detrás.
+const toastSlideOffset = 0.4;
+const toastOpacity = 0.85;
+
+// Visor
+/// Tiempo sin mover el ratón tras el que la barra de acciones del visor se
+/// esconde. Con el panel de información abierto no cuenta: ahí la barra se
+/// queda.
+const viewerControlsHideDelay = Duration(seconds: 3);
+
+/// Lo que tarda la barra del visor en aparecer y en esconderse.
+const viewerControlsFadeDuration = Duration(milliseconds: 200);
+
+/// Lo que tarda el pase de un contenido al siguiente, el deslizamiento de
+/// carrusel. Algo más largo que el desvanecido de la barra: aquí sí hay un
+/// recorrido que seguir, y es lo que dice hacia qué lado se está yendo.
+const viewerSlideDuration = Duration(milliseconds: 300);
+
+/// Grosor del trazo de los iconos de la barra del visor.
+///
+/// Van más finos que el de fábrica (400) porque se pintan grandes y sobre el
+/// contenido: a ese tamaño el trazo normal pesa más de lo que hace falta. El
+/// sombreado es lo que los hace legibles, no el grosor.
+const viewerIconWeight = 200.0;
+
+/// Sombreado que se pone bajo la barra de acciones del visor para que sus
+/// botones se lean también sobre un contenido claro. Es el mismo oscurecido que
+/// llevan las celdas de la rejilla; lo que cambia es que aquí se mide en alto
+/// fijo y no en parte de la celda, porque debajo hay una pantalla entera.
+const viewerShadeHeight = 140.0;
+const viewerShadeOpacity = mediaShadeOpacity;
 
 // Media grid
 const mediaHoverScale = 1.04;

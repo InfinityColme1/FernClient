@@ -34,7 +34,7 @@ class LanguageSettingsSection extends StatelessWidget {
             const SizedBox(height: AppSpacing.s),
             Text(
               texts.languageSectionNote,
-              style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+              style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
             ),
             const SizedBox(height: AppSpacing.l),
             for (final language in AppLanguage.values)

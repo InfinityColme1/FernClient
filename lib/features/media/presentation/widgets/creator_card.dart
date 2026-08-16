@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
@@ -162,6 +163,9 @@ class _CreatorCardState extends State<CreatorCard> {
   /// teniendo. Al terminar se releen los creadores (el nombre y el avatar salen
   /// en la lista de al lado) y se vuelve a pedir su contenido, que es lo que
   /// enseña la rejilla de debajo.
+  ///
+  /// El nombre no puede ser el de otro creador: si lo es no se guarda nada y se
+  /// avisa, como en el diálogo de creación.
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
@@ -179,7 +183,20 @@ class _CreatorCardState extends State<CreatorCard> {
         sourceUrls: _sourceUrls,
       ),
     );
-    if (result is! DataSuccess || !mounted) return;
+    if (!mounted) return;
+
+    // Con el nombre cogido por otro creador no se ha guardado nada: se avisa y
+    // la ficha se queda como estaba, para poder cambiarlo sin perder el resto.
+    if (result.exception is DuplicateCreatorNameException) {
+      showFernToast(
+        context,
+        AppLocalizations.of(context).creatorNameTaken,
+        icon: Icons.error_outline,
+      );
+      return;
+    }
+
+    if (result is! DataSuccess) return;
 
     getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
     context.read<MediaBloc>().add(LoadMediaByCreatorEvent(widget.creator.id));
@@ -267,9 +284,9 @@ class _CreatorCardState extends State<CreatorCard> {
     // pone sobre toda la ficha: lo que hay en ella es justo lo que va a cambiar.
     return FernBusyOverlay(
       isBusy: _isBusy,
-      color: AppColors.white,
+      color: context.colors.white,
       child: FernSurface(
-        color: AppColors.white,
+        color: context.colors.white,
         padding: const EdgeInsets.all(AppSpacing.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -291,7 +308,7 @@ class _CreatorCardState extends State<CreatorCard> {
                     // Sin nombre se enseña el del creador en tono apagado: el
                     // campo está vacío, pero el creador sigue llamándose así.
                     title: name.isEmpty ? widget.creator.name : name,
-                    titleColor: name.isEmpty ? AppColors.unremarked : null,
+                    titleColor: name.isEmpty ? context.colors.unremarked : null,
                     // Más pequeño que el del diálogo: la ficha comparte el alto de
                     // la pantalla con la rejilla, y el avatar es lo que más ocupa.
                     avatar: FernEditableAvatar(
@@ -342,16 +359,16 @@ class _CreatorCardState extends State<CreatorCard> {
                 FernPillButton(
                   label: texts.actionDeleteCreator,
                   icon: Icons.delete_outline,
-                  backgroundColor: AppColors.terciary,
-                  foregroundColor: AppColors.white,
+                  backgroundColor: context.colors.error,
+                  foregroundColor: Colors.white,
                   onPressed: _isBusy || _isUnknown ? null : () => _run(_delete),
                 ),
                 _unassignButton(texts),
                 FernPillButton(
                   label: texts.actionSave,
                   icon: Icons.check,
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.black,
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.black,
                   onPressed: _isBusy ? null : () => _run(_save),
                 ),
               ],
@@ -408,7 +425,7 @@ class _CreatorCardState extends State<CreatorCard> {
               ? Text(
                   texts.noSocialProfiles,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.unremarked,
+                    color: context.colors.unremarked,
                   ),
                 )
               : ListView.separated(
@@ -535,8 +552,8 @@ class _CreatorCardState extends State<CreatorCard> {
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionUnassignCreator,
         icon: Icons.person_remove_outlined,
-        backgroundColor: AppColors.secondary,
-        foregroundColor: AppColors.black,
+        backgroundColor: context.colors.secondary,
+        foregroundColor: context.colors.black,
         onPressed: hasSelection && !_isUnknown
             ? () => context
                 .read<MediaBloc>()

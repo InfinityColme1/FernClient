@@ -84,8 +84,8 @@ class _FavoritesView extends StatelessWidget {
                     FernPillButton(
                       label: texts.filters,
                       icon: Icons.tune,
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.black,
+                      backgroundColor: context.colors.primary,
+                      foregroundColor: context.colors.black,
                       onPressed: () {},
                     ),
                   ],

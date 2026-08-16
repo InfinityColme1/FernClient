@@ -11,12 +11,12 @@ class FernFieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.white,
+      color: context.colors.white,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.black,
+              color: context.colors.black,
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),

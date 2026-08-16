@@ -37,12 +37,12 @@ class FernInlineAddButton extends StatelessWidget {
               padding: const EdgeInsets.all(1),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.black, width: 1.5),
+                border: Border.all(color: context.colors.black, width: 1.5),
               ),
               child: Icon(
                 icon,
                 size: AppSizes.iconSmall,
-                color: AppColors.black,
+                color: context.colors.black,
               ),
             ),
             const SizedBox(width: AppSpacing.s),

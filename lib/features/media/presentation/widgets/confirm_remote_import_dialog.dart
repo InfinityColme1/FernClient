@@ -76,24 +76,24 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
           const SizedBox(height: AppSpacing.m),
           Text(
             _amount(texts),
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
           if (_isHeavy) ...[
             const SizedBox(height: AppSpacing.m),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.schedule,
                   size: AppSizes.iconCompact,
-                  color: AppColors.terciary,
+                  color: context.colors.terciary,
                 ),
                 const SizedBox(width: AppSpacing.s),
                 Expanded(
                   child: Text(
                     texts.remoteImportHeavyWarning,
                     style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.terciary),
+                        ?.copyWith(color: context.colors.terciary),
                   ),
                 ),
               ],
@@ -104,8 +104,8 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
       actionButton: FernPillButton(
         label: texts.actionImport,
         icon: Icons.file_download_outlined,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: context.colors.primary,
+        foregroundColor: context.colors.black,
         onPressed: () => Navigator.of(context).pop(true),
       ),
     );

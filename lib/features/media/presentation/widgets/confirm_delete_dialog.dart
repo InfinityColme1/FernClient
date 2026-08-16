@@ -137,8 +137,8 @@ class _ConfirmDeleteDialogState extends State<ConfirmDeleteDialog> {
       actionButton: FernPillButton(
         label: texts.actionDelete,
         icon: Icons.delete_outline,
-        backgroundColor: AppColors.terciary,
-        foregroundColor: AppColors.white,
+        backgroundColor: context.colors.error,
+        foregroundColor: Colors.white,
         onPressed: () => _confirm(context),
       ),
     );

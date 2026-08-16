@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/utils/file_utils.dart';
 import 'package:Fern/core/utils/source_url.dart';
@@ -985,20 +986,52 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
   /// Guarda el creador, enlaces de redes sociales incluidos, y lo devuelve con
   /// el identificador que le ha dado Isar.
+  ///
+  /// El nombre tiene que estar libre: dos creadores que se llamen igual no se
+  /// distinguirían ni en la lista ni en el buscador, así que si ya hay uno se
+  /// devuelve [DuplicateCreatorNameException] y no se escribe nada.
   @override
   Future<DataState<CreatorEntity>> saveCreator(CreatorEntity creator) async {
     try {
+      final name = creator.name.trim();
+
       final model = CreatorModel.fromEntity(creator)
+        ..name = name
         ..sourceUrls = normalizedSourceUrls(creator.sourceUrls);
 
+      // La comprobación va dentro de la misma transacción que el alta: fuera de
+      // ella, dos altas seguidas del mismo nombre podrían pasar las dos.
+      var isTaken = false;
+
       await _appDatabase.writeTxn(() async {
+        isTaken = await _isCreatorNameTaken(name);
+        if (isTaken) return;
+
         model.id = await _appDatabase.creatorModels.put(model);
       });
+
+      if (isTaken) return DataException(DuplicateCreatorNameException(name));
 
       return DataSuccess(model.toEntity());
     } on Exception catch (e) {
       return DataException(e);
     }
+  }
+
+  /// Hay ya un creador que se llama [name], sin contar el de [exceptId].
+  ///
+  /// Se compara sin distinguir mayúsculas: "Alguien" y "alguien" son el mismo
+  /// creador escrito de dos maneras, y tenerlos por separado es justo lo que se
+  /// quiere evitar. El identificador que se excluye es el del propio creador al
+  /// renombrarlo: dejarle su nombre tal cual no puede ser un choque consigo
+  /// mismo.
+  Future<bool> _isCreatorNameTaken(String name, {int? exceptId}) async {
+    final existing = await _appDatabase.creatorModels
+        .filter()
+        .nameEqualTo(name, caseSensitive: false)
+        .findFirst();
+
+    return existing != null && existing.id != exceptId;
   }
 
   /// Cambia los datos de un creador que ya existe: su nombre, su avatar y sus
@@ -1008,18 +1041,31 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// teniendo. Las direcciones vinculadas no se tocan aquí: se guardan desde su
   /// propio diálogo ([saveCreatorSourceUrls]), no desde el formulario del
   /// creador.
+  ///
+  /// El nombre nuevo tiene que seguir estando libre, como al crearlo: si es el
+  /// de otro creador se devuelve [DuplicateCreatorNameException] y el creador se
+  /// queda como estaba.
   @override
   Future<DataState<CreatorEntity>> updateCreator(CreatorEntity creator) async {
     try {
       final model = await _appDatabase.creatorModels.get(creator.id);
       if (model == null) return DataException(Exception("Creator not found"));
 
+      final name = creator.name.trim();
+
+      var isTaken = false;
+
       await _appDatabase.writeTxn(() async {
-        model.name = creator.name;
+        isTaken = await _isCreatorNameTaken(name, exceptId: creator.id);
+        if (isTaken) return;
+
+        model.name = name;
         model.picturePath = creator.picturePath;
         model.socialProfiles = creator.socialProfiles;
         await _appDatabase.creatorModels.put(model);
       });
+
+      if (isTaken) return DataException(DuplicateCreatorNameException(name));
 
       return DataSuccess(model.toEntity());
     } on Exception catch (e) {

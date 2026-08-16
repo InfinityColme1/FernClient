@@ -116,7 +116,7 @@ class _AssignUrlDialogState extends State<AssignUrlDialog> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             widget.target.description(texts),
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
           const SizedBox(height: AppSpacing.l),
           Text(

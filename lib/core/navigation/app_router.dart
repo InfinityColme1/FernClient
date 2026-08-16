@@ -9,6 +9,7 @@ import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/features/media/presentation/pages/media_page.dart';
 import 'package:Fern/features/media/presentation/pages/tag_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
+import 'package:Fern/features/splash/presentation/pages/splash_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,8 +18,19 @@ import '../service_locator.dart';
 
 
 final appRouter = GoRouter(
-  initialLocation: mediaRoute,
+  initialLocation: splashRoute,
   routes: [
+    // La bienvenida va fuera del armazón: no lleva ni cabecera ni menú lateral,
+    // sólo el logo. Sale con la transición de la aplicación, así que se
+    // desvanece sobre la biblioteca en lugar de cortarse de golpe.
+    GoRoute(
+      path: splashRoute,
+      pageBuilder: (context, state) => fernTransitionPage(
+        key: state.pageKey,
+        child: const SplashPage(),
+      ),
+    ),
+
     ShellRoute(
       // El armazón (barra superior + menú lateral) envuelve siempre a sus
       // pantallas. Si se le quitara al navegar al visor, las pantallas que

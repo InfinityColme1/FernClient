@@ -8,6 +8,7 @@ import 'package:Fern/features/settings/presentation/widgets/browser_settings_sec
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/remote_sources_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/viewer_settings_section.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,6 +18,7 @@ import 'package:go_router/go_router.dart';
 enum SettingsSection {
   language(icon: Icons.language),
   appearance(icon: Icons.palette_outlined),
+  viewer(icon: Icons.slideshow_outlined),
   files(icon: Icons.folder_outlined),
   remoteSources(icon: Icons.cloud_download_outlined),
 
@@ -30,6 +32,7 @@ enum SettingsSection {
   String title(AppLocalizations texts) => switch (this) {
         SettingsSection.language => texts.settingsLanguage,
         SettingsSection.appearance => texts.settingsAppearance,
+        SettingsSection.viewer => texts.settingsViewer,
         SettingsSection.files => texts.settingsFiles,
         SettingsSection.remoteSources => texts.settingsRemoteSources,
         SettingsSection.browser => texts.settingsBrowser,
@@ -67,7 +70,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return BlocProvider<SettingsBloc>.value(
       value: getIt<SettingsBloc>(),
       child: Dialog(
-        backgroundColor: AppColors.white,
+        backgroundColor: context.colors.white,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusDialog),
@@ -93,7 +96,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
     return Container(
       width: AppSizes.settingsNavWidth,
-      color: AppColors.secondary,
+      color: context.colors.secondary,
       padding: const EdgeInsets.symmetric(
         vertical: AppSpacing.xl,
         horizontal: AppSpacing.l,
@@ -125,10 +128,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: Material(
-        color: isSelected ? AppColors.primary : Colors.transparent,
+        color: isSelected ? context.colors.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+          // La fila de una sección es un botón, y como tal tiene que decirlo al
+          // pasar el ratón: sin fondo ni borde propios, el cursor es lo único
+          // que la distingue de un rótulo.
+          mouseCursor: WidgetStateMouseCursor.clickable,
           onTap: () => setState(() => _section = section),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -203,6 +210,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             child: switch (_section) {
               SettingsSection.language => const LanguageSettingsSection(),
               SettingsSection.appearance => const AppearanceSettingsSection(),
+              SettingsSection.viewer => const ViewerSettingsSection(),
               SettingsSection.files => const FilesSettingsSection(),
               SettingsSection.remoteSources =>
                 const RemoteSourcesSettingsSection(),

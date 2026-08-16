@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
@@ -10,6 +11,8 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
+import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
+import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
@@ -67,8 +70,10 @@ enum CreateDialogType {
 /// ```
 ///
 /// No necesita que nadie le provea un bloc: guarda con los casos de uso, así que
-/// se puede abrir desde cualquier pantalla. Al crear una etiqueta avisa al
-/// `TagsBloc` (que es único) para que el menú lateral la liste.
+/// se puede abrir desde cualquier pantalla. Lo que crea sí lo avisa a los blocs
+/// únicos que lo listan: al `TagsBloc` para que el menú lateral enseñe la
+/// etiqueta nueva y al `CreatorsBloc` para que la pantalla de gestión enseñe el
+/// creador nuevo.
 class FernCreateDialog extends StatefulWidget {
   final CreateDialogType type;
 
@@ -224,9 +229,25 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
             socialProfiles: links.isEmpty ? null : links,
           ),
         );
+        if (!mounted) return;
+
+        // Con el nombre cogido no se ha creado nada: el diálogo se queda abierto
+        // con todo lo escrito, que lo único que hay que cambiar es el nombre.
+        if (result.exception is DuplicateCreatorNameException) {
+          showFernToast(
+            context,
+            AppLocalizations.of(context).creatorNameTaken,
+            icon: Icons.error_outline,
+          );
+          return;
+        }
 
         final creator = result.data;
-        if (!mounted || result is! DataSuccess || creator == null) return;
+        if (result is! DataSuccess || creator == null) return;
+
+        // El creador nuevo tiene que salir en la pantalla de gestión sin tener
+        // que reiniciar, igual que la etiqueta en el menú lateral.
+        getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
 
         navigator.pop(creator);
     }
@@ -257,7 +278,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         // Mientras no haya nombre se enseña el título de la variante, en tono
         // apagado para que se lea como un hueco por rellenar.
         title: name.isEmpty ? widget.type.title(texts) : name,
-        titleColor: name.isEmpty ? AppColors.unremarked : null,
+        titleColor: name.isEmpty ? context.colors.unremarked : null,
         avatar: FernEditableAvatar(
           imagePath: _selectedImagePath,
           fallbackIcon: widget.type.icon,

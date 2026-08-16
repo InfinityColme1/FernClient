@@ -87,7 +87,7 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     if (!_isHovered) return background;
 
     return Color.alphaBlend(
-      AppColors.black.withValues(alpha: sidebarHoverOverlayOpacity),
+      context.colors.black.withValues(alpha: sidebarHoverOverlayOpacity),
       background,
     );
   }
@@ -114,7 +114,7 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     final avatarPath = widget.avatarPath;
 
     if (avatarPath == null) {
-      return Icon(widget.icon, color: AppColors.black, size: widget.iconSize);
+      return Icon(widget.icon, color: context.colors.black, size: widget.iconSize);
     }
 
     return FernAvatar(
@@ -146,7 +146,7 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
               if (_showsDepthMark) ...[
                 Icon(
                   Icons.subdirectory_arrow_right,
-                  color: AppColors.unremarked,
+                  color: context.colors.unremarked,
                   size: AppSizes.iconSmall,
                 ),
                 SizedBox(width: sizedBoxAnimation.value),

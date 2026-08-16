@@ -103,9 +103,9 @@ class _FernSearchInputState extends State<FernSearchInput> {
             color: Colors.transparent,
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.colors.white,
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-                border: Border.all(color: AppColors.lightgray),
+                border: Border.all(color: context.colors.lightgray),
               ),
               constraints: BoxConstraints(maxHeight: widget.maxSuggestionsHeight),
               child: ListView(
@@ -188,7 +188,7 @@ class _FernSearchInputState extends State<FernSearchInput> {
                 ),
               (false, true) => null,
               (false, false) => IconButton(
-                  icon: const Icon(Icons.cancel, color: AppColors.black),
+                  icon: Icon(Icons.cancel, color: context.colors.black),
                   onPressed: () {
                     _controller.clear();
                     _hideOverlay();

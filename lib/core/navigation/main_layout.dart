@@ -5,6 +5,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
+import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
@@ -148,6 +149,16 @@ class _MainLayoutState extends State<MainLayout> {
       appBar: AppBar(
         title: Row(
           children: [
+            // Lo que abre y cierra el menú, en la esquina de la que sale el
+            // menú y junto al logo: desde ahí se ve y se alcanza igual con el
+            // menú desplegado que plegado.
+            SidebarToggleButton(
+              isCollapsed: isSidebarCollapsed,
+              onPressed: () => setState(
+                () => _isSidebarCollapsed = !_isSidebarCollapsed,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s),
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.xxxl),
               child: Image.asset(

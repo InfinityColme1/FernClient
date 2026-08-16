@@ -327,7 +327,7 @@ class _BrowserPageState extends State<BrowserPage> {
             Text(
               _status!,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.gray,
+                color: context.colors.gray,
               ),
             ),
           ],

@@ -47,12 +47,12 @@ class RepositoryLinkDialog extends StatelessWidget {
             postTitle.isEmpty ? texts.linkChoiceUntitledPost : postTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
           const SizedBox(height: AppSpacing.m),
           Text(
             texts.repositoryLinkDescription,
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
           const SizedBox(height: AppSpacing.m),
           for (final link in links)
@@ -60,10 +60,10 @@ class RepositoryLinkDialog extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: AppSpacing.xs),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.cloud_outlined,
                     size: AppSizes.iconCompact,
-                    color: AppColors.gray,
+                    color: context.colors.gray,
                   ),
                   const SizedBox(width: AppSpacing.s),
                   Expanded(
@@ -82,8 +82,8 @@ class RepositoryLinkDialog extends StatelessWidget {
       actionButton: FernPillButton(
         label: texts.repositoryLinkOpen,
         icon: Icons.travel_explore_outlined,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: context.colors.primary,
+        foregroundColor: context.colors.black,
         onPressed: () {
           final router = GoRouter.of(context);
           Navigator.of(context).pop();

@@ -264,7 +264,18 @@ class SetInfoVisibilityEvent extends MediaEvents {
 
 class SaveMediaEvent extends MediaEvents {
   final MediaEntity media;
-  const SaveMediaEvent(this.media);
+
+  /// Si al guardar hay que seguir con el contenido siguiente en lugar de
+  /// quedarse en el que se acaba de dar por definitivo.
+  ///
+  /// Es lo que el usuario haya elegido en los ajustes, y sólo tiene sentido con
+  /// contenido pendiente de revisar: al guardarlo deja la lista de la pantalla
+  /// de importación, así que el visor no puede quedarse donde estaba. Si no
+  /// queda nada más que revisar, el visor se cierra igual que si se hubiera
+  /// pedido cerrarlo.
+  final bool goToNext;
+
+  const SaveMediaEvent(this.media, {this.goToNext = false});
 }
 
 /// Marca para borrar el contenido que se está viendo en el visor.

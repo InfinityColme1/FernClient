@@ -115,7 +115,7 @@ class _DeleteView extends StatelessWidget {
                         child: Text(
                           texts.deletedRetentionNotice(deletedRetention.inDays),
                           style: theme.textTheme.bodySmall
-                              ?.copyWith(color: AppColors.unremarked),
+                              ?.copyWith(color: context.colors.unremarked),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.m),
@@ -126,7 +126,7 @@ class _DeleteView extends StatelessWidget {
                         texts.selectedCount(selectedCount),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.terciary,
+                          color: context.colors.terciary,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.l),
@@ -143,8 +143,8 @@ class _DeleteView extends StatelessWidget {
                     FernPillButton(
                       label: texts.actionRestore,
                       icon: Icons.restore_from_trash_outlined,
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.black,
+                      backgroundColor: context.colors.primary,
+                      foregroundColor: context.colors.black,
                       onPressed: hasSelection
                           ? () => context
                               .read<MediaBloc>()

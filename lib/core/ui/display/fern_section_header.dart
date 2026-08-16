@@ -20,14 +20,14 @@ class FernSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: AppSizes.iconMedium, color: AppColors.gray),
+        Icon(icon, size: AppSizes.iconMedium, color: context.colors.gray),
         const SizedBox(width: AppSpacing.s),
         Text(
           title,
           style: Theme.of(context)
               .textTheme
               .titleMedium
-              ?.copyWith(color: AppColors.gray),
+              ?.copyWith(color: context.colors.gray),
         ),
         if (trailing != null) ...[
           const Spacer(),

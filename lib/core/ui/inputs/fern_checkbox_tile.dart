@@ -54,7 +54,7 @@ class FernCheckboxTile extends StatelessWidget {
                       Text(
                         description!,
                         style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: AppColors.gray),
+                            ?.copyWith(color: context.colors.gray),
                       ),
                     ],
                   ],

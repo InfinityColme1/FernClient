@@ -126,8 +126,8 @@ class FilesSettingsSection extends StatelessWidget {
                 FernPillButton(
                   label: texts.migrateFiles,
                   icon: Icons.drive_file_move_outline,
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.black,
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.black,
                   onPressed: settings.managesFiles && !state.isWorking
                       ? () => bloc.add(const MigrateLibraryRequestedEvent())
                       : null,
@@ -146,7 +146,7 @@ class FilesSettingsSection extends StatelessWidget {
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
-                          ?.copyWith(color: AppColors.gray),
+                          ?.copyWith(color: context.colors.gray),
                     ),
                   ),
               ],
@@ -181,7 +181,7 @@ class FilesSettingsSection extends StatelessWidget {
       style: Theme.of(context)
           .textTheme
           .bodyMedium
-          ?.copyWith(color: AppColors.gray),
+          ?.copyWith(color: context.colors.gray),
     );
   }
 

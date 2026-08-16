@@ -32,12 +32,12 @@ void main() {
       (tester) async {
     await _pump(tester, isEnabled: true);
 
-    expect(_iconColor(tester, Icons.refresh), AppColors.black);
+    expect(_iconColor(tester, Icons.refresh), AppColors.light.black);
   });
 
   testWidgets('un botón de icono apagado va en gris claro', (tester) async {
     await _pump(tester, isEnabled: false);
 
-    expect(_iconColor(tester, Icons.refresh), AppColors.lightgray);
+    expect(_iconColor(tester, Icons.refresh), AppColors.light.lightgray);
   });
 }

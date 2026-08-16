@@ -250,9 +250,9 @@ class _TagCardState extends State<TagCard> {
     // pone sobre toda la ficha: lo que hay en ella es justo lo que va a cambiar.
     return FernBusyOverlay(
       isBusy: _isBusy,
-      color: AppColors.white,
+      color: context.colors.white,
       child: FernSurface(
-        color: AppColors.white,
+        color: context.colors.white,
         padding: const EdgeInsets.all(AppSpacing.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -271,7 +271,7 @@ class _TagCardState extends State<TagCard> {
                     // Sin nombre se enseña el de la etiqueta en tono apagado: el
                     // campo está vacío, pero la etiqueta sigue llamándose así.
                     title: name.isEmpty ? widget.tag.name : name,
-                    titleColor: name.isEmpty ? AppColors.unremarked : null,
+                    titleColor: name.isEmpty ? context.colors.unremarked : null,
                     // Más pequeño que el del diálogo: la ficha comparte el alto de
                     // la pantalla con la rejilla, y el avatar es lo que más ocupa.
                     avatar: FernEditableAvatar(
@@ -321,8 +321,8 @@ class _TagCardState extends State<TagCard> {
                 FernPillButton(
                   label: texts.actionDeleteTag,
                   icon: Icons.delete_outline,
-                  backgroundColor: AppColors.terciary,
-                  foregroundColor: AppColors.white,
+                  backgroundColor: context.colors.error,
+                  foregroundColor: Colors.white,
                   onPressed: _isBusy ? null : () => _run(_delete),
                 ),
                 _removeParentButton(texts),
@@ -330,8 +330,8 @@ class _TagCardState extends State<TagCard> {
                 FernPillButton(
                   label: texts.actionSave,
                   icon: Icons.check,
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.black,
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.black,
                   onPressed: _isBusy ? null : () => _run(_save),
                 ),
               ],
@@ -382,8 +382,8 @@ class _TagCardState extends State<TagCard> {
     return FernPillButton(
       label: texts.actionRemoveParentTag,
       icon: Icons.link_off,
-      backgroundColor: AppColors.secondary,
-      foregroundColor: AppColors.black,
+      backgroundColor: context.colors.secondary,
+      foregroundColor: context.colors.black,
       onPressed: _parentQuery.trim().isEmpty ? null : _removeParent,
     );
   }
@@ -396,8 +396,8 @@ class _TagCardState extends State<TagCard> {
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionUnassignTag,
         icon: Icons.label_off_outlined,
-        backgroundColor: AppColors.secondary,
-        foregroundColor: AppColors.black,
+        backgroundColor: context.colors.secondary,
+        foregroundColor: context.colors.black,
         onPressed: hasSelection
             ? () => context
                 .read<MediaBloc>()

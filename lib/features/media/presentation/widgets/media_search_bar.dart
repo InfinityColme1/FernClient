@@ -175,9 +175,9 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
             color: Colors.transparent,
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.colors.white,
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-                border: Border.all(color: AppColors.lightgray),
+                border: Border.all(color: context.colors.lightgray),
               ),
               constraints: const BoxConstraints(
                 maxHeight: mediaSearchSuggestionsMaxHeight,
@@ -220,14 +220,14 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
         link: _layerLink,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.secondary,
+            color: context.colors.secondary,
             borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
             child: Row(
               children: [
-                const Icon(Icons.search, color: AppColors.black),
+                Icon(Icons.search, color: context.colors.black),
                 const SizedBox(width: AppSpacing.m),
                 Expanded(
                   child: TextField(
@@ -245,7 +245,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                       hintStyle: Theme.of(context)
                           .textTheme
                           .bodyMedium
-                          ?.copyWith(color: AppColors.lightgray),
+                          ?.copyWith(color: context.colors.lightgray),
                     ),
                   ),
                 ),
@@ -262,7 +262,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                     onPressed: _clear,
                     visualDensity: VisualDensity.compact,
                     iconSize: AppSizes.iconMedium,
-                    icon: const Icon(Icons.cancel, color: AppColors.black),
+                    icon: Icon(Icons.cancel, color: context.colors.black),
                   ),
               ],
             ),

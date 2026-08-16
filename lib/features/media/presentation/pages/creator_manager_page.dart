@@ -45,13 +45,15 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
   void initState() {
     super.initState();
 
-    if (!_creatorsBloc.state.isLoaded) {
-      _creatorsBloc.add(const LoadCreatorsEvent());
-    }
+    // Se releen siempre al entrar y no sólo la primera vez: mientras la pantalla
+    // no estaba puede haberse creado un creador desde cualquier otro sitio (el
+    // "+" del menú o el diálogo que se lo asigna a un contenido), y lo que hay
+    // en el bloc sería de antes.
+    _creatorsBloc.add(const LoadCreatorsEvent());
 
-    // Si los creadores ya estaban leídos no va a llegar ningún estado nuevo que
-    // dispare la selección por defecto, así que se resuelve en cuanto se puede
-    // llamar a `setState`.
+    // Los creadores que ya hubiera leídos se enseñan mientras llega la relectura,
+    // y con ellos no va a llegar ningún estado nuevo que dispare la selección por
+    // defecto, así que se resuelve en cuanto se puede llamar a `setState`.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _syncSelection(_creatorsBloc.state);

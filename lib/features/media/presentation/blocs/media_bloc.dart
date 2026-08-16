@@ -617,8 +617,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // queda donde está.
     final mediaList = List<MediaSummaryEntity>.from(state.mediaList ?? const []);
     final index = mediaList.indexWhere((summary) => summary.id == event.media.id);
+    var hasLeftTheList = false;
     if (index != -1 && !mediaList[index].isImported) {
       mediaList.removeAt(index);
+      hasLeftTheList = true;
     } else if (index != -1) {
       // Se queda en la lista, pero con la ruta que tenga ahora el fichero.
       mediaList[index] = MediaSummaryEntity(
@@ -633,6 +635,32 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final currentMediaIndex = mediaList.isEmpty
         ? 0
         : (state.currentMediaIndex ?? 0).clamp(0, mediaList.length - 1);
+
+    // Al guardar sin salir del visor, el contenido que se acaba de dar por
+    // definitivo ya no está en la lista, así que el sitio al que apuntaba el
+    // índice lo ocupa ahora el siguiente: pasar a él es leer sus detalles.
+    if (event.goToNext && hasLeftTheList) {
+      // La lista recortada tiene que estar en el estado antes de pedir los
+      // detalles: es de ahí de donde los lee.
+      emit(state.copyWith(
+        currentMedia: saved,
+        mediaList: mediaList,
+        currentMediaIndex: currentMediaIndex,
+        isModified: false,
+        isNew: false,
+        isBusy: true,
+      ));
+
+      // No queda nada que revisar: el visor se cierra solo al quedarse el
+      // estado sin contenido, igual que cuando se borra el último.
+      if (mediaList.isEmpty) {
+        _emitWithoutViewerMedia(saved.id, emit);
+        return;
+      }
+
+      emit(await _detailsOf(mediaList[currentMediaIndex], currentMediaIndex));
+      return;
+    }
 
     emit(state.copyWith(
       currentMedia: saved,

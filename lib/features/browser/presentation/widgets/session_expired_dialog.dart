@@ -55,7 +55,7 @@ class SessionExpiredDialog extends StatelessWidget {
             isBrowserSession
                 ? texts.sessionExpiredDescription(name)
                 : texts.credentialsRejectedDescription(name),
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
         ],
       ),
@@ -64,8 +64,8 @@ class SessionExpiredDialog extends StatelessWidget {
             ? texts.sourceLogIn(name)
             : texts.actionOpenRemoteSettings,
         icon: isBrowserSession ? Icons.login : Icons.settings,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: context.colors.primary,
+        foregroundColor: context.colors.black,
         onPressed: () => Navigator.of(context).pop(true),
       ),
     );

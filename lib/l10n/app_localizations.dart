@@ -102,6 +102,18 @@ abstract class AppLocalizations {
     Locale('fr'),
   ];
 
+  /// No description provided for @sidebarCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse the menu'**
+  String get sidebarCollapse;
+
+  /// No description provided for @sidebarExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand the menu'**
+  String get sidebarExpand;
+
   /// No description provided for @navGallery.
   ///
   /// In en, this message translates to:
@@ -480,6 +492,54 @@ abstract class AppLocalizations {
   /// **'Deselect'**
   String get deselectItem;
 
+  /// No description provided for @viewerBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get viewerBack;
+
+  /// No description provided for @viewerShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to the clipboard'**
+  String get viewerShare;
+
+  /// No description provided for @viewerFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen'**
+  String get viewerFullscreen;
+
+  /// No description provided for @viewerExitFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get viewerExitFullscreen;
+
+  /// No description provided for @viewerFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as favourite'**
+  String get viewerFavorite;
+
+  /// No description provided for @viewerUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favourites'**
+  String get viewerUnfavorite;
+
+  /// No description provided for @viewerCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to the clipboard'**
+  String get viewerCopied;
+
+  /// No description provided for @viewerCopyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This content could not be copied'**
+  String get viewerCopyFailed;
+
   /// No description provided for @mediaInfoTitle.
   ///
   /// In en, this message translates to:
@@ -624,6 +684,12 @@ abstract class AppLocalizations {
   /// **'Creator Name'**
   String get creatorNameLabel;
 
+  /// No description provided for @creatorNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'There is already a creator with that name'**
+  String get creatorNameTaken;
+
   /// No description provided for @socialProfilesLabel.
   ///
   /// In en, this message translates to:
@@ -702,6 +768,12 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearance;
 
+  /// No description provided for @settingsViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get settingsViewer;
+
   /// No description provided for @settingsFiles.
   ///
   /// In en, this message translates to:
@@ -749,6 +821,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Each tag is drawn with its own picture instead of the shared icon, so you can tell them apart while the menu is collapsed. Tags without a picture keep the icon.'**
   String get showListAvatarsDescription;
+
+  /// No description provided for @viewerSaveSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving imported media'**
+  String get viewerSaveSectionTitle;
+
+  /// No description provided for @viewerSaveSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What the viewer does once you mark an imported media as final. It leaves the import grid either way, so the viewer cannot stay where it was.'**
+  String get viewerSaveSectionNote;
+
+  /// No description provided for @viewerSaveNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to the next media'**
+  String get viewerSaveNext;
+
+  /// No description provided for @viewerSaveNextDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The viewer moves on to the next media, just as if you had pressed the arrow. With nothing left to review, it closes.'**
+  String get viewerSaveNextDescription;
+
+  /// No description provided for @viewerSaveClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the viewer'**
+  String get viewerSaveClose;
+
+  /// No description provided for @viewerSaveCloseDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The viewer closes and you are back at the import grid, already without that media.'**
+  String get viewerSaveCloseDescription;
+
+  /// No description provided for @themeSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeSectionTitle;
+
+  /// No description provided for @themeSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The colours the whole application is painted with.'**
+  String get themeSectionNote;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the system'**
+  String get themeSystem;
+
+  /// No description provided for @themeSystemDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Light or dark, whichever your desktop is using.'**
+  String get themeSystemDescription;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeLightDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The colours Fern has always had.'**
+  String get themeLightDescription;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @themeDarkDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The same application, for a dark desktop.'**
+  String get themeDarkDescription;
+
+  /// No description provided for @themeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get themeCustom;
+
+  /// No description provided for @themeCustomDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your own colours, the ones you pick below.'**
+  String get themeCustomDescription;
+
+  /// No description provided for @customColorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your colours'**
+  String get customColorsTitle;
+
+  /// No description provided for @customColorsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Only within reach with the custom theme. Whatever you leave untouched is taken from the light or the dark theme, whichever suits the background you chose.'**
+  String get customColorsNote;
+
+  /// No description provided for @customColorPrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get customColorPrimary;
+
+  /// No description provided for @customColorSecondary.
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary'**
+  String get customColorSecondary;
+
+  /// No description provided for @customColorTerciary.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent'**
+  String get customColorTerciary;
+
+  /// No description provided for @customColorError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get customColorError;
+
+  /// No description provided for @customColorBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get customColorBackground;
+
+  /// No description provided for @customColorSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface'**
+  String get customColorSurface;
+
+  /// No description provided for @customColorForeground.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get customColorForeground;
+
+  /// No description provided for @customColorPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose colour'**
+  String get customColorPick;
+
+  /// No description provided for @customColorReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the default colour'**
+  String get customColorReset;
+
+  /// No description provided for @colorPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a colour'**
+  String get colorPickerTitle;
+
+  /// No description provided for @colorPickerHex.
+  ///
+  /// In en, this message translates to:
+  /// **'Hex code'**
+  String get colorPickerHex;
 
   /// No description provided for @filesLocalTitle.
   ///

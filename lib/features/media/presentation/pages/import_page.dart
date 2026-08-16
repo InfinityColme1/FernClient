@@ -196,7 +196,7 @@ class _ImportViewState extends State<_ImportView> {
   ) {
     final theme = Theme.of(context);
     final isLink = note.onTap != null;
-    final color = isLink ? AppColors.terciary : AppColors.gray;
+    final color = isLink ? context.colors.terciary : context.colors.gray;
 
     return Tooltip(
       message: note.hint,
@@ -429,7 +429,7 @@ class _ImportViewState extends State<_ImportView> {
                               texts.selectedCount(selectedCount),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.terciary,
+                                color: context.colors.terciary,
                               ),
                             ),
                             const SizedBox(width: AppSpacing.l),
@@ -499,8 +499,8 @@ class _ImportViewState extends State<_ImportView> {
                           FernPillButton(
                             label: texts.actionDelete,
                             icon: Icons.delete_outline,
-                            backgroundColor: AppColors.terciary,
-                            foregroundColor: AppColors.white,
+                            backgroundColor: context.colors.error,
+                            foregroundColor: Colors.white,
                             onPressed: hasSelection
                                 ? () => _discardSelection(context, selectedCount)
                                 : null,
@@ -509,8 +509,8 @@ class _ImportViewState extends State<_ImportView> {
                           FernPillButton(
                             label: texts.actionConfirm,
                             icon: Icons.check,
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.black,
+                            backgroundColor: context.colors.primary,
+                            foregroundColor: context.colors.black,
                             onPressed: hasSelection
                                 ? () => context
                                     .read<MediaBloc>()

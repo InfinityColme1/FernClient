@@ -74,7 +74,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
                 : widget.postTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
           const SizedBox(height: AppSpacing.m),
           ConstrainedBox(
@@ -100,8 +100,8 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               FernPillButton(
                 label: texts.linkChoiceIgnore,
                 icon: Icons.block,
-                backgroundColor: AppColors.secondary,
-                foregroundColor: AppColors.black,
+                backgroundColor: context.colors.secondary,
+                foregroundColor: context.colors.black,
                 onPressed: () => _answer(
                   LinkChoice.ignore(applyToAll: _applyToAll),
                 ),
@@ -110,8 +110,8 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               FernPillButton(
                 label: texts.linkChoiceSelection(_selected.length),
                 icon: Icons.checklist,
-                backgroundColor: AppColors.secondary,
-                foregroundColor: AppColors.black,
+                backgroundColor: context.colors.secondary,
+                foregroundColor: context.colors.black,
                 onPressed: _selected.isEmpty
                     ? null
                     : () => _answer(LinkChoice(
@@ -124,8 +124,8 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               FernPillButton(
                 label: texts.linkChoiceAll,
                 icon: Icons.download_outlined,
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.black,
+                backgroundColor: context.colors.primary,
+                foregroundColor: context.colors.black,
                 onPressed: () => _answer(LinkChoice(
                   kind: LinkChoiceKind.all,
                   applyToAll: _applyToAll,
@@ -159,7 +159,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
                 ? Icons.folder_zip_outlined
                 : Icons.image_outlined,
             size: AppSizes.iconCompact,
-            color: AppColors.gray,
+            color: context.colors.gray,
           ),
           const SizedBox(width: AppSpacing.s),
           Expanded(

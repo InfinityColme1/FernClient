@@ -111,8 +111,8 @@ class BrowserMediaPanel extends StatelessWidget {
             child: FernPillButton(
               label: texts.browserImportAction(selected.length),
               icon: Icons.download_outlined,
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.black,
+              backgroundColor: context.colors.primary,
+              foregroundColor: context.colors.black,
               onPressed: isBusy || selected.isEmpty ? null : onImport,
             ),
           ),
@@ -151,7 +151,7 @@ class BrowserMediaPanel extends StatelessWidget {
                     ? Icons.local_offer_outlined
                     : Icons.image_outlined,
                 size: AppSizes.iconCompact,
-                color: AppColors.gray,
+                color: context.colors.gray,
               ),
               const SizedBox(width: AppSpacing.s),
               Expanded(
@@ -166,7 +166,7 @@ class BrowserMediaPanel extends StatelessWidget {
               Text(
                 item.isVisible ? '${item.width}×${item.height}' : item.extension,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.gray,
+                  color: context.colors.gray,
                 ),
               ),
             ],

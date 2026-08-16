@@ -88,7 +88,7 @@ class _CreatorTile extends StatelessWidget {
         // Sin superficie debajo, lo marcado se redondea por su cuenta: es una
         // píldora sobre el fondo de la pantalla, no una franja de una lista.
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
+          color: isSelected ? context.colors.primary : Colors.transparent,
           borderRadius: borderRadius,
         ),
         padding: const EdgeInsets.all(AppSpacing.s),
@@ -101,7 +101,7 @@ class _CreatorTile extends StatelessWidget {
               fallbackIcon: Icons.person,
               radius: AppSizes.avatarMedium,
               iconSize: AppSizes.iconMedium,
-              backgroundColor: AppColors.secondary,
+              backgroundColor: context.colors.secondary,
             ),
             const SizedBox(width: AppSpacing.m),
             Expanded(

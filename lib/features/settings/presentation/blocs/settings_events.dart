@@ -4,6 +4,7 @@ import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/theme_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class SettingsEvents extends Equatable {
@@ -101,6 +102,44 @@ class ShowListAvatarsToggledEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [enabled];
+}
+
+/// Cambia el tema con el que se pinta la aplicación.
+///
+/// Se ve al instante y en toda la aplicación: el tema cuelga de la raíz, así que
+/// al cambiarlo se repinta hasta la propia pantalla de ajustes desde la que se
+/// ha elegido.
+class ThemeModeChangedEvent extends SettingsEvents {
+  final AppThemeMode mode;
+
+  const ThemeModeChangedEvent(this.mode);
+
+  @override
+  List<Object?> get props => [mode];
+}
+
+/// Cambia uno de los colores del tema a medida.
+///
+/// Con [color] a `null` ese color vuelve al del tema de fábrica, que es lo que
+/// hace el botón de restablecer de su fila.
+class CustomThemeColorChangedEvent extends SettingsEvents {
+  final CustomThemeColor slot;
+  final int? color;
+
+  const CustomThemeColorChangedEvent(this.slot, this.color);
+
+  @override
+  List<Object?> get props => [slot, color];
+}
+
+/// Cambia lo que hace el visor al dar por definitivo un contenido importado.
+class ViewerSaveBehaviorChangedEvent extends SettingsEvents {
+  final ViewerSaveBehavior behavior;
+
+  const ViewerSaveBehaviorChangedEvent(this.behavior);
+
+  @override
+  List<Object?> get props => [behavior];
 }
 
 /// Credenciales de Reddit tal y como han quedado tras tocar uno de sus campos.

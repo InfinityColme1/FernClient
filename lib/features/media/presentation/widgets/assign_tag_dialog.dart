@@ -163,16 +163,16 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
 
     return FernChip(
       label: tag.name,
-      backgroundColor: isPending ? AppColors.background : AppColors.white,
-      labelColor: isPending ? AppColors.unremarked : null,
+      backgroundColor: isPending ? context.colors.background : context.colors.white,
+      labelColor: isPending ? context.colors.unremarked : null,
       onRemove: () => _removeTag(tag),
       leading: FernAvatar(
         imagePath: tag.picturePath,
         fallbackIcon: Icons.label,
         radius: AppSizes.avatarSmall,
         iconSize: AppSizes.iconCompact,
-        backgroundColor: isPending ? AppColors.lightgray : AppColors.secondary,
-        iconColor: isPending ? AppColors.gray : AppColors.primary,
+        backgroundColor: isPending ? context.colors.lightgray : context.colors.secondary,
+        iconColor: isPending ? context.colors.gray : context.colors.primary,
       ),
     );
   }
@@ -198,7 +198,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
-                      ?.copyWith(color: AppColors.gray),
+                      ?.copyWith(color: context.colors.gray),
                 ),
               ],
       ),

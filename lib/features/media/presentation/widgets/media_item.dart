@@ -291,10 +291,10 @@ class _MediaItemState extends State<MediaItem> {
 
   Widget _buildPlaceholder() {
     return ColoredBox(
-      color: AppColors.lightgray,
+      color: context.colors.lightgray,
       child: Icon(
         _isVideo ? Icons.movie_outlined : Icons.broken_image_outlined,
-        color: AppColors.white,
+        color: Colors.white,
         size: AppSizes.iconExtraLarge,
       ),
     );
@@ -315,7 +315,7 @@ class _MediaItemState extends State<MediaItem> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.black.withValues(alpha: mediaShadeOpacity),
+                  context.colors.scrim.withValues(alpha: mediaShadeOpacity),
                   Colors.transparent,
                 ],
               ),
@@ -337,7 +337,7 @@ class _MediaItemState extends State<MediaItem> {
             vertical: AppSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color: AppColors.black.withValues(alpha: mediaBadgeOpacity),
+            color: context.colors.scrim.withValues(alpha: mediaBadgeOpacity),
             borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           child: Row(
@@ -345,7 +345,7 @@ class _MediaItemState extends State<MediaItem> {
             children: [
               const Icon(
                 Icons.play_arrow_rounded,
-                color: AppColors.white,
+                color: Colors.white,
                 size: AppSizes.iconSmall,
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -354,7 +354,7 @@ class _MediaItemState extends State<MediaItem> {
                 style: Theme.of(context)
                     .textTheme
                     .labelSmall
-                    ?.copyWith(color: AppColors.white),
+                    ?.copyWith(color: Colors.white),
               ),
             ],
           ),
@@ -385,10 +385,10 @@ class _MediaItemState extends State<MediaItem> {
               widget.isSelected
                   ? Icons.check_circle_rounded
                   : Icons.radio_button_unchecked_rounded,
-              color: widget.isSelected ? AppColors.terciary : AppColors.white,
+              color: widget.isSelected ? context.colors.terciary : Colors.white,
               shadows: [
                 Shadow(
-                  color: AppColors.black
+                  color: context.colors.scrim
                       .withValues(alpha: mediaSelectionShadowOpacity),
                   blurRadius: AppSpacing.xs,
                 ),

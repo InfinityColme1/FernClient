@@ -31,8 +31,8 @@ class FernAvatarTile extends StatelessWidget {
           imagePath: imagePath,
           fallbackIcon: fallbackIcon,
           radius: radius,
-          backgroundColor: AppColors.lightgray,
-          iconColor: AppColors.white,
+          backgroundColor: context.colors.lightgray,
+          iconColor: Colors.white,
         ),
         const SizedBox(height: AppSpacing.s),
         Text(

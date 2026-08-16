@@ -39,7 +39,7 @@ class FernDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusDialog),
       ),
-      backgroundColor: AppColors.white,
+      backgroundColor: context.colors.white,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(

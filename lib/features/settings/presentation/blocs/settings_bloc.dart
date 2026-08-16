@@ -38,6 +38,9 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
+    on<ThemeModeChangedEvent>(onThemeModeChanged);
+    on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
+    on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<DanbooruSettingsChangedEvent>(onDanbooruSettingsChanged);
     on<GelbooruSettingsChangedEvent>(onGelbooruSettingsChanged);
@@ -154,6 +157,42 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(showListAvatars: event.enabled),
+      emit,
+    );
+  }
+
+  /// Se ve en el momento: el tema cuelga de la raíz de la aplicación, así que
+  /// cambia hasta la pantalla de ajustes desde la que se ha elegido.
+  Future<void> onThemeModeChanged(
+    ThemeModeChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(state.settings.copyWith(themeMode: event.mode), emit);
+  }
+
+  /// Los colores a medida se guardan siempre, se esté o no en el tema a medida:
+  /// mirar otro tema y volver no puede perder lo que el usuario había elegido.
+  Future<void> onCustomThemeColorChanged(
+    CustomThemeColorChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(
+        customTheme: state.settings.customTheme.withColor(
+          event.slot,
+          event.color,
+        ),
+      ),
+      emit,
+    );
+  }
+
+  Future<void> onViewerSaveBehaviorChanged(
+    ViewerSaveBehaviorChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(viewerSaveBehavior: event.behavior),
       emit,
     );
   }

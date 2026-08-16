@@ -54,7 +54,7 @@ class _BrowserSettingsSectionState extends State<BrowserSettingsSection> {
           style: Theme.of(context)
               .textTheme
               .bodyMedium
-              ?.copyWith(color: AppColors.gray),
+              ?.copyWith(color: context.colors.gray),
         ),
         const SizedBox(height: AppSpacing.l),
         FernLabeledTextField(

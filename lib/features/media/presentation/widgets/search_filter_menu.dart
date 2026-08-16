@@ -101,8 +101,8 @@ class SearchFilterMenu extends StatelessWidget {
       builder: (context, toggle) => FernPillButton(
         label: texts.filters,
         icon: Icons.tune,
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.black,
+        backgroundColor: context.colors.primary,
+        foregroundColor: context.colors.black,
         onPressed: toggle,
       ),
     );
@@ -116,7 +116,7 @@ class SearchFilterMenu extends StatelessWidget {
         style: Theme.of(context)
             .textTheme
             .labelSmall
-            ?.copyWith(color: AppColors.gray),
+            ?.copyWith(color: context.colors.gray),
       ),
     );
   }

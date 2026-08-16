@@ -193,9 +193,9 @@ class _SidebarState extends State<Sidebar> {
           textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight(400)),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           selectedColor: Theme.of(context).primaryColor,
-          textSelectedColor: AppColors.black,
+          textSelectedColor: context.colors.black,
           unselectedColor: Theme.of(context).scaffoldBackgroundColor,
-          textUnselectedColor: AppColors.unremarked,
+          textUnselectedColor: context.colors.unremarked,
           iconSize: widget.iconSize,
           isCollapsed: widget.isCollapsed,
           sections: [

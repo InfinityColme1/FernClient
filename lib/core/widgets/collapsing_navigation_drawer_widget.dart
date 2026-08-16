@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'collapsing_list_tile_widget.dart';
 
 
-/// Menú lateral desplegable: sus botones repartidos en secciones, y abajo el
-/// botón que lo encoge hasta dejar sólo los iconos.
+/// Menú lateral desplegable: sus botones repartidos en secciones.
+///
+/// Encogerlo hasta dejar sólo los iconos no se pide desde aquí: el botón que lo
+/// hace está en la cabecera, junto al logo, y llega como [isCollapsed].
 ///
 /// Las secciones se separan con una línea horizontal y llevan su rótulo encima.
 /// Todo el contenido va en un desplazable: las etiquetas pueden ser muchas y
@@ -25,9 +27,8 @@ class CollapsingNavigationDrawer extends StatefulWidget {
   final Color unselectedColor;
   final Color textUnselectedColor;
 
-  /// Con qué estado lo quiere quien lo monta. Es una petición, no una orden
-  /// permanente: cambiarla pliega o despliega el menú, pero después el botón
-  /// del propio menú sigue mandando hasta que vuelva a cambiar.
+  /// Si va plegado. Lo dice quien lo monta, que es quien tiene el botón de la
+  /// cabecera y quien lo pliega solo al estrecharse la ventana.
   final bool isCollapsed;
 
   const CollapsingNavigationDrawer({
@@ -61,10 +62,6 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
   /// que es la pantalla con la que arranca la aplicación.
   String? _selectedId;
 
-  /// Si el menú está encogido. Empieza como lo pida quien lo monta y luego lo
-  /// cambian su botón o los cambios de esa petición.
-  late bool _isCollapsed;
-
   @override
   void initState() {
     super.initState();
@@ -74,24 +71,18 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         .animate(_animationController);
 
     // De arranque no se anima: el menú ya aparece como toca.
-    _isCollapsed = widget.isCollapsed;
-    if (_isCollapsed) _animationController.value = 1.0;
+    if (widget.isCollapsed) _animationController.value = 1.0;
   }
 
   @override
   void didUpdateWidget(CollapsingNavigationDrawer oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Sólo al cruzar el umbral: si se comparara con el estado actual, plegarlo
-    // a mano en una ventana ancha se desharía en la reconstrucción siguiente.
-    if (widget.isCollapsed != oldWidget.isCollapsed) {
-      _setCollapsed(widget.isCollapsed);
-    }
-  }
+    // Sólo cuando cambia lo que se pide: una reconstrucción con lo mismo no
+    // reinicia la animación a medio camino.
+    if (widget.isCollapsed == oldWidget.isCollapsed) return;
 
-  void _setCollapsed(bool isCollapsed) {
-    setState(() => _isCollapsed = isCollapsed);
-    isCollapsed
+    widget.isCollapsed
         ? _animationController.forward()
         : _animationController.reverse();
   }
@@ -122,35 +113,17 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
       child: Container(
         width: widthAnimation.value,
         color: widget.backgroundColor,
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: Builder(builder: (context) {
-                // Los botones se arman todos, pero sólo se pintan los que se
-                // ven: las etiquetas pueden ser muchas.
-                final content = _sectionsContent(context);
+        child: Builder(builder: (context) {
+          // Los botones se arman todos, pero sólo se pintan los que se ven:
+          // las etiquetas pueden ser muchas.
+          final content = _sectionsContent(context);
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
-                  itemCount: content.length,
-                  itemBuilder: (context, index) => content[index],
-                );
-              }),
-            ),
-            InkWell(
-              onTap: () => _setCollapsed(!_isCollapsed),
-              child: AnimatedIcon(
-                icon: AnimatedIcons.close_menu,
-                progress: _animationController,
-                color: widget.selectedColor,
-                size: widget.iconSize,
-              ),
-            ),
-            SizedBox(
-              height: 50.0,
-            ),
-          ],
-        ),
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+            itemCount: content.length,
+            itemBuilder: (context, index) => content[index],
+          );
+        }),
       ),
     );
   }

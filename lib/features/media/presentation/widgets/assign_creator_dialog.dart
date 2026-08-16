@@ -103,14 +103,14 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
       onClose: () => context.pop(),
       leftContent: FernDialogSidePanel(
         title: creator.name,
-        titleColor: isPending ? AppColors.unremarked : null,
+        titleColor: isPending ? context.colors.unremarked : null,
         avatar: FernAvatar(
           imagePath: creator.picturePath,
           fallbackIcon: Icons.person,
           radius: AppSizes.avatarHuge,
           backgroundColor:
-              isPending ? AppColors.lightgray : AppColors.secondary,
-          iconColor: isPending ? AppColors.gray : AppColors.primary,
+              isPending ? context.colors.lightgray : context.colors.secondary,
+          iconColor: isPending ? context.colors.gray : context.colors.primary,
         ),
       ),
       rightContent: Column(

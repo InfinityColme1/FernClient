@@ -51,7 +51,7 @@ class FernDirectoryField extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: hasPath ? AppColors.black : AppColors.lightgray,
+                    color: hasPath ? context.colors.black : context.colors.lightgray,
                   ),
                 ),
               ),

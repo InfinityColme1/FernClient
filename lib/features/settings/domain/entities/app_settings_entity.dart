@@ -5,6 +5,7 @@ import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/theme_settings_entity.dart';
 import 'package:equatable/equatable.dart';
 
 /// Idiomas en los que se puede usar la aplicación.
@@ -56,6 +57,30 @@ enum FileOrganizationCriteria {
   }
 }
 
+/// Qué hace el visor cuando se da por definitivo un contenido importado.
+///
+/// El contenido que se acaba de guardar deja de estar en la lista de la pantalla
+/// de importación, así que el visor no puede quedarse donde estaba: o se cierra
+/// y se vuelve a la rejilla, o pasa al siguiente y se sigue revisando sin salir.
+///
+/// Lo segundo es lo de fábrica: importar es revisar unos cuantos contenidos
+/// seguidos, y cerrar el visor en cada uno obliga a volver a entrar.
+enum ViewerSaveBehavior {
+  goToNext(id: 'next'),
+  closeViewer(id: 'close');
+
+  const ViewerSaveBehavior({required this.id});
+
+  final String id;
+
+  static ViewerSaveBehavior fromId(String? id) {
+    return ViewerSaveBehavior.values.firstWhere(
+      (behavior) => behavior.id == id,
+      orElse: () => ViewerSaveBehavior.goToNext,
+    );
+  }
+}
+
 /// Ajustes de la aplicación tal y como los ve la interfaz.
 ///
 /// [avatarsPath] nunca es nulo: aunque no se haya elegido carpeta, la
@@ -95,6 +120,18 @@ class AppSettingsEntity extends Equatable {
   /// dice cuál es cuál, que es justo cuando el avatar hace falta. Las etiquetas
   /// sin avatar se quedan con su icono.
   final bool showListAvatars;
+
+  /// Con qué colores se pinta la aplicación. De fábrica, los que diga el
+  /// sistema: la aplicación se pone de noche cuando lo hace el escritorio.
+  final AppThemeMode themeMode;
+
+  /// Los colores del tema a medida. Sólo se usan con [AppThemeMode.custom], pero
+  /// se guardan siempre: cambiar de tema para mirar otro y volver no puede
+  /// perder lo que el usuario había elegido.
+  final CustomThemeEntity customTheme;
+
+  /// Qué hace el visor al dar por definitivo un contenido importado.
+  final ViewerSaveBehavior viewerSaveBehavior;
 
   /// Credenciales de la fuente remota de Reddit. Vienen vacías mientras el
   /// usuario no las haya rellenado, que es como la aplicación sabe que esa
@@ -137,6 +174,9 @@ class AppSettingsEntity extends Equatable {
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
+    this.themeMode = AppThemeMode.system,
+    this.customTheme = const CustomThemeEntity(),
+    this.viewerSaveBehavior = ViewerSaveBehavior.goToNext,
     this.browserHome = browserHomeUrl,
     this.reddit = const RedditSettingsEntity(),
     this.pixiv = const PixivSettingsEntity(),
@@ -159,6 +199,9 @@ class AppSettingsEntity extends Equatable {
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
+    AppThemeMode? themeMode,
+    CustomThemeEntity? customTheme,
+    ViewerSaveBehavior? viewerSaveBehavior,
     String? browserHome,
     RedditSettingsEntity? reddit,
     PixivSettingsEntity? pixiv,
@@ -176,6 +219,9 @@ class AppSettingsEntity extends Equatable {
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
+      themeMode: themeMode ?? this.themeMode,
+      customTheme: customTheme ?? this.customTheme,
+      viewerSaveBehavior: viewerSaveBehavior ?? this.viewerSaveBehavior,
       browserHome: browserHome ?? this.browserHome,
       reddit: reddit ?? this.reddit,
       pixiv: pixiv ?? this.pixiv,
@@ -196,6 +242,9 @@ class AppSettingsEntity extends Equatable {
         organization,
         autoTagRemoteSource,
         showListAvatars,
+        themeMode,
+        customTheme,
+        viewerSaveBehavior,
         browserHome,
         reddit,
         pixiv,

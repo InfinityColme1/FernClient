@@ -16,8 +16,9 @@ class FernAvatar extends StatelessWidget {
 
   /// Tamaño del icono de reserva. Por defecto igual al radio.
   final double? iconSize;
-  final Color backgroundColor;
-  final Color iconColor;
+  /// Sin decir nada, los colores de la paleta que esté puesta.
+  final Color? backgroundColor;
+  final Color? iconColor;
 
   const FernAvatar({
     super.key,
@@ -25,8 +26,8 @@ class FernAvatar extends StatelessWidget {
     required this.fallbackIcon,
     required this.radius,
     this.iconSize,
-    this.backgroundColor = AppColors.secondary,
-    this.iconColor = AppColors.primary,
+    this.backgroundColor,
+    this.iconColor,
   });
 
   @override
@@ -35,14 +36,14 @@ class FernAvatar extends StatelessWidget {
 
     return CircleAvatar(
       radius: radius,
-      backgroundColor: backgroundColor,
+      backgroundColor: backgroundColor ?? context.colors.secondary,
       backgroundImage: hasImage ? FileImage(File(imagePath!)) : null,
       child: hasImage
           ? null
           : Icon(
               fallbackIcon,
               size: iconSize ?? radius,
-              color: iconColor,
+              color: iconColor ?? context.colors.primary,
             ),
     );
   }

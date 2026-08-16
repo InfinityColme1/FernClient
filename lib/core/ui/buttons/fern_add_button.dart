@@ -39,12 +39,12 @@ class FernAddButton extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.black, width: 2),
+        border: Border.all(color: context.colors.black, width: 2),
       ),
       child: Icon(
         icon,
         size: AppSizes.iconLarge,
-        color: AppColors.black,
+        color: context.colors.black,
       ),
     );
 

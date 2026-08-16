@@ -89,7 +89,7 @@ class SearchResultRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.m),
           Text(
             type.label(AppLocalizations.of(context)),
-            style: theme.textTheme.labelSmall?.copyWith(color: AppColors.gray),
+            style: theme.textTheme.labelSmall?.copyWith(color: context.colors.gray),
           ),
         ],
       ),

@@ -93,7 +93,7 @@ class _FernPopupPanelState extends State<FernPopupPanel> {
       controller: _controller,
       alignmentOffset: _offset,
       style: MenuStyle(
-        backgroundColor: const WidgetStatePropertyAll(AppColors.white),
+        backgroundColor: WidgetStatePropertyAll(context.colors.white),
         padding: WidgetStatePropertyAll(widget.padding),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(

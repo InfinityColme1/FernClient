@@ -50,7 +50,7 @@ class FernRadioTile<T> extends StatelessWidget {
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
                 size: AppSizes.iconMedium,
-                color: isSelected ? AppColors.black : AppColors.lightgray,
+                color: isSelected ? context.colors.black : context.colors.lightgray,
               ),
               const SizedBox(width: AppSpacing.m),
               Expanded(
@@ -63,7 +63,7 @@ class FernRadioTile<T> extends StatelessWidget {
                       Text(
                         description!,
                         style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: AppColors.gray),
+                            ?.copyWith(color: context.colors.gray),
                       ),
                     ],
                   ],

@@ -36,10 +36,10 @@ class FernConfirmButton extends StatelessWidget {
       return ElevatedButton.icon(
         onPressed: null,
         style: ElevatedButton.styleFrom(
-          disabledBackgroundColor: AppColors.primary,
-          disabledForegroundColor: AppColors.black,
+          disabledBackgroundColor: context.colors.primary,
+          disabledForegroundColor: context.colors.black,
         ),
-        icon: const FernProgressIndicator.small(color: AppColors.black),
+        icon: FernProgressIndicator.small(color: context.colors.black),
         label: text,
       );
     }

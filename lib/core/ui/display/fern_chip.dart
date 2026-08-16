@@ -22,7 +22,8 @@ class FernChip extends StatelessWidget {
 
   /// Fondo y color del texto. Se dejan abiertos para poder pintar en tono
   /// apagado las píldoras que todavía no están confirmadas.
-  final Color backgroundColor;
+  /// Sin decir nada, la superficie de la paleta que esté puesta.
+  final Color? backgroundColor;
   final Color? labelColor;
 
   /// Sin superficie: ni fondo, ni sombra, ni bordes redondeados.
@@ -34,7 +35,7 @@ class FernChip extends StatelessWidget {
     this.leading,
     this.onTap,
     this.onRemove,
-    this.backgroundColor = AppColors.white,
+    this.backgroundColor,
     this.labelColor,
   }) : isPlain = false;
 
@@ -79,7 +80,7 @@ class FernChip extends StatelessWidget {
             child: Icon(
               Icons.cancel,
               size: AppSizes.iconCompact,
-              color: labelColor ?? AppColors.black,
+              color: labelColor ?? context.colors.black,
             ),
           ),
         ],
@@ -94,7 +95,7 @@ class FernChip extends StatelessWidget {
               vertical: AppSpacing.s,
             ),
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: backgroundColor ?? context.colors.white,
               borderRadius: borderRadius,
               boxShadow: [
                 BoxShadow(

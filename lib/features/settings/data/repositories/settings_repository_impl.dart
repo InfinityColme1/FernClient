@@ -6,6 +6,7 @@ import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/theme_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,6 +24,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
     required SharedPreferences preferences,
     required this.defaultAvatarsPath,
   }) : _preferences = preferences;
+
+  String _customColorKey(CustomThemeColor slot) =>
+      '$customColorPreferenceKeyPrefix${slot.id}';
+
+  /// El color que el usuario haya puesto en [slot], o `null` si no lo ha
+  /// tocado: la ausencia de la preferencia es lo que dice que ese color se
+  /// hereda del tema de fábrica.
+  int? _customColor(CustomThemeColor slot) =>
+      _preferences.getInt(_customColorKey(slot));
 
   @override
   AppSettingsEntity getSettings() {
@@ -42,6 +52,21 @@ class SettingsRepositoryImpl implements SettingsRepository {
           _preferences.getBool(autoTagRemoteSourcePreferenceKey) ?? false,
       showListAvatars:
           _preferences.getBool(showListAvatarsPreferenceKey) ?? true,
+      themeMode: AppThemeMode.fromId(
+        _preferences.getString(themeModePreferenceKey),
+      ),
+      customTheme: CustomThemeEntity(
+        primary: _customColor(CustomThemeColor.primary),
+        secondary: _customColor(CustomThemeColor.secondary),
+        terciary: _customColor(CustomThemeColor.terciary),
+        error: _customColor(CustomThemeColor.error),
+        background: _customColor(CustomThemeColor.background),
+        surface: _customColor(CustomThemeColor.surface),
+        foreground: _customColor(CustomThemeColor.foreground),
+      ),
+      viewerSaveBehavior: ViewerSaveBehavior.fromId(
+        _preferences.getString(viewerSaveBehaviorPreferenceKey),
+      ),
       reddit: RedditSettingsEntity(
         clientId: _preferences.getString(redditClientIdPreferenceKey) ?? '',
         clientSecret:
@@ -105,6 +130,27 @@ class SettingsRepositoryImpl implements SettingsRepository {
       showListAvatarsPreferenceKey,
       settings.showListAvatars,
     );
+
+    await _preferences.setString(
+      themeModePreferenceKey,
+      settings.themeMode.id,
+    );
+
+    await _preferences.setString(
+      viewerSaveBehaviorPreferenceKey,
+      settings.viewerSaveBehavior.id,
+    );
+
+    // Un color sin poner no se guarda: se borra su preferencia, que es como se
+    // vuelve al del tema de fábrica.
+    for (final slot in CustomThemeColor.values) {
+      final color = settings.customTheme.colorOf(slot);
+      if (color == null) {
+        await _preferences.remove(_customColorKey(slot));
+      } else {
+        await _preferences.setInt(_customColorKey(slot), color);
+      }
+    }
 
     final reddit = settings.reddit;
     await _preferences.setString(redditClientIdPreferenceKey, reddit.clientId);

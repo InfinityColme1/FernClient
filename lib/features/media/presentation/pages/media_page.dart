@@ -105,7 +105,7 @@ class _MediaView extends StatelessWidget {
                         texts.selectedCount(selectedCount),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.terciary,
+                          color: context.colors.terciary,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.l),

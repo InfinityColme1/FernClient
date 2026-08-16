@@ -271,7 +271,7 @@ class _RemoteSourcesSettingsSectionState
       style: Theme.of(context)
           .textTheme
           .bodyMedium
-          ?.copyWith(color: AppColors.gray),
+          ?.copyWith(color: context.colors.gray),
     );
   }
 }

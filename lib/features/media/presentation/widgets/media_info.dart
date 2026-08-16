@@ -10,6 +10,8 @@ import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_creator_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_tag_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
+import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,7 +44,7 @@ class MediaInfo extends StatelessWidget {
             false;
 
         return ColoredBox(
-          color: AppColors.background,
+          color: context.colors.background,
           child: Padding(
             padding: AppSpacing.infoPadding,
             child: Column(
@@ -55,21 +57,32 @@ class MediaInfo extends StatelessWidget {
                   label: texts.actionSave,
                   onPressed: (state.isNew || state.isModified)
                       ? () {
-                          context.read<MediaBloc>().add(SaveMediaEvent(media));
-
                           // El contenido pendiente de revisar se abre desde la
                           // pantalla de importación; al darlo por definitivo
-                          // deja de estar allí, así que se vuelve atrás para
-                          // ver la lista ya sin él.
-                          if (state.isNew) context.pop();
+                          // deja de estar allí, así que el visor no puede
+                          // quedarse donde estaba: o pasa al siguiente o se
+                          // cierra, según lo que el usuario tenga elegido.
+                          final goToNext = state.isNew &&
+                              context
+                                      .read<SettingsBloc>()
+                                      .state
+                                      .settings
+                                      .viewerSaveBehavior ==
+                                  ViewerSaveBehavior.goToNext;
+
+                          context
+                              .read<MediaBloc>()
+                              .add(SaveMediaEvent(media, goToNext: goToNext));
+
+                          if (state.isNew && !goToNext) context.pop();
                         }
                       : null,
                 ),
                 const SizedBox(height: AppSpacing.s),
                 FernActionButton(
                   label: texts.actionDelete,
-                  backgroundColor: AppColors.terciary,
-                  foregroundColor: AppColors.white,
+                  backgroundColor: context.colors.error,
+                  foregroundColor: Colors.white,
                   onPressed: () async {
                     if (isMarked) {
                       // El visor se cierra solo al quedarse el estado sin
@@ -152,7 +165,7 @@ class _InfoContent extends StatelessWidget {
                   fallbackIcon: Icons.label,
                   radius: AppSizes.avatarMedium,
                   iconSize: AppSizes.iconMedium,
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: context.colors.secondary,
                 ),
               ),
             );
@@ -254,7 +267,7 @@ class _CreatorRow extends StatelessWidget {
           radius: AppSizes.avatarMedium,
           iconSize: AppSizes.iconMedium,
           overlayIconSize: AppSizes.iconMedium,
-          backgroundColor: AppColors.secondary,
+          backgroundColor: context.colors.secondary,
           onTap: () => showFernDialog(
             context: context,
             bloc: context.read<MediaBloc>(),
@@ -268,7 +281,7 @@ class _CreatorRow extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.of(context).createdBy,
-                style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.gray),
+                style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
               ),
               Text(
                 media.creator.name,

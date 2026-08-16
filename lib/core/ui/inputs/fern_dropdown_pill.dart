@@ -16,7 +16,8 @@ class FernDropdownPill<T> extends StatefulWidget {
   final List<T> items;
   final ValueChanged<T?>? onChanged;
   final String Function(T value)? labelBuilder;
-  final Color backgroundColor;
+  /// Sin decir nada, el fondo suave de la paleta que esté puesta.
+  final Color? backgroundColor;
   final double height;
 
   /// Cuántas opciones se ven a la vez antes de que haya que desplazarse.
@@ -28,7 +29,7 @@ class FernDropdownPill<T> extends StatefulWidget {
     required this.items,
     this.onChanged,
     this.labelBuilder,
-    this.backgroundColor = AppColors.secondary,
+    this.backgroundColor,
     this.height = AppSizes.buttonHeightSmall,
     this.maxVisibleItems = dropdownMaxVisibleItems,
   });
@@ -47,11 +48,12 @@ class _FernDropdownPillState<T> extends State<FernDropdownPill<T>> {
   /// El velo oscuro del ratón encima, el mismo que llevan los botones del menú
   /// lateral: la píldora se abre al pulsarla y tiene que decirlo.
   Color get _background {
-    if (!_isHovered || !_isEnabled) return widget.backgroundColor;
+    final background = widget.backgroundColor ?? context.colors.secondary;
+    if (!_isHovered || !_isEnabled) return background;
 
     return Color.alphaBlend(
-      AppColors.black.withValues(alpha: sidebarHoverOverlayOpacity),
-      widget.backgroundColor,
+      context.colors.black.withValues(alpha: sidebarHoverOverlayOpacity),
+      background,
     );
   }
 

@@ -22,7 +22,7 @@ class FernOutlinedField extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.black, width: 2),
+            border: Border.all(color: context.colors.black, width: 2),
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
           ),
           child: child,

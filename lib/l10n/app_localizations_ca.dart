@@ -9,6 +9,12 @@ class AppLocalizationsCa extends AppLocalizations {
   AppLocalizationsCa([String locale = 'ca']) : super(locale);
 
   @override
+  String get sidebarCollapse => 'Plegar el menú';
+
+  @override
+  String get sidebarExpand => 'Desplegar el menú';
+
+  @override
   String get navGallery => 'Galeria';
 
   @override
@@ -279,6 +285,30 @@ class AppLocalizationsCa extends AppLocalizations {
   String get deselectItem => 'Treu la selecció';
 
   @override
+  String get viewerBack => 'Torna';
+
+  @override
+  String get viewerShare => 'Copia al porta-retalls';
+
+  @override
+  String get viewerFullscreen => 'Pantalla completa';
+
+  @override
+  String get viewerExitFullscreen => 'Surt de la pantalla completa';
+
+  @override
+  String get viewerFavorite => 'Marca com a preferit';
+
+  @override
+  String get viewerUnfavorite => 'Treu dels preferits';
+
+  @override
+  String get viewerCopied => 'Copiat al porta-retalls';
+
+  @override
+  String get viewerCopyFailed => 'No s\'ha pogut copiar el contingut';
+
+  @override
   String get mediaInfoTitle => 'Informació';
 
   @override
@@ -351,6 +381,9 @@ class AppLocalizationsCa extends AppLocalizations {
   String get creatorNameLabel => 'Nom del creador';
 
   @override
+  String get creatorNameTaken => 'Ja hi ha un creador amb aquest nom';
+
+  @override
   String get socialProfilesLabel => 'Perfils socials';
 
   @override
@@ -390,6 +423,9 @@ class AppLocalizationsCa extends AppLocalizations {
   String get settingsAppearance => 'Aparença';
 
   @override
+  String get settingsViewer => 'Visor';
+
+  @override
   String get settingsFiles => 'Fitxers';
 
   @override
@@ -415,6 +451,101 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get showListAvatarsDescription =>
       'Cada etiqueta es pinta amb la seva pròpia imatge en comptes de la icona comuna, així es distingeixen amb el menú plegat. Les etiquetes sense imatge es queden amb la icona.';
+
+  @override
+  String get viewerSaveSectionTitle => 'En desar contingut importat';
+
+  @override
+  String get viewerSaveSectionNote =>
+      'Què fa el visor quan dones per definitiu un contingut importat. Sigui com sigui deixa de ser a la graella d\'importació, així que el visor no es pot quedar on era.';
+
+  @override
+  String get viewerSaveNext => 'Anar al contingut següent';
+
+  @override
+  String get viewerSaveNextDescription =>
+      'El visor passa al contingut següent, igual que si haguessis premut la fletxa. Si no queda res per revisar, es tanca.';
+
+  @override
+  String get viewerSaveClose => 'Tancar la visualització';
+
+  @override
+  String get viewerSaveCloseDescription =>
+      'El visor es tanca i tornes a la graella d\'importació, ja sense aquest contingut.';
+
+  @override
+  String get themeSectionTitle => 'Tema';
+
+  @override
+  String get themeSectionNote =>
+      'Els colors amb què es pinta tota l\'aplicació.';
+
+  @override
+  String get themeSystem => 'Seguir el sistema';
+
+  @override
+  String get themeSystemDescription =>
+      'Clar o fosc, el que estigui fent servir el teu escriptori.';
+
+  @override
+  String get themeLight => 'Clar';
+
+  @override
+  String get themeLightDescription => 'Els colors de sempre de Fern.';
+
+  @override
+  String get themeDark => 'Fosc';
+
+  @override
+  String get themeDarkDescription =>
+      'La mateixa aplicació, per a un escriptori fosc.';
+
+  @override
+  String get themeCustom => 'A mida';
+
+  @override
+  String get themeCustomDescription =>
+      'Els teus colors, els que triïs aquí sota.';
+
+  @override
+  String get customColorsTitle => 'Els teus colors';
+
+  @override
+  String get customColorsNote =>
+      'Només es poden tocar amb el tema a mida. El que no canviïs es pren del tema clar o del fosc, el que vagi bé al fons que hagis triat.';
+
+  @override
+  String get customColorPrimary => 'Primari';
+
+  @override
+  String get customColorSecondary => 'Secundari';
+
+  @override
+  String get customColorTerciary => 'Accent';
+
+  @override
+  String get customColorError => 'Error';
+
+  @override
+  String get customColorBackground => 'Fons';
+
+  @override
+  String get customColorSurface => 'Superfície';
+
+  @override
+  String get customColorForeground => 'Text';
+
+  @override
+  String get customColorPick => 'Triar color';
+
+  @override
+  String get customColorReset => 'Tornar al color de fàbrica';
+
+  @override
+  String get colorPickerTitle => 'Tria un color';
+
+  @override
+  String get colorPickerHex => 'Codi hexadecimal';
 
   @override
   String get filesLocalTitle => 'Fitxers locals';
