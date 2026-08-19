@@ -1,6 +1,13 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/core/services/jobs/job_queue.dart';
+import 'package:Fern/core/services/schema_migrator.dart';
+import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
+import 'package:Fern/features/notifications/data/services/notification_service.dart';
+import 'package:Fern/features/notifications/data/services/notification_sound_service.dart';
+import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
+import 'package:Fern/features/recognition/data/services/recognition_engine.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pawchive_api_client.dart';
@@ -19,6 +26,8 @@ import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart
 import 'package:Fern/features/media/domain/usecases/organize_library_files_usecase.dart';
 import 'package:Fern/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/settings/data/services/recognition_storage_service.dart';
+import 'package:Fern/features/settings/domain/usecases/migrate_recognition_data_usecase.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/features/settings/domain/usecases/get_settings_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/save_settings_usecase.dart';
@@ -81,6 +90,11 @@ Future<void> initializeDependencies() async {
   
   getIt.registerLazySingleton<ImportCancellation>(() => ImportCancellation());
 
+  // Los trabajos largos que corren por detrás (entrenar, reconocer, buscar
+  // repetidos). Único: el indicador cuelga de la barra superior, que está en el
+  // marco de la aplicación y no en una pantalla.
+  getIt.registerSingleton<JobQueue>(JobQueue());
+
   getIt.registerLazySingleton<PreferencesService>(() =>
       PreferencesService(getIt<SharedPreferences>())
   );
@@ -94,6 +108,8 @@ Future<void> initializeDependencies() async {
         preferences: getIt<SharedPreferences>(),
         defaultAvatarsPath:
             p.join(documentsDirectory.path, appName, avatarsFolderName),
+        defaultRecognitionPath:
+            p.join(documentsDirectory.path, appName, recognitionFolderName),
       ));
 
   getIt.registerSingleton<GetSettingsUseCase>(
@@ -108,12 +124,56 @@ Future<void> initializeDependencies() async {
       AvatarStorageService(settingsRepository: getIt())
   );
 
+  // Los avisos. El sonido va aparte del contador porque son dos cosas que se
+  // encienden y se apagan por separado.
+  getIt.registerLazySingleton<NotificationSoundService>(() =>
+      NotificationSoundService(
+        soundsPath: p.join(
+          documentsDirectory.path,
+          appName,
+          notificationSoundsFolderName,
+        ),
+      )
+  );
+
+  getIt.registerLazySingleton<NotificationService>(() => NotificationService(
+        preferences: getIt<SharedPreferences>(),
+        settingsRepository: getIt(),
+        sounds: getIt(),
+      ));
+
+  // Todo lo del reconocimiento vive bajo una sola carpeta, y este es el único
+  // sitio que sabe cómo se reparte por dentro.
+  getIt.registerLazySingleton<RecognitionStorageService>(() =>
+      RecognitionStorageService(settingsRepository: getIt())
+  );
+
+  getIt.registerSingleton<MigrateRecognitionDataUseCase>(
+    MigrateRecognitionDataUseCase(getIt())
+  );
+
+  // El motor de reconocimiento. No arranca nada al registrarse: el proceso de
+  // Python se lanza la primera vez que hace falta y se cierra solo si nadie lo
+  // usa.
+  getIt.registerLazySingleton<RecognitionEngine>(() =>
+      RecognitionEngine(storage: getIt())
+  );
+
   getIt.registerLazySingleton<MediaFileOrganizer>(() =>
       MediaFileOrganizer(settingsRepository: getIt())
   );
 
   getIt.registerSingleton<AppDatabase>(AppDatabase());
   getIt.registerSingleton<Isar>(await getIt<AppDatabase>().getIsar());
+
+  // La base de datos se pone al día antes de que exista nadie que pueda leerla:
+  // un repositorio registrado por encima de esta línea podría encontrarse las
+  // filas a medio convertir. Si falla, no se sigue: lo recoge `main` y la
+  // aplicación no llega a abrirse.
+  getIt.registerLazySingleton<SchemaMigrator>(() =>
+      SchemaMigrator(preferences: getIt<SharedPreferences>())
+  );
+  await getIt<SchemaMigrator>().run(getIt<Isar>());
 
   // Etiquetar con una etiqueta es etiquetar con toda su rama, y de eso se
   // encarga esto: lo usan por igual el guardado a mano y el automático.
@@ -359,7 +419,20 @@ Future<void> initializeDependencies() async {
         saveSettings: getIt(),
         migrateAvatars: getIt(),
         organizeLibraryFiles: getIt(),
+        migrateRecognitionData: getIt(),
       ));
+
+  // Único por el mismo motivo que el de ajustes: los contadores se pintan en el
+  // menú lateral, que está en el marco de la aplicación.
+  getIt.registerSingleton<NotificationsBloc>(
+      NotificationsBloc(service: getIt())
+  );
+
+  // Único por el mismo motivo que el de ajustes: el indicador de trabajos vive
+  // en la barra superior y tiene que sobrevivir a los cambios de pantalla.
+  getIt.registerSingleton<JobsBloc>(
+      JobsBloc(queue: getIt())
+  );
 
   // Único por el mismo motivo que el de ajustes: las etiquetas se listan en el
   // menú lateral, que está en el marco de la aplicación y no en una pantalla.
@@ -402,6 +475,7 @@ Future<void> initializeDependencies() async {
         searchMediaUseCase: getIt(),
         searchMediaBySuggestionUseCase: getIt(),
         preferences: getIt(),
+        notifications: getIt(),
       )
   );
 }

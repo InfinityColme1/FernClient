@@ -3,6 +3,7 @@ import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart
 import 'package:Fern/features/media/domain/usecases/organize_library_files_usecase.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/usecases/get_settings_usecase.dart';
+import 'package:Fern/features/settings/domain/usecases/migrate_recognition_data_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/save_settings_usecase.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,16 +19,19 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   final SaveSettingsUseCase _saveSettings;
   final MigrateAvatarsUseCase _migrateAvatars;
   final OrganizeLibraryFilesUseCase _organizeLibraryFiles;
+  final MigrateRecognitionDataUseCase _migrateRecognitionData;
 
   SettingsBloc({
     required GetSettingsUseCase getSettings,
     required SaveSettingsUseCase saveSettings,
     required MigrateAvatarsUseCase migrateAvatars,
     required OrganizeLibraryFilesUseCase organizeLibraryFiles,
+    required MigrateRecognitionDataUseCase migrateRecognitionData,
   })  : _getSettings = getSettings,
         _saveSettings = saveSettings,
         _migrateAvatars = migrateAvatars,
         _organizeLibraryFiles = organizeLibraryFiles,
+        _migrateRecognitionData = migrateRecognitionData,
         super(SettingsState(settings: getSettings())) {
     on<LoadSettingsEvent>(onLoadSettings);
     on<LanguageChangedEvent>(onLanguageChanged);
@@ -35,6 +39,8 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<CopyFilesToggledEvent>(onCopyFilesToggled);
     on<LibraryDirectoryChangedEvent>(onLibraryDirectoryChanged);
     on<AvatarsDirectoryChangedEvent>(onAvatarsDirectoryChanged);
+    on<RecognitionDirectoryChangedEvent>(onRecognitionDirectoryChanged);
+    on<NotificationSettingsChangedEvent>(onNotificationSettingsChanged);
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
@@ -127,6 +133,49 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
           ? SettingsResult(SettingsStatus.avatarsMigrated, count: result.data ?? 0)
           : const SettingsResult(SettingsStatus.avatarsFailed),
     ));
+  }
+
+  /// Como los avatares: se mueve en el momento, porque los modelos se cargan de
+  /// esta carpeta. Puede tardar bastante (son varios gigas), de ahí el
+  /// [SettingsState.isWorking] mientras dura.
+  Future<void> onRecognitionDirectoryChanged(
+    RecognitionDirectoryChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    final previous = state.settings.recognitionPath;
+    if (previous == event.path) return;
+
+    emit(state.copyWith(isWorking: true));
+
+    final result = await _migrateRecognitionData(
+      params: MigrateRecognitionDataParams(
+        targetDirectory: event.path,
+        previousDirectory: previous,
+      ),
+    );
+
+    final settings = state.settings.copyWith(recognitionPath: event.path);
+    await _saveSettings(params: settings);
+
+    emit(SettingsState(
+      settings: settings,
+      lastResult: result is DataSuccess
+          ? SettingsResult(
+              SettingsStatus.recognitionMigrated,
+              count: result.data ?? 0,
+            )
+          : const SettingsResult(SettingsStatus.recognitionFailed),
+    ));
+  }
+
+  Future<void> onNotificationSettingsChanged(
+    NotificationSettingsChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(notifications: event.notifications),
+      emit,
+    );
   }
 
   Future<void> onFileOrganizationChanged(

@@ -10,6 +10,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_states.dart';
+import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -47,6 +48,7 @@ class Sidebar extends StatefulWidget {
 class _SidebarState extends State<Sidebar> {
   final _tagsBloc = getIt<TagsBloc>();
   final _settingsBloc = getIt<SettingsBloc>();
+  final _notificationsBloc = getIt<NotificationsBloc>();
 
   @override
   void initState() {
@@ -82,7 +84,14 @@ class _SidebarState extends State<Sidebar> {
     });
   }
 
-  List<SidebarItem> _galleryItems(AppLocalizations texts) {
+  /// Con los avisos apagados no se pinta ningún contador: lo que hubiera
+  /// pendiente sigue anotado, pero deja de enseñarse hasta que se vuelvan a
+  /// encender.
+  List<SidebarItem> _galleryItems(
+    AppLocalizations texts,
+    NotificationsState notifications, {
+    required bool showBadges,
+  }) {
     return [
       SidebarItem(
         id: mediaRoute,
@@ -96,6 +105,7 @@ class _SidebarState extends State<Sidebar> {
           id: importRoute,
           title: texts.navImport,
           icon: Icons.file_download_outlined,
+          badgeCount: showBadges ? notifications.badgeFor(importRoute) : 0,
           onTap: () {
             GoRouter.of(context).go(importRoute);
           }
@@ -186,34 +196,50 @@ class _SidebarState extends State<Sidebar> {
       bloc: _settingsBloc,
       buildWhen: (previous, current) =>
           previous.settings.showListAvatars !=
-          current.settings.showListAvatars,
+              current.settings.showListAvatars ||
+          previous.settings.notifications.enabled !=
+              current.settings.notifications.enabled,
       builder: (context, settings) => BlocBuilder<TagsBloc, TagsState>(
         bloc: _tagsBloc,
-        builder: (context, state) => CollapsingNavigationDrawer(
-          textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight(400)),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          selectedColor: Theme.of(context).primaryColor,
-          textSelectedColor: context.colors.black,
-          unselectedColor: Theme.of(context).scaffoldBackgroundColor,
-          textUnselectedColor: context.colors.unremarked,
-          iconSize: widget.iconSize,
-          isCollapsed: widget.isCollapsed,
-          sections: [
-            SidebarSection(
-              title: texts.navGallery,
-              items: _galleryItems(texts),
-            ),
-            SidebarSection(
-              title: texts.navTags,
-              items: _tagItems(
-                state.tags,
-                showAvatars: settings.settings.showListAvatars,
+        // Los contadores de avisos también se escuchan: encontrar repetidos o
+        // terminar de reconocer tiene que encender la bolita sin que el usuario
+        // cambie de pantalla.
+        builder: (context, state) =>
+            BlocBuilder<NotificationsBloc, NotificationsState>(
+          bloc: _notificationsBloc,
+          builder: (context, notifications) => CollapsingNavigationDrawer(
+            textStyle: Theme.of(context)
+                .textTheme
+                .bodyMedium!
+                .copyWith(fontWeight: FontWeight(400)),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            selectedColor: Theme.of(context).primaryColor,
+            textSelectedColor: context.colors.black,
+            unselectedColor: Theme.of(context).scaffoldBackgroundColor,
+            textUnselectedColor: context.colors.unremarked,
+            iconSize: widget.iconSize,
+            isCollapsed: widget.isCollapsed,
+            sections: [
+              SidebarSection(
+                title: texts.navGallery,
+                items: _galleryItems(
+                  texts,
+                  notifications,
+                  showBadges: settings.settings.notifications.enabled,
+                ),
               ),
-              // Mientras la primera lectura está en marcha no se dice que no
-              // haya etiquetas: todavía no se sabe.
-              emptyMessage: state.isLoaded ? texts.noTagsYet : null,
-            ),
-          ],
+              SidebarSection(
+                title: texts.navTags,
+                items: _tagItems(
+                  state.tags,
+                  showAvatars: settings.settings.showListAvatars,
+                ),
+                // Mientras la primera lectura está en marcha no se dice que no
+                // haya etiquetas: todavía no se sabe.
+                emptyMessage: state.isLoaded ? texts.noTagsYet : null,
+              ),
+            ],
+          ),
         ),
       ),
     );

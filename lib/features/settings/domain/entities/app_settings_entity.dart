@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/notification_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
@@ -102,6 +103,14 @@ class AppSettingsEntity extends Equatable {
 
   final String avatarsPath;
 
+  /// Dónde vive todo lo del reconocimiento: el entorno de entrenamiento, los
+  /// modelos ya entrenados y los conjuntos de datos que se preparan para
+  /// entrenarlos.
+  ///
+  /// Nunca es nulo, por lo mismo que [avatarsPath]: aunque el usuario no elija
+  /// carpeta, la aplicación necesita saber dónde escribir.
+  final String recognitionPath;
+
   final FileOrganizationCriteria organization;
 
   /// Al contenido que llega de una plataforma se le pone además una etiqueta con
@@ -165,12 +174,17 @@ class AppSettingsEntity extends Equatable {
   /// todavía no se puede usar.
   final PixivSettingsEntity pixiv;
 
+  /// Cómo avisa la aplicación de lo que tarda: entrenar, reconocer, buscar
+  /// repetidos e importar.
+  final NotificationSettingsEntity notifications;
+
   const AppSettingsEntity({
     this.language = AppLanguage.english,
     this.syncLocalFiles = false,
     this.copyFiles = false,
     this.libraryPath,
     required this.avatarsPath,
+    required this.recognitionPath,
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
@@ -184,6 +198,7 @@ class AppSettingsEntity extends Equatable {
     this.gelbooru = const GelbooruSettingsEntity(),
     this.pinterest = const PinterestSettingsEntity(),
     this.pawchive = const PawchiveSettingsEntity(),
+    this.notifications = const NotificationSettingsEntity(),
   });
 
   /// Los ficheros sólo se reordenan si el usuario lo ha pedido y ha dicho
@@ -196,6 +211,7 @@ class AppSettingsEntity extends Equatable {
     bool? copyFiles,
     String? libraryPath,
     String? avatarsPath,
+    String? recognitionPath,
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
@@ -209,6 +225,7 @@ class AppSettingsEntity extends Equatable {
     GelbooruSettingsEntity? gelbooru,
     PinterestSettingsEntity? pinterest,
     PawchiveSettingsEntity? pawchive,
+    NotificationSettingsEntity? notifications,
   }) {
     return AppSettingsEntity(
       language: language ?? this.language,
@@ -216,6 +233,7 @@ class AppSettingsEntity extends Equatable {
       copyFiles: copyFiles ?? this.copyFiles,
       libraryPath: libraryPath ?? this.libraryPath,
       avatarsPath: avatarsPath ?? this.avatarsPath,
+      recognitionPath: recognitionPath ?? this.recognitionPath,
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
@@ -229,6 +247,7 @@ class AppSettingsEntity extends Equatable {
       gelbooru: gelbooru ?? this.gelbooru,
       pinterest: pinterest ?? this.pinterest,
       pawchive: pawchive ?? this.pawchive,
+      notifications: notifications ?? this.notifications,
     );
   }
 
@@ -239,6 +258,7 @@ class AppSettingsEntity extends Equatable {
         copyFiles,
         libraryPath,
         avatarsPath,
+        recognitionPath,
         organization,
         autoTagRemoteSource,
         showListAvatars,
@@ -252,5 +272,6 @@ class AppSettingsEntity extends Equatable {
         gelbooru,
         pinterest,
         pawchive,
+        notifications,
       ];
 }

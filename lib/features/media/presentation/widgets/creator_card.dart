@@ -437,7 +437,7 @@ class _CreatorCardState extends State<CreatorCard> {
                 ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        FernInlineAddButton(
+        FernAddButton.compact(
           label: texts.addProfile,
           onTap: _addProfile,
         ),

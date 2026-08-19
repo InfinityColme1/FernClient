@@ -2,6 +2,8 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/notification_settings_entity.dart';
+import 'package:Fern/features/notifications/domain/entities/app_notification.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
@@ -20,9 +22,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
   final SharedPreferences _preferences;
   final String defaultAvatarsPath;
 
+  /// La carpeta de reconocimiento de fábrica, resuelta al arrancar por lo mismo
+  /// que [defaultAvatarsPath]: cuelga del directorio de datos de la aplicación,
+  /// que sólo se sabe de forma asíncrona.
+  final String defaultRecognitionPath;
+
   SettingsRepositoryImpl({
     required SharedPreferences preferences,
     required this.defaultAvatarsPath,
+    required this.defaultRecognitionPath,
   }) : _preferences = preferences;
 
   String _customColorKey(CustomThemeColor slot) =>
@@ -33,6 +41,75 @@ class SettingsRepositoryImpl implements SettingsRepository {
   /// hereda del tema de fábrica.
   int? _customColor(CustomThemeColor slot) =>
       _preferences.getInt(_customColorKey(slot));
+
+  /// Cómo avisa cada clase de aviso.
+  ///
+  /// Se guarda una clave por clase y por vía en lugar de un objeto serializado:
+  /// así una clase nueva nace con sus valores de fábrica sin tener que migrar
+  /// nada, que es justo lo que va a pasar según lleguen las fases.
+  NotificationSettingsEntity _notifications() {
+    return NotificationSettingsEntity(
+      enabled: _preferences.getBool(notificationsEnabledPreferenceKey) ?? true,
+      muted: _preferences.getBool(notificationsMutedPreferenceKey) ?? false,
+      volume: _preferences.getInt(notificationsVolumePreferenceKey) ??
+          defaultNotificationVolume,
+      maxSeconds: _preferences.getInt(notificationsMaxSecondsPreferenceKey) ??
+          defaultNotificationSeconds,
+      channels: {
+        for (final kind in NotificationKind.values)
+          kind: NotificationChannelEntity(
+            badge: _preferences
+                    .getBool('$notificationBadgePreferenceKeyPrefix${kind.id}') ??
+                true,
+            sound: _preferences
+                    .getBool('$notificationSoundPreferenceKeyPrefix${kind.id}') ??
+                true,
+            soundPath: _preferences
+                .getString('$notificationSoundPathPreferenceKeyPrefix${kind.id}'),
+          ),
+      },
+    );
+  }
+
+  Future<void> _saveNotifications(NotificationSettingsEntity settings) async {
+    await _preferences.setBool(
+      notificationsEnabledPreferenceKey,
+      settings.enabled,
+    );
+    await _preferences.setBool(notificationsMutedPreferenceKey, settings.muted);
+    await _preferences.setInt(
+      notificationsVolumePreferenceKey,
+      settings.volume,
+    );
+    await _preferences.setInt(
+      notificationsMaxSecondsPreferenceKey,
+      settings.maxSeconds,
+    );
+
+    for (final kind in NotificationKind.values) {
+      final channel = settings.channel(kind);
+
+      await _preferences.setBool(
+        '$notificationBadgePreferenceKeyPrefix${kind.id}',
+        channel.badge,
+      );
+      await _preferences.setBool(
+        '$notificationSoundPreferenceKeyPrefix${kind.id}',
+        channel.sound,
+      );
+
+      final key = '$notificationSoundPathPreferenceKeyPrefix${kind.id}';
+      final path = channel.soundPath;
+
+      // Sin fichero elegido se borra la clave en vez de guardar vacío: la
+      // ausencia es lo que dice "suena el de fábrica".
+      if (path == null || path.isEmpty) {
+        await _preferences.remove(key);
+      } else {
+        await _preferences.setString(key, path);
+      }
+    }
+  }
 
   @override
   AppSettingsEntity getSettings() {
@@ -45,6 +122,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
       libraryPath: _preferences.getString(libraryPathPreferenceKey),
       avatarsPath: _preferences.getString(avatarsPathPreferenceKey) ??
           defaultAvatarsPath,
+      recognitionPath: _preferences.getString(recognitionPathPreferenceKey) ??
+          defaultRecognitionPath,
       organization: FileOrganizationCriteria.fromId(
         _preferences.getString(fileOrganizationPreferenceKey),
       ),
@@ -98,6 +177,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       pixiv: PixivSettingsEntity(
         sessionId: _preferences.getString(pixivSessionIdPreferenceKey) ?? '',
       ),
+      notifications: _notifications(),
     );
   }
 
@@ -119,6 +199,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setString(
       avatarsPathPreferenceKey,
       settings.avatarsPath,
+    );
+    await _preferences.setString(
+      recognitionPathPreferenceKey,
+      settings.recognitionPath,
     );
 
     await _preferences.setBool(
@@ -200,6 +284,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
       browserHomePreferenceKey,
       settings.browserHome,
     );
+
+    await _saveNotifications(settings.notifications);
 
     final libraryPath = settings.libraryPath;
     if (libraryPath == null) {

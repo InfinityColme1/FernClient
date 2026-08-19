@@ -16,6 +16,12 @@ const deletedRoute = '/deleted';
 const creatorManagerRoute = '/creator-manager';
 const tagManagerRoute = '/tag-manager';
 
+// Reconocimiento. Las pantallas llegan en fases posteriores; las rutas se
+// declaran ya porque los avisos necesitan saber a dónde llevan.
+const fernieManagerRoute = '/fernies';
+const repeatedMediaRoute = '/repeated-media';
+const modelsRoute = '/models';
+
 /// El navegador de dentro de la aplicación. Es una prueba: si no convence, se
 /// quita esta ruta, su botón del menú y la carpeta `features/browser`, y la
 /// aplicación se queda como estaba.
@@ -63,13 +69,71 @@ final unknownCreator = CreatorEntity(id: 0, name: "Unknown");
 // Unknown tag
 final unknownTag = TagEntity(id: 0, name: "Unknown", children: []);
 
+// Esquema de la base de datos
+/// Por qué versión va el esquema de la base de datos.
+///
+/// La 1 es todo lo anterior a FeRN 2.0, cuando no se llevaba la cuenta: no hay
+/// preferencia guardada y se asume esa. Subir este número obliga a mirar si el
+/// cambio necesita una migración en `schemaMigrations` o si es de los que Isar
+/// resuelve sola.
+const firstSchemaVersion = 1;
+const currentSchemaVersion = 2;
+
 // Preferences keys
+/// Hasta qué versión se ha puesto al día la base de datos de este equipo.
+const schemaVersionPreferenceKey = 'schema_version';
+
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
 const syncLocalFilesPreferenceKey = 'sync_local_files';
 const copyFilesPreferenceKey = 'copy_files';
 const libraryPathPreferenceKey = 'library_path';
 const avatarsPathPreferenceKey = 'avatars_path';
+
+/// Dónde vive todo lo del reconocimiento. Como la de avatares, nunca está
+/// vacía: si el usuario no ha elegido ninguna, se usa la que cuelga del
+/// directorio de datos de la aplicación.
+const recognitionPathPreferenceKey = 'recognition_path';
+
+// Avisos
+/// Los avisos, en general: si se dan y si suenan.
+const notificationsEnabledPreferenceKey = 'notifications_enabled';
+const notificationsMutedPreferenceKey = 'notifications_muted';
+const notificationsVolumePreferenceKey = 'notifications_volume';
+const notificationsMaxSecondsPreferenceKey = 'notifications_max_seconds';
+
+/// Prefijos de lo que se guarda por cada clase de aviso. Se completan con el
+/// identificador de [NotificationKind]: `notification_badge_training`, y así.
+const notificationBadgePreferenceKeyPrefix = 'notification_badge_';
+const notificationSoundPreferenceKeyPrefix = 'notification_sound_';
+const notificationSoundPathPreferenceKeyPrefix = 'notification_sound_path_';
+
+/// Cuántos avisos hay sin mirar de cada clase. Se completa igual que los
+/// anteriores.
+const notificationCountPreferenceKeyPrefix = 'notification_count_';
+
+/// A partir de aquí el contador deja de decir el número exacto: lo que importa
+/// es que hay mucho, y un número de tres cifras no cabe en el botón.
+const notificationBadgeMaxCount = 99;
+
+/// Carpeta donde se copian los sonidos que elige el usuario, para que borrar o
+/// mover el original no deje el aviso mudo.
+const notificationSoundsFolderName = 'sounds';
+
+/// Sonidos de fábrica. Son un punto de partida: la idea es que el usuario
+/// ponga los suyos.
+const defaultNotificationSound = 'assets/sounds/fern_notification.wav';
+const successNotificationSound = 'assets/sounds/fern_success.wav';
+const alertNotificationSound = 'assets/sounds/fern_alert.wav';
+
+/// Cuánto se deja sonar un aviso, de fábrica y como mucho.
+///
+/// Un aviso es un toque corto: si el usuario elige una canción, se corta al
+/// llegar aquí en lugar de rechazarla o de tocar su fichero.
+const defaultNotificationSeconds = 5;
+const minNotificationSeconds = 1;
+const maxNotificationSeconds = 15;
+const defaultNotificationVolume = 70;
 const fileOrganizationPreferenceKey = 'file_organization';
 /// Prefijo de la preferencia que guarda cuándo se importó por última vez de una
 /// fuente. Se completa con el identificador de la fuente.
@@ -128,6 +192,86 @@ const avatarsFolderName = 'avatars';
 /// equipo: de aquí lo recoge la gestión de ficheros cuando el contenido pasa a
 /// ser definitivo.
 const remoteDownloadsFolderName = 'downloads';
+
+// Reconocimiento
+/// Carpeta donde vive todo lo que hace falta para reconocer contenido.
+///
+/// Va aparte de la biblioteca y de los avatares porque no es contenido del
+/// usuario sino maquinaria: el entorno con el que se entrena, los modelos y los
+/// conjuntos de datos que se preparan para entrenarlos. Puede ocupar varios
+/// gigas, así que el usuario puede llevársela a otro disco.
+const recognitionFolderName = 'recognition';
+
+/// Las cuatro subcarpetas de la carpeta de reconocimiento.
+///
+/// [recognitionDatasetsFolderName] es material de usar y tirar: se genera al
+/// entrenar a partir de las regiones guardadas en la base de datos y se puede
+/// borrar sin perder nada. [recognitionWeightsFolderName] son los modelos ya
+/// entrenados, que es lo único que de verdad duele perder.
+/// [recognitionRunsFolderName] es lo que escribe el entrenador (registros,
+/// curvas, matrices de confusión) y [recognitionRuntimeFolderName] el entorno
+/// de Python, que siempre se puede volver a instalar.
+const recognitionDatasetsFolderName = 'datasets';
+const recognitionWeightsFolderName = 'weights';
+const recognitionRunsFolderName = 'runs';
+const recognitionRuntimeFolderName = 'runtime';
+
+const recognitionSubfolderNames = [
+  recognitionDatasetsFolderName,
+  recognitionWeightsFolderName,
+  recognitionRunsFolderName,
+  recognitionRuntimeFolderName,
+];
+
+// El entorno de Python
+/// De dónde se baja `uv`, el binario con el que se monta todo lo demás.
+///
+/// La versión va fijada porque es la que se ha probado; si esa etiqueta ya no
+/// existe se cae a la última publicada, que es preferible a dejar al usuario sin
+/// reconocimiento por un 404. Subirla es un cambio consciente.
+const uvReleaseBaseUrl = 'https://github.com/astral-sh/uv/releases';
+const uvPinnedVersion = '0.5.11';
+
+/// Qué Python instala `uv` para el entorno. Ultralytics y torch publican ruedas
+/// para esta versión en los tres sistemas.
+const sidecarPythonVersion = '3.12';
+
+/// Los paquetes del entorno, con la versión de ultralytics fijada: una versión
+/// mayor podría cambiar la forma de sus resultados, que es justo lo que el
+/// script del sidecar da por supuesto.
+const sidecarUltralyticsPackage = 'ultralytics>=8.3.0,<8.4.0';
+
+/// Índices de ruedas de PyTorch. El de CPU es el de fábrica y pesa una décima
+/// parte que el de CUDA; el de GPU sólo se instala si el usuario lo pide.
+const torchCpuIndexUrl = 'https://download.pytorch.org/whl/cpu';
+const torchCudaIndexUrl = 'https://download.pytorch.org/whl/cu124';
+
+/// El script del sidecar y su versión. Al arrancar se compara con la que haya
+/// escrita en disco y se reescribe si no coinciden.
+const sidecarScriptAsset = 'assets/python/fern_sidecar.py';
+
+const sidecarScriptVersion = '1';
+
+/// Cuánto se deja al sidecar sin peticiones antes de cerrarlo. Cargar un modelo
+/// cuesta segundos, así que tampoco conviene cerrarlo en cuanto se calla.
+const sidecarIdleTimeout = Duration(minutes: 10);
+
+/// Cuánto se tiñe de rojo el aviso de que la instalación ha fallado. Es un
+/// fondo, no una alarma: lo que tiene que leerse es el texto de encima.
+const sidecarFailureTint = 0.12;
+
+/// Cada cuánto cambia el texto que dice que la instalación sigue trabajando, y
+/// cuánto tarda en dar paso al siguiente.
+///
+/// El fundido es largo a propósito y dentro de él las dos frases no se cruzan:
+/// primero se va la anterior y luego entra la nueva. Rotar deprisa marea, y es
+/// un texto que sólo está ahí para decir que se sigue trabajando.
+const sidecarActivityRotation = Duration(seconds: 10);
+const sidecarActivityFade = Duration(milliseconds: 900);
+
+/// Lo que baja el texto nuevo mientras aparece, en fracción de su propio alto.
+/// Poco: es un acompañamiento del fundido, no un movimiento en sí.
+const sidecarActivitySlide = 0.25;
 
 // Importación
 /// Hasta dónde llega un escaneo.
@@ -609,6 +753,15 @@ const sidebarDepthIndent = 20.0;
 /// que con 2 la última que entra es la nieta; de ahí para abajo se pinta el
 /// indicador de jerarquía en lugar de seguir estrechando el botón.
 const sidebarMaxIndentDepth = 2;
+
+/// Lo que mide un botón del menú desplegado y plegado, y el hueco entre su
+/// icono y su título, que desaparece al plegarse.
+///
+/// Estaban sueltos dentro del propio botón; se suben aquí porque el contador de
+/// avisos tiene que caber en las dos anchuras.
+const sidebarTileExpandedWidth = 200.0;
+const sidebarTileCollapsedWidth = 70.0;
+const sidebarTileGap = 10.0;
 
 // Media info
 const mediaDescriptionMaxLines = 10;

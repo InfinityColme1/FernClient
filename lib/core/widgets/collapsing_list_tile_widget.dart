@@ -1,7 +1,9 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
+import 'package:Fern/core/ui/display/fern_badge.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -29,6 +31,9 @@ class CollapsingListTile extends StatefulWidget {
   /// adentro empieza.
   final int depth;
 
+  /// Cuántos avisos hay pendientes en la pantalla a la que lleva.
+  final int badgeCount;
+
   final TextStyle textStyle;
 
   final Color selectedColor;
@@ -46,6 +51,7 @@ class CollapsingListTile extends StatefulWidget {
     this.isExpanded = true,
     this.onTap,
     this.depth = 0,
+    this.badgeCount = 0,
     required this.iconSize,
     required this.textStyle,
     required this.selectedColor,
@@ -66,9 +72,11 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
   void initState() {
     super.initState();
     widthAnimation =
-        Tween<double>(begin: 200, end: 70).animate(widget.animationController);
+        Tween<double>(begin: sidebarTileExpandedWidth, end: sidebarTileCollapsedWidth)
+            .animate(widget.animationController);
     sizedBoxAnimation =
-        Tween<double>(begin: 10, end: 0).animate(widget.animationController);
+        Tween<double>(begin: sidebarTileGap, end: 0)
+            .animate(widget.animationController);
   }
 
   /// Fondo del botón: el del elemento seleccionado y, mientras el ratón está
@@ -110,18 +118,26 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
   ///
   /// El avatar ocupa lo mismo que el icono al que sustituye: los botones con
   /// imagen y sin ella se alinean igual y la lista no se descuadra.
+  ///
+  /// El contador de avisos va encima del icono y no al final de la fila: con el
+  /// menú plegado el título no se ve, y ahí es justo cuando más falta hace saber
+  /// que ese botón tiene algo pendiente.
   Widget _leading() {
     final avatarPath = widget.avatarPath;
 
-    if (avatarPath == null) {
-      return Icon(widget.icon, color: context.colors.black, size: widget.iconSize);
-    }
+    final leading = avatarPath == null
+        ? Icon(widget.icon, color: context.colors.black, size: widget.iconSize)
+        : FernAvatar(
+            imagePath: avatarPath,
+            fallbackIcon: widget.icon,
+            radius: widget.iconSize / 2,
+            iconSize: widget.iconSize,
+          );
 
-    return FernAvatar(
-      imagePath: avatarPath,
-      fallbackIcon: widget.icon,
-      radius: widget.iconSize / 2,
-      iconSize: widget.iconSize,
+    return FernBadge(
+      count: widget.badgeCount,
+      maxCount: notificationBadgeMaxCount,
+      child: leading,
     );
   }
 
@@ -135,12 +151,12 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
         mouseCursor: WidgetStateMouseCursor.clickable,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(16.0)),
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
             color: _backgroundColor(context),
           ),
           width: widthAnimation.value,
-          margin: EdgeInsets.only(left: 8.0 + _indent, right: 8.0),
-          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+          margin: EdgeInsets.only(left: AppSpacing.s + _indent, right: AppSpacing.s),
+          padding: const EdgeInsets.all(AppSpacing.s),
           child: Row(
             children: <Widget>[
               if (_showsDepthMark) ...[

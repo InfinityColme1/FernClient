@@ -1,0 +1,179 @@
+import 'package:Fern/config/theme/app_colors.dart';
+import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/services/jobs/job.dart';
+import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
+import 'package:Fern/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+/// Cómo se llama cada trabajo en pantalla. El dominio sólo guarda el tipo.
+extension JobTypeLabels on JobType {
+  String label(AppLocalizations texts) => switch (this) {
+        JobType.training => texts.jobTraining,
+        JobType.recognition => texts.jobRecognition,
+        JobType.duplicateScan => texts.jobDuplicateScan,
+        JobType.hashing => texts.jobHashing,
+      };
+}
+
+/// Lo que hay en marcha por detrás, en la barra superior.
+///
+/// No se ve mientras no haya nada: la barra ya está llena y un icono apagado
+/// permanente no dice nada. Al pulsarlo se despliega la lista con lo que lleva
+/// cada trabajo y un botón para pararlo.
+class JobsIndicator extends StatelessWidget {
+  const JobsIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<JobsBloc, JobsState>(
+      builder: (context, state) {
+        if (!state.hasSomethingToShow) return const SizedBox.shrink();
+
+        final texts = AppLocalizations.of(context);
+        final visible = [...state.active, ...state.failed];
+
+        return FernPopupPanel(
+          width: AppSizes.jobsPanelWidth,
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.l,
+            horizontal: AppSpacing.l,
+          ),
+          builder: (context, toggle) => IconButton(
+            tooltip: texts.jobsTooltip,
+            onPressed: toggle,
+            icon: _icon(context, state),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.m),
+              child: Text(
+                texts.jobsTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            if (visible.isEmpty)
+              Text(
+                texts.jobsEmpty,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: context.colors.gray),
+              )
+            else
+              for (final job in visible) _JobRow(job: job),
+          ],
+        );
+      },
+    );
+  }
+
+  /// El icono lleva encima cuántos trabajos hay vivos: con uno solo no hace
+  /// falta decir nada, con varios sí.
+  Widget _icon(BuildContext context, JobsState state) {
+    final count = state.active.length;
+    final icon = Icon(
+      state.active.isEmpty ? Icons.error_outline : Icons.sync,
+      color: state.active.isEmpty ? context.colors.error : null,
+    );
+
+    if (count < 2) return icon;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        icon,
+        Positioned(
+          right: -AppSpacing.xs,
+          top: -AppSpacing.xs,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: context.colors.terciary,
+              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+            ),
+            child: Text(
+              '$count',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: context.colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Una fila del panel: qué es, por dónde va y el botón de pararlo.
+class _JobRow extends StatelessWidget {
+  final Job job;
+
+  const _JobRow({required this.job});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.m),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  job.type.label(texts),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              if (job.status.isActive)
+                IconButton(
+                  tooltip: texts.jobCancelTooltip,
+                  iconSize: AppSizes.iconMedium,
+                  onPressed: () => context
+                      .read<JobsBloc>()
+                      .add(CancelJobEvent(job.id)),
+                  icon: const Icon(Icons.close),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (job.status == JobStatus.failed)
+            Text(
+              texts.jobFailed,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: context.colors.error),
+            )
+          else if (job.status == JobStatus.queued)
+            Text(
+              texts.jobQueued,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: context.colors.gray),
+            )
+          else ...[
+            // Sin total no se sabe cuánto queda, así que la barra da vueltas en
+            // lugar de mentir con un porcentaje.
+            LinearProgressIndicator(value: job.progress),
+            if (job.total > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  texts.jobProgress(job.done, job.total),
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: context.colors.gray),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}

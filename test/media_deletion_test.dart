@@ -300,7 +300,10 @@ class _Settings implements SettingsRepository {
   _Settings({required this.avatarsPath});
 
   @override
-  AppSettingsEntity getSettings() => AppSettingsEntity(avatarsPath: avatarsPath);
+  AppSettingsEntity getSettings() => AppSettingsEntity(
+        avatarsPath: avatarsPath,
+        recognitionPath: 'recognition',
+      );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();

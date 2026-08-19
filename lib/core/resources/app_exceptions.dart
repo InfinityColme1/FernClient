@@ -18,3 +18,25 @@ class DuplicateCreatorNameException implements Exception {
   @override
   String toString() => "DuplicateCreatorNameException: $name";
 }
+
+/// No se ha podido poner la base de datos al día.
+///
+/// Es la única excepción de la aplicación que impide arrancar: seguir adelante
+/// sería trabajar sobre datos a medio convertir, y eso se estropea en silencio y
+/// no se deshace. Lleva entre qué versiones se ha quedado para que el aviso
+/// pueda decir algo útil.
+class SchemaMigrationException implements Exception {
+  final int fromVersion;
+  final int toVersion;
+  final Object cause;
+
+  const SchemaMigrationException({
+    required this.fromVersion,
+    required this.toVersion,
+    required this.cause,
+  });
+
+  @override
+  String toString() =>
+      "SchemaMigrationException: $fromVersion -> $toVersion: $cause";
+}

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppSpacing {
+  /// El escalón más fino, para separar un icono de su borde. No se usa como
+  /// separación entre elementos: para eso el mínimo es [xs].
+  static const double xxs = 1.0;
+
   static const double xs = 4.0;
   static const double s = 8.0;
   static const double m = 12.0;

@@ -1084,4 +1084,327 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get autoTagRemoteSourceDescription =>
       'Fern crée une étiquette par plateforme (Reddit, et les suivantes) et la pose sur ce qu\'il en importe. Désactivé, la source est quand même enregistrée et se filtre depuis le bouton Filtres.';
+
+  @override
+  String get startupFailedTitle => 'Fern n\'a pas pu démarrer';
+
+  @override
+  String get startupFailedDatabase =>
+      'La base de données n\'a pas pu être mise à jour vers ce que cette version attend.';
+
+  @override
+  String get startupFailedHint =>
+      'Rien n\'est perdu : votre contenu est toujours là. Fermez Fern et rouvrez-le ; si cela continue, le détail ci-dessous indique ce qui a échoué.';
+
+  @override
+  String get settingsRecognition => 'Reconnaissance';
+
+  @override
+  String get recognitionFolderTitle => 'Données de reconnaissance';
+
+  @override
+  String get recognitionFolderDescription =>
+      'Là où Fern garde tout ce qu\'il lui faut pour reconnaître votre contenu : l\'environnement d\'entraînement, les modèles entraînés et les jeux de données qu\'il prépare pour les entraîner. Cela peut prendre plusieurs gigas, vous préférerez peut-être un autre disque.';
+
+  @override
+  String get recognitionFolder => 'Dossier de reconnaissance';
+
+  @override
+  String recognitionFolderMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers déplacés vers le nouveau dossier',
+      one: '1 fichier déplacé vers le nouveau dossier',
+      zero: 'Le dossier y était déjà',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recognitionFolderMoveFailed =>
+      'Les données de reconnaissance n\'ont pas pu être déplacées';
+
+  @override
+  String get jobsTooltip => 'Tâches en cours';
+
+  @override
+  String get jobsTitle => 'Tâches en arrière-plan';
+
+  @override
+  String get jobsEmpty => 'Rien en cours pour le moment';
+
+  @override
+  String get jobCancelTooltip => 'Annuler cette tâche';
+
+  @override
+  String jobProgress(int done, int total) {
+    return '$done sur $total';
+  }
+
+  @override
+  String get jobQueued => 'En attente';
+
+  @override
+  String get jobFailed => 'Échec';
+
+  @override
+  String get jobTraining => 'Entraînement du modèle';
+
+  @override
+  String get jobRecognition => 'Reconnaissance du contenu';
+
+  @override
+  String get jobDuplicateScan => 'Recherche de contenu en double';
+
+  @override
+  String get jobHashing => 'Lecture du contenu';
+
+  @override
+  String get settingsNotifications => 'Alertes';
+
+  @override
+  String get notificationsTitle => 'Alertes';
+
+  @override
+  String get notificationsDescription =>
+      'Entraîner un modèle, reconnaître un lot ou chercher du contenu en double peut prendre un bon moment. Fern vous prévient quand c\'est fini, pour ne pas avoir à surveiller.';
+
+  @override
+  String get notificationsEnabled => 'Me prévenir';
+
+  @override
+  String get notificationsEnabledDescription =>
+      'Désactivé, rien n\'est compté et rien ne sonne. Ce qui était en attente reste noté et réapparaît si vous réactivez.';
+
+  @override
+  String get notificationsMuted => 'Silence';
+
+  @override
+  String get notificationsMutedDescription =>
+      'Les compteurs restent, les sons non.';
+
+  @override
+  String get notificationsSoundTitle => 'Son';
+
+  @override
+  String get notificationsVolume => 'Volume';
+
+  @override
+  String get notificationsMaxSeconds => 'Jouer au plus';
+
+  @override
+  String notificationsSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count secondes',
+      one: '1 seconde',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notificationsMaxSecondsDescription =>
+      'Une alerte est un son bref. Si l\'audio choisi dure plus longtemps, Fern l\'arrête ici au lieu de le jouer en entier. Votre fichier n\'est pas modifié.';
+
+  @override
+  String get notificationsEventsTitle => 'Quoi signaler';
+
+  @override
+  String get notificationsEventsDescription =>
+      'Pour chacun : compteur dans le menu latéral, et son.';
+
+  @override
+  String get notificationsBadge => 'Compteur';
+
+  @override
+  String get notificationsSound => 'Son';
+
+  @override
+  String get notificationsDefaultSound => 'Son de Fern';
+
+  @override
+  String get notificationsPreview => 'Écouter';
+
+  @override
+  String get notificationsChooseSound => 'Choisir un audio';
+
+  @override
+  String get notificationsResetSound => 'Revenir au son de Fern';
+
+  @override
+  String get notifyDuplicates => 'Contenu en double trouvé';
+
+  @override
+  String get notifyTraining => 'Entraînement du modèle terminé';
+
+  @override
+  String get notifyRecognition => 'Reconnaissance par lot terminée';
+
+  @override
+  String get notifyRemoteImport => 'Import distant terminé';
+
+  @override
+  String get sidecarTitle => 'Moteur de reconnaissance';
+
+  @override
+  String get sidecarDescription =>
+      'Pour entraîner et reconnaître, Fern installe son propre environnement Python dans le dossier de reconnaissance. Il ne touche pas à votre système et vous n\'avez pas besoin d\'avoir Python au préalable : il apporte le sien. Cela occupe environ 1,2 Go sur le disque et n\'est téléchargé que si vous le demandez.';
+
+  @override
+  String get sidecarUnsupportedPlatform =>
+      'La reconnaissance n\'est pas encore disponible sur ce système.';
+
+  @override
+  String get sidecarNotInstalled => 'Pas encore installé';
+
+  @override
+  String get sidecarDownloadingUv => 'Téléchargement de l\'installeur';
+
+  @override
+  String get sidecarInstallingPython => 'Installation de Python';
+
+  @override
+  String get sidecarCreatingVenv => 'Préparation de l\'environnement';
+
+  @override
+  String get sidecarDetectingHardware => 'Analyse de votre matériel';
+
+  @override
+  String get sidecarInstallingTorch => 'Téléchargement du moteur';
+
+  @override
+  String get sidecarInstallingUltralytics => 'Installation de YOLO';
+
+  @override
+  String get sidecarCleaning => 'Nettoyage';
+
+  @override
+  String get sidecarVerifying => 'Vérification';
+
+  @override
+  String get sidecarReady => 'Prêt à entraîner et reconnaître';
+
+  @override
+  String get sidecarError => 'Quelque chose s\'est mal passé';
+
+  @override
+  String sidecarDownloaded(String received, String total) {
+    return '$received Mo sur $total Mo';
+  }
+
+  @override
+  String get sidecarInstall => 'Installer';
+
+  @override
+  String get sidecarReinstall => 'Réinstaller';
+
+  @override
+  String get sidecarEnableGpu => 'Utiliser la carte graphique';
+
+  @override
+  String get sidecarUninstall => 'Désinstaller';
+
+  @override
+  String get sidecarShowLog => 'Voir les détails';
+
+  @override
+  String get sidecarHideLog => 'Masquer les détails';
+
+  @override
+  String get sidecarFailureInUse =>
+      'Les fichiers du moteur sont en cours d\'utilisation';
+
+  @override
+  String get sidecarFailureInUseHint =>
+      'Quelque chose les garde ouverts, ils ne peuvent donc pas être remplacés. Fermez complètement Fern, rouvrez-le et appuyez sur Installer. Si cela persiste, redémarrez l\'ordinateur : cela les libère toujours.';
+
+  @override
+  String get sidecarFailureSpace => 'Il n\'y a plus de place sur le disque';
+
+  @override
+  String get sidecarFailureSpaceHint =>
+      'Le moteur a besoin d\'environ 1,5 Go libres, en comptant ce qu\'il utilise pendant l\'installation. Libérez de l\'espace, ou déplacez le dossier de reconnaissance vers un autre disque depuis le champ ci-dessus.';
+
+  @override
+  String get sidecarFailureNetwork => 'Le téléchargement n\'a pas pu aboutir';
+
+  @override
+  String get sidecarFailureNetworkHint =>
+      'Vérifiez votre connexion internet et appuyez de nouveau sur Installer. Ce qui était déjà téléchargé est conservé, la reprise se fait là où elle s\'était arrêtée.';
+
+  @override
+  String get sidecarFailureBlocked =>
+      'Le système n\'a pas laissé Fern lancer l\'installeur';
+
+  @override
+  String get sidecarFailureBlockedHint =>
+      'C\'est en général l\'antivirus, qui bloque les programmes fraîchement téléchargés. Autorisez Fern dans votre antivirus, ou choisissez un dossier de reconnaissance dans votre dossier utilisateur, puis réessayez.';
+
+  @override
+  String get sidecarFailureMissing => 'Il manque quelque chose au moteur';
+
+  @override
+  String get sidecarFailureMissingHint =>
+      'L\'installation est restée à moitié faite. Appuyez sur Désinstaller pour la nettoyer, puis sur Installer.';
+
+  @override
+  String get sidecarFailureUnknown => 'Le moteur n\'a pas pu être installé';
+
+  @override
+  String get sidecarFailureUnknownHint =>
+      'Appuyez sur Installer pour réessayer. Si cela échoue encore, ouvrez les détails ci-dessous : ils indiquent exactement l\'étape qui a échoué.';
+
+  @override
+  String get sidecarInstallCpu => 'Installer pour le processeur';
+
+  @override
+  String get sidecarInstallGpu => 'Installer pour la carte graphique';
+
+  @override
+  String get sidecarEnableCpu => 'Revenir au processeur';
+
+  @override
+  String sidecarPercent(int percent) {
+    return '$percent %';
+  }
+
+  @override
+  String get sidecarBusyDownloading => 'Téléchargement des paquets...';
+
+  @override
+  String get sidecarBusyUnpacking => 'Décompression de ce qui arrive...';
+
+  @override
+  String get sidecarBusyPatience => 'Cette étape prend quelques minutes.';
+
+  @override
+  String get sidecarBusySettling => 'Mise en place...';
+
+  @override
+  String get sidecarBusyKeepUsing =>
+      'Vous pouvez continuer à utiliser Fern pendant ce temps.';
+
+  @override
+  String get gpuDialogTitle => 'Installer la version carte graphique ?';
+
+  @override
+  String get gpuDialogBenefit =>
+      'L\'entraînement est bien plus rapide : ce qui prend des heures sur le processeur peut prendre des minutes sur la carte graphique.';
+
+  @override
+  String get gpuDialogTime =>
+      'Le téléchargement fait environ 2,5 Go : sur une connexion normale, cela peut prendre un bon moment.';
+
+  @override
+  String get gpuDialogSize =>
+      'Cela occupe environ 5 Go sur le disque, au lieu des 1,2 Go de la version processeur.';
+
+  @override
+  String get gpuDialogReversible =>
+      'Vous pourrez revenir à la version processeur quand vous voudrez, sans tout réinstaller.';
+
+  @override
+  String get gpuDialogConfirm => 'L\'installer';
 }

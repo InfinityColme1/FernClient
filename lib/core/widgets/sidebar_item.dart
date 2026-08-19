@@ -26,6 +26,10 @@ class SidebarItem {
   /// etiquetas raíz, uno más por cada etiqueta que cuelga de otra.
   final int depth;
 
+  /// Cuántos avisos hay pendientes en la pantalla a la que lleva. A cero no se
+  /// pinta nada.
+  final int badgeCount;
+
   SidebarItem({
     required this.id,
     required this.title,
@@ -33,6 +37,7 @@ class SidebarItem {
     required this.onTap,
     this.avatarPath,
     this.depth = 0,
+    this.badgeCount = 0,
   });
 }
 

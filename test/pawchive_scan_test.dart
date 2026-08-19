@@ -76,6 +76,7 @@ Future<RemoteMediaRepositoryImpl> repositoryWith(http.Client client) async {
     registry: _Registry(),
     settingsRepository: _Settings(const AppSettingsEntity(
       avatarsPath: '',
+      recognitionPath: '',
       pawchive: PawchiveSettingsEntity(sessionId: 'la-sesion'),
     )),
     preferencesService: PreferencesService(
@@ -158,7 +159,10 @@ void main() {
       decisions: ImportDecisions(),
       downloader: _Downloader(),
       registry: _Registry(),
-      settingsRepository: _Settings(const AppSettingsEntity(avatarsPath: '')),
+      settingsRepository: _Settings(const AppSettingsEntity(
+        avatarsPath: '',
+        recognitionPath: '',
+      )),
       preferencesService: PreferencesService(
         await SharedPreferences.getInstance(),
       ),

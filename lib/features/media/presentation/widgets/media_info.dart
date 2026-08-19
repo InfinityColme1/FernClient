@@ -38,10 +38,7 @@ class MediaInfo extends StatelessWidget {
 
         // Lo que ya está en la papelera se borra del todo, igual que con el
         // botón del visor: es el mismo contenido y el mismo sitio del que sale.
-        final isMarked = state.mediaList?.any(
-              (summary) => summary.id == media.id && summary.isDeleted,
-            ) ??
-            false;
+        final isMarked = state.isCurrentMediaMarked;
 
         return ColoredBox(
           color: context.colors.background,

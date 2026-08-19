@@ -165,6 +165,14 @@ class AppTheme {
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
+        // El rótulo de una fila del menú lateral. Estaba en uso sin estar
+        // definido, así que caía en el estilo de fábrica de Material y se salía
+        // de la tipografía de la aplicación.
+        labelLarge: TextStyle(
+          color: palette.black,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
         labelSmall: TextStyle(
           color: palette.black,
           fontSize: 10,

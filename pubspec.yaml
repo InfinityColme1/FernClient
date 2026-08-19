@@ -97,6 +97,8 @@ flutter:
     - assets/fonts/
     - assets/icons/
     - assets/images/
+    - assets/python/
+    - assets/sounds/
     - assets/vectors/
 
   # An image asset can refer to one or more resolution-specific "variants", see

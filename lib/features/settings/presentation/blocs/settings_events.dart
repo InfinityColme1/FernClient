@@ -1,6 +1,7 @@
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/notification_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
@@ -65,6 +66,29 @@ class AvatarsDirectoryChangedEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [path];
+}
+
+/// Cambiar la carpeta de reconocimiento se lleva consigo lo que ya hubiera
+/// dentro: la aplicación carga los modelos de ahí, así que dejarlos atrás sería
+/// quedarse sin ellos.
+class RecognitionDirectoryChangedEvent extends SettingsEvents {
+  final String path;
+
+  const RecognitionDirectoryChangedEvent(this.path);
+
+  @override
+  List<Object?> get props => [path];
+}
+
+/// Cambia cómo avisa la aplicación: el interruptor general, el silencio, el
+/// volumen, el corte o cualquiera de las vías de un aviso concreto.
+class NotificationSettingsChangedEvent extends SettingsEvents {
+  final NotificationSettingsEntity notifications;
+
+  const NotificationSettingsChangedEvent(this.notifications);
+
+  @override
+  List<Object?> get props => [notifications];
 }
 
 class FileOrganizationChangedEvent extends SettingsEvents {

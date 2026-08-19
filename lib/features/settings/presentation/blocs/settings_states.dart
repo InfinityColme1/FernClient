@@ -2,7 +2,14 @@ import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart'
 import 'package:equatable/equatable.dart';
 
 /// Cómo ha acabado la última migración.
-enum SettingsStatus { avatarsMigrated, avatarsFailed, filesOrganized, filesFailed }
+enum SettingsStatus {
+  avatarsMigrated,
+  avatarsFailed,
+  filesOrganized,
+  filesFailed,
+  recognitionMigrated,
+  recognitionFailed,
+}
 
 /// Resultado de la última migración: qué se hizo y sobre cuántos ficheros.
 ///

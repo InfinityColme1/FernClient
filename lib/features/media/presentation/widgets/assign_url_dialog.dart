@@ -143,7 +143,7 @@ class _AssignUrlDialogState extends State<AssignUrlDialog> {
             ),
           ),
           const SizedBox(height: AppSpacing.s),
-          FernInlineAddButton(
+          FernAddButton.compact(
             label: texts.addSourceUrl,
             onTap: _addField,
           ),

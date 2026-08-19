@@ -1,0 +1,21 @@
+{
+  "settings_version": "0.0.6",
+  "datasets_dir": "C:\\Users\\Mauricio\\Desktop\\Proyectos\\Fern\\FernClient\\datasets",
+  "weights_dir": "weights",
+  "runs_dir": "runs",
+  "uuid": "8b22d5ce2c6c3439c403200480b6e8b1592751ed49229cc8f30fe81112e7e015",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "hub": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": true
+}

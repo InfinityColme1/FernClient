@@ -7,6 +7,8 @@ import 'package:Fern/features/settings/presentation/widgets/appearance_settings_
 import 'package:Fern/features/settings/presentation/widgets/browser_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/notification_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/recognition_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/remote_sources_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/viewer_settings_section.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -21,6 +23,8 @@ enum SettingsSection {
   viewer(icon: Icons.slideshow_outlined),
   files(icon: Icons.folder_outlined),
   remoteSources(icon: Icons.cloud_download_outlined),
+  recognition(icon: Icons.center_focus_strong_outlined),
+  notifications(icon: Icons.notifications_none),
 
   /// Experimental: los ajustes del navegador de dentro de la aplicación.
   browser(icon: Icons.travel_explore_outlined);
@@ -35,6 +39,8 @@ enum SettingsSection {
         SettingsSection.viewer => texts.settingsViewer,
         SettingsSection.files => texts.settingsFiles,
         SettingsSection.remoteSources => texts.settingsRemoteSources,
+        SettingsSection.recognition => texts.settingsRecognition,
+        SettingsSection.notifications => texts.settingsNotifications,
         SettingsSection.browser => texts.settingsBrowser,
       };
 }
@@ -214,6 +220,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
               SettingsSection.files => const FilesSettingsSection(),
               SettingsSection.remoteSources =>
                 const RemoteSourcesSettingsSection(),
+              SettingsSection.recognition =>
+                const RecognitionSettingsSection(),
+              SettingsSection.notifications =>
+                const NotificationSettingsSection(),
               SettingsSection.browser => const BrowserSettingsSection(),
             },
           ),

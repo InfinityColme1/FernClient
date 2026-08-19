@@ -1086,4 +1086,328 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get autoTagRemoteSourceDescription =>
       'Fern crea una etiqueta per plataforma (Reddit, i les que vinguin) i la posa al que n\'importa. Apagat, la font es continua desant i s\'hi filtra des del botó de filtres.';
+
+  @override
+  String get startupFailedTitle => 'Fern no ha pogut arrencar';
+
+  @override
+  String get startupFailedDatabase =>
+      'No s\'ha pogut posar la base de dades al dia amb el que necessita aquesta versió.';
+
+  @override
+  String get startupFailedHint =>
+      'No s\'ha perdut res: el teu contingut segueix on era. Tanca el Fern i torna\'l a obrir, i si continua passant, el detall de sota diu què ha fallat.';
+
+  @override
+  String get settingsRecognition => 'Reconeixement';
+
+  @override
+  String get recognitionFolderTitle => 'Dades de reconeixement';
+
+  @override
+  String get recognitionFolderDescription =>
+      'On el Fern desa tot el que necessita per reconèixer el teu contingut: l\'entorn amb què entrena, els models ja entrenats i els conjunts de dades que prepara per entrenar-los. Pot ocupar uns quants gigues, així que potser el prefereixes en un altre disc.';
+
+  @override
+  String get recognitionFolder => 'Carpeta de reconeixement';
+
+  @override
+  String recognitionFolderMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fitxers moguts a la carpeta nova',
+      one: '1 fitxer mogut a la carpeta nova',
+      zero: 'La carpeta ja hi era',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recognitionFolderMoveFailed =>
+      'No s\'han pogut moure les dades de reconeixement';
+
+  @override
+  String get jobsTooltip => 'Tasques en marxa';
+
+  @override
+  String get jobsTitle => 'Tasques en segon pla';
+
+  @override
+  String get jobsEmpty => 'Ara mateix no hi ha res en marxa';
+
+  @override
+  String get jobCancelTooltip => 'Cancel·la aquesta tasca';
+
+  @override
+  String jobProgress(int done, int total) {
+    return '$done de $total';
+  }
+
+  @override
+  String get jobQueued => 'Esperant';
+
+  @override
+  String get jobFailed => 'Ha fallat';
+
+  @override
+  String get jobTraining => 'Entrenant el model';
+
+  @override
+  String get jobRecognition => 'Reconeixent contingut';
+
+  @override
+  String get jobDuplicateScan => 'Cercant contingut repetit';
+
+  @override
+  String get jobHashing => 'Llegint contingut';
+
+  @override
+  String get settingsNotifications => 'Avisos';
+
+  @override
+  String get notificationsTitle => 'Avisos';
+
+  @override
+  String get notificationsDescription =>
+      'Entrenar un model, reconèixer un lot o cercar contingut repetit pot trigar una bona estona. El Fern t\'avisa quan acaba perquè no hagis d\'estar mirant.';
+
+  @override
+  String get notificationsEnabled => 'Avisa\'m';
+
+  @override
+  String get notificationsEnabledDescription =>
+      'Apagat no es compta res ni sona res. El que ja hi hagués pendent continua anotat i es torna a veure en encendre-ho.';
+
+  @override
+  String get notificationsMuted => 'Silenci';
+
+  @override
+  String get notificationsMutedDescription =>
+      'Els comptadors es queden, els sons no.';
+
+  @override
+  String get notificationsSoundTitle => 'So';
+
+  @override
+  String get notificationsVolume => 'Volum';
+
+  @override
+  String get notificationsMaxSeconds => 'Sonar com a màxim';
+
+  @override
+  String notificationsSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count segons',
+      one: '1 segon',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notificationsMaxSecondsDescription =>
+      'Un avís és un toc curt. Si l\'àudio que tries dura més, el Fern el talla aquí en lloc de reproduir-lo sencer. El teu fitxer no es toca.';
+
+  @override
+  String get notificationsEventsTitle => 'De què avisar';
+
+  @override
+  String get notificationsEventsDescription =>
+      'De cadascun, si posa comptador al menú lateral i si sona.';
+
+  @override
+  String get notificationsBadge => 'Comptador';
+
+  @override
+  String get notificationsSound => 'So';
+
+  @override
+  String get notificationsDefaultSound => 'So del Fern';
+
+  @override
+  String get notificationsPreview => 'Escoltar';
+
+  @override
+  String get notificationsChooseSound => 'Triar un àudio';
+
+  @override
+  String get notificationsResetSound => 'Tornar al so del Fern';
+
+  @override
+  String get notifyDuplicates => 'Contingut repetit trobat';
+
+  @override
+  String get notifyTraining => 'Model acabat d\'entrenar';
+
+  @override
+  String get notifyRecognition => 'Reconeixement en lot acabat';
+
+  @override
+  String get notifyRemoteImport => 'Importació remota acabada';
+
+  @override
+  String get sidecarTitle => 'Motor de reconeixement';
+
+  @override
+  String get sidecarDescription =>
+      'Per entrenar i reconèixer, el Fern instal·la el seu propi entorn de Python dins la carpeta de reconeixement. No toca el teu sistema i no cal que tinguis Python instal·lat abans: es porta el seu. Ocupa uns 1,2 GB al disc i només es descarrega quan tu ho demanes.';
+
+  @override
+  String get sidecarUnsupportedPlatform =>
+      'El reconeixement encara no està disponible en aquest sistema.';
+
+  @override
+  String get sidecarNotInstalled => 'Sense instal·lar';
+
+  @override
+  String get sidecarDownloadingUv => 'Descarregant l\'instal·lador';
+
+  @override
+  String get sidecarInstallingPython => 'Instal·lant Python';
+
+  @override
+  String get sidecarCreatingVenv => 'Preparant l\'entorn';
+
+  @override
+  String get sidecarDetectingHardware => 'Mirant el teu equip';
+
+  @override
+  String get sidecarInstallingTorch => 'Descarregant el motor';
+
+  @override
+  String get sidecarInstallingUltralytics => 'Instal·lant YOLO';
+
+  @override
+  String get sidecarCleaning => 'Netejant';
+
+  @override
+  String get sidecarVerifying => 'Comprovant que tot funciona';
+
+  @override
+  String get sidecarReady => 'A punt per entrenar i reconèixer';
+
+  @override
+  String get sidecarError => 'Alguna cosa ha anat malament';
+
+  @override
+  String sidecarDownloaded(String received, String total) {
+    return '$received MB de $total MB';
+  }
+
+  @override
+  String get sidecarInstall => 'Instal·la';
+
+  @override
+  String get sidecarReinstall => 'Reinstal·la';
+
+  @override
+  String get sidecarEnableGpu => 'Fer servir la targeta gràfica';
+
+  @override
+  String get sidecarUninstall => 'Desinstal·la';
+
+  @override
+  String get sidecarShowLog => 'Veure detalls';
+
+  @override
+  String get sidecarHideLog => 'Amagar detalls';
+
+  @override
+  String get sidecarFailureInUse =>
+      'Els fitxers del motor s\'estan fent servir ara mateix';
+
+  @override
+  String get sidecarFailureInUseHint =>
+      'Alguna cosa els té oberts i no es poden reemplaçar. Tanca el Fern del tot, torna\'l a obrir i prem Instal·la. Si continua passant, reinicia l\'equip: això sempre els allibera.';
+
+  @override
+  String get sidecarFailureSpace => 'No queda espai al disc';
+
+  @override
+  String get sidecarFailureSpaceHint =>
+      'El motor necessita uns 1,5 GB lliures, comptant el que ocupa mentre s\'instal·la. Allibera espai, o porta la carpeta de reconeixement a un altre disc des del camp de dalt.';
+
+  @override
+  String get sidecarFailureNetwork => 'No s\'ha pogut acabar la descàrrega';
+
+  @override
+  String get sidecarFailureNetworkHint =>
+      'Revisa la connexió a internet i torna a prémer Instal·la. El que ja s\'havia descarregat es conserva, així que continua per on anava.';
+
+  @override
+  String get sidecarFailureBlocked =>
+      'El sistema no ha deixat que el Fern executi l\'instal·lador';
+
+  @override
+  String get sidecarFailureBlockedHint =>
+      'Sol ser l\'antivirus, que frena els programes acabats de descarregar. Permet el Fern al teu antivirus, o tria una carpeta de reconeixement dins la teva carpeta d\'usuari, i torna-ho a provar.';
+
+  @override
+  String get sidecarFailureMissing =>
+      'Falta alguna cosa que el motor necessita';
+
+  @override
+  String get sidecarFailureMissingHint =>
+      'La instal·lació s\'ha quedat a mitges. Prem Desinstal·la per netejar-la i després Instal·la un altre cop.';
+
+  @override
+  String get sidecarFailureUnknown => 'No s\'ha pogut instal·lar el motor';
+
+  @override
+  String get sidecarFailureUnknownHint =>
+      'Prem Instal·la per tornar-ho a provar. Si continua fallant, obre els detalls de sota: allà es veu exactament en quin pas ha fallat.';
+
+  @override
+  String get sidecarInstallCpu => 'Instal·la per al processador';
+
+  @override
+  String get sidecarInstallGpu => 'Instal·la per a la targeta gràfica';
+
+  @override
+  String get sidecarEnableCpu => 'Tornar al processador';
+
+  @override
+  String sidecarPercent(int percent) {
+    return '$percent %';
+  }
+
+  @override
+  String get sidecarBusyDownloading => 'Descarregant paquets...';
+
+  @override
+  String get sidecarBusyUnpacking => 'Descomprimint el que va arribant...';
+
+  @override
+  String get sidecarBusyPatience => 'Aquest pas triga uns minuts.';
+
+  @override
+  String get sidecarBusySettling => 'Col·locant-ho tot al seu lloc...';
+
+  @override
+  String get sidecarBusyKeepUsing =>
+      'Pots continuar fent servir el Fern mentrestant.';
+
+  @override
+  String get gpuDialogTitle => 'Vols instal·lar la versió de targeta gràfica?';
+
+  @override
+  String get gpuDialogBenefit =>
+      'Entrenar va molt més ràpid: el que al processador són hores, a la targeta gràfica poden ser minuts.';
+
+  @override
+  String get gpuDialogTime =>
+      'La descàrrega són uns 2,5 GB, així que amb una connexió normal pot trigar una bona estona.';
+
+  @override
+  String get gpuDialogSize =>
+      'Ocupa uns 5 GB al disc, en lloc dels 1,2 GB de la versió de processador.';
+
+  @override
+  String get gpuDialogReversible =>
+      'Pots tornar a la versió de processador quan vulguis, sense reinstal·lar-ho tot.';
+
+  @override
+  String get gpuDialogConfirm => 'Instal·la-la';
 }

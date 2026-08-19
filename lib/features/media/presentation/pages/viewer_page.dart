@@ -199,11 +199,7 @@ class _ViewerPageState extends State<ViewerPage> {
           // El contenido que ya está en la papelera se trata distinto: su botón
           // de borrar es el definitivo y, junto a él, aparece el de devolverlo a
           // su sitio.
-          final isMarked = media != null &&
-              (state.mediaList?.any(
-                    (summary) => summary.id == media.id && summary.isDeleted,
-                  ) ??
-                  false);
+          final isMarked = state.isCurrentMediaMarked;
 
           // Con el panel de información abierto los mandos no se esconden: se
           // está trabajando con el contenido, no mirándolo.

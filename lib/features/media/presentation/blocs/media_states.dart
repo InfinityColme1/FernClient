@@ -132,6 +132,25 @@ abstract class MediaStates extends Equatable {
   ///
   /// Un grupo que se queda sin contenido desaparece con su cabecera: una
   /// etiqueta de la que no se ve nada no es un grupo vacío que enseñar.
+  /// El contenido que se está viendo ya está en la papelera.
+  ///
+  /// Cambia lo que se puede hacer con él: su botón de borrar es el definitivo y
+  /// aparece además el de devolverlo a su sitio. Lo miran el visor y su panel de
+  /// información, y por eso se calcula aquí en vez de en cada uno: es el mismo
+  /// contenido y la misma pregunta.
+  ///
+  /// No es un campo de [MediaEntity] porque no es suyo: quien sabe si algo está
+  /// marcado es la lista de la que sale.
+  bool get isCurrentMediaMarked {
+    final media = currentMedia;
+    if (media == null) return false;
+
+    return mediaList?.any(
+          (summary) => summary.id == media.id && summary.isDeleted,
+        ) ??
+        false;
+  }
+
   List<MediaSearchSectionEntity>? get visibleSearchSections {
     final sections = searchSections;
     if (sections == null) return null;

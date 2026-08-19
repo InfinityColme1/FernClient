@@ -377,7 +377,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           ),
         ),
         const SizedBox(height: AppSpacing.s),
-        FernInlineAddButton(
+        FernAddButton.compact(
           label: texts.addProfile,
           onTap: _addSocialField,
         ),

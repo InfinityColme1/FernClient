@@ -6,11 +6,15 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
 import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
+import 'package:Fern/features/jobs/presentation/widgets/jobs_indicator.dart';
+import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
 enum _CreateOption { creator, tag, collection }
@@ -109,8 +113,33 @@ class _MainLayoutState extends State<MainLayout> {
     return display.size.width / display.devicePixelRatio / 2;
   }
 
+  /// La última pantalla por la que se ha pasado, para no repetir el aviso de
+  /// "ya visto" en cada reconstrucción.
+  String? _lastSeenRoute;
+
+  /// Los avisos que llevaban a esta pantalla se dan por vistos al llegar a ella.
+  ///
+  /// Se hace aquí y no en el botón del menú porque a una pantalla se llega de
+  /// muchas maneras (el buscador, un enlace, volver atrás), y lo que apaga el
+  /// contador es haber ido a mirar, no por dónde se fue.
+  void _markCurrentRouteSeen(BuildContext context) {
+    final route = GoRouterState.of(context).matchedLocation;
+    if (route == _lastSeenRoute) return;
+
+    _lastSeenRoute = route;
+
+    // En el fotograma siguiente: durante la construcción no se puede tocar el
+    // estado de nadie.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<NotificationsBloc>().add(RouteSeenEvent(route));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _markCurrentRouteSeen(context);
+
     return LayoutBuilder(builder: (context, constraints) {
       final isLargeScreen = constraints.maxWidth > AppSizes.largeScreenMinWidth;
 
@@ -170,6 +199,9 @@ class _MainLayoutState extends State<MainLayout> {
           ],
         ),
         actions: [
+          // Sólo asoma cuando hay algo corriendo por detrás, así que el resto
+          // del tiempo la barra queda como estaba.
+          const JobsIndicator(),
           FernPopupMenu<_CreateOption>(
             options: _createOptions(AppLocalizations.of(context)),
             onSelected: _onCreateSelected,

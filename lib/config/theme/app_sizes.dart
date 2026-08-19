@@ -33,6 +33,10 @@ class AppSizes {
   static const double dialogMaxWidth = 800.0;
   static const double menuWidth = 280.0;
 
+  /// El panel de trabajos en segundo plano. Más ancho que un menú corriente
+  /// porque lleva barras de progreso y no sólo texto.
+  static const double jobsPanelWidth = 320.0;
+
   /// Ancho de la lista de etiquetas de la pantalla de gestión de etiquetas: lo
   /// justo para que quepan el avatar, el nombre y la sangría de la jerarquía.
   static const double tagListWidth = 260.0;
@@ -55,12 +59,40 @@ class AppSizes {
   /// desborde antes de llegar a [largeScreenMinWidth].
   static const double sidebarAutoCollapseMinWidth = 1340.0;
 
+  // Grosores de borde
+  /// El trazo de los contornos dibujados a mano (el círculo del botón de
+  /// añadir): fino para la variante menuda, normal para las demás.
+  static const double borderThin = 1.5;
+  static const double borderRegular = 2.0;
+
+  /// Lo que mide de ancho, como mínimo, la bolita con el contador de avisos.
+  /// Con una cifra queda redonda y con tres se estira.
+  static const double badgeMinWidth = 18.0;
+
   static const double logoWidth = 150.0;
+
+  /// Ancho máximo del aviso de arranque fallido. Es una columna de texto y no
+  /// una pantalla: pasado ese ancho las líneas se hacen incómodas de leer.
+  static const double startupErrorMaxWidth = 560.0;
 
   // Ajustes: diálogo a dos columnas, secciones a la izquierda
   static const double settingsDialogWidth = 900.0;
   static const double settingsDialogHeight = 620.0;
   static const double settingsNavWidth = 240.0;
+
+  /// Filas de ajuste con deslizador: lo que ocupa el rótulo a la izquierda y el
+  /// valor a la derecha, para que varias filas seguidas queden alineadas.
+  static const double settingsLabelWidth = 180.0;
+  static const double settingsValueWidth = 64.0;
+
+  /// Alto máximo del registro de instalación del entorno de reconocimiento:
+  /// lo justo para ver qué está pasando sin que se coma la pantalla.
+  static const double sidecarLogHeight = 180.0;
+
+  /// Alto reservado al texto que va rotando mientras se instala. Es fijo para
+  /// que la barra de progreso y los botones no se muevan al cambiar de frase,
+  /// y da para dos líneas.
+  static const double sidecarActivityHeight = 40.0;
 
   // Ajustes: tema
   /// Lado de la muestra de color de una fila de color y de la que enseña el

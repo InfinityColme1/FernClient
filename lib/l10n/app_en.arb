@@ -492,5 +492,131 @@
   "sourceLocal": "This computer",
 
   "autoTagRemoteSource": "Auto-tag remote source",
-  "autoTagRemoteSourceDescription": "Fern creates a tag for each platform (Reddit, and so on) and puts it on what it imports from it. With this off the source is still recorded, and you filter by it from the Filters button."
+  "autoTagRemoteSourceDescription": "Fern creates a tag for each platform (Reddit, and so on) and puts it on what it imports from it. With this off the source is still recorded, and you filter by it from the Filters button.",
+
+  "startupFailedTitle": "Fern could not start",
+  "startupFailedDatabase": "The database could not be brought up to the version this release needs.",
+  "startupFailedHint": "Nothing has been lost: your content is still where it was. Close Fern and open it again, and if this keeps happening, the details below say what went wrong.",
+
+  "settingsRecognition": "Recognition",
+  "recognitionFolderTitle": "Recognition data",
+  "recognitionFolderDescription": "Where Fern keeps everything it needs to recognise your content: the training environment, the trained models and the data sets it builds to train them. It can take several gigabytes, so you may prefer it on another drive.",
+  "recognitionFolder": "Recognition folder",
+  "recognitionFolderMoved": "{count, plural, =0{The folder was already there} =1{1 file moved to the new folder} other{{count} files moved to the new folder}}",
+  "@recognitionFolderMoved": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recognitionFolderMoveFailed": "The recognition data could not be moved",
+
+  "jobsTooltip": "Tasks running",
+  "jobsTitle": "Background tasks",
+  "jobsEmpty": "Nothing running right now",
+  "jobCancelTooltip": "Cancel this task",
+  "jobProgress": "{done} of {total}",
+  "@jobProgress": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "jobQueued": "Waiting",
+  "jobFailed": "Failed",
+  "jobTraining": "Training model",
+  "jobRecognition": "Recognising content",
+  "jobDuplicateScan": "Looking for repeated media",
+  "jobHashing": "Reading content",
+
+  "settingsNotifications": "Notifications",
+  "notificationsTitle": "Alerts",
+  "notificationsDescription": "Training a model, recognising a batch or looking for repeated media can take a long while. Fern tells you when it is done so you do not have to keep checking.",
+  "notificationsEnabled": "Alert me",
+  "notificationsEnabledDescription": "With this off nothing is counted and nothing plays. What was already pending stays noted, and comes back when you turn it on again.",
+  "notificationsMuted": "Silent",
+  "notificationsMutedDescription": "Counters stay, sounds do not.",
+  "notificationsSoundTitle": "Sound",
+  "notificationsVolume": "Volume",
+  "notificationsMaxSeconds": "Play at most",
+  "notificationsSeconds": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@notificationsSeconds": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "notificationsMaxSecondsDescription": "An alert is a short chime. If the audio you pick is longer, Fern stops it here instead of playing the whole thing. Your file is not touched.",
+  "notificationsEventsTitle": "What to alert about",
+  "notificationsEventsDescription": "For each one, whether it puts a counter on the side menu and whether it plays a sound.",
+  "notificationsBadge": "Counter",
+  "notificationsSound": "Sound",
+  "notificationsDefaultSound": "Fern sound",
+  "notificationsPreview": "Listen",
+  "notificationsChooseSound": "Choose an audio file",
+  "notificationsResetSound": "Back to the Fern sound",
+  "notifyDuplicates": "Repeated media found",
+  "notifyTraining": "Model finished training",
+  "notifyRecognition": "Batch recognition finished",
+  "notifyRemoteImport": "Remote import finished",
+
+  "sidecarTitle": "Recognition engine",
+  "sidecarDescription": "To train and recognise, Fern installs its own small Python environment inside the recognition folder. It does not touch your system and you do not need to have Python installed beforehand: it brings its own. It takes about 1.2 GB on disk and is only downloaded when you ask for it.",
+  "sidecarUnsupportedPlatform": "Recognition is not available on this system yet.",
+  "sidecarNotInstalled": "Not installed yet",
+  "sidecarDownloadingUv": "Downloading the installer",
+  "sidecarInstallingPython": "Installing Python",
+  "sidecarCreatingVenv": "Preparing the environment",
+  "sidecarDetectingHardware": "Checking your hardware",
+  "sidecarInstallingTorch": "Downloading the engine",
+  "sidecarInstallingUltralytics": "Installing YOLO",
+  "sidecarCleaning": "Cleaning up",
+  "sidecarVerifying": "Checking everything works",
+  "sidecarReady": "Ready to train and recognise",
+  "sidecarError": "Something went wrong",
+  "sidecarDownloaded": "{received} MB of {total} MB",
+  "@sidecarDownloaded": {
+    "placeholders": {
+      "received": { "type": "String" },
+      "total": { "type": "String" }
+    }
+  },
+  "sidecarInstall": "Install",
+  "sidecarReinstall": "Reinstall",
+  "sidecarEnableGpu": "Use the graphics card",
+  "sidecarUninstall": "Uninstall",
+  "sidecarShowLog": "Show details",
+  "sidecarHideLog": "Hide details",
+
+  "sidecarFailureInUse": "The engine files are in use right now",
+  "sidecarFailureInUseHint": "Something still has them open, so they cannot be replaced. Close Fern completely, open it again and press Install. If it keeps happening, restart the computer: that always releases them.",
+  "sidecarFailureSpace": "There is no room left on the disk",
+  "sidecarFailureSpaceHint": "The engine needs about 1.5 GB free, counting what it uses while installing. Free up some space, or move the recognition folder to another drive from the field above.",
+  "sidecarFailureNetwork": "The download could not be completed",
+  "sidecarFailureNetworkHint": "Check your internet connection and press Install again. What was already downloaded is kept, so it carries on where it left off.",
+  "sidecarFailureBlocked": "The system would not let Fern run the installer",
+  "sidecarFailureBlockedHint": "This is usually the antivirus stopping a freshly downloaded program. Allow Fern in your antivirus, or choose a recognition folder inside your own user folder, and try again.",
+  "sidecarFailureMissing": "Something the engine needs is missing",
+  "sidecarFailureMissingHint": "The installation was left half done. Press Uninstall to clear it out and then Install again.",
+  "sidecarFailureUnknown": "The engine could not be installed",
+  "sidecarFailureUnknownHint": "Press Install to try again. If it keeps failing, open the details below: they say exactly which step went wrong.",
+
+  "sidecarInstallCpu": "Install for the processor",
+  "sidecarInstallGpu": "Install for the graphics card",
+  "sidecarEnableCpu": "Go back to the processor",
+  "sidecarPercent": "{percent} %",
+  "@sidecarPercent": {
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "sidecarBusyDownloading": "Downloading packages...",
+  "sidecarBusyUnpacking": "Unpacking what has arrived...",
+  "sidecarBusyPatience": "This step takes a few minutes.",
+  "sidecarBusySettling": "Putting everything in place...",
+  "sidecarBusyKeepUsing": "You can keep using Fern meanwhile.",
+  "gpuDialogTitle": "Install the graphics card version?",
+  "gpuDialogBenefit": "Training goes much faster: what takes hours on the processor can be minutes on the graphics card.",
+  "gpuDialogTime": "The download is around 2.5 GB, so it can take a good while on a normal connection.",
+  "gpuDialogSize": "It takes about 5 GB on disk, instead of the 1.2 GB of the processor version.",
+  "gpuDialogReversible": "You can go back to the processor version whenever you want, without reinstalling everything.",
+  "gpuDialogConfirm": "Install it"
 }

@@ -1757,6 +1757,558 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fern creates a tag for each platform (Reddit, and so on) and puts it on what it imports from it. With this off the source is still recorded, and you filter by it from the Filters button.'**
   String get autoTagRemoteSourceDescription;
+
+  /// No description provided for @startupFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern could not start'**
+  String get startupFailedTitle;
+
+  /// No description provided for @startupFailedDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'The database could not be brought up to the version this release needs.'**
+  String get startupFailedDatabase;
+
+  /// No description provided for @startupFailedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been lost: your content is still where it was. Close Fern and open it again, and if this keeps happening, the details below say what went wrong.'**
+  String get startupFailedHint;
+
+  /// No description provided for @settingsRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition'**
+  String get settingsRecognition;
+
+  /// No description provided for @recognitionFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition data'**
+  String get recognitionFolderTitle;
+
+  /// No description provided for @recognitionFolderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Where Fern keeps everything it needs to recognise your content: the training environment, the trained models and the data sets it builds to train them. It can take several gigabytes, so you may prefer it on another drive.'**
+  String get recognitionFolderDescription;
+
+  /// No description provided for @recognitionFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition folder'**
+  String get recognitionFolder;
+
+  /// No description provided for @recognitionFolderMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{The folder was already there} =1{1 file moved to the new folder} other{{count} files moved to the new folder}}'**
+  String recognitionFolderMoved(int count);
+
+  /// No description provided for @recognitionFolderMoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The recognition data could not be moved'**
+  String get recognitionFolderMoveFailed;
+
+  /// No description provided for @jobsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks running'**
+  String get jobsTooltip;
+
+  /// No description provided for @jobsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Background tasks'**
+  String get jobsTitle;
+
+  /// No description provided for @jobsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing running right now'**
+  String get jobsEmpty;
+
+  /// No description provided for @jobCancelTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this task'**
+  String get jobCancelTooltip;
+
+  /// No description provided for @jobProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total}'**
+  String jobProgress(int done, int total);
+
+  /// No description provided for @jobQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get jobQueued;
+
+  /// No description provided for @jobFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get jobFailed;
+
+  /// No description provided for @jobTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Training model'**
+  String get jobTraining;
+
+  /// No description provided for @jobRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognising content'**
+  String get jobRecognition;
+
+  /// No description provided for @jobDuplicateScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for repeated media'**
+  String get jobDuplicateScan;
+
+  /// No description provided for @jobHashing.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading content'**
+  String get jobHashing;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Training a model, recognising a batch or looking for repeated media can take a long while. Fern tells you when it is done so you do not have to keep checking.'**
+  String get notificationsDescription;
+
+  /// No description provided for @notificationsEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert me'**
+  String get notificationsEnabled;
+
+  /// No description provided for @notificationsEnabledDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'With this off nothing is counted and nothing plays. What was already pending stays noted, and comes back when you turn it on again.'**
+  String get notificationsEnabledDescription;
+
+  /// No description provided for @notificationsMuted.
+  ///
+  /// In en, this message translates to:
+  /// **'Silent'**
+  String get notificationsMuted;
+
+  /// No description provided for @notificationsMutedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Counters stay, sounds do not.'**
+  String get notificationsMutedDescription;
+
+  /// No description provided for @notificationsSoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get notificationsSoundTitle;
+
+  /// No description provided for @notificationsVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get notificationsVolume;
+
+  /// No description provided for @notificationsMaxSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Play at most'**
+  String get notificationsMaxSeconds;
+
+  /// No description provided for @notificationsSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
+  String notificationsSeconds(int count);
+
+  /// No description provided for @notificationsMaxSecondsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'An alert is a short chime. If the audio you pick is longer, Fern stops it here instead of playing the whole thing. Your file is not touched.'**
+  String get notificationsMaxSecondsDescription;
+
+  /// No description provided for @notificationsEventsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What to alert about'**
+  String get notificationsEventsTitle;
+
+  /// No description provided for @notificationsEventsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'For each one, whether it puts a counter on the side menu and whether it plays a sound.'**
+  String get notificationsEventsDescription;
+
+  /// No description provided for @notificationsBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter'**
+  String get notificationsBadge;
+
+  /// No description provided for @notificationsSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get notificationsSound;
+
+  /// No description provided for @notificationsDefaultSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Fern sound'**
+  String get notificationsDefaultSound;
+
+  /// No description provided for @notificationsPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get notificationsPreview;
+
+  /// No description provided for @notificationsChooseSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an audio file'**
+  String get notificationsChooseSound;
+
+  /// No description provided for @notificationsResetSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the Fern sound'**
+  String get notificationsResetSound;
+
+  /// No description provided for @notifyDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated media found'**
+  String get notifyDuplicates;
+
+  /// No description provided for @notifyTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Model finished training'**
+  String get notifyTraining;
+
+  /// No description provided for @notifyRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch recognition finished'**
+  String get notifyRecognition;
+
+  /// No description provided for @notifyRemoteImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote import finished'**
+  String get notifyRemoteImport;
+
+  /// No description provided for @sidecarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition engine'**
+  String get sidecarTitle;
+
+  /// No description provided for @sidecarDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To train and recognise, Fern installs its own small Python environment inside the recognition folder. It does not touch your system and you do not need to have Python installed beforehand: it brings its own. It takes about 1.2 GB on disk and is only downloaded when you ask for it.'**
+  String get sidecarDescription;
+
+  /// No description provided for @sidecarUnsupportedPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition is not available on this system yet.'**
+  String get sidecarUnsupportedPlatform;
+
+  /// No description provided for @sidecarNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed yet'**
+  String get sidecarNotInstalled;
+
+  /// No description provided for @sidecarDownloadingUv.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading the installer'**
+  String get sidecarDownloadingUv;
+
+  /// No description provided for @sidecarInstallingPython.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing Python'**
+  String get sidecarInstallingPython;
+
+  /// No description provided for @sidecarCreatingVenv.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the environment'**
+  String get sidecarCreatingVenv;
+
+  /// No description provided for @sidecarDetectingHardware.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking your hardware'**
+  String get sidecarDetectingHardware;
+
+  /// No description provided for @sidecarInstallingTorch.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading the engine'**
+  String get sidecarInstallingTorch;
+
+  /// No description provided for @sidecarInstallingUltralytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing YOLO'**
+  String get sidecarInstallingUltralytics;
+
+  /// No description provided for @sidecarCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning up'**
+  String get sidecarCleaning;
+
+  /// No description provided for @sidecarVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking everything works'**
+  String get sidecarVerifying;
+
+  /// No description provided for @sidecarReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to train and recognise'**
+  String get sidecarReady;
+
+  /// No description provided for @sidecarError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get sidecarError;
+
+  /// No description provided for @sidecarDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{received} MB of {total} MB'**
+  String sidecarDownloaded(String received, String total);
+
+  /// No description provided for @sidecarInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get sidecarInstall;
+
+  /// No description provided for @sidecarReinstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Reinstall'**
+  String get sidecarReinstall;
+
+  /// No description provided for @sidecarEnableGpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the graphics card'**
+  String get sidecarEnableGpu;
+
+  /// No description provided for @sidecarUninstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Uninstall'**
+  String get sidecarUninstall;
+
+  /// No description provided for @sidecarShowLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Show details'**
+  String get sidecarShowLog;
+
+  /// No description provided for @sidecarHideLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get sidecarHideLog;
+
+  /// No description provided for @sidecarFailureInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'The engine files are in use right now'**
+  String get sidecarFailureInUse;
+
+  /// No description provided for @sidecarFailureInUseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Something still has them open, so they cannot be replaced. Close Fern completely, open it again and press Install. If it keeps happening, restart the computer: that always releases them.'**
+  String get sidecarFailureInUseHint;
+
+  /// No description provided for @sidecarFailureSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no room left on the disk'**
+  String get sidecarFailureSpace;
+
+  /// No description provided for @sidecarFailureSpaceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The engine needs about 1.5 GB free, counting what it uses while installing. Free up some space, or move the recognition folder to another drive from the field above.'**
+  String get sidecarFailureSpaceHint;
+
+  /// No description provided for @sidecarFailureNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'The download could not be completed'**
+  String get sidecarFailureNetwork;
+
+  /// No description provided for @sidecarFailureNetworkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your internet connection and press Install again. What was already downloaded is kept, so it carries on where it left off.'**
+  String get sidecarFailureNetworkHint;
+
+  /// No description provided for @sidecarFailureBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The system would not let Fern run the installer'**
+  String get sidecarFailureBlocked;
+
+  /// No description provided for @sidecarFailureBlockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This is usually the antivirus stopping a freshly downloaded program. Allow Fern in your antivirus, or choose a recognition folder inside your own user folder, and try again.'**
+  String get sidecarFailureBlockedHint;
+
+  /// No description provided for @sidecarFailureMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Something the engine needs is missing'**
+  String get sidecarFailureMissing;
+
+  /// No description provided for @sidecarFailureMissingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The installation was left half done. Press Uninstall to clear it out and then Install again.'**
+  String get sidecarFailureMissingHint;
+
+  /// No description provided for @sidecarFailureUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The engine could not be installed'**
+  String get sidecarFailureUnknown;
+
+  /// No description provided for @sidecarFailureUnknownHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Install to try again. If it keeps failing, open the details below: they say exactly which step went wrong.'**
+  String get sidecarFailureUnknownHint;
+
+  /// No description provided for @sidecarInstallCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Install for the processor'**
+  String get sidecarInstallCpu;
+
+  /// No description provided for @sidecarInstallGpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Install for the graphics card'**
+  String get sidecarInstallGpu;
+
+  /// No description provided for @sidecarEnableCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to the processor'**
+  String get sidecarEnableCpu;
+
+  /// No description provided for @sidecarPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} %'**
+  String sidecarPercent(int percent);
+
+  /// No description provided for @sidecarBusyDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading packages...'**
+  String get sidecarBusyDownloading;
+
+  /// No description provided for @sidecarBusyUnpacking.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpacking what has arrived...'**
+  String get sidecarBusyUnpacking;
+
+  /// No description provided for @sidecarBusyPatience.
+  ///
+  /// In en, this message translates to:
+  /// **'This step takes a few minutes.'**
+  String get sidecarBusyPatience;
+
+  /// No description provided for @sidecarBusySettling.
+  ///
+  /// In en, this message translates to:
+  /// **'Putting everything in place...'**
+  String get sidecarBusySettling;
+
+  /// No description provided for @sidecarBusyKeepUsing.
+  ///
+  /// In en, this message translates to:
+  /// **'You can keep using Fern meanwhile.'**
+  String get sidecarBusyKeepUsing;
+
+  /// No description provided for @gpuDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the graphics card version?'**
+  String get gpuDialogTitle;
+
+  /// No description provided for @gpuDialogBenefit.
+  ///
+  /// In en, this message translates to:
+  /// **'Training goes much faster: what takes hours on the processor can be minutes on the graphics card.'**
+  String get gpuDialogBenefit;
+
+  /// No description provided for @gpuDialogTime.
+  ///
+  /// In en, this message translates to:
+  /// **'The download is around 2.5 GB, so it can take a good while on a normal connection.'**
+  String get gpuDialogTime;
+
+  /// No description provided for @gpuDialogSize.
+  ///
+  /// In en, this message translates to:
+  /// **'It takes about 5 GB on disk, instead of the 1.2 GB of the processor version.'**
+  String get gpuDialogSize;
+
+  /// No description provided for @gpuDialogReversible.
+  ///
+  /// In en, this message translates to:
+  /// **'You can go back to the processor version whenever you want, without reinstalling everything.'**
+  String get gpuDialogReversible;
+
+  /// No description provided for @gpuDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Install it'**
+  String get gpuDialogConfirm;
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,8 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/main_layout.dart';
 import 'package:Fern/core/navigation/page_transitions.dart';
 import 'package:Fern/features/browser/presentation/pages/browser_page.dart';
+import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
+import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:Fern/features/media/presentation/pages/creator_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/delete_page.dart';
 import 'package:Fern/features/media/presentation/pages/favorites_page.dart';
@@ -38,8 +40,18 @@ final appRouter = GoRouter(
       // que necesitan sus widgets, que es justo lo que asomaba durante la
       // transición.
       builder: (context, state, child) {
-        return BlocProvider<MediaBloc>.value(
-          value: getIt<MediaBloc>(),
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<MediaBloc>.value(value: getIt<MediaBloc>()),
+            // El indicador de trabajos vive en la barra superior del armazón,
+            // así que su bloc se provee aquí y no en cada pantalla.
+            BlocProvider<JobsBloc>.value(value: getIt<JobsBloc>()),
+            // Los contadores de avisos se pintan en el menú lateral y se dan
+            // por vistos al llegar a la pantalla: los dos están aquí dentro.
+            BlocProvider<NotificationsBloc>.value(
+              value: getIt<NotificationsBloc>(),
+            ),
+          ],
           child: MainLayout(child: child),
         );
       },

@@ -1,5 +1,7 @@
 import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/notifications/data/services/notification_service.dart';
+import 'package:Fern/features/notifications/domain/entities/app_notification.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/remote_session_expired.dart';
@@ -74,6 +76,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// que la vació a mano.
   final PreferencesService _preferences;
 
+  /// Por aquí se avisa de lo que tarda: traerse contenido de una plataforma se
+  /// lanza y se desatiende, así que al acabar se pone el contador en el menú.
+  final NotificationService _notifications;
+
   /// La señal con la que se para una importación en marcha. La levanta el botón
   /// de la rejilla y la miran los recorridos de las fuentes.
   final ImportCancellation _cancellation;
@@ -113,6 +119,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
     required PreferencesService preferences,
+    required NotificationService notifications,
     required ImportCancellation cancellation,
     required ImportDecisions decisions,
   })  : _selectAndScanDirectoryUsecase = selectAndScanDirectoryUsecase,
@@ -140,6 +147,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _searchMediaUseCase = searchMediaUseCase,
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
         _preferences = preferences,
+        _notifications = notifications,
         _cancellation = cancellation,
         _decisions = decisions,
         super(const MediaLoading()) {
@@ -1143,6 +1151,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       () => _scanSourceUseCase(
         params: (source: state.importSource, limit: event.limit),
       ),
+      // Traerse contenido de una plataforma tarda y se lanza para desatenderlo,
+      // así que al acabar se avisa. Escanear una carpeta del equipo no: eso se
+      // hace mirando.
+      notifyWhenDone: state.importSource != ImportSource.local,
     );
   }
 
@@ -1159,8 +1171,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// indicador esté puesto quedan cosas por llegar.
   Future<void> _scan(
     Emitter<MediaStates> emit,
-    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan,
-  ) async {
+    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan, {
+    bool notifyWhenDone = false,
+  }) async {
     // La importación empieza sin nadie que la haya parado: lo que se pidiera
     // parar la vez anterior ya se paró.
     _cancellation.reset();
@@ -1170,6 +1183,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     _decisions.reset();
 
     List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
+    final arrivedBefore = currentMedia.length;
     final selectedIds = state.selectedIds;
     emit(MediaLoading(
       mediaList: currentMedia,
@@ -1221,6 +1235,16 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         return state;
       },
     );
+
+    // Lo que ha llegado de nuevo. Se avisa antes de emitir el estado final para
+    // que el contador del menú ya esté puesto cuando la pantalla se recomponga.
+    final arrived = currentMedia.length - arrivedBefore;
+    if (notifyWhenDone && arrived > 0) {
+      await _notifications.notify(
+        NotificationKind.remoteImportFinished,
+        count: arrived,
+      );
+    }
 
     // El escaneo ha terminado: se queda lo encontrado, se retira el indicador y
     // se recoge la fecha que acaba de sellar el caso de uso.

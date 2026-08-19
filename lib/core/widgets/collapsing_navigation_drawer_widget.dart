@@ -165,6 +165,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             icon: item.icon,
             avatarPath: item.avatarPath,
             depth: item.depth,
+            badgeCount: item.badgeCount,
             animationController: _animationController,
             textStyle: widget.textStyle,
             selectedColor: widget.selectedColor,

@@ -49,7 +49,7 @@ void main() {
       );
 
       final settings = pixiv.apply(
-        const AppSettingsEntity(avatarsPath: ''),
+        const AppSettingsEntity(avatarsPath: '', recognitionPath: ''),
         '1234567_abcdefghij',
       );
 
