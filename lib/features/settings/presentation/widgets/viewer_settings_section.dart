@@ -9,8 +9,8 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Cómo se comporta el visor: por ahora, qué hace al dar por definitivo un
-/// contenido importado.
+/// Cómo se comporta el visor: qué hace al dar por definitivo un contenido
+/// importado, y qué le hace a un vídeo recorrer su línea de tiempo.
 class ViewerSettingsSection extends StatelessWidget {
   const ViewerSettingsSection({super.key});
 
@@ -57,6 +57,26 @@ class ViewerSettingsSection extends StatelessWidget {
                     .read<SettingsBloc>()
                     .add(ViewerSaveBehaviorChangedEvent(value)),
               ),
+            const SizedBox(height: AppSpacing.xxl),
+            Text(
+              texts.viewerPlaybackSectionTitle,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              texts.viewerPlaybackSectionNote,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: context.colors.gray),
+            ),
+            const SizedBox(height: AppSpacing.l),
+            FernCheckboxTile(
+              label: texts.viewerPauseWhenSeeking,
+              description: texts.viewerPauseWhenSeekingDescription,
+              value: state.settings.pauseWhenSeeking,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(PauseWhenSeekingToggledEvent(value)),
+            ),
           ],
         );
       },

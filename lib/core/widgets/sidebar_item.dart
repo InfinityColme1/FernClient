@@ -13,6 +13,10 @@ class SidebarItem {
   /// haya [avatarPath].
   final IconData icon;
 
+  /// Icono en forma de imagen del paquete, para lo que no tiene glifo propio.
+  /// Manda sobre [icon] cuando viene.
+  final String? iconAsset;
+
   /// Imagen con la que se pinta el botón en lugar del icono.
   ///
   /// La llevan las etiquetas que tienen avatar cuando el ajuste de apariencia lo
@@ -34,6 +38,7 @@ class SidebarItem {
     required this.id,
     required this.title,
     required this.icon,
+    this.iconAsset,
     required this.onTap,
     this.avatarPath,
     this.depth = 0,

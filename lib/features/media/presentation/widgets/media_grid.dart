@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
@@ -15,9 +16,75 @@ import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/media/media_summary_entity.dart';
 import '../../domain/entities/search/media_search_section_entity.dart';
 
+/// Una celda que es **un recorte** de un contenido, no el contenido entero.
+///
+/// [id] identifica la celda y no el fichero: un mismo contenido con tres
+/// regiones marcadas da tres celdas, cada una con su identificador, y la
+/// selección se lleva por ese identificador.
+///
+/// Vive aquí y no en el dominio del reconocimiento porque la rejilla no tiene
+/// por qué saber que existen los fernies: lo que pinta es un fichero y un
+/// rectángulo suyo.
+class MediaCrop {
+  final int id;
+  final MediaSummaryEntity media;
+  final RegionCrop crop;
+
+  /// Los fotogramas seguidos que la celda agrupa, cuando es un tramo de vídeo.
+  ///
+  /// [crop] es el primero de ellos. Con más de uno la celda se mueve sola, en
+  /// bucle: varios fotogramas seguidos del mismo fernie son **una escena**, no
+  /// cinco celdas casi idénticas puestas en fila.
+  final List<RegionCrop> frames;
+
+  /// Las regiones que la celda representa, [id] incluido.
+  ///
+  /// Es lo que hace que marcarla marque el tramo entero: agrupar es cosa de la
+  /// interfaz, pero para quien la borra o la selecciona siguen siendo todas las
+  /// regiones que son.
+  final List<int> regionIds;
+
+  const MediaCrop({
+    required this.id,
+    required this.media,
+    required this.crop,
+    this.frames = const [],
+    this.regionIds = const [],
+  });
+
+  /// Las regiones de la celda, contando la de siempre cuando no se agrupa nada.
+  List<int> get ids => regionIds.isEmpty ? [id] : regionIds;
+}
+
 class MediaGrid extends StatelessWidget {
   final List<MediaSummaryEntity> mediaList;
   final int columns;
+
+  /// Los recortes de la variante [MediaGrid.crops]. `null` en las demás, que
+  /// pintan contenidos enteros.
+  final List<MediaCrop>? crops;
+
+  /// Recortes marcados, por identificador de celda. La variante de recortes
+  /// lleva su propia selección en vez de la del `MediaBloc`: lo que se marca
+  /// aquí son regiones, y de esas el bloc de contenido no sabe nada.
+  final Set<int> selectedCropIds;
+
+  final void Function(MediaCrop crop)? onCropTap;
+  final void Function(MediaCrop crop)? onCropSelectionToggled;
+
+  /// Mayúsculas + clic sobre un recorte: la selección se estira hasta él desde
+  /// el último con el que se hizo algo, igual que en la rejilla de contenido.
+  final void Function(MediaCrop crop)? onCropRangeSelectionRequested;
+
+  /// Se invoca cuando el fichero de un recorte no se ha podido cargar. Quien lo
+  /// escuche decide si la fila sobra.
+  final void Function(MediaCrop crop)? onCropLoadFailed;
+
+  /// Aviso que llevan los recortes cuyo contenido todavía no es definitivo.
+  ///
+  /// El texto viene de fuera: la rejilla pinta lo que le den y no se inventa
+  /// mensajes. Sin él, los recortes no llevan aviso.
+  final String? pendingWarning;
 
   /// Grupos de una búsqueda, cada uno con su cabecera. `null` en la rejilla
   /// normal, que pinta [mediaList] de un tirón.
@@ -41,6 +108,10 @@ class MediaGrid extends StatelessWidget {
   /// sólo se espera.
   final VoidCallback? onStop;
 
+  /// Lo que se dice cuando la rejilla está vacía. Sin decir nada, que la
+  /// biblioteca está vacía, que es lo que toca en casi todas las pantallas.
+  final String? emptyMessage;
+
   const MediaGrid({
     super.key,
     required this.mediaList,
@@ -48,7 +119,37 @@ class MediaGrid extends StatelessWidget {
     this.hasSurface = true,
     this.isLoading = false,
     this.onStop,
-  }) : sections = null;
+  })  : sections = null,
+        crops = null,
+        selectedCropIds = const {},
+        onCropTap = null,
+        onCropSelectionToggled = null,
+        onCropRangeSelectionRequested = null,
+        onCropLoadFailed = null,
+        pendingWarning = null,
+        emptyMessage = null;
+
+  /// Rejilla de recortes: cada celda es una región de un contenido y se pinta
+  /// con la proporción de la región, no con la del fichero.
+  ///
+  /// Es la rejilla de la pantalla de fernies. No necesita un `MediaBloc` por
+  /// encima: la selección y lo que pasa al pulsar vienen de fuera.
+  const MediaGrid.crops({
+    super.key,
+    required List<MediaCrop> this.crops,
+    required this.columns,
+    this.selectedCropIds = const {},
+    this.onCropTap,
+    this.onCropSelectionToggled,
+    this.onCropRangeSelectionRequested,
+    this.onCropLoadFailed,
+    this.pendingWarning,
+    this.hasSurface = true,
+    this.isLoading = false,
+    this.emptyMessage,
+  })  : mediaList = const [],
+        sections = null,
+        onStop = null;
 
   /// Rejilla de resultados de búsqueda: el contenido va separado en grupos
   /// (descripciones, etiquetas y creadores) con una cabecera delante de cada
@@ -60,17 +161,27 @@ class MediaGrid extends StatelessWidget {
     this.hasSurface = true,
     this.isLoading = false,
     this.onStop,
-  }) : mediaList = const [];
+  })  : mediaList = const [],
+        crops = null,
+        selectedCropIds = const {},
+        onCropTap = null,
+        onCropSelectionToggled = null,
+        onCropRangeSelectionRequested = null,
+        onCropLoadFailed = null,
+        pendingWarning = null,
+        emptyMessage = null;
 
   /// Todo el contenido de la rejilla en el orden en el que se pinta, que es el
   /// que sigue la selección por rango. Con grupos, los recorre de arriba abajo
   /// como una sola lista, igual que se ven.
-  List<int> get _orderedIds => sections == null
-      ? [for (final media in mediaList) media.id]
-      : [
-          for (final section in sections!)
-            for (final media in section.media) media.id,
-        ];
+  List<int> get _orderedIds => switch ((sections, crops)) {
+        (final sections?, _) => [
+            for (final section in sections)
+              for (final media in section.media) media.id,
+          ],
+        (_, final crops?) => [for (final crop in crops) crop.id],
+        _ => [for (final media in mediaList) media.id],
+      };
 
   /// El hueco que la rejilla deja hasta el borde de la ventana.
   ///
@@ -82,7 +193,7 @@ class MediaGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEmpty = sections?.isEmpty ?? mediaList.isEmpty;
+    final isEmpty = sections?.isEmpty ?? crops?.isEmpty ?? mediaList.isEmpty;
 
     if (isEmpty) {
       // Mientras se está leyendo, el indicador de espera; sólo cuando ya se sabe
@@ -102,7 +213,7 @@ class MediaGrid extends StatelessWidget {
             )
           : FernEmptyState(
               imageAsset: fernEmptyImage,
-              message: AppLocalizations.of(context).emptyLibrary,
+              message: emptyMessage ?? AppLocalizations.of(context).emptyLibrary,
             );
 
       return Padding(
@@ -114,8 +225,11 @@ class MediaGrid extends StatelessWidget {
     }
 
     final orderedIds = _orderedIds;
-    final content =
-        sections == null ? _buildGrid(orderedIds) : _buildSections(orderedIds);
+    final content = switch ((sections, crops)) {
+      (final sections?, _) when sections.isNotEmpty => _buildSections(orderedIds),
+      (_, final crops?) => _buildCropGrid(crops),
+      _ => _buildGrid(orderedIds),
+    };
 
     return Padding(
       padding: _padding,
@@ -198,6 +312,43 @@ class MediaGrid extends StatelessWidget {
         ],
         const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s)),
       ],
+    );
+  }
+
+  /// La rejilla de recortes. Se arma igual que la de contenidos: lo único que
+  /// cambia es que cada celda lleva su región y su propia selección.
+  Widget _buildCropGrid(List<MediaCrop> crops) {
+    return MasonryGridView.count(
+      padding: const EdgeInsets.all(AppSpacing.s),
+      crossAxisCount: columns,
+      mainAxisSpacing: AppSpacing.s,
+      crossAxisSpacing: AppSpacing.s,
+      itemCount: crops.length,
+      itemBuilder: (context, index) {
+        final crop = crops[index];
+
+        return MediaItem(
+          // La celda es la región, no el fichero: sin esto, dos regiones del
+          // mismo contenido compartirían estado al desplazar la rejilla.
+          key: ValueKey(crop.id),
+          media: crop.media,
+          crop: crop.crop,
+          frames: crop.frames,
+          // El contenido pendiente de revisar se avisa: su región está marcada,
+          // pero no cuenta para entrenar mientras no se dé por definitivo.
+          warning: crop.media.isImported ? null : pendingWarning,
+          isSelected: selectedCropIds.contains(crop.id),
+          onTap: onCropTap == null ? null : () => onCropTap!(crop),
+          onSelectionToggled: onCropSelectionToggled == null
+              ? null
+              : () => onCropSelectionToggled!(crop),
+          onRangeSelectionRequested: onCropRangeSelectionRequested == null
+              ? null
+              : () => onCropRangeSelectionRequested!(crop),
+          onLoadFailed:
+              onCropLoadFailed == null ? null : () => onCropLoadFailed!(crop),
+        );
+      },
     );
   }
 

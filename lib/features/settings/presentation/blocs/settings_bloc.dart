@@ -44,6 +44,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
+    on<PauseWhenSeekingToggledEvent>(onPauseWhenSeekingToggled);
     on<ThemeModeChangedEvent>(onThemeModeChanged);
     on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
@@ -194,6 +195,16 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(autoTagRemoteSource: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onPauseWhenSeekingToggled(
+    PauseWhenSeekingToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(pauseWhenSeeking: event.enabled),
       emit,
     );
   }

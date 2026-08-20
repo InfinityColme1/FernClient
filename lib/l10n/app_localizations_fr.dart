@@ -297,6 +297,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewerExitFullscreen => 'Quitter le plein écran';
 
   @override
+  String get viewerSkipBack => 'Reculer de cinq secondes';
+
+  @override
+  String get viewerSkipForward => 'Avancer de cinq secondes';
+
+  @override
+  String get viewerLoop => 'Lire en boucle';
+
+  @override
+  String get viewerPlaybackSectionTitle => 'Lecture vidéo';
+
+  @override
+  String get viewerPlaybackSectionNote =>
+      'Ce que la visionneuse fait à une vidéo pendant que vous parcourez sa ligne de temps.';
+
+  @override
+  String get viewerPauseWhenSeeking => 'Mettre en pause en saisissant la barre';
+
+  @override
+  String get viewerPauseWhenSeekingDescription =>
+      'La vidéo s’arrête dès que vous saisissez la barre et reste où vous la laissez. Désactivé, elle continue depuis l’endroit où vous la relâchez. Le marquage de régions met toujours en pause, quoi qu’en dise ce réglage : une région se marque sur une image fixe.';
+
+  @override
+  String get fernieUndo => 'Annuler la dernière région marquée';
+
+  @override
   String get viewerFavorite => 'Ajouter aux favoris';
 
   @override
@@ -1407,4 +1433,197 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gpuDialogConfirm => 'L\'installer';
+
+  @override
+  String get navRecognition => 'Reconnaissance';
+
+  @override
+  String get navFernies => 'Fernies';
+
+  @override
+  String get navRepeatedMedia => 'Contenu en double';
+
+  @override
+  String get navModels => 'Modèles';
+
+  @override
+  String get menuNewFernie => 'Nouveau fernie';
+
+  @override
+  String get newFernieTitle => 'Nouveau fernie';
+
+  @override
+  String get fernieNameLabel => 'Nom du fernie';
+
+  @override
+  String get ferniesTitle => 'Fernies';
+
+  @override
+  String get addFernie => 'Ajouter un fernie';
+
+  @override
+  String get noFerniesYet => 'Aucun fernie pour l’instant';
+
+  @override
+  String get fernieNoRegions => 'Ce fernie n’a encore aucune région';
+
+  @override
+  String get fernieNoneHere => 'Aucun fernie marqué ici pour l’instant';
+
+  @override
+  String get fernieLinkLabel => 'Il propose';
+
+  @override
+  String get fernieLinkNone => 'Rien';
+
+  @override
+  String get fernieLinkTag => 'Une étiquette';
+
+  @override
+  String get fernieLinkCreator => 'Un créateur';
+
+  @override
+  String get fernieLinkNoneHint =>
+      'Il ne fait qu’entraîner : seul, il n’étiquette rien';
+
+  @override
+  String get fernieLinkMissing => 'Ce à quoi il était lié n’existe plus';
+
+  @override
+  String get fernieFewRegions =>
+      'Trop peu de régions pour entraîner de façon fiable';
+
+  @override
+  String get fernieLowVariety =>
+      'Peu de variété : le modèle apprendra le fond, pas l’objet';
+
+  @override
+  String get fernieRegionPending =>
+      'Contenu en attente de révision : cette région ne servira pas à l’entraînement tant qu’il n’est pas enregistré';
+
+  @override
+  String get fernieRegionTiny =>
+      'Région très petite : elle peut n’apporter rien à l’entraînement';
+
+  @override
+  String get actionDeleteFernie => 'Supprimer le fernie';
+
+  @override
+  String get actionRemoveLink => 'Retirer le lien';
+
+  @override
+  String get actionDeleteRegions => 'Supprimer les régions';
+
+  @override
+  String get fernieToolSelect => 'Marquer des régions';
+
+  @override
+  String get fernieToolEdit => 'Modifier des régions';
+
+  @override
+  String get fernieRegionConfirm =>
+      'Enregistrer les modifications de cette région';
+
+  @override
+  String get fernieRegionCancel =>
+      'Abandonner les modifications de cette région';
+
+  @override
+  String get fernieRegionDelete => 'Supprimer cette région';
+
+  @override
+  String get fernieRegionDeleteTitle => 'Supprimer cette région ?';
+
+  @override
+  String get fernieRegionDeleteMessage =>
+      'La région quitte son fernie. Si c’était la seule de ce fernie dans ce contenu, le fernie n’y sera plus marqué.';
+
+  @override
+  String get fernieRegionDiscardTitle =>
+      'Abandonner les modifications de la région ?';
+
+  @override
+  String get fernieRegionDiscardMessage =>
+      'Ce que vous avez changé dans la région sélectionnée ne sera pas enregistré.';
+
+  @override
+  String get fernieTimelinePlay => 'Lire pour vérifier les régions marquées';
+
+  @override
+  String get fernieTimelinePause => 'Arrêter';
+
+  @override
+  String get fernieFramePrevious => 'Image précédente';
+
+  @override
+  String get fernieFrameNext => 'Image suivante';
+
+  @override
+  String get fernieOnionSkin =>
+      'Pelure d’oignon : voir l’image marquée précédente';
+
+  @override
+  String get fernieDragRegions =>
+      'Faire glisser la région sur toutes les images intermédiaires';
+
+  @override
+  String get fernieModeTooltip => 'Marquer des régions';
+
+  @override
+  String get fernieModeAccept => 'Enregistrer les régions';
+
+  @override
+  String get fernieModeCancel => 'Abandonner les régions';
+
+  @override
+  String get fernieModeHint =>
+      'Faites glisser sur le contenu pour marquer une région. Maintenez espace ou le bouton du milieu pour déplacer.';
+
+  @override
+  String get fernieDiscardTitle => 'Abandonner ce qui est marqué ?';
+
+  @override
+  String get fernieDiscardMessage =>
+      'Les régions marquées pendant cette session seront perdues.';
+
+  @override
+  String get actionDiscard => 'Abandonner';
+
+  @override
+  String get assignRegionTitle => 'Assigner la région';
+
+  @override
+  String get searchFernieHint => 'Chercher un fernie...';
+
+  @override
+  String get createFernie => 'Créer un fernie';
+
+  @override
+  String fernieRegionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count régions',
+      one: '1 région',
+      zero: 'Aucune région',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fernieMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'dans $count contenus',
+      one: 'dans 1 contenu',
+      zero: 'dans aucun contenu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fernieRecommendedRegions(int count) {
+    return 'Au moins $count régions sont recommandées';
+  }
 }

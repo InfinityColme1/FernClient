@@ -139,6 +139,14 @@
   "viewerShare": "Copy to the clipboard",
   "viewerFullscreen": "Full screen",
   "viewerExitFullscreen": "Exit full screen",
+  "viewerSkipBack": "Back five seconds",
+  "viewerSkipForward": "Forward five seconds",
+  "viewerLoop": "Play on repeat",
+  "viewerPlaybackSectionTitle": "Video playback",
+  "viewerPlaybackSectionNote": "What the viewer does to a video while you move along its timeline.",
+  "viewerPauseWhenSeeking": "Pause when you take hold of the bar",
+  "viewerPauseWhenSeekingDescription": "The video stops as soon as you take hold of the bar and stays where you leave it. Off, it carries on playing from wherever you drop it. Marking regions always pauses, whatever this says: a region is marked on a still frame.",
+  "fernieUndo": "Undo the last region marked",
   "viewerFavorite": "Mark as favourite",
   "viewerUnfavorite": "Remove from favourites",
   "viewerCopied": "Copied to the clipboard",
@@ -618,5 +626,75 @@
   "gpuDialogTime": "The download is around 2.5 GB, so it can take a good while on a normal connection.",
   "gpuDialogSize": "It takes about 5 GB on disk, instead of the 1.2 GB of the processor version.",
   "gpuDialogReversible": "You can go back to the processor version whenever you want, without reinstalling everything.",
-  "gpuDialogConfirm": "Install it"
+  "gpuDialogConfirm": "Install it",
+
+  "navRecognition": "Recognition",
+  "navFernies": "Fernies",
+  "navRepeatedMedia": "Repeated media",
+  "navModels": "Model",
+  "menuNewFernie": "New fernie",
+  "newFernieTitle": "New fernie",
+  "fernieNameLabel": "Fernie name",
+  "ferniesTitle": "Fernies",
+  "addFernie": "Add fernie",
+  "noFerniesYet": "No fernies yet",
+  "fernieNoRegions": "This fernie has no regions yet",
+  "fernieNoneHere": "No fernies marked here yet",
+  "fernieLinkLabel": "It proposes",
+  "fernieLinkNone": "Nothing",
+  "fernieLinkTag": "A tag",
+  "fernieLinkCreator": "A creator",
+  "fernieLinkNoneHint": "It only trains: on its own it tags nothing",
+  "fernieLinkMissing": "What it was linked to no longer exists",
+  "fernieFewRegions": "Few regions to train reliably",
+  "fernieLowVariety": "Little variety: the model will learn the background, not the object",
+  "fernieRegionPending": "Pending content: this region will not be used to train until you save it",
+  "fernieRegionTiny": "Very small region: it may not help the training",
+  "actionDeleteFernie": "Delete fernie",
+  "actionRemoveLink": "Remove link",
+  "actionDeleteRegions": "Delete regions",
+  "fernieToolSelect": "Mark regions",
+  "fernieToolEdit": "Edit regions",
+  "fernieRegionConfirm": "Save the changes to this region",
+  "fernieRegionCancel": "Discard the changes to this region",
+  "fernieRegionDelete": "Delete this region",
+  "fernieRegionDeleteTitle": "Delete this region?",
+  "fernieRegionDeleteMessage": "The region is removed from its fernie. If it was the only one of that fernie in this content, the fernie stops being marked here.",
+  "fernieRegionDiscardTitle": "Discard the changes to the region?",
+  "fernieRegionDiscardMessage": "What you changed in the selected region will not be saved.",
+  "fernieTimelinePlay": "Play to check the marked regions",
+  "fernieTimelinePause": "Stop",
+  "fernieFramePrevious": "Previous frame",
+  "fernieFrameNext": "Next frame",
+  "fernieOnionSkin": "Onion skin: show the previous marked frame",
+  "fernieDragRegions": "Drag the region across every frame in between",
+  "fernieModeTooltip": "Mark regions",
+  "fernieModeAccept": "Save the regions",
+  "fernieModeCancel": "Discard the regions",
+  "fernieModeHint": "Drag over the content to mark a region. Hold space or the middle button to pan.",
+  "fernieDiscardTitle": "Discard what you marked?",
+  "fernieDiscardMessage": "The regions marked in this session will be lost.",
+  "actionDiscard": "Discard",
+  "assignRegionTitle": "Assign the region",
+  "searchFernieHint": "Search fernie...",
+  "createFernie": "Create fernie",
+
+  "fernieRegionCount": "{count, plural, =0{No regions} =1{1 region} other{{count} regions}}",
+  "@fernieRegionCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "fernieMediaCount": "{count, plural, =0{in no media} =1{in 1 media} other{in {count} media}}",
+  "@fernieMediaCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "fernieRecommendedRegions": "At least {count} regions are recommended",
+  "@fernieRecommendedRegions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

@@ -27,11 +27,15 @@ class FernOutlinedField extends StatelessWidget {
           ),
           child: child,
         ),
-        Positioned(
-          top: -10,
-          left: 12,
-          child: FernFieldLabel(text: label),
-        ),
+        // Sin etiqueta no hay nada que apoyar en el contorno: pintarla igual
+        // dejaría una muesca blanca en el borde, que es justo lo que la
+        // etiqueta viene a tapar.
+        if (label.isNotEmpty)
+          Positioned(
+            top: -10,
+            left: 12,
+            child: FernFieldLabel(text: label),
+          ),
       ],
     );
   }

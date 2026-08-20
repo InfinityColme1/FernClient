@@ -115,6 +115,19 @@ class AutoTagRemoteSourceToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Enciende o apaga que coger la barra de un vídeo lo pare.
+///
+/// Sólo en el modo de mirar: marcando regiones se para siempre, porque una
+/// región se marca sobre un fotograma quieto.
+class PauseWhenSeekingToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const PauseWhenSeekingToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 /// Enciende o apaga los avatares en la lista de etiquetas del menú lateral.
 ///
 /// Sólo afecta a esa lista: las etiquetas de las demás pantallas ya se ven con

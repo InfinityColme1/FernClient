@@ -17,7 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
-enum _CreateOption { creator, tag, collection }
+enum _CreateOption { creator, tag, fernie, collection }
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -44,6 +44,12 @@ class _MainLayoutState extends State<MainLayout> {
         icon: Icons.label_outline,
       ),
       FernMenuOption(
+        value: _CreateOption.fernie,
+        label: texts.menuNewFernie,
+        icon: Icons.face_retouching_natural,
+        iconAsset: icFernie,
+      ),
+      FernMenuOption(
         value: _CreateOption.collection,
         label: texts.menuNewCollection,
         icon: Icons.collections_outlined,
@@ -59,6 +65,7 @@ class _MainLayoutState extends State<MainLayout> {
       builder: (context) => switch (option) {
         _CreateOption.creator => const FernCreateDialog.creator(),
         _CreateOption.tag => const FernCreateDialog.tag(),
+        _CreateOption.fernie => const FernCreateDialog.fernie(),
         _CreateOption.collection => FernMessageDialog(
             imageAsset: fernEmptyImage,
             message: AppLocalizations.of(context).collectionsWip,

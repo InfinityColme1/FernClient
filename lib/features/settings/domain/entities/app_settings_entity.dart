@@ -142,6 +142,15 @@ class AppSettingsEntity extends Equatable {
   /// Qué hace el visor al dar por definitivo un contenido importado.
   final ViewerSaveBehavior viewerSaveBehavior;
 
+  /// Coger la barra de un vídeo lo para.
+  ///
+  /// Apagado de fábrica: recorrer un vídeo es normalmente buscar un momento
+  /// **viéndolo**, y pararlo en cada toque obliga a darle a reproducir otra vez.
+  /// El modo de marcar no lo mira: allí siempre para, porque una región se marca
+  /// sobre un fotograma quieto y si el contenido siguiera corriendo acabaría
+  /// puesta sobre un instante que ya ha pasado.
+  final bool pauseWhenSeeking;
+
   /// Credenciales de la fuente remota de Reddit. Vienen vacías mientras el
   /// usuario no las haya rellenado, que es como la aplicación sabe que esa
   /// fuente todavía no se puede usar.
@@ -191,6 +200,7 @@ class AppSettingsEntity extends Equatable {
     this.themeMode = AppThemeMode.system,
     this.customTheme = const CustomThemeEntity(),
     this.viewerSaveBehavior = ViewerSaveBehavior.goToNext,
+    this.pauseWhenSeeking = false,
     this.browserHome = browserHomeUrl,
     this.reddit = const RedditSettingsEntity(),
     this.pixiv = const PixivSettingsEntity(),
@@ -218,6 +228,7 @@ class AppSettingsEntity extends Equatable {
     AppThemeMode? themeMode,
     CustomThemeEntity? customTheme,
     ViewerSaveBehavior? viewerSaveBehavior,
+    bool? pauseWhenSeeking,
     String? browserHome,
     RedditSettingsEntity? reddit,
     PixivSettingsEntity? pixiv,
@@ -240,6 +251,7 @@ class AppSettingsEntity extends Equatable {
       themeMode: themeMode ?? this.themeMode,
       customTheme: customTheme ?? this.customTheme,
       viewerSaveBehavior: viewerSaveBehavior ?? this.viewerSaveBehavior,
+      pauseWhenSeeking: pauseWhenSeeking ?? this.pauseWhenSeeking,
       browserHome: browserHome ?? this.browserHome,
       reddit: reddit ?? this.reddit,
       pixiv: pixiv ?? this.pixiv,
@@ -265,6 +277,7 @@ class AppSettingsEntity extends Equatable {
         themeMode,
         customTheme,
         viewerSaveBehavior,
+        pauseWhenSeeking,
         browserHome,
         reddit,
         pixiv,

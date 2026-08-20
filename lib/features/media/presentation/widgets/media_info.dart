@@ -10,6 +10,9 @@ import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_creator_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_tag_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_events.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_states.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -22,7 +25,14 @@ import 'package:go_router/go_router.dart';
 /// Se divide en dos: una zona desplazable con los datos editables y, fija
 /// debajo, las acciones de guardar y borrar.
 class MediaInfo extends StatelessWidget {
-  const MediaInfo({super.key});
+  /// El modo del visor.
+  ///
+  /// Llega por parámetro y no por el árbol: el panel vive dentro del visor, que
+  /// es quien lo crea, y un `BlocProvider` sólo para esto añadiría un
+  /// `InheritedWidget` que hay que desmontar con cuidado al salir.
+  final FernieModeBloc fernieMode;
+
+  const MediaInfo({super.key, required this.fernieMode});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +56,9 @@ class MediaInfo extends StatelessWidget {
             padding: AppSpacing.infoPadding,
             child: Column(
               children: [
-                Expanded(child: _InfoContent(media: media)),
+                Expanded(
+                  child: _InfoContent(media: media, fernieMode: fernieMode),
+                ),
                 const SizedBox(height: AppSpacing.l),
 
                 // Acciones fijas: quedan fuera de la zona desplazable.
@@ -108,12 +120,13 @@ class MediaInfo extends StatelessWidget {
 ///
 /// Está construida con slivers a propósito: las etiquetas se pintan bajo
 /// demanda, así que el panel aguanta igual con tres etiquetas que con cientos.
-/// Las secciones que llegarán después (colecciones en vertical, fernies en
-/// horizontal) encajan como slivers más en esta misma lista.
+/// La sección de fernies encaja como un sliver más; la de colecciones, cuando
+/// llegue, hará lo mismo.
 class _InfoContent extends StatelessWidget {
   final MediaEntity media;
+  final FernieModeBloc fernieMode;
 
-  const _InfoContent({required this.media});
+  const _InfoContent({required this.media, required this.fernieMode});
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +148,8 @@ class _InfoContent extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.l),
               _CreatorRow(media: media),
+              const SizedBox(height: AppSpacing.l),
+              _FerniesSection(media: media, fernieMode: fernieMode),
               const SizedBox(height: AppSpacing.l),
               FernSectionHeader(
                 icon: Icons.label_outline,
@@ -186,6 +201,93 @@ class _InfoContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Los fernies que tienen alguna región marcada en este contenido.
+///
+/// Es la sección desde la que se entra al modo de marcar: el botón de la
+/// cabecera y el "+" hacen lo mismo, porque un fernie es regiones más etiqueta y
+/// asignarlo sin marcar nada no serviría para entrenar. La lista de aquí son los
+/// que ya están marcados **en esto**, no todos los de la aplicación.
+class _FerniesSection extends StatelessWidget {
+  final MediaEntity media;
+  final FernieModeBloc fernieMode;
+
+  const _FerniesSection({required this.media, required this.fernieMode});
+
+  /// Entra al modo de marcar, recordando si el panel estaba abierto para
+  /// dejarlo como estaba al salir.
+  void _enterFernieMode(BuildContext context) {
+    final showInfo = context.read<MediaBloc>().state.showInfo;
+
+    fernieMode.add(EnterFernieModeEvent(infoWasOpen: showInfo));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
+    return BlocBuilder<FernieModeBloc, FernieModeState>(
+      bloc: fernieMode,
+      builder: (context, state) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // La cabecera no lleva botón: el "+" de abajo ya entra al modo de
+          // marcar, y dos botones para lo mismo en la misma sección sólo hacen
+          // dudar de si hacen cosas distintas. El atajo de siempre está en la
+          // barra del visor.
+          FernSectionHeader(
+            icon: Icons.face_retouching_natural_outlined,
+            iconAsset: icFernie,
+            title: texts.ferniesTitle,
+          ),
+          const SizedBox(height: AppSpacing.m),
+          // En fila y bajando de línea: el panel es estrecho y los fernies de un
+          // mismo contenido pueden ser unos cuantos.
+          Wrap(
+            spacing: AppSpacing.l,
+            runSpacing: AppSpacing.m,
+            children: [
+              FernAddButton(
+                label: texts.addFernie,
+                onTap: () => _enterFernieMode(context),
+              ),
+              // Los que siguen atados al contenido, no los que se han llegado
+              // a tocar: borrar la última región de un fernie lo desata, y aquí
+              // tiene que dejar de verse en el acto.
+              for (final fernie in state.ferniesInMedia)
+                FernAvatarTile(
+                  label: fernie.name,
+                  imagePath: fernie.picturePath,
+                  fallbackIcon: Icons.face_retouching_natural,
+                  fallbackAsset: icFernie,
+                  // Pulsar un fernie lleva a su pantalla, donde están todas
+                  // sus regiones y no sólo las de este contenido.
+                  //
+                  // Va con `go` y no con `push`: el visor está apilado sobre el
+                  // armazón de la aplicación, así que apilar encima la pantalla
+                  // de fernies montaría un segundo armazón con las mismas claves
+                  // globales que el primero, y eso revienta.
+                  onTap: () =>
+                      context.go(fernieManagerRouteWithFernie(fernie.id)),
+                ),
+            ],
+          ),
+          if (state.ferniesInMedia.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s),
+              child: Text(
+                texts.fernieNoneHere,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: context.colors.unremarked),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -19,6 +19,15 @@ const tagManagerRoute = '/tag-manager';
 // Reconocimiento. Las pantallas llegan en fases posteriores; las rutas se
 // declaran ya porque los avisos necesitan saber a dónde llevan.
 const fernieManagerRoute = '/fernies';
+
+/// Parámetro de consulta de la pantalla de fernies: cuál llega ya elegido.
+///
+/// Es lo que hace que pulsar el avatar de un fernie en el panel del visor
+/// aterrice en **ese** fernie y no en el primero de la lista.
+const fernieQueryParam = 'fernie';
+
+String fernieManagerRouteWithFernie(int fernieId) =>
+    '$fernieManagerRoute?$fernieQueryParam=$fernieId';
 const repeatedMediaRoute = '/repeated-media';
 const modelsRoute = '/models';
 
@@ -45,6 +54,15 @@ const viewerInfoQueryParam = 'info';
 String viewerRouteWithInfo(bool showInfo) =>
     '$viewerRoute?$viewerInfoQueryParam=$showInfo';
 
+/// Parámetro de consulta del visor: qué región hay que resaltar al abrirlo.
+///
+/// Es lo que hace que, al pulsar una celda de la rejilla de fernies (que enseña
+/// sólo el recorte), el contenido se abra entero y el ojo sepa dónde mirar.
+const viewerHighlightQueryParam = 'highlight';
+
+String viewerRouteWithHighlight(int regionId) =>
+    '$viewerRoute?$viewerHighlightQueryParam=$regionId';
+
 /// Cuántas opciones enseña un desplegable antes de desplazarse, y el relleno
 /// que el propio desplegable pone por arriba y por abajo. Con los dos sale el
 /// alto exacto de esas opciones.
@@ -57,6 +75,11 @@ const fernEmptyImage = 'assets/images/fern_empty.png';
 // Icons
 const icRight = 'assets/icons/ic_right.png';
 const icLeft = 'assets/icons/ic_left.png';
+
+/// El icono de los fernies. Es una imagen y no un glifo del juego de iconos
+/// porque no hay ninguno que valga: un fernie no es una cara, ni una
+/// etiqueta, ni un recorte.
+const icFernie = 'assets/icons/ic_fernie.png';
 
 const icInfo = 'assets/icons/ic_info.png';
 const icShare = 'assets/icons/ic_share.png';
@@ -77,7 +100,11 @@ final unknownTag = TagEntity(id: 0, name: "Unknown", children: []);
 /// cambio necesita una migración en `schemaMigrations` o si es de los que Isar
 /// resuelve sola.
 const firstSchemaVersion = 1;
-const currentSchemaVersion = 2;
+
+/// La 3 añade las colecciones de fernies y de sus regiones. Son colecciones
+/// nuevas, así que Isar las crea sola y no hay ninguna migración que escribir:
+/// el número sube igual para dejar constancia de que el esquema no es el mismo.
+const currentSchemaVersion = 3;
 
 // Preferences keys
 /// Hasta qué versión se ha puesto al día la base de datos de este equipo.
@@ -147,6 +174,7 @@ const autoTagRemoteSourcePreferenceKey = 'auto_tag_remote_source';
 /// Si la lista de etiquetas del menú lateral enseña los avatares. Encendido de
 /// fábrica: es lo que permite reconocerlas con el menú plegado.
 const showListAvatarsPreferenceKey = 'show_list_avatars';
+const pauseWhenSeekingPreferenceKey = 'pause_when_seeking';
 
 /// Con qué colores se pinta la aplicación: el claro, el oscuro, el del sistema
 /// o el del usuario. De fábrica, el del sistema.
@@ -788,6 +816,10 @@ const unsavedId = 0;
 /// Atenuado de los botones de píldora cuando están desactivados.
 const pillButtonDisabledOpacity = 0.35;
 
+/// Lo que se encoge el botón de añadir mientras se pulsa. Poco: es un acuse de
+/// recibo, no un rebote.
+const addButtonPressedScale = 0.92;
+
 // Create dialog
 const createDialogSocialFieldsMaxHeight = 160.0;
 
@@ -806,6 +838,174 @@ const tagManagerGridColumns = 5;
 /// en la de etiquetas: las dos pantallas reparten el hueco igual (ficha arriba,
 /// rejilla debajo y lista al lado).
 const creatorManagerGridColumns = tagManagerGridColumns;
+
+// Gestión de fernies
+/// La rejilla de fernies reparte el hueco igual que las de etiquetas y
+/// creadores, así que lleva las mismas columnas.
+const fernieManagerGridColumns = tagManagerGridColumns;
+
+/// Umbrales con los que se avisa de que un fernie da poco de sí para entrenar.
+///
+/// YOLO necesita muchas más muestras de las que uno intuye, y un fernie con
+/// cuatro regiones no va a reconocer nada. Sin decirlo en la propia ficha, la
+/// conclusión al entrenar sería que la función no funciona, cuando lo que pasa
+/// es que no hay con qué. Los tres números son de partida y se pueden mover con
+/// lo que se vea al entrenar de verdad (fase 3).
+const fernieMinRegions = 20;
+const fernieRecommendedRegions = 50;
+const fernieMinDistinctMedia = 5;
+
+/// Área mínima, en tanto por uno del contenido, para que un arrastre cuente como
+/// región.
+///
+/// Es lo que evita que un clic suelto o un temblor de la mano abran el menú de
+/// asignación. Medio por ciento de lado en cada eje: lo bastante pequeño para
+/// marcar una cara al fondo de una foto, y lo bastante grande para que un clic
+/// no cuele.
+const fernieMinRegionFraction = 0.0025;
+
+/// Por debajo de esta parte del contenido se avisa de que la región es muy
+/// pequeña. No impide guardarla: el aviso es informativo.
+const fernieTinyRegionFraction = 0.02;
+
+/// Radio en el que un tirador de región responde al ratón.
+///
+/// Algo más grande que el tirador que se pinta: agarrar una esquina no puede
+/// exigir puntería de cirujano.
+const regionHandleReach = 12.0;
+
+/// La pestaña de acciones que sale de la región elegida.
+const regionTabWidth = 132.0;
+const regionTabHeight = 36.0;
+
+/// Cuánto se aclara la región elegida respecto a las demás. Es lo que la
+/// distingue de un vistazo sin cambiarle el color.
+const regionSelectedTint = 0.55;
+
+/// Cuánto se puede alejar el visor. Es el que ya tenía, sacado de donde estaba
+/// escrito a mano.
+const viewerMinZoomScale = 0.5;
+
+/// Cuánto se puede acercar el visor en modo fernie.
+///
+/// Se sube por encima del zoom de siempre porque marcar una región pequeña con
+/// precisión pide acercarse más de lo que hace falta sólo para mirar.
+const fernieMaxZoomScale = 8.0;
+
+/// El resaltado con el que el visor señala una región al llegar desde la
+/// pantalla de fernies: se oscurece todo menos la región, se queda así un
+/// momento y se vuelve a la normalidad.
+///
+/// Va de una sola pasada y sin parpadeos a propósito. Encender y apagar varias
+/// veces una imagen a pantalla completa marea y, en vez de llevar el ojo a la
+/// región, lo obliga a perseguirla.
+const fernieHighlightFadeDuration = Duration(milliseconds: 600);
+const fernieHighlightHoldDuration = Duration(milliseconds: 1500);
+
+/// Lo que tardan las regiones en aparecer y en irse al entrar y salir del modo
+/// fernie.
+///
+/// Fuera del modo no se ven: el visor es para mirar el contenido, no para
+/// mirarlo lleno de rectángulos. Aparecer de golpe se leería como un fallo de
+/// pintado, así que entran y salen con un desvanecido corto.
+const fernieRegionsFadeDuration = Duration(milliseconds: 220);
+
+/// Alto máximo del menú contextual con el que se asigna una región: lo justo
+/// para el buscador y unos cuantos resultados sin comerse la pantalla.
+const contextMenuMaxHeight = 320.0;
+
+/// La sombra que separa el menú contextual del contenido que tiene debajo.
+///
+/// Es más marcada que la de un panel de cabecera porque aquí lo de detrás es una
+/// imagen a pantalla completa, no el fondo liso de la aplicación.
+const contextMenuElevation = 8.0;
+
+/// Salto de fotograma cuando el reproductor no sabe a cuántos va el contenido.
+///
+/// Treinta por segundo es lo más común y, sobre todo, es mejor que un botón que
+/// no hace nada: en un GIF de dos fotogramas o en un contenedor raro mpv no
+/// siempre los declara.
+const defaultFrameStep = Duration(microseconds: 33333);
+
+/// Cuántas copias como mucho deja poner el arrastre de una región por los
+/// fotogramas de en medio.
+///
+/// Arrastrar entre dos puntos muy separados de un vídeo largo son miles de
+/// regiones de una tacada, y eso no es lo que nadie quiere: se corta aquí y se
+/// vuelve a arrastrar si de verdad hacían falta más.
+const maxDraggedFrames = 300;
+
+/// La línea de tiempo del modo fernie: lo que ocupa y cuánto se separa del borde
+/// de abajo del visor.
+const fernieTimelineHeight = 56.0;
+
+/// Lo alto que es la barra de reproducción del visor.
+///
+/// Más gruesa que la de fábrica: dentro se pintan los tramos que ya tienen
+/// regiones marcadas, y en una barra fina no se distinguirían de la propia
+/// barra.
+const trackHeight = 6.0;
+
+/// El salto de los botones de adelantar y retrasar del modo de mirar.
+///
+/// Cinco segundos es lo que lleva cualquier reproductor y sirve para buscar por
+/// encima. Nada que ver con el salto de fotograma del modo fernie, que es para
+/// pararse en uno.
+const viewerSkipStep = Duration(seconds: 5);
+
+/// El mando de la barra de reproducción y el halo que se le enciende debajo.
+///
+/// Se fijan en vez de dejar los de fábrica porque de su tamaño sale el hueco que
+/// el recorrido deja a los lados, y de ese hueco dependen tres cosas que
+/// **tienen que coincidir**: dónde se pintan los tramos ya marcados, dónde se
+/// busca la muesca que hay bajo el cursor y a qué instante lleva pulsarla. Con
+/// los de fábrica el tamaño lo pone el tema por dentro y desde fuera no se sabe.
+const trackThumbRadius = 8.0;
+const trackOverlayRadius = 16.0;
+
+/// Lo que mide la nube que sale al pasar el cursor por una muesca de la línea
+/// de tiempo.
+///
+/// Va fijo y no lo pone su contenido: la nube se abre y se cierra siguiendo al
+/// cursor, y una que cambiara de ancho con el nombre más largo de cada muesca
+/// daría un salto en cada una.
+const fernieMarkBubbleWidth = 220.0;
+
+/// Hasta dónde se dan por seguidos dos fotogramas marcados de un mismo vídeo.
+///
+/// Es lo que decide qué se junta en una sola celda de la pantalla de fernies.
+/// La rejilla no sabe a cuántos fotogramas por segundo va cada contenido, así
+/// que el corte va en tiempo: por debajo de una décima de segundo lo que hay
+/// seguido se lee como una sola escena, y por encima, como dos momentos.
+const fernieRegionGroupGap = Duration(milliseconds: 100);
+
+/// Cuántos fotogramas como mucho se pasan en una de esas celdas.
+///
+/// Sacar un fotograma de un vídeo abre un reproductor entero, así que un tramo
+/// de trescientos fotogramas sería inaguantable. De un tramo más largo se cogen
+/// repartidos: lo que hace falta es que se vea el movimiento, no tenerlos todos.
+const fernieRegionGroupMaxFrames = 12;
+
+/// Lo que dura cada fotograma en el pase de una de esas celdas.
+///
+/// No es la velocidad del vídeo: de un tramo largo se cogen fotogramas
+/// repartidos, así que pasarlos a la velocidad original sería un parpadeo. A
+/// diez por segundo se lee el movimiento.
+const fernieRegionFlipbookStep = Duration(milliseconds: 100);
+
+/// Cuántos fernies enseña esa nube a la vez. El resto se desplazan.
+///
+/// El corte es a propósito: una nube que crece con veinte nombres tapa el
+/// contenido, que es justo lo que se está mirando.
+const fernieMarkMaxNames = 3;
+
+/// Tolerancia de partida para dar por bueno que una región es de este
+/// fotograma, cuando todavía no se sabe a cuántos va el contenido.
+///
+/// Lo normal es que la ponga el propio mando
+/// (`MediaPlaybackController.frameTolerance`, medio fotograma): esto es sólo el
+/// respaldo de mientras.
+const fernieFrameTolerance = Duration(milliseconds: 20);
 
 /// Alto de la ficha de la pantalla de gestión de creadores.
 ///

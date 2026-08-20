@@ -516,6 +516,54 @@ abstract class AppLocalizations {
   /// **'Exit full screen'**
   String get viewerExitFullscreen;
 
+  /// No description provided for @viewerSkipBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back five seconds'**
+  String get viewerSkipBack;
+
+  /// No description provided for @viewerSkipForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward five seconds'**
+  String get viewerSkipForward;
+
+  /// No description provided for @viewerLoop.
+  ///
+  /// In en, this message translates to:
+  /// **'Play on repeat'**
+  String get viewerLoop;
+
+  /// No description provided for @viewerPlaybackSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Video playback'**
+  String get viewerPlaybackSectionTitle;
+
+  /// No description provided for @viewerPlaybackSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What the viewer does to a video while you move along its timeline.'**
+  String get viewerPlaybackSectionNote;
+
+  /// No description provided for @viewerPauseWhenSeeking.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause when you take hold of the bar'**
+  String get viewerPauseWhenSeeking;
+
+  /// No description provided for @viewerPauseWhenSeekingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The video stops as soon as you take hold of the bar and stays where you leave it. Off, it carries on playing from wherever you drop it. Marking regions always pauses, whatever this says: a region is marked on a still frame.'**
+  String get viewerPauseWhenSeekingDescription;
+
+  /// No description provided for @fernieUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo the last region marked'**
+  String get fernieUndo;
+
   /// No description provided for @viewerFavorite.
   ///
   /// In en, this message translates to:
@@ -2309,6 +2357,324 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Install it'**
   String get gpuDialogConfirm;
+
+  /// No description provided for @navRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition'**
+  String get navRecognition;
+
+  /// No description provided for @navFernies.
+  ///
+  /// In en, this message translates to:
+  /// **'Fernies'**
+  String get navFernies;
+
+  /// No description provided for @navRepeatedMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated media'**
+  String get navRepeatedMedia;
+
+  /// No description provided for @navModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get navModels;
+
+  /// No description provided for @menuNewFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'New fernie'**
+  String get menuNewFernie;
+
+  /// No description provided for @newFernieTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New fernie'**
+  String get newFernieTitle;
+
+  /// No description provided for @fernieNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fernie name'**
+  String get fernieNameLabel;
+
+  /// No description provided for @ferniesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fernies'**
+  String get ferniesTitle;
+
+  /// No description provided for @addFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'Add fernie'**
+  String get addFernie;
+
+  /// No description provided for @noFerniesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No fernies yet'**
+  String get noFerniesYet;
+
+  /// No description provided for @fernieNoRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'This fernie has no regions yet'**
+  String get fernieNoRegions;
+
+  /// No description provided for @fernieNoneHere.
+  ///
+  /// In en, this message translates to:
+  /// **'No fernies marked here yet'**
+  String get fernieNoneHere;
+
+  /// No description provided for @fernieLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'It proposes'**
+  String get fernieLinkLabel;
+
+  /// No description provided for @fernieLinkNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get fernieLinkNone;
+
+  /// No description provided for @fernieLinkTag.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag'**
+  String get fernieLinkTag;
+
+  /// No description provided for @fernieLinkCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'A creator'**
+  String get fernieLinkCreator;
+
+  /// No description provided for @fernieLinkNoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'It only trains: on its own it tags nothing'**
+  String get fernieLinkNoneHint;
+
+  /// No description provided for @fernieLinkMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'What it was linked to no longer exists'**
+  String get fernieLinkMissing;
+
+  /// No description provided for @fernieFewRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Few regions to train reliably'**
+  String get fernieFewRegions;
+
+  /// No description provided for @fernieLowVariety.
+  ///
+  /// In en, this message translates to:
+  /// **'Little variety: the model will learn the background, not the object'**
+  String get fernieLowVariety;
+
+  /// No description provided for @fernieRegionPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending content: this region will not be used to train until you save it'**
+  String get fernieRegionPending;
+
+  /// No description provided for @fernieRegionTiny.
+  ///
+  /// In en, this message translates to:
+  /// **'Very small region: it may not help the training'**
+  String get fernieRegionTiny;
+
+  /// No description provided for @actionDeleteFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete fernie'**
+  String get actionDeleteFernie;
+
+  /// No description provided for @actionRemoveLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link'**
+  String get actionRemoveLink;
+
+  /// No description provided for @actionDeleteRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete regions'**
+  String get actionDeleteRegions;
+
+  /// No description provided for @fernieToolSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark regions'**
+  String get fernieToolSelect;
+
+  /// No description provided for @fernieToolEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit regions'**
+  String get fernieToolEdit;
+
+  /// No description provided for @fernieRegionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the changes to this region'**
+  String get fernieRegionConfirm;
+
+  /// No description provided for @fernieRegionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the changes to this region'**
+  String get fernieRegionCancel;
+
+  /// No description provided for @fernieRegionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this region'**
+  String get fernieRegionDelete;
+
+  /// No description provided for @fernieRegionDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this region?'**
+  String get fernieRegionDeleteTitle;
+
+  /// No description provided for @fernieRegionDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The region is removed from its fernie. If it was the only one of that fernie in this content, the fernie stops being marked here.'**
+  String get fernieRegionDeleteMessage;
+
+  /// No description provided for @fernieRegionDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the changes to the region?'**
+  String get fernieRegionDiscardTitle;
+
+  /// No description provided for @fernieRegionDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'What you changed in the selected region will not be saved.'**
+  String get fernieRegionDiscardMessage;
+
+  /// No description provided for @fernieTimelinePlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play to check the marked regions'**
+  String get fernieTimelinePlay;
+
+  /// No description provided for @fernieTimelinePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get fernieTimelinePause;
+
+  /// No description provided for @fernieFramePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous frame'**
+  String get fernieFramePrevious;
+
+  /// No description provided for @fernieFrameNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next frame'**
+  String get fernieFrameNext;
+
+  /// No description provided for @fernieOnionSkin.
+  ///
+  /// In en, this message translates to:
+  /// **'Onion skin: show the previous marked frame'**
+  String get fernieOnionSkin;
+
+  /// No description provided for @fernieDragRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the region across every frame in between'**
+  String get fernieDragRegions;
+
+  /// No description provided for @fernieModeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark regions'**
+  String get fernieModeTooltip;
+
+  /// No description provided for @fernieModeAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the regions'**
+  String get fernieModeAccept;
+
+  /// No description provided for @fernieModeCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the regions'**
+  String get fernieModeCancel;
+
+  /// No description provided for @fernieModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag over the content to mark a region. Hold space or the middle button to pan.'**
+  String get fernieModeHint;
+
+  /// No description provided for @fernieDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard what you marked?'**
+  String get fernieDiscardTitle;
+
+  /// No description provided for @fernieDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The regions marked in this session will be lost.'**
+  String get fernieDiscardMessage;
+
+  /// No description provided for @actionDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get actionDiscard;
+
+  /// No description provided for @assignRegionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign the region'**
+  String get assignRegionTitle;
+
+  /// No description provided for @searchFernieHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search fernie...'**
+  String get searchFernieHint;
+
+  /// No description provided for @createFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'Create fernie'**
+  String get createFernie;
+
+  /// No description provided for @fernieRegionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No regions} =1{1 region} other{{count} regions}}'**
+  String fernieRegionCount(int count);
+
+  /// No description provided for @fernieMediaCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{in no media} =1{in 1 media} other{in {count} media}}'**
+  String fernieMediaCount(int count);
+
+  /// No description provided for @fernieRecommendedRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {count} regions are recommended'**
+  String fernieRecommendedRegions(int count);
 }
 
 class _AppLocalizationsDelegate

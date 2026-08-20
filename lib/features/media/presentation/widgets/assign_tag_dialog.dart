@@ -216,6 +216,9 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
           ),
           const SizedBox(height: AppSpacing.xl),
           FernAddButton(
+            // Aquí el botón va suelto bajo un buscador, no en una fila de
+            // avatares: se queda con el círculo pequeño.
+            radius: AppSizes.addButtonRadius,
             label: texts.createTag,
             onTap: () => _openCreateTagDialog(context),
           ),

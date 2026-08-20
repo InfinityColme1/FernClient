@@ -320,3 +320,15 @@ class UpdateMediaDescriptionEvent extends MediaEvents {
   final String description;
   const UpdateMediaDescriptionEvent(this.description);
 }
+
+/// Deja en la rejilla una lista de contenidos ya resuelta, sin consultar nada.
+///
+/// Lo usan las pantallas que sacan su contenido de otro sitio y no de una
+/// consulta del repositorio de contenido: la de fernies lo saca de las regiones
+/// de un fernie. Sin esto, abrir el visor desde ahí no tendría lista por la que
+/// pasar con las flechas, y `onMediaClicked` no tendría dónde buscar el índice.
+class SetMediaListEvent extends MediaEvents {
+  final List<MediaSummaryEntity> media;
+
+  const SetMediaListEvent(this.media);
+}

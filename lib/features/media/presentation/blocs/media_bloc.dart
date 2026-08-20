@@ -169,6 +169,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<ScanSourceEvent>(onScanSource);
     on<StopImportEvent>(onStopImport);
     on<SelectAndScanDirectoryEvent>(onSelectAndScanDirectoryEvent);
+    on<SetMediaListEvent>(onSetMediaList);
     on<MediaClickedEvent>(onMediaClicked);
     on<ToggleMediaSelectionEvent>(onToggleMediaSelection);
     on<SelectMediaRangeEvent>(onSelectMediaRange);
@@ -1078,6 +1079,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     emit(state.copyWith(selectedIds: const {}));
   }
 
+  /// Deja en la rejilla lo que le den, sin consultar nada.
+  ///
+  /// La selección se suelta: lo que estuviera marcado era de la lista anterior.
+  void onSetMediaList(SetMediaListEvent event, Emitter<MediaStates> emit) {
+    emit(state.copyWith(mediaList: event.media, selectedIds: const {}));
+  }
+
   void onMediaClicked(MediaClickedEvent event, Emitter<MediaStates> emit) async {
     // Los detalles se leen de la base de datos, así que la rejilla espera con su
     // indicador hasta que el visor tiene qué enseñar.
@@ -1095,7 +1103,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       isBusy: true,
     ));
 
-    final index = state.mediaList!.indexWhere((element) => element.id == event.media.id);
+    // Sin lista detrás (o con el contenido fuera de ella) el visor enseña lo
+    // que se ha pulsado y las flechas no llevan a ninguna parte, que es
+    // preferible a reventar por un índice que no existe.
+    final index = state.mediaList
+            ?.indexWhere((element) => element.id == event.media.id) ??
+        -1;
 
     emit(await _detailsOf(event.media, index));
   }

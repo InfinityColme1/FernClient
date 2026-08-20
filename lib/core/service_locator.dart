@@ -7,7 +7,23 @@ import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
 import 'package:Fern/features/notifications/data/services/notification_service.dart';
 import 'package:Fern/features/notifications/data/services/notification_sound_service.dart';
 import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
+import 'package:Fern/features/recognition/data/repositories/fernie_repository_impl.dart';
 import 'package:Fern/features/recognition/data/services/recognition_engine.dart';
+import 'package:Fern/features/recognition/domain/repositories/fernie_repository.dart';
+import 'package:Fern/features/recognition/domain/usecases/add_fernie_regions_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/delete_fernie_region_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/delete_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/delete_regions_of_media_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_media_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_fernies_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_media_of_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_regions_of_media_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/save_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/search_fernies_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/update_fernie_region_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/update_fernie_usecase.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pawchive_api_client.dart';
@@ -196,6 +212,16 @@ Future<void> initializeDependencies() async {
       )
   );
 
+  // Los fernies van en su propio repositorio y no dentro del de contenido: aquél
+  // ya mezcla contenido, etiquetas, creadores y búsqueda en más de mil
+  // quinientas líneas, y el reconocimiento es un dominio con vida propia.
+  getIt.registerLazySingleton<FernieRepository>(() =>
+      FernieRepositoryImpl(
+        database: getIt<Isar>(),
+        avatarStorage: getIt(),
+      )
+  );
+
   // Fuentes remotas. La carpeta de descargas cuelga del directorio de datos de
   // la aplicación, igual que la de los avatares: es de donde salen los ficheros
   // hasta que la gestión de archivos los coloca en la biblioteca.
@@ -376,6 +402,58 @@ Future<void> initializeDependencies() async {
     RemoveCreatorFromMediaUseCase(getIt())
   );
 
+  getIt.registerSingleton<GetFerniesUseCase>(
+    GetFerniesUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetFernieUseCase>(
+    GetFernieUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SearchFerniesUseCase>(
+    SearchFerniesUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SaveFernieUseCase>(
+    SaveFernieUseCase(getIt())
+  );
+
+  getIt.registerSingleton<UpdateFernieUseCase>(
+    UpdateFernieUseCase(getIt())
+  );
+
+  getIt.registerSingleton<DeleteFernieUseCase>(
+    DeleteFernieUseCase(getIt())
+  );
+
+  getIt.registerSingleton<AddFernieRegionsUseCase>(
+    AddFernieRegionsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<UpdateFernieRegionUseCase>(
+    UpdateFernieRegionUseCase(getIt())
+  );
+
+  getIt.registerSingleton<DeleteFernieRegionUseCase>(
+    DeleteFernieRegionUseCase(getIt())
+  );
+
+  getIt.registerSingleton<DeleteRegionsOfMediaUseCase>(
+    DeleteRegionsOfMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetRegionsOfMediaUseCase>(
+    GetRegionsOfMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetFerniesOfMediaUseCase>(
+    GetFerniesOfMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetMediaOfFernieUseCase>(
+    GetMediaOfFernieUseCase(getIt())
+  );
+
   getIt.registerSingleton<SearchTagsUseCase>(
     SearchTagsUseCase(getIt())
   );
@@ -438,6 +516,17 @@ Future<void> initializeDependencies() async {
   // menú lateral, que está en el marco de la aplicación y no en una pantalla.
   getIt.registerSingleton<TagsBloc>(
       TagsBloc(getTagTree: getIt())
+  );
+
+  // Único como el de etiquetas: los fernies se crean desde el "+" de la barra
+  // superior y desde el visor, así que la pantalla de gestión tiene que
+  // encontrárselos hechos al volver a ella.
+  getIt.registerSingleton<FerniesBloc>(
+      FerniesBloc(
+        getFernies: getIt(),
+        getMediaOfFernie: getIt(),
+        deleteRegion: getIt(),
+      )
   );
 
   // Único como el de etiquetas: la lista de creadores se lee una vez y la

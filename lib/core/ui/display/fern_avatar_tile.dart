@@ -10,6 +10,11 @@ class FernAvatarTile extends StatelessWidget {
   final String label;
   final String? imagePath;
   final IconData fallbackIcon;
+
+  /// Icono de reserva en forma de imagen del paquete. Manda sobre
+  /// [fallbackIcon] cuando viene.
+  final String? fallbackAsset;
+
   final double radius;
   final VoidCallback? onTap;
 
@@ -18,6 +23,7 @@ class FernAvatarTile extends StatelessWidget {
     required this.label,
     this.imagePath,
     this.fallbackIcon = Icons.person,
+    this.fallbackAsset,
     this.radius = AppSizes.avatarLarge,
     this.onTap,
   });
@@ -30,6 +36,7 @@ class FernAvatarTile extends StatelessWidget {
         FernAvatar(
           imagePath: imagePath,
           fallbackIcon: fallbackIcon,
+          fallbackAsset: fallbackAsset,
           radius: radius,
           backgroundColor: context.colors.lightgray,
           iconColor: Colors.white,

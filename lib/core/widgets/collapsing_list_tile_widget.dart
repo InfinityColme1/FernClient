@@ -11,6 +11,9 @@ class CollapsingListTile extends StatefulWidget {
   final String title;
   final IconData icon;
 
+  /// Icono en forma de imagen del paquete. Manda sobre [icon] cuando viene.
+  final String? iconAsset;
+
   /// Imagen con la que se pinta el botón en lugar del icono. Es lo que deja
   /// reconocer una etiqueta con el menú plegado, cuando el icono es el único que
   /// se ve y es igual para todas.
@@ -45,6 +48,7 @@ class CollapsingListTile extends StatefulWidget {
     super.key,
     required this.title,
     required this.icon,
+    this.iconAsset,
     this.avatarPath,
     required this.animationController,
     this.isSelected = false,
@@ -126,10 +130,17 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     final avatarPath = widget.avatarPath;
 
     final leading = avatarPath == null
-        ? Icon(widget.icon, color: context.colors.black, size: widget.iconSize)
+        ? fernFallbackIcon(
+            context,
+            icon: widget.icon,
+            asset: widget.iconAsset,
+            size: widget.iconSize,
+            color: context.colors.black,
+          )
         : FernAvatar(
             imagePath: avatarPath,
             fallbackIcon: widget.icon,
+            fallbackAsset: widget.iconAsset,
             radius: widget.iconSize / 2,
             iconSize: widget.iconSize,
           );

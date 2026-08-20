@@ -20,6 +20,7 @@ import 'package:Fern/features/media/domain/entities/search/search_result_type.da
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
+import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:isar/isar.dart';
@@ -403,10 +404,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       if (summary == null) return const DataSuccess(false);
       if (await File(summary.path).exists()) return const DataSuccess(false);
 
-      await _appDatabase.writeTxn(() async {
-        await _appDatabase.mediaSummaryModels.delete(id);
-        await _appDatabase.mediaModels.delete(id);
-      });
+      await _purgeRows([id]);
 
       return const DataSuccess(true);
     } on Exception catch (e) {
@@ -430,15 +428,45 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (deleteFiles) await _deleteFilesOf(ids);
 
-      await _appDatabase.writeTxn(() async {
-        await _appDatabase.mediaSummaryModels.deleteAll(ids);
-        await _appDatabase.mediaModels.deleteAll(ids);
-      });
+      await _purgeRows(ids);
 
       return DataSuccess(null);
     } on Exception catch (e) {
       return DataException(e);
     }
+  }
+
+  /// Saca de la base de datos las filas de [ids], con todo lo que cuelga de
+  /// ellas.
+  ///
+  /// Es el **único** sitio por el que un contenido desaparece de verdad, y por
+  /// eso es también donde se limpia lo que le acompaña: las regiones de fernie
+  /// marcadas sobre él. Si cada sitio que borra hiciera su propia limpieza,
+  /// tarde o temprano uno se olvidaría y quedarían regiones apuntando a un
+  /// contenido que ya no está.
+  ///
+  /// Ojo con quién llama a esto: mandar a la papelera **no** pasa por aquí. De
+  /// la papelera se vuelve, y perder el trabajo de marcado al restablecer sería
+  /// perderlo sin haberlo pedido.
+  Future<void> _purgeRows(List<int> ids) async {
+    if (ids.isEmpty) return;
+
+    final regionIds = <int>[];
+    for (final mediaId in ids) {
+      regionIds.addAll(
+        await _appDatabase.fernieRegionModels
+            .filter()
+            .mediaIdEqualTo(mediaId)
+            .idProperty()
+            .findAll(),
+      );
+    }
+
+    await _appDatabase.writeTxn(() async {
+      await _appDatabase.mediaSummaryModels.deleteAll(ids);
+      await _appDatabase.mediaModels.deleteAll(ids);
+      await _appDatabase.fernieRegionModels.deleteAll(regionIds);
+    });
   }
 
   /// Borra del disco los ficheros de [ids].
@@ -532,10 +560,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (deleteFiles) await _deleteFilesOf(ids);
 
-      await _appDatabase.writeTxn(() async {
-        await _appDatabase.mediaSummaryModels.deleteAll(ids);
-        await _appDatabase.mediaModels.deleteAll(ids);
-      });
+      await _purgeRows(ids);
 
       return DataSuccess(ids.length);
     } on Exception catch (e) {
@@ -562,10 +587,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (deleteFiles) await _deleteFilesOf(ids);
 
-      await _appDatabase.writeTxn(() async {
-        await _appDatabase.mediaSummaryModels.deleteAll(ids);
-        await _appDatabase.mediaModels.deleteAll(ids);
-      });
+      await _purgeRows(ids);
 
       return DataSuccess(ids.length);
     } on Exception catch (e) {

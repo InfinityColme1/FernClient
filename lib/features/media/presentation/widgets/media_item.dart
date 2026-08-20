@@ -10,7 +10,9 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/services/media_preview_service.dart';
 import 'package:Fern/core/utils/media_type.dart';
+import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
@@ -43,6 +45,28 @@ class MediaItem extends StatefulWidget {
   /// cargar. Quien lo escuche decide qué hacer con el contenido.
   final VoidCallback? onLoadFailed;
 
+  /// Recorte que hay que enseñar en lugar del contenido entero.
+  ///
+  /// Con esto puesto la celda deja de ser el fichero y pasa a ser **una región
+  /// suya**: toma la proporción de la región, no la del fichero, y pinta sólo
+  /// ese trozo. Es lo que hace la rejilla de la pantalla de fernies, donde cada
+  /// celda es una región marcada y no un contenido.
+  ///
+  /// Sin él, la celda se comporta exactamente como siempre.
+  final RegionCrop? crop;
+
+  /// Los demás fotogramas del tramo, con [crop] delante y en el orden en el que
+  /// se reproducen.
+  ///
+  /// Con más de uno la celda se mueve sola, en bucle, como un GIF: varios
+  /// fotogramas seguidos del mismo fernie son **una escena**, y verla moverse
+  /// dice mucho más que cinco celdas casi idénticas puestas en fila.
+  final List<RegionCrop> frames;
+
+  /// Aviso que se pinta en la esquina de la celda, con su explicación al pasar
+  /// el ratón. `null` cuando no hay nada que advertir.
+  final String? warning;
+
   const MediaItem({
     super.key,
     required this.media,
@@ -51,6 +75,9 @@ class MediaItem extends StatefulWidget {
     this.onSelectionToggled,
     this.onRangeSelectionRequested,
     this.onLoadFailed,
+    this.crop,
+    this.frames = const [],
+    this.warning,
   });
 
   @override
@@ -58,7 +85,16 @@ class MediaItem extends StatefulWidget {
 }
 
 class _MediaItemState extends State<MediaItem> {
-  MediaPreview? _preview;
+  /// Una previsualización por fotograma de la celda. Con una imagen o con un
+  /// recorte suelto hay una sola.
+  List<MediaPreview?> _previews = const [];
+
+  /// Qué fotograma del tramo toca pintar.
+  int _frameIndex = 0;
+
+  /// El pase de fotogramas de un tramo de vídeo.
+  Timer? _flipbook;
+
   bool _isHovered = false;
 
   Player? _player;
@@ -72,38 +108,158 @@ class _MediaItemState extends State<MediaItem> {
 
   bool get _isVideo => widget.media.path.isVideoPath;
 
+  /// Los recortes que enseña la celda, en el orden en el que se pasan. Vacío
+  /// cuando la celda es el fichero entero.
+  List<RegionCrop> get _crops {
+    if (widget.frames.isNotEmpty) return widget.frames;
+
+    final crop = widget.crop;
+    return crop == null ? const [] : [crop];
+  }
+
+  /// De qué instante sale la miniatura de cada uno: el de la región cuando la
+  /// celda es una región de un vídeo, y el de siempre en todo lo demás.
+  List<Duration?> get _frames {
+    final crops = _crops;
+    if (crops.isEmpty) return const [null];
+
+    return [
+      for (final crop in crops)
+        if (crop.frameMs case final frameMs?)
+          Duration(milliseconds: frameMs)
+        else
+          null,
+    ];
+  }
+
+  /// El recorte que toca pintar ahora mismo.
+  RegionCrop? get _crop {
+    final crops = _crops;
+    if (crops.isEmpty) return null;
+
+    return crops[_frameIndex.clamp(0, crops.length - 1)];
+  }
+
+  /// La previsualización del fotograma que toca, o la primera que haya llegado.
+  ///
+  /// La de reserva importa para las proporciones: la celda tiene que saber lo
+  /// que mide el fichero antes de tener todos los fotogramas, o daría un salto
+  /// de forma al llegar el primero.
+  MediaPreview? get _preview {
+    if (_previews.isEmpty) return null;
+
+    final current = _previews[_frameIndex.clamp(0, _previews.length - 1)];
+    if (current != null) return current;
+
+    for (final preview in _previews) {
+      if (preview != null) return preview;
+    }
+
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
-    _preview = MediaPreviewService.instance.peek(widget.media.path);
-    if (_preview == null) _loadPreview();
+    _resetPreviews();
   }
 
   @override
   void didUpdateWidget(covariant MediaItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.media.path == widget.media.path) return;
+    // El recorte también identifica lo que hay que enseñar: dos celdas del
+    // mismo fichero con regiones distintas no pintan lo mismo.
+    if (oldWidget.media.path == widget.media.path &&
+        oldWidget.crop == widget.crop &&
+        listEquals(oldWidget.frames, widget.frames)) {
+      return;
+    }
 
     _stopPreview();
+    _stopFlipbook();
     _loadFailureReported = false;
-    _preview = MediaPreviewService.instance.peek(widget.media.path);
-    if (_preview == null) _loadPreview();
+    _resetPreviews();
   }
 
   @override
   void dispose() {
     _stopPreview();
+    _stopFlipbook();
     super.dispose();
   }
 
-  Future<void> _loadPreview() async {
-    final preview = await MediaPreviewService.instance.load(widget.media.path);
-    if (preview == null) {
-      _reportLoadFailure();
+  /// Deja la celda esperando los fotogramas que le tocan, con los que ya
+  /// estuvieran resueltos puestos de salida.
+  void _resetPreviews() {
+    final frames = _frames;
+
+    _frameIndex = 0;
+    _previews = [
+      for (final frame in frames)
+        MediaPreviewService.instance.peek(widget.media.path, frame: frame),
+    ];
+
+    if (_previews.any((preview) => preview == null)) {
+      _loadPreviews(frames);
       return;
     }
-    if (!mounted) return;
-    setState(() => _preview = preview);
+
+    _startFlipbook();
+  }
+
+  /// Resuelve los fotogramas que falten, de uno en uno.
+  ///
+  /// De uno en uno y no todos a la vez: sacar un fotograma de un vídeo abre un
+  /// reproductor, y el servicio sólo deja dos a la vez. Pidiéndolos en fila, el
+  /// primero llega enseguida y la celda ya enseña algo mientras vienen los
+  /// demás.
+  Future<void> _loadPreviews(List<Duration?> frames) async {
+    final path = widget.media.path;
+
+    for (var index = 0; index < frames.length; index++) {
+      if (_previews[index] != null) continue;
+
+      final preview =
+          await MediaPreviewService.instance.load(path, frame: frames[index]);
+
+      // La celda se reaprovecha al desplazar la rejilla: si mientras se pedía el
+      // fotograma ha pasado a ser de otro contenido, esto ya no le sirve.
+      //
+      // El fichero se compara **además** de los instantes, y no basta con
+      // aquéllos: en una celda que no es un recorte el instante es siempre
+      // `null`, así que cualquier celda reaprovechada pasaba el filtro y se
+      // quedaba con la miniatura del contenido anterior.
+      if (!mounted || widget.media.path != path) return;
+      if (!listEquals(_frames, frames)) return;
+
+      if (preview == null) {
+        _reportLoadFailure();
+        return;
+      }
+
+      setState(() => _previews[index] = preview);
+    }
+
+    _startFlipbook();
+  }
+
+  /// Arranca el pase de fotogramas de un tramo.
+  ///
+  /// Espera a tenerlos todos: empezar a medias dejaría la celda parada en los
+  /// que faltan, y un pase que se atasca se lee peor que un fotograma quieto.
+  void _startFlipbook() {
+    if (_flipbook != null || _crops.length < 2) return;
+    if (_previews.any((preview) => preview == null)) return;
+
+    _flipbook = Timer.periodic(fernieRegionFlipbookStep, (_) {
+      if (!mounted) return;
+      setState(() => _frameIndex = (_frameIndex + 1) % _crops.length);
+    });
+  }
+
+  void _stopFlipbook() {
+    _flipbook?.cancel();
+    _flipbook = null;
   }
 
   /// Avisa de que este contenido no se ha podido cargar.
@@ -143,7 +299,10 @@ class _MediaItemState extends State<MediaItem> {
     if (_isHovered == isHovered) return;
     setState(() => _isHovered = isHovered);
 
-    if (!_isVideo) return;
+    // Una celda que es un recorte no reproduce nada al pasar por encima: lo que
+    // se reproduciría es el vídeo entero, y aquí lo que se está enseñando es un
+    // trozo de un fotograma suyo.
+    if (!_isVideo || _crops.isNotEmpty) return;
     isHovered ? _startPreview() : _stopPreview();
   }
 
@@ -197,9 +356,32 @@ class _MediaItemState extends State<MediaItem> {
     if (mounted) setState(() {});
   }
 
+  /// Proporción de la celda: la del fichero, o la de la región cuando la celda
+  /// es un recorte.
+  ///
+  /// Sin esto la región saldría deformada: se pintaría el trozo que toca dentro
+  /// de una celda con la forma del fichero entero.
+  double get _aspectRatio {
+    final preview = _preview;
+    // Siempre la del primer fotograma, aunque el tramo se esté moviendo: si
+    // cada fotograma pusiera la suya, la celda cambiaría de forma en cada paso
+    // y arrastraría con ella a toda la fila de la rejilla.
+    final crop = _crops.isEmpty ? null : _crops.first;
+
+    if (crop == null) return preview?.aspectRatio ?? mediaFallbackAspectRatio;
+
+    final width = preview?.width;
+    final height = preview?.height;
+    if (width == null || height == null || width <= 0 || height <= 0) {
+      return mediaFallbackAspectRatio;
+    }
+
+    return crop.aspectRatio(Size(width.toDouble(), height.toDouble()));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final aspectRatio = _preview?.aspectRatio ?? mediaFallbackAspectRatio;
+    final aspectRatio = _aspectRatio;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -220,7 +402,7 @@ class _MediaItemState extends State<MediaItem> {
                 children: [
                   _buildContent(),
                   _buildTopShade(),
-                  if (_isVideo) _buildVideoBadge(),
+                  _buildTopLeftBadges(),
                   _buildSelectionButton(),
                 ],
               ),
@@ -244,6 +426,8 @@ class _MediaItemState extends State<MediaItem> {
     final path = _isVideo ? _preview?.thumbnailPath : widget.media.path;
     if (path == null) return _buildPlaceholder();
 
+    if (_crop case final crop?) return _buildCroppedContent(path, crop);
+
     return LayoutBuilder(
       builder: (context, constraints) => Image.file(
         File(path),
@@ -266,6 +450,55 @@ class _MediaItemState extends State<MediaItem> {
           return _buildPlaceholder();
         },
       ),
+    );
+  }
+
+  /// Pinta sólo el trozo de [path] que marca [crop], a tamaño de celda.
+  ///
+  /// La imagen se pinta entera al tamaño que haga falta para que la región llene
+  /// la celda, y se recorta lo que sobra. Se decodifica pensando en la región y
+  /// no en la celda: si se decodificara al ancho de la celda, ampliar después un
+  /// trozo pequeño daría una mancha borrosa. El límite lo sigue poniendo el
+  /// ancho real del fichero, que es donde deja de haber resolución que ganar.
+  Widget _buildCroppedContent(String path, RegionCrop crop) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+
+        // Una región degenerada dejaría la imagen a tamaño infinito.
+        if (!width.isFinite || crop.w <= 0 || crop.h <= 0) {
+          return _buildPlaceholder();
+        }
+
+        final fullWidth = width / crop.w;
+        final fullHeight = height / crop.h;
+
+        return ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.topLeft,
+            minWidth: fullWidth,
+            maxWidth: fullWidth,
+            minHeight: fullHeight,
+            maxHeight: fullHeight,
+            child: Transform.translate(
+              offset: Offset(-crop.x * fullWidth, -crop.y * fullHeight),
+              child: Image.file(
+                File(path),
+                key: ValueKey('$path|${crop.hashCode}'),
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.medium,
+                gaplessPlayback: true,
+                cacheWidth: _decodeWidth(context, fullWidth),
+                errorBuilder: (_, _, _) {
+                  _reportLoadFailure();
+                  return _buildPlaceholder();
+                },
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -326,38 +559,81 @@ class _MediaItemState extends State<MediaItem> {
     );
   }
 
-  Widget _buildVideoBadge() {
+  /// Lo que se cuenta de la celda sin tener que abrirla: el aviso, si lo hay, y
+  /// la duración cuando es un vídeo.
+  ///
+  /// Van juntos en la misma esquina y en la misma fila para que no se pisen: una
+  /// región marcada sobre un vídeo pendiente de revisar lleva los dos.
+  Widget _buildTopLeftBadges() {
+    final warning = widget.warning;
+    if (warning == null && !_isVideo) return const SizedBox.shrink();
+
     return Positioned(
       top: AppSpacing.s,
       left: AppSpacing.s,
-      child: IgnorePointer(
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s,
-            vertical: AppSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: context.colors.scrim.withValues(alpha: mediaBadgeOpacity),
-            borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: AppSizes.iconSmall,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                _formatDuration(_preview?.duration),
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: Colors.white),
-              ),
-            ],
-          ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (warning != null) ...[
+            _buildWarningBadge(warning),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          if (_isVideo) _buildVideoBadge(),
+        ],
+      ),
+    );
+  }
+
+  /// El aviso, con su explicación al pasar el ratón.
+  ///
+  /// No lleva `IgnorePointer` como el resto de distintivos: si no atendiera al
+  /// ratón no habría forma de leer por qué está ahí.
+  Widget _buildWarningBadge(String warning) {
+    return Tooltip(
+      message: warning,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: context.colors.scrim.withValues(alpha: mediaBadgeOpacity),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.warning_amber_rounded,
+          color: context.colors.terciary,
+          size: AppSizes.iconSmall,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoBadge() {
+    return IgnorePointer(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: context.colors.scrim.withValues(alpha: mediaBadgeOpacity),
+          borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: AppSizes.iconSmall,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              _formatDuration(_preview?.duration),
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: Colors.white),
+            ),
+          ],
         ),
       ),
     );

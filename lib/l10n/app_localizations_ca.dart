@@ -297,6 +297,32 @@ class AppLocalizationsCa extends AppLocalizations {
   String get viewerExitFullscreen => 'Surt de la pantalla completa';
 
   @override
+  String get viewerSkipBack => 'Retrocedir cinc segons';
+
+  @override
+  String get viewerSkipForward => 'Avançar cinc segons';
+
+  @override
+  String get viewerLoop => 'Reproduir en bucle';
+
+  @override
+  String get viewerPlaybackSectionTitle => 'Reproducció de vídeo';
+
+  @override
+  String get viewerPlaybackSectionNote =>
+      'Què li fa el visor a un vídeo mentre se’n recorre la línia de temps.';
+
+  @override
+  String get viewerPauseWhenSeeking => 'Aturar en agafar la barra';
+
+  @override
+  String get viewerPauseWhenSeekingDescription =>
+      'El vídeo s’atura tan bon punt s’agafa la barra i es queda on es deixi. Apagat, continua reproduint-se des d’on es deixi. Marcar regions atura sempre, digui el que digui això: una regió es marca sobre un fotograma quiet.';
+
+  @override
+  String get fernieUndo => 'Desfer l’última regió marcada';
+
+  @override
   String get viewerFavorite => 'Marca com a preferit';
 
   @override
@@ -1410,4 +1436,194 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get gpuDialogConfirm => 'Instal·la-la';
+
+  @override
+  String get navRecognition => 'Reconeixement';
+
+  @override
+  String get navFernies => 'Fernies';
+
+  @override
+  String get navRepeatedMedia => 'Contingut repetit';
+
+  @override
+  String get navModels => 'Models';
+
+  @override
+  String get menuNewFernie => 'Nou fernie';
+
+  @override
+  String get newFernieTitle => 'Nou fernie';
+
+  @override
+  String get fernieNameLabel => 'Nom del fernie';
+
+  @override
+  String get ferniesTitle => 'Fernies';
+
+  @override
+  String get addFernie => 'Afegir fernie';
+
+  @override
+  String get noFerniesYet => 'Encara no hi ha cap fernie';
+
+  @override
+  String get fernieNoRegions => 'Aquest fernie encara no té regions';
+
+  @override
+  String get fernieNoneHere => 'Encara no hi ha fernies marcats aquí';
+
+  @override
+  String get fernieLinkLabel => 'Proposa';
+
+  @override
+  String get fernieLinkNone => 'Res';
+
+  @override
+  String get fernieLinkTag => 'Una etiqueta';
+
+  @override
+  String get fernieLinkCreator => 'Un creador';
+
+  @override
+  String get fernieLinkNoneHint => 'Només entrena: tot sol no etiqueta res';
+
+  @override
+  String get fernieLinkMissing => 'Allò que tenia enllaçat ja no existeix';
+
+  @override
+  String get fernieFewRegions => 'Poques regions per entrenar de manera fiable';
+
+  @override
+  String get fernieLowVariety =>
+      'Poca varietat: el model aprendrà el fons, no l’objecte';
+
+  @override
+  String get fernieRegionPending =>
+      'Contingut pendent de revisar: aquesta regió no s’usarà per entrenar fins que es desi';
+
+  @override
+  String get fernieRegionTiny =>
+      'Regió molt petita: pot no aportar res a l’entrenament';
+
+  @override
+  String get actionDeleteFernie => 'Eliminar fernie';
+
+  @override
+  String get actionRemoveLink => 'Treure l’enllaç';
+
+  @override
+  String get actionDeleteRegions => 'Eliminar regions';
+
+  @override
+  String get fernieToolSelect => 'Marcar regions';
+
+  @override
+  String get fernieToolEdit => 'Editar regions';
+
+  @override
+  String get fernieRegionConfirm => 'Desar els canvis d’aquesta regió';
+
+  @override
+  String get fernieRegionCancel => 'Descartar els canvis d’aquesta regió';
+
+  @override
+  String get fernieRegionDelete => 'Eliminar aquesta regió';
+
+  @override
+  String get fernieRegionDeleteTitle => 'Vols eliminar aquesta regió?';
+
+  @override
+  String get fernieRegionDeleteMessage =>
+      'La regió surt del seu fernie. Si era l’única d’aquest fernie en aquest contingut, el fernie deixa d’estar-hi marcat.';
+
+  @override
+  String get fernieRegionDiscardTitle =>
+      'Vols descartar els canvis de la regió?';
+
+  @override
+  String get fernieRegionDiscardMessage =>
+      'El que has canviat a la regió seleccionada no es desarà.';
+
+  @override
+  String get fernieTimelinePlay =>
+      'Reproduir per comprovar les regions marcades';
+
+  @override
+  String get fernieTimelinePause => 'Aturar';
+
+  @override
+  String get fernieFramePrevious => 'Fotograma anterior';
+
+  @override
+  String get fernieFrameNext => 'Fotograma següent';
+
+  @override
+  String get fernieOnionSkin =>
+      'Paper ceba: veure el fotograma marcat anterior';
+
+  @override
+  String get fernieDragRegions =>
+      'Arrossegar la regió per tots els fotogrames del mig';
+
+  @override
+  String get fernieModeTooltip => 'Marcar regions';
+
+  @override
+  String get fernieModeAccept => 'Desar les regions';
+
+  @override
+  String get fernieModeCancel => 'Descartar les regions';
+
+  @override
+  String get fernieModeHint =>
+      'Arrossega sobre el contingut per marcar una regió. Mantén l’espai o el botó central per desplaçar.';
+
+  @override
+  String get fernieDiscardTitle => 'Vols descartar el que has marcat?';
+
+  @override
+  String get fernieDiscardMessage =>
+      'Es perdran les regions marcades en aquesta sessió.';
+
+  @override
+  String get actionDiscard => 'Descartar';
+
+  @override
+  String get assignRegionTitle => 'Assignar la regió';
+
+  @override
+  String get searchFernieHint => 'Cercar fernie...';
+
+  @override
+  String get createFernie => 'Crear fernie';
+
+  @override
+  String fernieRegionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count regions',
+      one: '1 regió',
+      zero: 'Sense regions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fernieMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'en $count continguts',
+      one: 'en 1 contingut',
+      zero: 'en cap contingut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fernieRecommendedRegions(int count) {
+    return 'Es recomanen com a mínim $count regions';
+  }
 }

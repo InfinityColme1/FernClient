@@ -11,6 +11,9 @@ import 'package:Fern/features/media/presentation/pages/import_page.dart';
 import 'package:Fern/features/media/presentation/pages/media_page.dart';
 import 'package:Fern/features/media/presentation/pages/tag_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
+import 'package:Fern/features/recognition/presentation/pages/fernies_page.dart';
+import 'package:Fern/features/recognition/presentation/pages/models_page.dart';
+import 'package:Fern/features/recognition/presentation/pages/repeated_media_page.dart';
 import 'package:Fern/features/splash/presentation/pages/splash_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -102,6 +105,36 @@ final appRouter = GoRouter(
               child: const TagManagerPage(),
             ),
         ),
+        // Reconocimiento. La de fernies es la de esta fase; las otras dos
+        // existen para que sus botones del menú lateral lleven a algún sitio
+        // hasta que lleguen sus fases.
+        GoRoute(
+            path: fernieManagerRoute,
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: FerniesPage(
+                // Se llega así al pulsar un fernie en el panel del visor: la
+                // pantalla se abre con ése elegido y no con el primero.
+                selectedFernieId: int.tryParse(
+                  state.uri.queryParameters[fernieQueryParam] ?? '',
+                ),
+              ),
+            ),
+        ),
+        GoRoute(
+            path: repeatedMediaRoute,
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const RepeatedMediaPage(),
+            ),
+        ),
+        GoRoute(
+            path: modelsRoute,
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ModelsPage(),
+            ),
+        ),
         // Experimental: el navegador de dentro de la aplicación. Se quita de
         // aquí y del menú lateral, y la aplicación se queda como estaba.
         GoRoute(
@@ -131,6 +164,11 @@ final appRouter = GoRouter(
           value: getIt<MediaBloc>(),
           child: ViewerPage(
             openInfo: state.uri.queryParameters[viewerInfoQueryParam] == 'true',
+            // Se llega así desde la rejilla de fernies, que enseña recortes: el
+            // visor abre el contenido entero y señala de cuál se trataba.
+            highlightRegionId: int.tryParse(
+              state.uri.queryParameters[viewerHighlightQueryParam] ?? '',
+            ),
           ),
         ),
       ),

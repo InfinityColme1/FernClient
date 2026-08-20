@@ -296,6 +296,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewerExitFullscreen => 'Exit full screen';
 
   @override
+  String get viewerSkipBack => 'Back five seconds';
+
+  @override
+  String get viewerSkipForward => 'Forward five seconds';
+
+  @override
+  String get viewerLoop => 'Play on repeat';
+
+  @override
+  String get viewerPlaybackSectionTitle => 'Video playback';
+
+  @override
+  String get viewerPlaybackSectionNote =>
+      'What the viewer does to a video while you move along its timeline.';
+
+  @override
+  String get viewerPauseWhenSeeking => 'Pause when you take hold of the bar';
+
+  @override
+  String get viewerPauseWhenSeekingDescription =>
+      'The video stops as soon as you take hold of the bar and stays where you leave it. Off, it carries on playing from wherever you drop it. Marking regions always pauses, whatever this says: a region is marked on a still frame.';
+
+  @override
+  String get fernieUndo => 'Undo the last region marked';
+
+  @override
   String get viewerFavorite => 'Mark as favourite';
 
   @override
@@ -1403,4 +1429,191 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gpuDialogConfirm => 'Install it';
+
+  @override
+  String get navRecognition => 'Recognition';
+
+  @override
+  String get navFernies => 'Fernies';
+
+  @override
+  String get navRepeatedMedia => 'Repeated media';
+
+  @override
+  String get navModels => 'Model';
+
+  @override
+  String get menuNewFernie => 'New fernie';
+
+  @override
+  String get newFernieTitle => 'New fernie';
+
+  @override
+  String get fernieNameLabel => 'Fernie name';
+
+  @override
+  String get ferniesTitle => 'Fernies';
+
+  @override
+  String get addFernie => 'Add fernie';
+
+  @override
+  String get noFerniesYet => 'No fernies yet';
+
+  @override
+  String get fernieNoRegions => 'This fernie has no regions yet';
+
+  @override
+  String get fernieNoneHere => 'No fernies marked here yet';
+
+  @override
+  String get fernieLinkLabel => 'It proposes';
+
+  @override
+  String get fernieLinkNone => 'Nothing';
+
+  @override
+  String get fernieLinkTag => 'A tag';
+
+  @override
+  String get fernieLinkCreator => 'A creator';
+
+  @override
+  String get fernieLinkNoneHint => 'It only trains: on its own it tags nothing';
+
+  @override
+  String get fernieLinkMissing => 'What it was linked to no longer exists';
+
+  @override
+  String get fernieFewRegions => 'Few regions to train reliably';
+
+  @override
+  String get fernieLowVariety =>
+      'Little variety: the model will learn the background, not the object';
+
+  @override
+  String get fernieRegionPending =>
+      'Pending content: this region will not be used to train until you save it';
+
+  @override
+  String get fernieRegionTiny =>
+      'Very small region: it may not help the training';
+
+  @override
+  String get actionDeleteFernie => 'Delete fernie';
+
+  @override
+  String get actionRemoveLink => 'Remove link';
+
+  @override
+  String get actionDeleteRegions => 'Delete regions';
+
+  @override
+  String get fernieToolSelect => 'Mark regions';
+
+  @override
+  String get fernieToolEdit => 'Edit regions';
+
+  @override
+  String get fernieRegionConfirm => 'Save the changes to this region';
+
+  @override
+  String get fernieRegionCancel => 'Discard the changes to this region';
+
+  @override
+  String get fernieRegionDelete => 'Delete this region';
+
+  @override
+  String get fernieRegionDeleteTitle => 'Delete this region?';
+
+  @override
+  String get fernieRegionDeleteMessage =>
+      'The region is removed from its fernie. If it was the only one of that fernie in this content, the fernie stops being marked here.';
+
+  @override
+  String get fernieRegionDiscardTitle => 'Discard the changes to the region?';
+
+  @override
+  String get fernieRegionDiscardMessage =>
+      'What you changed in the selected region will not be saved.';
+
+  @override
+  String get fernieTimelinePlay => 'Play to check the marked regions';
+
+  @override
+  String get fernieTimelinePause => 'Stop';
+
+  @override
+  String get fernieFramePrevious => 'Previous frame';
+
+  @override
+  String get fernieFrameNext => 'Next frame';
+
+  @override
+  String get fernieOnionSkin => 'Onion skin: show the previous marked frame';
+
+  @override
+  String get fernieDragRegions =>
+      'Drag the region across every frame in between';
+
+  @override
+  String get fernieModeTooltip => 'Mark regions';
+
+  @override
+  String get fernieModeAccept => 'Save the regions';
+
+  @override
+  String get fernieModeCancel => 'Discard the regions';
+
+  @override
+  String get fernieModeHint =>
+      'Drag over the content to mark a region. Hold space or the middle button to pan.';
+
+  @override
+  String get fernieDiscardTitle => 'Discard what you marked?';
+
+  @override
+  String get fernieDiscardMessage =>
+      'The regions marked in this session will be lost.';
+
+  @override
+  String get actionDiscard => 'Discard';
+
+  @override
+  String get assignRegionTitle => 'Assign the region';
+
+  @override
+  String get searchFernieHint => 'Search fernie...';
+
+  @override
+  String get createFernie => 'Create fernie';
+
+  @override
+  String fernieRegionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count regions',
+      one: '1 region',
+      zero: 'No regions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fernieMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'in $count media',
+      one: 'in 1 media',
+      zero: 'in no media',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fernieRecommendedRegions(int count) {
+    return 'At least $count regions are recommended';
+  }
 }

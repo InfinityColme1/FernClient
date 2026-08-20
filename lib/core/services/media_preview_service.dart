@@ -64,27 +64,42 @@ class MediaPreviewService {
   int _runningVideoJobs = 0;
   Directory? _thumbnailDir;
 
+  /// Clave con la que se guarda una previsualización.
+  ///
+  /// El fotograma pedido forma parte de ella: sin eso, la miniatura de la
+  /// región marcada en el segundo doce se pisaría con la del segundo uno, y las
+  /// celdas de la rejilla de fernies enseñarían todas el mismo fotograma.
+  String _key(String path, Duration? frame) =>
+      frame == null ? path : '$path|${frame.inMilliseconds}';
+
   /// Previsualización ya resuelta, si la hay. Permite pintar el primer
   /// fotograma sin parpadeos cuando la rejilla reconstruye un elemento.
-  MediaPreview? peek(String path) => _cache[path];
+  MediaPreview? peek(String path, {Duration? frame}) => _cache[_key(path, frame)];
 
   /// Resuelve la previsualización, reutilizando la petición en curso si el
   /// mismo fichero se pide desde varios sitios a la vez.
-  Future<MediaPreview?> load(String path) {
-    final cached = _cache[path];
+  ///
+  /// Con [frame] se saca el fotograma de ese instante en vez del de por
+  /// defecto. Es lo que necesitan las regiones marcadas sobre vídeo y GIF, que
+  /// llevan apuntado de qué momento son.
+  Future<MediaPreview?> load(String path, {Duration? frame}) {
+    final key = _key(path, frame);
+
+    final cached = _cache[key];
     if (cached != null) return Future.value(cached);
 
-    return _pending.putIfAbsent(path, () async {
+    return _pending.putIfAbsent(key, () async {
       try {
-        final preview =
-            path.isVideoPath ? await _loadVideo(path) : await _loadImage(path);
-        if (preview != null) _cache[path] = preview;
+        final preview = path.isVideoPath
+            ? await _loadVideo(path, frame: frame)
+            : await _loadImage(path);
+        if (preview != null) _cache[key] = preview;
         return preview;
       } catch (e) {
         debugPrint('MediaPreviewService: no se pudo procesar "$path": $e');
         return null;
       } finally {
-        _pending.remove(path);
+        _pending.remove(key);
       }
     });
   }
@@ -102,12 +117,12 @@ class MediaPreviewService {
     }
   }
 
-  Future<MediaPreview?> _loadVideo(String path) async {
+  Future<MediaPreview?> _loadVideo(String path, {Duration? frame}) async {
     final file = File(path);
     if (!file.existsSync()) return null;
 
     final directory = await _ensureThumbnailDir();
-    final key = _cacheKey(path, file.statSync());
+    final key = _cacheKey(path, file.statSync(), frame);
     final thumbnail = File(p.join(directory.path, '$key.jpg'));
     final metadata = File(p.join(directory.path, '$key.json'));
 
@@ -116,7 +131,7 @@ class MediaPreviewService {
 
     await _acquireSlot();
     try {
-      return await _extractVideoPreview(path, thumbnail, metadata);
+      return await _extractVideoPreview(path, thumbnail, metadata, frame);
     } finally {
       _releaseSlot();
     }
@@ -142,6 +157,7 @@ class MediaPreviewService {
     String path,
     File thumbnail,
     File metadata,
+    Duration? frame,
   ) async {
     final player = Player(
       configuration: const PlayerConfiguration(
@@ -164,8 +180,11 @@ class MediaPreviewService {
           .firstWhere((value) => value != null && value > 0)
           .timeout(videoProbeTimeout, onTimeout: () => null);
 
-      final seek =
-          duration > videoThumbnailSeek ? videoThumbnailSeek : Duration.zero;
+      // El fotograma pedido manda, y si se sale del vídeo se recorta a su
+      // final: una región marcada sobre un fichero que luego se ha recortado no
+      // debe dejar la miniatura en negro.
+      final wanted = frame ?? videoThumbnailSeek;
+      final seek = duration > wanted ? wanted : Duration.zero;
       await player.seek(seek);
 
       final platform = await controller.platform.future;
@@ -208,8 +227,11 @@ class MediaPreviewService {
     return null;
   }
 
-  String _cacheKey(String path, FileStat stat) {
-    final seed = '$path|${stat.size}|${stat.modified.millisecondsSinceEpoch}';
+  /// La clave del fichero en disco. Lleva el fotograma dentro por lo mismo que
+  /// [_key]: dos fotogramas del mismo vídeo no pueden compartir miniatura.
+  String _cacheKey(String path, FileStat stat, Duration? frame) {
+    final seed = '$path|${stat.size}|${stat.modified.millisecondsSinceEpoch}'
+        '|${frame?.inMilliseconds ?? 0}';
     return md5.convert(utf8.encode(seed)).toString();
   }
 

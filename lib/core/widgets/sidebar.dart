@@ -155,6 +155,48 @@ class _SidebarState extends State<Sidebar> {
     ];
   }
 
+  /// Los tres sitios del reconocimiento: los fernies (que es lo que se marca), el
+  /// contenido repetido y los modelos.
+  ///
+  /// El árbol de modelos no está aquí a propósito: es un botón dentro de la
+  /// pantalla de modelos, no un cuarto sitio del menú.
+  List<SidebarItem> _recognitionItems(
+    AppLocalizations texts,
+    NotificationsState notifications, {
+    required bool showBadges,
+  }) {
+    return [
+      SidebarItem(
+        id: fernieManagerRoute,
+        title: texts.navFernies,
+        icon: Icons.face_retouching_natural_outlined,
+        iconAsset: icFernie,
+        onTap: () {
+          context.go(fernieManagerRoute);
+        },
+      ),
+      SidebarItem(
+        id: repeatedMediaRoute,
+        title: texts.navRepeatedMedia,
+        icon: Icons.copy_all_outlined,
+        badgeCount:
+            showBadges ? notifications.badgeFor(repeatedMediaRoute) : 0,
+        onTap: () {
+          context.go(repeatedMediaRoute);
+        },
+      ),
+      SidebarItem(
+        id: modelsRoute,
+        title: texts.navModels,
+        icon: Icons.hub_outlined,
+        badgeCount: showBadges ? notifications.badgeFor(modelsRoute) : 0,
+        onTap: () {
+          context.go(modelsRoute);
+        },
+      ),
+    ];
+  }
+
   /// Las etiquetas en fila, madres antes que hijas, cada una con el nivel que le
   /// toca: el menú es una lista, así que la jerarquía se cuenta con [depth] y se
   /// ve en la sangría de cada botón.
@@ -223,6 +265,14 @@ class _SidebarState extends State<Sidebar> {
               SidebarSection(
                 title: texts.navGallery,
                 items: _galleryItems(
+                  texts,
+                  notifications,
+                  showBadges: settings.settings.notifications.enabled,
+                ),
+              ),
+              SidebarSection(
+                title: texts.navRecognition,
+                items: _recognitionItems(
                   texts,
                   notifications,
                   showBadges: settings.settings.notifications.enabled,

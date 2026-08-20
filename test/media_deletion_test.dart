@@ -24,6 +24,8 @@ import 'package:Fern/features/settings/data/services/avatar_storage_service.dart
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:Fern/features/recognition/data/models/fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
 
@@ -59,6 +61,10 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        // El borrado definitivo se lleva por delante las regiones de fernie, así
+        // que la base de datos de la prueba tiene que conocerlas.
+        FernieModelSchema,
+        FernieRegionModelSchema,
       ],
       directory: directory.path,
       inspector: false,

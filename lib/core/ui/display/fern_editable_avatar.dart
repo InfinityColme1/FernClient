@@ -7,6 +7,11 @@ import 'package:flutter/material.dart';
 class FernEditableAvatar extends StatefulWidget {
   final String? imagePath;
   final IconData fallbackIcon;
+
+  /// Icono de reserva en forma de imagen del paquete. Manda sobre
+  /// [fallbackIcon] cuando viene.
+  final String? fallbackAsset;
+
   final double radius;
   final double? iconSize;
   final VoidCallback? onTap;
@@ -20,6 +25,7 @@ class FernEditableAvatar extends StatefulWidget {
     super.key,
     this.imagePath,
     required this.fallbackIcon,
+    this.fallbackAsset,
     required this.radius,
     this.iconSize,
     this.onTap,
@@ -52,6 +58,7 @@ class _FernEditableAvatarState extends State<FernEditableAvatar> {
             FernAvatar(
               imagePath: widget.imagePath,
               fallbackIcon: widget.fallbackIcon,
+              fallbackAsset: widget.fallbackAsset,
               radius: widget.radius,
               iconSize: widget.iconSize,
               backgroundColor: widget.backgroundColor,

@@ -16,6 +16,13 @@ class AppSizes {
   static const double iconExtraLarge = 32.0;
   static const double iconHuge = 48.0;
 
+  /// Radio del círculo del botón de añadir cuando va suelto en un formulario y
+  /// no acompaña a ninguna rejilla de avatares.
+  ///
+  /// En una rejilla de avatares el botón usa [avatarLarge], que es lo que hace
+  /// que el "+" y las caras que tiene al lado midan lo mismo.
+  static const double addButtonRadius = 20.0;
+
   // Avatar Sizes
   static const double avatarSmall = 18.0;
   static const double avatarMedium = 24.0;

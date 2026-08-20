@@ -16,36 +16,51 @@ import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
+import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/recognition/domain/usecases/save_fernie_usecase.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Las dos variantes del diálogo de creación. El panel izquierdo es el mismo
+/// Las variantes del diálogo de creación. El panel izquierdo es el mismo
 /// (avatar editable y nombre); lo que cambia es el formulario de la derecha,
 /// y [secondaryLabel] nombra ese segundo bloque en cada caso.
+///
+/// El fernie no tiene segundo bloque: se crea con nombre y avatar, y a qué se
+/// enlaza se decide luego en su ficha. Aquí sólo estorbaría, porque lo normal
+/// es crearlo al vuelo mientras se está marcando una región.
 enum CreateDialogType {
   tag(icon: Icons.label_outline),
-  creator(icon: Icons.person_outline);
+  creator(icon: Icons.person_outline),
+  fernie(icon: Icons.face_retouching_natural, iconAsset: icFernie);
 
-  const CreateDialogType({required this.icon});
+  const CreateDialogType({required this.icon, this.iconAsset});
 
   final IconData icon;
+
+  /// Icono en forma de imagen, para la variante que no tiene glifo propio.
+  final String? iconAsset;
 
   String title(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.newTagTitle,
         CreateDialogType.creator => texts.newCreatorTitle,
+        CreateDialogType.fernie => texts.newFernieTitle,
       };
 
   String nameLabel(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.tagNameLabel,
         CreateDialogType.creator => texts.creatorNameLabel,
+        CreateDialogType.fernie => texts.fernieNameLabel,
       };
 
   String secondaryLabel(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.parentTagLabel,
         CreateDialogType.creator => texts.socialProfilesLabel,
+        CreateDialogType.fernie => '',
       };
 }
 
@@ -82,6 +97,8 @@ class FernCreateDialog extends StatefulWidget {
   const FernCreateDialog.creator({super.key})
       : type = CreateDialogType.creator;
 
+  const FernCreateDialog.fernie({super.key}) : type = CreateDialogType.fernie;
+
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
 }
@@ -90,6 +107,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   final _searchTags = getIt<SearchTagsUseCase>();
   final _saveTag = getIt<SaveTagUseCase>();
   final _saveCreator = getIt<SaveCreatorUseCase>();
+  final _saveFernie = getIt<SaveFernieUseCase>();
   final _avatarStorage = getIt<AvatarStorageService>();
 
   final TextEditingController _nameController = TextEditingController();
@@ -250,6 +268,20 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
 
         navigator.pop(creator);
+
+      case CreateDialogType.fernie:
+        final result = await _saveFernie(
+          params: FernieEntity(id: unsavedId, name: name, picturePath: _selectedImagePath),
+        );
+
+        final fernie = result.data;
+        if (!mounted || result is! DataSuccess || fernie == null) return;
+
+        // El fernie nuevo tiene que salir en su pantalla y en el buscador del
+        // menú de asignación sin tener que reiniciar.
+        getIt<FerniesBloc>().add(const LoadFerniesEvent());
+
+        navigator.pop(fernie);
     }
   }
 
@@ -282,6 +314,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         avatar: FernEditableAvatar(
           imagePath: _selectedImagePath,
           fallbackIcon: widget.type.icon,
+          fallbackAsset: widget.type.iconAsset,
           radius: AppSizes.avatarHuge,
           iconSize: AppSizes.iconHuge,
           onTap: _pickImage,
@@ -302,6 +335,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           switch (widget.type) {
             CreateDialogType.tag => _parentTagField(),
             CreateDialogType.creator => _socialProfilesField(),
+            // Un fernie nace sin nada más: sin regiones, que se le marcan desde
+            // el visor, y sin enlace, que se le pone en su ficha.
+            CreateDialogType.fernie => _fernieHint(texts),
           },
         ],
       ),
@@ -327,6 +363,21 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       ),
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
+    );
+  }
+
+  /// Lo que le falta a un fernie recién creado.
+  ///
+  /// Se dice porque el diálogo se queda muy vacío y, sin explicación, un fernie
+  /// sin regiones parece algo a medio hacer en lugar de un contenedor esperando
+  /// a que le marquen contenido.
+  Widget _fernieHint(AppLocalizations texts) {
+    return Text(
+      texts.fernieNoRegions,
+      style: Theme.of(context)
+          .textTheme
+          .bodyMedium
+          ?.copyWith(color: context.colors.unremarked),
     );
   }
 
