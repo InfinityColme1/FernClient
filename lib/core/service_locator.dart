@@ -4,10 +4,37 @@ import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/services/jobs/job_queue.dart';
 import 'package:Fern/core/services/schema_migrator.dart';
 import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
+import 'package:Fern/features/notifications/domain/entities/app_notification.dart';
 import 'package:Fern/features/notifications/data/services/notification_service.dart';
 import 'package:Fern/features/notifications/data/services/notification_sound_service.dart';
 import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:Fern/features/recognition/data/repositories/fernie_repository_impl.dart';
+import 'package:Fern/features/recognition/data/repositories/model_repository_impl.dart';
+import 'package:Fern/features/recognition/data/services/dataset_builder.dart';
+import 'package:Fern/features/recognition/data/services/training_job_runner.dart';
+import 'package:Fern/features/recognition/data/repositories/model_tree_repository_impl.dart';
+import 'package:Fern/features/recognition/data/services/model_files.dart';
+import 'package:Fern/features/recognition/domain/repositories/model_tree_repository.dart';
+import 'package:Fern/features/recognition/presentation/blocs/model_tree_bloc.dart';
+import 'package:Fern/features/recognition/data/services/weights_importer.dart';
+import 'package:Fern/features/recognition/domain/usecases/import_model_weights_usecase.dart';
+import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/services/jobs/job.dart';
+import 'package:Fern/features/recognition/domain/entities/fernie_region_media_entity.dart';
+import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
+import 'package:Fern/features/recognition/domain/services/dataset_plan.dart';
+import 'package:Fern/features/recognition/domain/repositories/model_repository.dart';
+import 'package:Fern/features/recognition/domain/usecases/assign_fernie_to_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/clear_stale_training_flags_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/delete_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_models_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/remove_fernie_from_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/save_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/update_model_split_usecase.dart';
+import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/models_events.dart';
 import 'package:Fern/features/recognition/data/services/recognition_engine.dart';
 import 'package:Fern/features/recognition/domain/repositories/fernie_repository.dart';
 import 'package:Fern/features/recognition/domain/usecases/add_fernie_regions_usecase.dart';
@@ -222,6 +249,17 @@ Future<void> initializeDependencies() async {
       )
   );
 
+  // Los modelos van aparte de los fernies por lo mismo: son otro dominio, con
+  // su propia vida (entrenar, guardar pesos, medir) que no tiene nada que ver
+  // con marcar regiones.
+  getIt.registerLazySingleton<ModelRepository>(
+      () => ModelRepositoryImpl(database: getIt<Isar>())
+  );
+
+  // El que materializa el dataset con el que se entrena. No guarda estado: se
+  // le pasa un plan y escribe.
+  getIt.registerLazySingleton<DatasetBuilder>(() => DatasetBuilder());
+
   // Fuentes remotas. La carpeta de descargas cuelga del directorio de datos de
   // la aplicación, igual que la de los avatares: es de donde salen los ficheros
   // hasta que la gestión de archivos los coloca en la biblioteca.
@@ -402,6 +440,54 @@ Future<void> initializeDependencies() async {
     RemoveCreatorFromMediaUseCase(getIt())
   );
 
+  getIt.registerSingleton<GetModelsUseCase>(GetModelsUseCase(getIt()));
+  getIt.registerSingleton<GetModelUseCase>(GetModelUseCase(getIt()));
+  getIt.registerSingleton<SaveModelUseCase>(SaveModelUseCase(getIt()));
+  // Borrar un modelo se lleva también lo que dejó en disco: los pesos, la
+  // carpeta de la run y el dataset temporal si se quedó a medias. Los fernies no
+  // se tocan, que son suyos y no del modelo.
+  // El árbol que decide en qué orden se ejecutan los modelos. Único como el
+  // bloc de modelos: la pantalla se encuentra el árbol hecho al volver a ella.
+  getIt.registerLazySingleton<ModelTreeRepository>(
+    () => ModelTreeRepositoryImpl(database: getIt(), models: getIt()),
+  );
+
+  // Perezoso a propósito: pide un caso de uso de fernies que se registra más
+  // abajo, y uno impaciente lo resolvería antes de que exista. Se monta la
+  // primera vez que se abre la pantalla del árbol, que es de sobra.
+  getIt.registerLazySingleton<ModelTreeBloc>(
+    () => ModelTreeBloc(
+      repository: getIt(),
+      getModels: getIt(),
+      getFernie: getIt(),
+    ),
+  );
+
+  getIt.registerLazySingleton<ModelFiles>(
+    () => ModelFiles(
+      root: () async => getIt<SettingsRepository>().getSettings().recognitionPath,
+    ),
+  );
+
+  getIt.registerSingleton<DeleteModelUseCase>(
+    DeleteModelUseCase(getIt(), getIt()),
+  );
+  getIt.registerSingleton<GetFerniesOfModelUseCase>(
+    GetFerniesOfModelUseCase(getIt()),
+  );
+  getIt.registerSingleton<AssignFernieToModelUseCase>(
+    AssignFernieToModelUseCase(getIt()),
+  );
+  getIt.registerSingleton<RemoveFernieFromModelUseCase>(
+    RemoveFernieFromModelUseCase(getIt()),
+  );
+  getIt.registerSingleton<UpdateModelSplitUseCase>(
+    UpdateModelSplitUseCase(getIt()),
+  );
+  getIt.registerSingleton<ClearStaleTrainingFlagsUseCase>(
+    ClearStaleTrainingFlagsUseCase(getIt()),
+  );
+
   getIt.registerSingleton<GetFerniesUseCase>(
     GetFerniesUseCase(getIt())
   );
@@ -529,6 +615,64 @@ Future<void> initializeDependencies() async {
       )
   );
 
+  // Único como el de fernies, y por lo mismo: la rejilla de modelos y el detalle
+  // de uno comparten datos, así que crear o borrar en una tiene que verse en la
+  // otra sin releer nada a mano.
+  getIt.registerSingleton<ModelsBloc>(
+      ModelsBloc(
+        getModels: getIt(),
+        getModel: getIt(),
+        deleteModel: getIt(),
+        getFernies: getIt(),
+        assignFernie: getIt(),
+        removeFernie: getIt(),
+        updateSplit: getIt(),
+      )
+  );
+
+  // Quien sabe entrenar. Se registra en la cola, que es la que decide cuándo le
+  // toca: entrenar puede durar horas y mientras tanto se sigue usando la
+  // aplicación.
+  // Los pesos traídos de fuera: el plan B del doc 02 para quien no tenga con
+  // qué entrenar aquí.
+  getIt.registerLazySingleton<WeightsImporter>(
+    () => WeightsImporter(
+      models: getIt(),
+      inspect: (path) => getIt<RecognitionEngine>().inspect(path),
+      root: () async => getIt<SettingsRepository>().getSettings().recognitionPath,
+    ),
+  );
+
+  getIt.registerLazySingleton<ImportModelWeightsUseCase>(
+    () => ImportModelWeightsUseCase(getIt()),
+  );
+
+  getIt.registerLazySingleton<TrainingJobRunner>(
+    () => TrainingJobRunner(
+      models: getIt(),
+      datasets: getIt(),
+      engine: getIt(),
+      root: () async => getIt<SettingsRepository>().getSettings().recognitionPath,
+      // Juntar las regiones de todos los fernies de un modelo toca los dos
+      // repositorios, así que se arma aquí y el runner no tiene que saber de
+      // ninguno.
+      regionsOf: (modelId) => _regionsForModel(modelId),
+      notifyFinished: () =>
+          getIt<NotificationService>().notify(NotificationKind.trainingFinished),
+    ),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.training,
+    (context) => getIt<TrainingJobRunner>().run(context),
+  );
+
+  // Un entrenamiento que se quedó a medias porque el equipo se apagó deja el
+  // modelo marcado para siempre, y así no se dejaría entrenar nunca más. Se
+  // desatasca al arrancar, antes de que ninguna pantalla lo lea.
+  await getIt<ClearStaleTrainingFlagsUseCase>()();
+  getIt<ModelsBloc>().add(const LoadModelsEvent());
+
   // Único como el de etiquetas: la lista de creadores se lee una vez y la
   // pantalla de gestión se la encuentra hecha al volver a ella.
   getIt.registerSingleton<CreatorsBloc>(
@@ -567,4 +711,38 @@ Future<void> initializeDependencies() async {
         notifications: getIt(),
       )
   );
+}
+
+/// Las regiones con las que se entrena un modelo, listas para el dataset.
+///
+/// Junta lo de los dos repositorios: del de modelos salen los fernies y su
+/// número de clase, y del de fernies, las regiones de cada uno con el contenido
+/// al que pertenecen.
+Future<List<DatasetRegion>> _regionsForModel(int modelId) async {
+  final assignments = await getIt<ModelRepository>().getFerniesOfModel(modelId);
+  if (assignments is! DataSuccess) return const [];
+
+  final regions = <DatasetRegion>[];
+
+  for (final assignment in assignments.data ?? const <ModelFernieEntity>[]) {
+    final media =
+        await getIt<FernieRepository>().getMediaOfFernie(assignment.fernie.id);
+    if (media is! DataSuccess) continue;
+
+    for (final entry in media.data ?? const <FernieRegionMediaEntity>[]) {
+      regions.add(DatasetRegion(
+        regionId: entry.region.id,
+        mediaId: entry.media.id,
+        mediaPath: entry.media.path,
+        frameMs: entry.region.frameMs,
+        x: entry.region.x,
+        y: entry.region.y,
+        w: entry.region.w,
+        h: entry.region.h,
+        classIndex: assignment.classIndex,
+      ));
+    }
+  }
+
+  return regions;
 }

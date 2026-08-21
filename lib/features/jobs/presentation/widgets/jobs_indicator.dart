@@ -20,9 +20,12 @@ extension JobTypeLabels on JobType {
 
 /// Lo que hay en marcha por detrás, en la barra superior.
 ///
-/// No se ve mientras no haya nada: la barra ya está llena y un icono apagado
-/// permanente no dice nada. Al pulsarlo se despliega la lista con lo que lleva
-/// cada trabajo y un botón para pararlo.
+/// Está siempre, y **apagado mientras no haya nada**. Aparecer y desaparecer
+/// movía los botones de al lado justo cuando se iba a pulsar uno; en gris ocupa
+/// su sitio y de paso dice que no hay nada corriendo, que es información.
+///
+/// Al pulsarlo se despliega la lista con lo que lleva cada trabajo y un botón
+/// para pararlo.
 class JobsIndicator extends StatelessWidget {
   const JobsIndicator({super.key});
 
@@ -30,10 +33,18 @@ class JobsIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<JobsBloc, JobsState>(
       builder: (context, state) {
-        if (!state.hasSomethingToShow) return const SizedBox.shrink();
-
         final texts = AppLocalizations.of(context);
         final visible = [...state.active, ...state.failed];
+
+        if (visible.isEmpty) {
+          return IconButton(
+            tooltip: texts.jobsNone,
+            // Sin nada que enseñar no se abre: un panel que sólo dice «no hay
+            // nada» es un clic tirado.
+            onPressed: null,
+            icon: const Icon(Icons.sync),
+          );
+        }
 
         return FernPopupPanel(
           width: AppSizes.jobsPanelWidth,
@@ -54,16 +65,7 @@ class JobsIndicator extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-            if (visible.isEmpty)
-              Text(
-                texts.jobsEmpty,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: context.colors.gray),
-              )
-            else
-              for (final job in visible) _JobRow(job: job),
+            for (final job in visible) _JobRow(job: job),
           ],
         );
       },
@@ -114,6 +116,21 @@ class _JobRow extends StatelessWidget {
 
   const _JobRow({required this.job});
 
+  /// Cómo se llama esto en la lista.
+  ///
+  /// Cuando el trabajo dice sobre qué va, se dice: se pueden encolar varios del
+  /// mismo tipo, y «Entrenando modelo» tres veces seguidas no distingue cuál se
+  /// está parando al pulsar el aspa.
+  String _title(AppLocalizations texts) {
+    final name = job.name;
+    if (name == null) return job.type.label(texts);
+
+    return switch (job.type) {
+      JobType.training => texts.jobTrainingModel(name),
+      _ => '${job.type.label(texts)} · $name',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
@@ -128,7 +145,7 @@ class _JobRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  job.type.label(texts),
+                  _title(texts),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium,

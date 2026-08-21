@@ -17,7 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
-enum _CreateOption { creator, tag, fernie, collection }
+enum _CreateOption { creator, tag, fernie, model, collection }
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -50,6 +50,11 @@ class _MainLayoutState extends State<MainLayout> {
         iconAsset: icFernie,
       ),
       FernMenuOption(
+        value: _CreateOption.model,
+        label: texts.menuNewModel,
+        icon: Icons.hub_outlined,
+      ),
+      FernMenuOption(
         value: _CreateOption.collection,
         label: texts.menuNewCollection,
         icon: Icons.collections_outlined,
@@ -66,6 +71,7 @@ class _MainLayoutState extends State<MainLayout> {
         _CreateOption.creator => const FernCreateDialog.creator(),
         _CreateOption.tag => const FernCreateDialog.tag(),
         _CreateOption.fernie => const FernCreateDialog.fernie(),
+        _CreateOption.model => const FernCreateDialog.model(),
         _CreateOption.collection => FernMessageDialog(
             imageAsset: fernEmptyImage,
             message: AppLocalizations.of(context).collectionsWip,
@@ -129,9 +135,14 @@ class _MainLayoutState extends State<MainLayout> {
   /// Se hace aquí y no en el botón del menú porque a una pantalla se llega de
   /// muchas maneras (el buscador, un enlace, volver atrás), y lo que apaga el
   /// contador es haber ido a mirar, no por dónde se fue.
-  void _markCurrentRouteSeen(BuildContext context) {
+  ///
+  /// [isPending] es que haya algo sin ver **para esta misma pantalla**. Sin eso,
+  /// un aviso que llegaba estando ya en su pantalla no se iba nunca: la ruta no
+  /// había cambiado, así que no se volvía a marcar, y sólo se limpiaba saliendo
+  /// y volviendo. Estando delante ya se ha ido a mirar.
+  void _markCurrentRouteSeen(BuildContext context, {required bool isPending}) {
     final route = GoRouterState.of(context).matchedLocation;
-    if (route == _lastSeenRoute) return;
+    if (route == _lastSeenRoute && !isPending) return;
 
     _lastSeenRoute = route;
 
@@ -145,7 +156,17 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    _markCurrentRouteSeen(context);
+    // Se mira el estado de los avisos, no sólo se lee: hace falta volver por
+    // aquí cuando llega uno para poder darlo por visto si es de esta pantalla.
+    final notifications = context.watch<NotificationsBloc>().state;
+
+    _markCurrentRouteSeen(
+      context,
+      isPending: notifications.badgeFor(
+        GoRouterState.of(context).matchedLocation,
+      ) >
+          0,
+    );
 
     return LayoutBuilder(builder: (context, constraints) {
       final isLargeScreen = constraints.maxWidth > AppSizes.largeScreenMinWidth;
@@ -213,6 +234,9 @@ class _MainLayoutState extends State<MainLayout> {
             options: _createOptions(AppLocalizations.of(context)),
             onSelected: _onCreateSelected,
             builder: (context, toggle) => IconButton(
+              // Los demás botones de esta barra lo llevan, y éste es el que más
+              // se usa: sin él, un icono «+» a secas no dice de qué.
+              tooltip: AppLocalizations.of(context).createTooltip,
               onPressed: toggle,
               icon: const Icon(Icons.add),
             ),

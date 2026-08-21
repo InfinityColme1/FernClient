@@ -12,6 +12,8 @@ import 'package:Fern/features/media/presentation/pages/media_page.dart';
 import 'package:Fern/features/media/presentation/pages/tag_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
 import 'package:Fern/features/recognition/presentation/pages/fernies_page.dart';
+import 'package:Fern/features/recognition/presentation/pages/model_detail_page.dart';
+import 'package:Fern/features/recognition/presentation/pages/model_tree_page.dart';
 import 'package:Fern/features/recognition/presentation/pages/models_page.dart';
 import 'package:Fern/features/recognition/presentation/pages/repeated_media_page.dart';
 import 'package:Fern/features/splash/presentation/pages/splash_page.dart';
@@ -134,6 +136,30 @@ final appRouter = GoRouter(
               key: state.pageKey,
               child: const ModelsPage(),
             ),
+            routes: [
+              // El árbol también cuelga de la rejilla: es una vista **de** los
+              // modelos, no un sitio aparte de la aplicación, y por eso no está
+              // en el menú lateral.
+              GoRoute(
+                path: modelTreeRoute,
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const ModelTreePage(),
+                ),
+              ),
+              // Cuelga de la rejilla y no va suelta: así volver atrás lleva a
+              // ella aunque se haya llegado desde otro sitio.
+              GoRoute(
+                path: modelDetailRoute,
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: ModelDetailPage(
+                    modelId:
+                        int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+                  ),
+                ),
+              ),
+            ],
         ),
         // Experimental: el navegador de dentro de la aplicación. Se quita de
         // aquí y del menú lateral, y la aplicación se queda como estaba.

@@ -210,10 +210,51 @@ def handle_train(request_id, params):
             if value is not None:
                 metrics[target] = float(value)
 
+    # Por clase, que es lo que dice **cual** de los fernies ha salido mal. La
+    # media general puede ser buena con una clase que no reconoce nada.
+    per_class = {}
+    names = getattr(results, "names", None) or {}
+    maps = getattr(getattr(results, "box", None), "maps", None)
+
+    if maps is not None:
+        for index, value in enumerate(maps):
+            name = names.get(index) if hasattr(names, "get") else None
+            per_class[str(name if name is not None else index)] = float(value)
+
+    metrics["per_class"] = per_class
     metrics["curves_dir"] = save_dir
     metrics["elapsed_seconds"] = int(time.time() - started)
 
     return {"weights": weights, "metrics": metrics}
+
+
+def handle_inspect(request_id, params):
+    """Que sabe reconocer un fichero de pesos.
+
+    Hace falta para los pesos traidos de fuera: sin saber que clases trae, la
+    aplicacion no puede emparejarlas con fernies y el modelo no sirve de nada.
+    """
+    weights = params.get("weights")
+    if not weights or not os.path.exists(weights):
+        raise SidecarError("MODEL_NOT_FOUND", "No weights at %s" % weights)
+
+    from ultralytics import YOLO
+
+    try:
+        model = YOLO(weights)
+    except Exception as error:
+        raise SidecarError("MODEL_INVALID", str(error))
+
+    names = getattr(model, "names", None) or {}
+    if hasattr(names, "items"):
+        classes = [str(name) for _, name in sorted(names.items())]
+    else:
+        classes = [str(name) for name in names]
+
+    return {
+        "classes": classes,
+        "task": str(getattr(model, "task", "") or ""),
+    }
 
 
 def _detections_of(result, conf):
@@ -300,6 +341,7 @@ HANDLERS = {
     "train": handle_train,
     "predict": handle_predict,
     "predict_batch": handle_predict,
+    "inspect": handle_inspect,
     "export": handle_export,
     "cancel": handle_cancel,
 }

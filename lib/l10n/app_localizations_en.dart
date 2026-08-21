@@ -322,6 +322,416 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fernieUndo => 'Undo the last region marked';
 
   @override
+  String get createTooltip => 'Create';
+
+  @override
+  String get menuNewModel => 'New model';
+
+  @override
+  String get newModelTitle => 'New model';
+
+  @override
+  String get modelNameLabel => 'Model name';
+
+  @override
+  String get modelFunctionLabel => 'What it answers';
+
+  @override
+  String get modelFunctionBoolean => 'Is it there?';
+
+  @override
+  String get modelFunctionBooleanDescription =>
+      'Says whether each of its fernies is in the media. With several, it answers for each one on its own.';
+
+  @override
+  String get modelFunctionClassification => 'Which one is it?';
+
+  @override
+  String get modelFunctionClassificationDescription =>
+      'Tells its fernies apart and says which one it found, and where. Needs at least two: there is nothing to choose between with one.';
+
+  @override
+  String get modelsTitle => 'Models';
+
+  @override
+  String get modelsEmpty => 'No models yet';
+
+  @override
+  String get modelStatusUntrained => 'Not trained';
+
+  @override
+  String get modelStatusTraining => 'Training';
+
+  @override
+  String get modelStatusReady => 'Ready';
+
+  @override
+  String get modelStatusFailed => 'Training failed';
+
+  @override
+  String get modelDegradedNotice =>
+      'With a single fernie there is nothing to choose between, so it answers whether it is there. Add another one to tell them apart.';
+
+  @override
+  String modelRegionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count regions',
+      one: '1 region',
+      zero: 'no regions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modelFernieCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fernies',
+      one: '1 fernie',
+      zero: 'no fernies',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get modelDeleteTitle => 'Delete this model?';
+
+  @override
+  String get modelDeleteMessage =>
+      'Its fernies stay where they are: they belong to you, not to the model. What is lost is what it had learned: the weights, the training charts and everything it left on disk.';
+
+  @override
+  String get splitTrain => 'Train';
+
+  @override
+  String get splitValidation => 'Validate';
+
+  @override
+  String get splitTest => 'Test';
+
+  @override
+  String get modelRemoveFernie => 'Take out of this model';
+
+  @override
+  String modelMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count media',
+      one: '1 media',
+      zero: 'no media',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modelTooFewRegions(int count) {
+    return 'Fewer than $count regions: not enough to train';
+  }
+
+  @override
+  String modelFewRegions(int count) {
+    return 'Fewer than $count regions: it will learn little';
+  }
+
+  @override
+  String get modelTooFewMedia =>
+      'Too few different media: it will learn the background';
+
+  @override
+  String get modelAssignedFernies => 'Assigned fernies';
+
+  @override
+  String get modelAddFernie => 'Add fernie';
+
+  @override
+  String get modelNoFernies =>
+      'A model with no fernies has nothing to learn. Add at least one.';
+
+  @override
+  String get modelApplySplitToAll => 'Apply this split to all';
+
+  @override
+  String get modelRetrainNotice =>
+      'Changing the fernies of a trained model means training it again: its weights no longer mean the same thing.';
+
+  @override
+  String get modelSaved => 'Saved';
+
+  @override
+  String get trainingTitle => 'Training';
+
+  @override
+  String get presetFast => 'Quick';
+
+  @override
+  String get presetFastDescription =>
+      'To see whether the idea works before leaving the machine running all night. Also the sensible one without a graphics card.';
+
+  @override
+  String get presetBalanced => 'Balanced';
+
+  @override
+  String get presetBalancedDescription =>
+      'What you want most of the time: enough to use the model for real.';
+
+  @override
+  String get presetAccurate => 'Thorough';
+
+  @override
+  String get presetAccurateDescription =>
+      'When there are already plenty of regions and the model matters. Takes a good while.';
+
+  @override
+  String get presetCustom => 'Custom';
+
+  @override
+  String get presetCustomDescription =>
+      'The settings do not match any of the above, so yours win.';
+
+  @override
+  String get trainingAdvanced => 'Advanced';
+
+  @override
+  String get trainingEpochsLabel => 'Epochs';
+
+  @override
+  String get trainingImageSizeLabel => 'Image size';
+
+  @override
+  String get trainingBatchLabel => 'Batch';
+
+  @override
+  String get trainingBatchAuto => '-1 lets it decide';
+
+  @override
+  String trainingBackboneIs(String backbone) {
+    return 'Network: $backbone';
+  }
+
+  @override
+  String get trainingStart => 'Train model';
+
+  @override
+  String get trainingRetrain => 'Train again';
+
+  @override
+  String get trainingPreparing => 'Preparing the dataset...';
+
+  @override
+  String trainingEpoch(int done, int total) {
+    return 'Epoch $done of $total';
+  }
+
+  @override
+  String trainingRemaining(int minutes) {
+    return 'About $minutes min left';
+  }
+
+  @override
+  String get trainingEngineNotReady =>
+      'The recognition engine is not installed yet. Set it up in settings.';
+
+  @override
+  String get trainingNoValidation =>
+      'nothing set aside to validate, so training cannot tell when to stop';
+
+  @override
+  String trainingImbalanced(int count) {
+    return 'One fernie has more than $count times the regions of another: the model will learn to always answer the big one';
+  }
+
+  @override
+  String get trainingQueued => 'Training queued';
+
+  @override
+  String get metricsLastTraining => 'Last training';
+
+  @override
+  String get metricMap50 => 'mAP50';
+
+  @override
+  String get metricMap50to95 => 'mAP50-95';
+
+  @override
+  String get metricPrecision => 'Precision';
+
+  @override
+  String get metricRecall => 'Recall';
+
+  @override
+  String get metricsPerClass => 'Per fernie';
+
+  @override
+  String get metricsConfusionMatrix => 'Confusion matrix';
+
+  @override
+  String get metricsCurves => 'Curves';
+
+  @override
+  String get metricsOpenRunFolder => 'Open run folder';
+
+  @override
+  String get metricsRunFolderMissing => 'That folder is no longer there.';
+
+  @override
+  String get metricsRunImagesMissing =>
+      'Those images are no longer in the run folder. Deleting it does not break the model: the weights are all it needs to recognise.';
+
+  @override
+  String get metricsNotTrainedYet => 'Not trained yet.';
+
+  @override
+  String get metricsImportedWeights =>
+      'The weights come from outside, so there are no training metrics.';
+
+  @override
+  String get metricsRetry => 'Try again';
+
+  @override
+  String get metricsRealPerformance => 'Real performance';
+
+  @override
+  String get metricsRealPerformanceEmpty =>
+      'No data yet. It counts how many suggestions from this model you accept and reject while importing, which is the only honest measure of whether it works.';
+
+  @override
+  String get modelImportWeights => 'Import weights';
+
+  @override
+  String get modelImportWeightsHint =>
+      'A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.';
+
+  @override
+  String modelImportWeightsInvalid(String error) {
+    return 'Those weights could not be read: $error';
+  }
+
+  @override
+  String modelImportWeightsDone(String classes) {
+    return 'Weights imported: $classes';
+  }
+
+  @override
+  String get modelImportedBadge => 'Imported weights';
+
+  @override
+  String get trainingFailedEngineStopped =>
+      'The recognition engine stopped mid-training. Try again; if it keeps happening, the machine is most likely running out of memory: lower the image size or the batch under Advanced.';
+
+  @override
+  String get trainingFailedOutOfMemory =>
+      'It ran out of memory. Lower the batch or the image size under Advanced and try again.';
+
+  @override
+  String get trainingFailedDataset =>
+      'The material could not be prepared. Some files may have moved or been deleted since the regions were marked.';
+
+  @override
+  String get trainingFailedWeights =>
+      'The starting weights are missing and could not be downloaded. Check the connection, or import weights of your own.';
+
+  @override
+  String get trainingFailedNoSpace =>
+      'There is not enough room on disk. A video dataset is thousands of frames, so it needs a few gigabytes free.';
+
+  @override
+  String get trainingFailedUnknown => 'Training failed.';
+
+  @override
+  String jobTrainingModel(String model) {
+    return 'Training «$model»';
+  }
+
+  @override
+  String get jobsNone => 'Nothing running';
+
+  @override
+  String get treeTitle => 'Model tree';
+
+  @override
+  String get treeOpen => 'Tree';
+
+  @override
+  String get treeEmpty =>
+      'Nothing in the tree yet. A model that is not here never runs when recognising: add one from the panel on the right.';
+
+  @override
+  String get treeSearchModel => 'Search a model';
+
+  @override
+  String get treeAvailableModels => 'Models';
+
+  @override
+  String get treeAllInTree => 'They are all in the tree already.';
+
+  @override
+  String get treeNoModels => 'There are no models yet.';
+
+  @override
+  String get treeRemoveNode => 'Take out of the tree';
+
+  @override
+  String get treeNodeNotTrained => 'Not trained';
+
+  @override
+  String get treeAddAsRoot => 'Add on its own';
+
+  @override
+  String treeAddAsChild(String parent) {
+    return 'Hang from «$parent»';
+  }
+
+  @override
+  String treeSelectedHint(String name) {
+    return '«$name» is selected: what you add from the panel hangs from it.';
+  }
+
+  @override
+  String get treeClearSelection => 'Deselect';
+
+  @override
+  String get treeEdgeAnyDetection => 'anything';
+
+  @override
+  String get treeEdgeConditionTitle => 'When does it run?';
+
+  @override
+  String treeEdgeConditionMessage(String child, String parent) {
+    return '«$child» only runs when «$parent» detects this. Without a fernie it runs on any detection, which means the specialised models run all the time: it works, but it is the thing to narrow down.';
+  }
+
+  @override
+  String get treeEdgeDisconnect => 'Unhook';
+
+  @override
+  String get treeFitToView => 'Fit to view';
+
+  @override
+  String get treeZoomIn => 'Zoom in';
+
+  @override
+  String get treeZoomOut => 'Zoom out';
+
+  @override
+  String get treeCannotConnect =>
+      'That cannot be hooked up: it would make the tree bite its own tail.';
+
+  @override
+  String treeOutsideCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count models outside the tree',
+      one: '1 model outside the tree',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get viewerFavorite => 'Mark as favourite';
 
   @override

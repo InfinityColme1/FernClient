@@ -1,6 +1,58 @@
 class AppSizes {
   // Border Radius
   static const double radiusSmall = 8.0;
+
+  /// El ancho fijo de la etiqueta y del número de una métrica.
+  ///
+  /// Fijos para que las cuatro barras empiecen en la misma vertical: si cada una
+  /// arranca donde termina su texto, la comparación de un vistazo se pierde.
+  static const double metricLabelWidth = 88.0;
+  static const double metricValueWidth = 36.0;
+  static const double metricBarHeight = 8.0;
+
+  /// Lo que ocupa el botón de entrenar al lado de los presets.
+  ///
+  /// Fijo para que no encoja cuando el texto cambia de «Entrenar modelo» a
+  /// «Volver a entrenar», ni se estire a media pantalla en una ventana ancha.
+  static const double trainingActionWidth = 220.0;
+
+  /// Lo que ocupa una tarjeta del árbol de modelos y el hueco entre ellas.
+  ///
+  /// Fijas para que la rejilla se pueda calcular sin medir: dónde cae cada nodo
+  /// sale de su fila y su columna, y las aristas se dibujan con esas mismas
+  /// cuentas. Con tarjetas de alto variable habría que medirlas todas antes de
+  /// poder pintar una sola línea.
+  static const double treeNodeWidth = 200.0;
+  static const double treeNodeHeight = 92.0;
+  static const double treeColumnGap = 40.0;
+  static const double treeRowGap = 72.0;
+
+  /// El relleno de la etiqueta que lleva una arista encima.
+  static const double treeLabelPadding = 6.0;
+
+  /// Lo ancho que es el panel de modelos de la derecha.
+  static const double treeSidePanelWidth = 300.0;
+
+  /// Lo alta que puede ser la lista de clases del diálogo de una arista.
+  ///
+  /// Un modelo puede tener veinte fernies: sin tope, el diálogo se sale de la
+  /// ventana antes de llegar a los botones.
+  static const double edgeConditionListHeight = 320.0;
+
+  /// El diálogo con las imágenes de la run.
+  ///
+  /// Ancho porque lo que enseña son gráficas de ultralytics con ejes y
+  /// etiquetas: en una columna estrecha no se lee ninguna.
+  static const double runImagesDialogWidth = 900.0;
+  static const double runImagesDialogHeight = 560.0;
+
+  /// Lo que ocupa el marco de un diálogo alrededor de su contenido.
+  ///
+  /// El margen que `Dialog` deja contra la ventana, el relleno de dentro y la
+  /// fila del aspa. Hace falta para poder decir cuánto alto le queda de verdad
+  /// al contenido: un diálogo con alto fijo desborda en cuanto la ventana es
+  /// más baja de lo que alguien supuso al escribirlo.
+  static const double dialogChromeHeight = 180.0;
   static const double radiusMedium = 12.0;
   static const double radiusLarge = 16.0;
   static const double radiusExtraLarge = 25.0; 

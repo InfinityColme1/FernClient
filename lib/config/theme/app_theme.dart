@@ -80,8 +80,20 @@ class AppTheme {
         ).copyWith(mouseCursor: _clickable),
       ),
 
+      // Un botón de texto se pinta, de fábrica, con el primario del esquema de
+      // color. Y el primario de FeRN es el lavanda con el que están pintadas las
+      // propias superficies: sobre una de ellas, el texto del botón se leía
+      // exactamente igual que uno deshabilitado. Con el acento se lee y además
+      // dice que se puede pulsar.
       textButtonTheme: TextButtonThemeData(
-        style: const ButtonStyle(mouseCursor: _clickable),
+        style: ButtonStyle(
+          mouseCursor: _clickable,
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.disabled)
+                ? palette.unremarked
+                : palette.terciary;
+          }),
+        ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(

@@ -69,7 +69,7 @@ class FernDialogSidePanel extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.s),
       const Divider(thickness: 2),
-      ?footer,
+      if (footer != null) footer!,
     ];
   }
 
@@ -96,7 +96,7 @@ class FernDialogSidePanel extends StatelessWidget {
           ),
         ),
       ),
-      ?footer,
+      if (footer != null) footer!,
     ];
   }
 }

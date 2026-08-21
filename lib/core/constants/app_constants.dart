@@ -31,6 +31,20 @@ String fernieManagerRouteWithFernie(int fernieId) =>
 const repeatedMediaRoute = '/repeated-media';
 const modelsRoute = '/models';
 
+/// El árbol que decide en qué orden se ejecutan los modelos.
+///
+/// Se llega desde el botón de la pantalla de modelos y no desde el menú lateral:
+/// es una vista **de** los modelos, no un sitio aparte de la aplicación.
+const modelTreeRoute = 'tree';
+
+String modelTreePath() => '$modelsRoute/$modelTreeRoute';
+
+/// El detalle de un modelo. Cuelga de la rejilla, así que la flecha de volver
+/// lleva a ella sin tener que decírselo.
+const modelDetailRoute = 'detail/:id';
+
+String modelDetailPath(int id) => '$modelsRoute/detail/$id';
+
 /// El navegador de dentro de la aplicación. Es una prueba: si no convence, se
 /// quita esta ruta, su botón del menú y la carpeta `features/browser`, y la
 /// aplicación se queda como estaba.
@@ -101,10 +115,11 @@ final unknownTag = TagEntity(id: 0, name: "Unknown", children: []);
 /// resuelve sola.
 const firstSchemaVersion = 1;
 
-/// La 3 añade las colecciones de fernies y de sus regiones. Son colecciones
-/// nuevas, así que Isar las crea sola y no hay ninguna migración que escribir:
-/// el número sube igual para dejar constancia de que el esquema no es el mismo.
-const currentSchemaVersion = 3;
+/// La 3 añade las colecciones de fernies y de sus regiones; la 4, las de los
+/// modelos de reconocimiento y sus fernies asignados. Son colecciones nuevas,
+/// así que Isar las crea sola y no hay ninguna migración que escribir: el número
+/// sube igual para dejar constancia de que el esquema no es el mismo.
+const currentSchemaVersion = 4;
 
 // Preferences keys
 /// Hasta qué versión se ha puesto al día la base de datos de este equipo.
@@ -1006,6 +1021,104 @@ const fernieMarkMaxNames = 3;
 /// (`MediaPlaybackController.frameTolerance`, medio fotograma): esto es sólo el
 /// respaldo de mientras.
 const fernieFrameTolerance = Duration(milliseconds: 20);
+
+/// La barra con la que se reparte lo marcado de un fernie entre entrenar,
+/// validar y probar.
+const splitBarHeight = 10.0;
+
+/// Cuándo avisar de que un fernie no da para entrenar.
+///
+/// Por debajo de [minRegionsPerClass] no hay con qué: el entrenamiento arranca y
+/// no aprende nada. Por debajo de [lowRegionsPerClass] aprende poco. Y con menos
+/// de [minMediaPerClass] contenidos distintos aprende **el fondo** en vez del
+/// objeto, que es el aviso más importante de los tres porque no se ve en las
+/// métricas: salen bien y luego falla con todo lo demás.
+const minRegionsPerClass = 10;
+
+/// Los límites de los mandos de dentro del entrenamiento.
+///
+/// No son caprichos: por debajo de diez épocas no aprende nada y por encima de
+/// mil se está tirando el tiempo; el tamaño de imagen va de treinta y dos en
+/// treinta y dos porque es con lo que trabaja YOLO, y un número cualquiera lo
+/// redondearía por su cuenta.
+const minTrainingEpochs = 10;
+const maxTrainingEpochs = 1000;
+const minTrainingImageSize = 320;
+const maxTrainingImageSize = 1280;
+const maxTrainingBatch = 64;
+
+/// A partir de cuántas veces se da por desequilibrado un modelo.
+///
+/// Con diez a uno entre el fernie que más tiene y el que menos, el modelo
+/// aprende a contestar siempre el mayoritario: acierta el noventa por ciento de
+/// las veces sin haber aprendido nada, y las métricas le dan la razón.
+const maxClassImbalance = 10;
+
+const lowRegionsPerClass = 50;
+const minMediaPerClass = 5;
+
+/// Por debajo de qué acierto se avisa de que una clase ha salido mal.
+///
+/// No es un aprobado: es el punto a partir del cual el fernie va a fallar tanto
+/// que se nota usándolo, aunque la media del modelo sea buena.
+const weakClassThreshold = 0.5;
+
+/// Lo oscuro que va el disco de detrás de las flechas a pantalla completa.
+///
+/// Sobre una imagen clara, un icono blanco sin nada detrás no se ve; y a
+/// pantalla completa no hay margen gris que haga de fondo, como sí lo hay en la
+/// ventana. Lo justo para separarlo de la foto sin taparla.
+const fullscreenArrowScrimOpacity = 0.35;
+
+/// Lo transparente que va lo que se arrastra, y el hueco que deja atrás.
+///
+/// El hueco atenuado y no invisible: se ve de dónde salió, y si se suelta en un
+/// sitio que no lo acepta, el ojo ya sabe a dónde vuelve.
+const draggingFeedbackOpacity = 0.9;
+const draggingGhostOpacity = 0.35;
+
+/// Hasta dónde se puede acercar y alejar el lienzo del árbol, y de cuánto en
+/// cuánto.
+///
+/// El mismo reparto de gestos que el modo fernie: rueda para el zoom, arrastre
+/// para desplazar. Dos convenciones distintas en la misma aplicación es lo que
+/// hace que ninguna se recuerde.
+const treeMinZoom = 0.3;
+const treeMaxZoom = 2.0;
+const treeZoomStep = 1.25;
+
+/// Por debajo de qué zoom las tarjetas dejan el detalle y se quedan con el
+/// nombre. A ese tamaño lo demás no se lee y sólo emborrona.
+const treeSimplifyBelow = 0.5;
+
+/// El grosor de las aristas del árbol de modelos, y el tamaño de su punta.
+///
+/// La punta no es adorno: dos nodos unidos por una línea a secas no dicen en qué
+/// orden se ejecutan, y el orden es lo único que el árbol decide.
+const treeEdgeWidth = 2.0;
+const treeArrowSize = 10.0;
+
+/// Lo ancha que puede ser la etiqueta de una arista antes de cortarse.
+///
+/// Es el nombre de un fernie: más allá de esto tapa la tarjeta de al lado, y lo
+/// que hace falta saber es cuál, no leerlo entero.
+const treeEdgeLabelMaxWidth = 140.0;
+
+/// A partir de qué ancho las filas de fernie de un modelo van de dos en dos.
+///
+/// Una fila es alta —nombre, recuentos, aviso y barra de reparto—, así que en
+/// una ventana ancha a una sola columna sobra la mitad del papel. Por debajo de
+/// esta cifra la barra de reparto se queda sin sitio para arrastrarla.
+const fernieRowsTwoColumnsWidth = 900.0;
+
+/// Lo que ocupa una tarjeta de la rejilla de modelos.
+///
+/// La rejilla se reparte por ancho máximo y no por número de columnas: la
+/// ventana cambia de tamaño, y con un número fijo las tarjetas salen enormes en
+/// pantalla ancha y espachurradas en estrecha. El alto va fijo porque todas
+/// llevan lo mismo: cara, nombre, función, recuentos y estado.
+const modelCardWidth = 220.0;
+const modelCardHeight = 280.0;
 
 /// Alto de la ficha de la pantalla de gestión de creadores.
 ///

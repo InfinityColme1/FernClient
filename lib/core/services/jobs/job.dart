@@ -67,6 +67,24 @@ class Job extends Equatable {
   /// contenidos que se reconocen. La cola no lo mira, sólo lo transporta.
   final Map<String, Object?> payload;
 
+  /// La clave con la que un trabajo puede decir **sobre qué** va.
+  ///
+  /// Está aquí y no en quien lo encola para que la lista de tareas pueda
+  /// enseñarlo sin saber de qué tipo de trabajo se trata: si supiera, tendría
+  /// que importar cada rincón de la aplicación que encola algo.
+  static const nameKey = 'displayName';
+
+  /// Sobre qué va este trabajo, si lo dijo al encolarse.
+  ///
+  /// Hace falta porque se pueden encolar varios del mismo tipo: «Entrenando
+  /// modelo» tres veces seguidas no distingue cuál se está parando al pulsar el
+  /// aspa.
+  String? get name {
+    final value = payload[nameKey];
+
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
   final DateTime createdAt;
   final DateTime? startedAt;
   final DateTime? finishedAt;

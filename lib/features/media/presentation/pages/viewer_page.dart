@@ -886,6 +886,31 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                       ),
                     ),
 
+                    // A pantalla completa las flechas se ponen **encima** del
+                    // contenido en vez de a los lados. Ahí el contenido va de
+                    // borde a borde, y quitarle cien píxeles para hacerles sitio
+                    // es justo lo contrario de lo que se pide al entrar; pero
+                    // sin ellas no hay forma de pasar al siguiente sin salir.
+                    //
+                    // Los huecos de la fila siguen ahí, encogidos: sacar y
+                    // volver a meter hijos en esa fila cambia de sitio al
+                    // `Expanded` del contenido, y eso rehace el reproductor de
+                    // vídeo entero.
+                    if (_isFullscreen && !fernieState.isFernieMode) ...[
+                      _buildOverlayArrow(
+                        asset: icLeft,
+                        isLeading: true,
+                        isVisible: showControls,
+                        onPressed: () => _goTo(next: false),
+                      ),
+                      _buildOverlayArrow(
+                        asset: icRight,
+                        isLeading: false,
+                        isVisible: showControls,
+                        onPressed: () => _goTo(next: true),
+                      ),
+                    ],
+
                     // Panel de herramientas, sólo en el modo de marcar.
                     if (fernieState.isFernieMode)
                       _buildToolPanel(fernieState, isVisible: showControls),
@@ -1247,6 +1272,40 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
               onPressed: onPressed,
               icon: Image.asset(asset, width: AppSizes.buttonHeightSmall),
             ),
+    );
+  }
+
+  /// Una flecha de pasar de contenido, puesta sobre el propio contenido.
+  ///
+  /// Es la de pantalla completa. Lleva su propia sombra por detrás porque encima
+  /// de una imagen clara un icono blanco no se ve, y ahí no hay margen gris que
+  /// haga de fondo como en la ventana.
+  Widget _buildOverlayArrow({
+    required String asset,
+    required bool isLeading,
+    required bool isVisible,
+    required VoidCallback onPressed,
+  }) {
+    return Positioned(
+      left: isLeading ? AppSpacing.l : null,
+      right: isLeading ? null : AppSpacing.l,
+      top: 0,
+      bottom: 0,
+      child: Center(
+        child: FernFadingControls(
+          isVisible: isVisible,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: fullscreenArrowScrimOpacity),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: onPressed,
+              icon: Image.asset(asset, width: AppSizes.buttonHeightSmall),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

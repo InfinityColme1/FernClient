@@ -97,6 +97,163 @@
   "viewerPauseWhenSeeking": "Mettre en pause en saisissant la barre",
   "viewerPauseWhenSeekingDescription": "La vidéo s’arrête dès que vous saisissez la barre et reste où vous la laissez. Désactivé, elle continue depuis l’endroit où vous la relâchez. Le marquage de régions met toujours en pause, quoi qu’en dise ce réglage : une région se marque sur une image fixe.",
   "fernieUndo": "Annuler la dernière région marquée",
+  "createTooltip": "Créer",
+  "menuNewModel": "Nouveau modèle",
+  "newModelTitle": "Nouveau modèle",
+  "modelNameLabel": "Nom du modèle",
+  "modelFunctionLabel": "Ce à quoi il répond",
+  "modelFunctionBoolean": "Est-ce présent ?",
+  "modelFunctionBooleanDescription": "Dit si chacun de ses fernies est dans le contenu. Avec plusieurs, il répond pour chacun séparément.",
+  "modelFunctionClassification": "Lequel est-ce ?",
+  "modelFunctionClassificationDescription": "Distingue ses fernies et dit lequel il a trouvé, et où. Il lui en faut au moins deux : avec un seul, il n’y a pas de choix.",
+  "modelsTitle": "Modèles",
+  "modelsEmpty": "Pas encore de modèles",
+  "modelStatusUntrained": "Non entraîné",
+  "modelStatusTraining": "Entraînement",
+  "modelStatusReady": "Prêt",
+  "modelStatusFailed": "L’entraînement a échoué",
+  "modelDegradedNotice": "Avec un seul fernie il n’y a pas de choix, alors il répond s’il est là ou non. Ajoutez-en un autre pour qu’il les distingue.",
+  "modelRegionCount": "{count, plural, =0{aucune région} =1{1 région} other{{count} régions}}",
+  "@modelRegionCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFernieCount": "{count, plural, =0{aucun fernie} =1{1 fernie} other{{count} fernies}}",
+  "@modelFernieCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelDeleteTitle": "Supprimer ce modèle ?",
+  "modelDeleteMessage": "Ses fernies restent où ils sont : ils sont à vous, pas au modèle. Ce qui se perd, c’est ce qu’il avait appris : les poids, les graphiques de l’entraînement et tout ce qu’il a laissé sur le disque.",
+  "splitTrain": "Entraîner",
+  "splitValidation": "Valider",
+  "splitTest": "Tester",
+  "modelRemoveFernie": "Retirer de ce modèle",
+  "modelMediaCount": "{count, plural, =0{aucun contenu} =1{1 contenu} other{{count} contenus}}",
+  "@modelMediaCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewRegions": "Moins de {count} régions : pas de quoi entraîner",
+  "@modelTooFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFewRegions": "Moins de {count} régions : il apprendra peu",
+  "@modelFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewMedia": "Trop peu de contenus différents : il apprendra le fond",
+  "modelAssignedFernies": "Fernies assignés",
+  "modelAddFernie": "Ajouter un fernie",
+  "modelNoFernies": "Un modèle sans fernies n’a rien à apprendre. Ajoutez-en au moins un.",
+  "modelApplySplitToAll": "Appliquer cette répartition à tous",
+  "modelRetrainNotice": "Changer les fernies d’un modèle entraîné oblige à le réentraîner : ses poids ne veulent plus dire la même chose.",
+  "modelSaved": "Enregistré",
+  "trainingTitle": "Entraînement",
+  "presetFast": "Rapide",
+  "presetFastDescription": "Pour voir si l’idée fonctionne avant de laisser la machine tourner toute la nuit. Aussi le choix raisonnable sans carte graphique.",
+  "presetBalanced": "Équilibré",
+  "presetBalancedDescription": "Ce qu’on veut la plupart du temps : de quoi utiliser le modèle pour de vrai.",
+  "presetAccurate": "Soigné",
+  "presetAccurateDescription": "Quand il y a déjà beaucoup de régions et que le modèle compte. Prend un bon moment.",
+  "presetCustom": "Personnalisé",
+  "presetCustomDescription": "Les réglages ne correspondent à aucun de ceux du dessus : les vôtres l’emportent.",
+  "trainingAdvanced": "Avancé",
+  "trainingEpochsLabel": "Époques",
+  "trainingImageSizeLabel": "Taille d’image",
+  "trainingBatchLabel": "Lot",
+  "trainingBatchAuto": "-1 le laisse décider",
+  "trainingBackboneIs": "Réseau : {backbone}",
+  "@trainingBackboneIs": {
+    "placeholders": { "backbone": { "type": "String" } }
+  },
+  "trainingStart": "Entraîner le modèle",
+  "trainingRetrain": "Réentraîner",
+  "trainingPreparing": "Préparation du matériel...",
+  "trainingEpoch": "Époque {done} sur {total}",
+  "@trainingEpoch": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "trainingRemaining": "Environ {minutes} min restantes",
+  "@trainingRemaining": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "trainingEngineNotReady": "Le moteur de reconnaissance n’est pas encore installé. Il se prépare depuis les réglages.",
+  "trainingNoValidation": "ne laisse rien pour valider : l’entraînement ne saura pas quand s’arrêter",
+  "trainingImbalanced": "Un fernie a plus de {count} fois les régions d’un autre : le modèle apprendra à toujours répondre le majoritaire",
+  "@trainingImbalanced": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "trainingQueued": "Entraînement en file",
+  "metricsLastTraining": "Dernier entraînement",
+  "metricMap50": "mAP50",
+  "metricMap50to95": "mAP50-95",
+  "metricPrecision": "Précision",
+  "metricRecall": "Rappel",
+  "metricsPerClass": "Par fernie",
+  "metricsConfusionMatrix": "Matrice de confusion",
+  "metricsCurves": "Courbes",
+  "metricsOpenRunFolder": "Ouvrir le dossier de la run",
+  "metricsRunFolderMissing": "Ce dossier n’existe plus.",
+  "metricsRunImagesMissing": "Ces images ne sont plus dans le dossier de la run. Le supprimer ne casse pas le modèle : les poids suffisent pour reconnaître.",
+  "metricsNotTrainedYet": "Pas encore entraîné.",
+  "metricsImportedWeights": "Les poids viennent de l’extérieur : il n’y a pas de métriques d’entraînement.",
+  "metricsRetry": "Réessayer",
+  "metricsRealPerformance": "Performance réelle",
+  "metricsRealPerformanceEmpty": "Pas encore de données. On compte combien de suggestions de ce modèle vous acceptez et rejetez à l’import : la seule mesure honnête de son utilité.",
+  "modelImportWeights": "Importer des poids",
+  "modelImportWeightsHint": "Un fichier .pt entraîné ailleurs. Il est copié dans le dossier de reconnaissance pour qu’il ne disparaisse pas sous le modèle.",
+  "modelImportWeightsInvalid": "Ces poids n’ont pas pu être lus : {error}",
+  "@modelImportWeightsInvalid": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "modelImportWeightsDone": "Poids importés : {classes}",
+  "@modelImportWeightsDone": {
+    "placeholders": { "classes": { "type": "String" } }
+  },
+  "modelImportedBadge": "Poids importés",
+  "trainingFailedEngineStopped": "Le moteur de reconnaissance s’est arrêté en cours de route. Réessayez ; si cela se reproduit, la machine manque sans doute de mémoire : baissez la taille d’image ou le lot dans « Avancé ».",
+  "trainingFailedOutOfMemory": "Plus de mémoire disponible. Baissez le lot ou la taille d’image dans « Avancé » et réessayez.",
+  "trainingFailedDataset": "Le matériel n’a pas pu être préparé. Des contenus ont peut-être été déplacés ou supprimés depuis que les régions ont été marquées.",
+  "trainingFailedWeights": "Les poids de départ manquent et n’ont pas pu être téléchargés. Vérifiez la connexion, ou importez vos propres poids.",
+  "trainingFailedNoSpace": "Pas assez de place sur le disque. Un jeu de données vidéo, ce sont des milliers d’images : il faut quelques gigas libres.",
+  "trainingFailedUnknown": "L’entraînement a échoué.",
+  "jobTrainingModel": "Entraînement de « {model} »",
+  "@jobTrainingModel": {
+    "placeholders": { "model": { "type": "String" } }
+  },
+  "jobsNone": "Rien en cours",
+  "treeTitle": "Arbre de modèles",
+  "treeOpen": "Arbre",
+  "treeEmpty": "Rien dans l’arbre pour l’instant. Un modèle qui n’y est pas ne s’exécute jamais à la reconnaissance : ajoutez-en un depuis le panneau de droite.",
+  "treeSearchModel": "Chercher un modèle",
+  "treeAvailableModels": "Modèles",
+  "treeAllInTree": "Ils sont déjà tous dans l’arbre.",
+  "treeNoModels": "Il n’y a pas encore de modèles.",
+  "treeRemoveNode": "Retirer de l’arbre",
+  "treeNodeNotTrained": "Pas entraîné",
+  "treeAddAsRoot": "Ajouter seul",
+  "treeAddAsChild": "Rattacher à « {parent} »",
+  "@treeAddAsChild": {
+    "placeholders": { "parent": { "type": "String" } }
+  },
+  "treeSelectedHint": "« {name} » est sélectionné : ce que vous ajoutez depuis le panneau lui sera rattaché.",
+  "@treeSelectedHint": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "treeClearSelection": "Désélectionner",
+  "treeEdgeAnyDetection": "n’importe quoi",
+  "treeEdgeConditionTitle": "Quand s’exécute-t-il ?",
+  "treeEdgeConditionMessage": "« {child} » ne s’exécute que lorsque « {parent} » détecte ceci. Sans fernie, il s’exécute à la moindre détection : les spécialisés tournent alors tout le temps. Ça marche, mais c’est ce qu’il faut affiner.",
+  "@treeEdgeConditionMessage": {
+    "placeholders": { "child": { "type": "String" }, "parent": { "type": "String" } }
+  },
+  "treeEdgeDisconnect": "Détacher",
+  "treeFitToView": "Ajuster à la vue",
+  "treeZoomIn": "Zoom avant",
+  "treeZoomOut": "Zoom arrière",
+  "treeCannotConnect": "Impossible de rattacher : l’arbre se mordrait la queue.",
+  "treeOutsideCount": "{count, plural, =1{1 modèle hors de l’arbre} other{{count} modèles hors de l’arbre}}",
+  "@treeOutsideCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "viewerFavorite": "Ajouter aux favoris",
   "viewerUnfavorite": "Retirer des favoris",
   "viewerCopied": "Copié dans le presse-papiers",

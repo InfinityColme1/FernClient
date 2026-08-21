@@ -66,9 +66,20 @@ class _FernPopupPanelState extends State<FernPopupPanel> {
 
     final anchorLeft = renderObject.localToGlobal(Offset.zero).dx;
     final maxLeft =
-        MediaQuery.sizeOf(context).width - widget.windowMargin - widget.width;
+        MediaQuery.sizeOf(context).width - widget.windowMargin - _panelWidth;
 
     return math.min<double>(0, maxLeft - anchorLeft);
+  }
+
+  /// Lo que ocupa el panel de verdad.
+  ///
+  /// [FernPopupPanel.width] es el ancho **del contenido**: el relleno va por
+  /// fuera. Midiendo con el del contenido, un panel con relleno lateral se salía
+  /// justo esos píxeles y se pegaba al borde de la ventana.
+  double get _panelWidth {
+    final padding = widget.padding.resolve(Directionality.of(context));
+
+    return widget.width + padding.horizontal;
   }
 
   void _toggle() {

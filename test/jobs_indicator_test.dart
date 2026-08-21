@@ -1,9 +1,10 @@
 // El indicador de trabajos en segundo plano.
 //
-// Lo que hay que sostener es que no ocupe sitio en la barra superior mientras no
-// haya nada que contar (es la razón de que se pueda meter en una cabecera que ya
-// va llena), que aparezca en cuanto lo hay, y que un fallo se siga viendo cuando
-// ya no queda nada corriendo.
+// Lo que hay que sostener es que **esté siempre y apagado** mientras no haya
+// nada que contar —aparecer y desaparecer movía los botones de al lado justo
+// cuando se iba a pulsar uno—, que se encienda en cuanto lo hay, que diga de qué
+// va cada trabajo, y que un fallo se siga viendo cuando ya no queda nada
+// corriendo.
 //
 // Tres cuidados propios de este widget:
 //
@@ -68,12 +69,32 @@ void main() {
     openQueue = null;
   });
 
-  testWidgets('sin nada en marcha no ocupa sitio', (tester) async {
+  /// Si el boton se puede pulsar.
+  bool canOpen(WidgetTester tester) =>
+      tester.widget<IconButton>(find.byType(IconButton)).onPressed != null;
+
+  testWidgets('sin nada en marcha esta, pero apagado', (tester) async {
     newQueue();
 
     await pumpIndicator(tester);
 
-    expect(find.byType(IconButton), findsNothing);
+    // Ocupa su sitio para que los botones de al lado no bailen, y en gris dice
+    // que no hay nada corriendo, que es informacion.
+    expect(find.byType(IconButton), findsOneWidget);
+    expect(canOpen(tester), isFalse);
+  });
+
+  testWidgets('apagado no abre nada', (tester) async {
+    newQueue();
+
+    await pumpIndicator(tester);
+    await tester.tap(find.byType(IconButton));
+    await tester.pump();
+
+    final texts = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Un panel que solo dice «no hay nada» es un clic tirado.
+    expect(find.text(texts.jobsTitle), findsNothing);
   });
 
   testWidgets('aparece mientras hay algo corriendo y dice por dónde va',
@@ -88,12 +109,16 @@ void main() {
     });
 
     await pumpIndicator(tester);
-    expect(find.byType(IconButton), findsNothing);
+    expect(canOpen(tester), isFalse);
 
-    final id = queue.enqueue(type: JobType.training, total: 8);
+    final id = queue.enqueue(
+      type: JobType.training,
+      total: 8,
+      payload: const {Job.nameKey: 'Figuras de prueba'},
+    );
     await settleQueue(tester);
 
-    expect(find.byType(IconButton), findsOneWidget);
+    expect(canOpen(tester), isTrue);
 
     await tester.tap(find.byType(IconButton));
     await tester.pump();
@@ -102,8 +127,14 @@ void main() {
     final texts = await AppLocalizations.delegate.load(const Locale('en'));
 
     expect(find.text(texts.jobsTitle), findsOneWidget);
-    expect(find.text(texts.jobTraining), findsOneWidget);
     expect(find.text(texts.jobProgress(2, 8)), findsOneWidget);
+
+    // De que modelo: se pueden encolar varios, y «Entrenando modelo» tres veces
+    // seguidas no distingue cual se esta parando al pulsar el aspa.
+    expect(
+      find.text(texts.jobTrainingModel('Figuras de prueba')),
+      findsOneWidget,
+    );
 
     // El aspa de la fila para ese trabajo.
     await tester.tap(find.widgetWithIcon(IconButton, Icons.close));
@@ -132,7 +163,7 @@ void main() {
     await settleQueue(tester);
     await settleQueue(tester);
 
-    expect(find.byType(IconButton), findsOneWidget);
+    expect(canOpen(tester), isTrue);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
   });
 }

@@ -323,6 +323,415 @@ class AppLocalizationsCa extends AppLocalizations {
   String get fernieUndo => 'Desfer l’última regió marcada';
 
   @override
+  String get createTooltip => 'Crear';
+
+  @override
+  String get menuNewModel => 'Nou model';
+
+  @override
+  String get newModelTitle => 'Nou model';
+
+  @override
+  String get modelNameLabel => 'Nom del model';
+
+  @override
+  String get modelFunctionLabel => 'Què respon';
+
+  @override
+  String get modelFunctionBoolean => 'Hi és?';
+
+  @override
+  String get modelFunctionBooleanDescription =>
+      'Diu si cadascun dels seus fernies és al contingut. Amb uns quants, contesta per cadascun per separat.';
+
+  @override
+  String get modelFunctionClassification => 'Quin és?';
+
+  @override
+  String get modelFunctionClassificationDescription =>
+      'Distingeix entre els seus fernies i diu quin ha trobat, i on. En necessita almenys dos: amb un no hi ha entre què triar.';
+
+  @override
+  String get modelsTitle => 'Models';
+
+  @override
+  String get modelsEmpty => 'Encara no hi ha models';
+
+  @override
+  String get modelStatusUntrained => 'Sense entrenar';
+
+  @override
+  String get modelStatusTraining => 'Entrenant';
+
+  @override
+  String get modelStatusReady => 'Llest';
+
+  @override
+  String get modelStatusFailed => 'L’entrenament ha fallat';
+
+  @override
+  String get modelDegradedNotice =>
+      'Amb un sol fernie no hi ha entre què triar, així que respon si hi és o no. Afegeix-ne un altre perquè els distingeixi.';
+
+  @override
+  String modelRegionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count regions',
+      one: '1 regió',
+      zero: 'sense regions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modelFernieCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fernies',
+      one: '1 fernie',
+      zero: 'sense fernies',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get modelDeleteTitle => 'Voleu esborrar aquest model?';
+
+  @override
+  String get modelDeleteMessage =>
+      'Els seus fernies es queden on són: són teus, no del model. El que es perd és el que havia après: els pesos, els gràfics de l’entrenament i tot el que va deixar al disc.';
+
+  @override
+  String get splitTrain => 'Entrenar';
+
+  @override
+  String get splitValidation => 'Validar';
+
+  @override
+  String get splitTest => 'Provar';
+
+  @override
+  String get modelRemoveFernie => 'Treure d’aquest model';
+
+  @override
+  String modelMediaCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts',
+      one: '1 contingut',
+      zero: 'sense continguts',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modelTooFewRegions(int count) {
+    return 'Menys de $count regions: no dona per entrenar';
+  }
+
+  @override
+  String modelFewRegions(int count) {
+    return 'Menys de $count regions: aprendrà poc';
+  }
+
+  @override
+  String get modelTooFewMedia => 'Pocs continguts diferents: aprendrà el fons';
+
+  @override
+  String get modelAssignedFernies => 'Fernies assignats';
+
+  @override
+  String get modelAddFernie => 'Afegir fernie';
+
+  @override
+  String get modelNoFernies =>
+      'Un model sense fernies no té res a aprendre. Afegeix-ne almenys un.';
+
+  @override
+  String get modelApplySplitToAll => 'Aplicar aquest repartiment a tots';
+
+  @override
+  String get modelRetrainNotice =>
+      'Canviar els fernies d’un model entrenat obliga a tornar-lo a entrenar: els seus pesos ja no signifiquen el mateix.';
+
+  @override
+  String get modelSaved => 'Desat';
+
+  @override
+  String get trainingTitle => 'Entrenament';
+
+  @override
+  String get presetFast => 'Ràpid';
+
+  @override
+  String get presetFastDescription =>
+      'Per veure si la idea funciona abans de deixar l’equip tota la nit. També el raonable sense targeta gràfica.';
+
+  @override
+  String get presetBalanced => 'Equilibrat';
+
+  @override
+  String get presetBalancedDescription =>
+      'El que es vol gairebé sempre: dona per fer servir el model de debò.';
+
+  @override
+  String get presetAccurate => 'Acurat';
+
+  @override
+  String get presetAccurateDescription =>
+      'Quan ja hi ha moltes regions i el model importa. Triga una bona estona.';
+
+  @override
+  String get presetCustom => 'Personalitzat';
+
+  @override
+  String get presetCustomDescription =>
+      'Els comandaments no coincideixen amb cap dels de dalt, així que manen els teus.';
+
+  @override
+  String get trainingAdvanced => 'Avançat';
+
+  @override
+  String get trainingEpochsLabel => 'Èpoques';
+
+  @override
+  String get trainingImageSizeLabel => 'Mida d’imatge';
+
+  @override
+  String get trainingBatchLabel => 'Lot';
+
+  @override
+  String get trainingBatchAuto => '-1 deixa que ho decideixi ell';
+
+  @override
+  String trainingBackboneIs(String backbone) {
+    return 'Xarxa: $backbone';
+  }
+
+  @override
+  String get trainingStart => 'Entrenar model';
+
+  @override
+  String get trainingRetrain => 'Tornar a entrenar';
+
+  @override
+  String get trainingPreparing => 'Preparant el material...';
+
+  @override
+  String trainingEpoch(int done, int total) {
+    return 'Època $done de $total';
+  }
+
+  @override
+  String trainingRemaining(int minutes) {
+    return 'Queden uns $minutes min';
+  }
+
+  @override
+  String get trainingEngineNotReady =>
+      'El motor de reconeixement encara no està instal·lat. Es prepara des dels ajustos.';
+
+  @override
+  String get trainingNoValidation =>
+      'no deixa res per validar, així que l’entrenament no sabrà quan aturar-se';
+
+  @override
+  String trainingImbalanced(int count) {
+    return 'Un fernie té més de $count vegades les regions d’un altre: el model aprendrà a contestar sempre el majoritari';
+  }
+
+  @override
+  String get trainingQueued => 'Entrenament a la cua';
+
+  @override
+  String get metricsLastTraining => 'Últim entrenament';
+
+  @override
+  String get metricMap50 => 'mAP50';
+
+  @override
+  String get metricMap50to95 => 'mAP50-95';
+
+  @override
+  String get metricPrecision => 'Precisió';
+
+  @override
+  String get metricRecall => 'Recall';
+
+  @override
+  String get metricsPerClass => 'Per fernie';
+
+  @override
+  String get metricsConfusionMatrix => 'Matriu de confusió';
+
+  @override
+  String get metricsCurves => 'Corbes';
+
+  @override
+  String get metricsOpenRunFolder => 'Obrir carpeta de la run';
+
+  @override
+  String get metricsRunFolderMissing => 'Aquesta carpeta ja no hi és.';
+
+  @override
+  String get metricsRunImagesMissing =>
+      'Aquestes imatges ja no són a la carpeta de la run. Esborrar-la no trenca el model: els pesos són l’únic que cal per reconèixer.';
+
+  @override
+  String get metricsNotTrainedYet => 'Encara sense entrenar.';
+
+  @override
+  String get metricsImportedWeights =>
+      'Els pesos vénen de fora, així que no hi ha mètriques d’entrenament.';
+
+  @override
+  String get metricsRetry => 'Tornar-ho a provar';
+
+  @override
+  String get metricsRealPerformance => 'Rendiment real';
+
+  @override
+  String get metricsRealPerformanceEmpty =>
+      'Encara sense dades. Compta quants suggeriments d’aquest model acceptes i quants rebutges en importar, que és l’única mesura honesta de si serveix.';
+
+  @override
+  String get modelImportWeights => 'Importar pesos';
+
+  @override
+  String get modelImportWeightsHint =>
+      'Un fitxer .pt entrenat en un altre lloc. Es copia a la carpeta de reconeixement perquè no desaparegui per sota del model.';
+
+  @override
+  String modelImportWeightsInvalid(String error) {
+    return 'No s’han pogut llegir aquests pesos: $error';
+  }
+
+  @override
+  String modelImportWeightsDone(String classes) {
+    return 'Pesos importats: $classes';
+  }
+
+  @override
+  String get modelImportedBadge => 'Pesos importats';
+
+  @override
+  String get trainingFailedEngineStopped =>
+      'El motor de reconeixement es va aturar a mitja feina. Torna-ho a provar; si es repeteix, el més probable és que l’equip s’estigui quedant sense memòria: abaixa la mida d’imatge o el lot a «Avançat».';
+
+  @override
+  String get trainingFailedOutOfMemory =>
+      'Es va quedar sense memòria. Abaixa el lot o la mida d’imatge a «Avançat» i torna-ho a provar.';
+
+  @override
+  String get trainingFailedDataset =>
+      'No s’ha pogut preparar el material. Pot ser que algun contingut s’hagi mogut o esborrat des que es van marcar les regions.';
+
+  @override
+  String get trainingFailedWeights =>
+      'Falten els pesos de partida i no s’han pogut descarregar. Comprova la connexió, o importa uns pesos teus.';
+
+  @override
+  String get trainingFailedNoSpace =>
+      'No hi cap al disc. Un conjunt de vídeo són milers de fotogrames, així que calen uns quants gigues lliures.';
+
+  @override
+  String get trainingFailedUnknown => 'L’entrenament ha fallat.';
+
+  @override
+  String jobTrainingModel(String model) {
+    return 'Entrenant «$model»';
+  }
+
+  @override
+  String get jobsNone => 'Res en marxa';
+
+  @override
+  String get treeTitle => 'Arbre de models';
+
+  @override
+  String get treeOpen => 'Arbre';
+
+  @override
+  String get treeEmpty =>
+      'Encara no hi ha res a l’arbre. Un model que no hi sigui no s’executa mai en reconèixer: posa-n’hi un des del plafó de la dreta.';
+
+  @override
+  String get treeSearchModel => 'Cercar model';
+
+  @override
+  String get treeAvailableModels => 'Models';
+
+  @override
+  String get treeAllInTree => 'Ja hi són tots, a l’arbre.';
+
+  @override
+  String get treeNoModels => 'Encara no hi ha models.';
+
+  @override
+  String get treeRemoveNode => 'Treure de l’arbre';
+
+  @override
+  String get treeNodeNotTrained => 'Sense entrenar';
+
+  @override
+  String get treeAddAsRoot => 'Posar sol';
+
+  @override
+  String treeAddAsChild(String parent) {
+    return 'Penjar de «$parent»';
+  }
+
+  @override
+  String treeSelectedHint(String name) {
+    return '«$name» està triat: el que hi posis des del plafó en penjarà.';
+  }
+
+  @override
+  String get treeClearSelection => 'Deixar';
+
+  @override
+  String get treeEdgeAnyDetection => 'qualsevol cosa';
+
+  @override
+  String get treeEdgeConditionTitle => 'Quan s’executa?';
+
+  @override
+  String treeEdgeConditionMessage(String child, String parent) {
+    return '«$child» només s’executa quan «$parent» detecta això. Sense fernie s’executa davant qualsevol detecció, que és tenir els especialitzats corrent tota l’estona: funciona, però és el que cal afinar.';
+  }
+
+  @override
+  String get treeEdgeDisconnect => 'Despenjar';
+
+  @override
+  String get treeFitToView => 'Ajustar a la vista';
+
+  @override
+  String get treeZoomIn => 'Apropar';
+
+  @override
+  String get treeZoomOut => 'Allunyar';
+
+  @override
+  String get treeCannotConnect =>
+      'Això no es pot penjar: l’arbre es mossegaria la cua.';
+
+  @override
+  String treeOutsideCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count models fora de l’arbre',
+      one: '1 model fora de l’arbre',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get viewerFavorite => 'Marca com a preferit';
 
   @override

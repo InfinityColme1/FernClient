@@ -147,6 +147,163 @@
   "viewerPauseWhenSeeking": "Pause when you take hold of the bar",
   "viewerPauseWhenSeekingDescription": "The video stops as soon as you take hold of the bar and stays where you leave it. Off, it carries on playing from wherever you drop it. Marking regions always pauses, whatever this says: a region is marked on a still frame.",
   "fernieUndo": "Undo the last region marked",
+  "createTooltip": "Create",
+  "menuNewModel": "New model",
+  "newModelTitle": "New model",
+  "modelNameLabel": "Model name",
+  "modelFunctionLabel": "What it answers",
+  "modelFunctionBoolean": "Is it there?",
+  "modelFunctionBooleanDescription": "Says whether each of its fernies is in the media. With several, it answers for each one on its own.",
+  "modelFunctionClassification": "Which one is it?",
+  "modelFunctionClassificationDescription": "Tells its fernies apart and says which one it found, and where. Needs at least two: there is nothing to choose between with one.",
+  "modelsTitle": "Models",
+  "modelsEmpty": "No models yet",
+  "modelStatusUntrained": "Not trained",
+  "modelStatusTraining": "Training",
+  "modelStatusReady": "Ready",
+  "modelStatusFailed": "Training failed",
+  "modelDegradedNotice": "With a single fernie there is nothing to choose between, so it answers whether it is there. Add another one to tell them apart.",
+  "modelRegionCount": "{count, plural, =0{no regions} =1{1 region} other{{count} regions}}",
+  "@modelRegionCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFernieCount": "{count, plural, =0{no fernies} =1{1 fernie} other{{count} fernies}}",
+  "@modelFernieCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelDeleteTitle": "Delete this model?",
+  "modelDeleteMessage": "Its fernies stay where they are: they belong to you, not to the model. What is lost is what it had learned: the weights, the training charts and everything it left on disk.",
+  "splitTrain": "Train",
+  "splitValidation": "Validate",
+  "splitTest": "Test",
+  "modelRemoveFernie": "Take out of this model",
+  "modelMediaCount": "{count, plural, =0{no media} =1{1 media} other{{count} media}}",
+  "@modelMediaCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewRegions": "Fewer than {count} regions: not enough to train",
+  "@modelTooFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFewRegions": "Fewer than {count} regions: it will learn little",
+  "@modelFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewMedia": "Too few different media: it will learn the background",
+  "modelAssignedFernies": "Assigned fernies",
+  "modelAddFernie": "Add fernie",
+  "modelNoFernies": "A model with no fernies has nothing to learn. Add at least one.",
+  "modelApplySplitToAll": "Apply this split to all",
+  "modelRetrainNotice": "Changing the fernies of a trained model means training it again: its weights no longer mean the same thing.",
+  "modelSaved": "Saved",
+  "trainingTitle": "Training",
+  "presetFast": "Quick",
+  "presetFastDescription": "To see whether the idea works before leaving the machine running all night. Also the sensible one without a graphics card.",
+  "presetBalanced": "Balanced",
+  "presetBalancedDescription": "What you want most of the time: enough to use the model for real.",
+  "presetAccurate": "Thorough",
+  "presetAccurateDescription": "When there are already plenty of regions and the model matters. Takes a good while.",
+  "presetCustom": "Custom",
+  "presetCustomDescription": "The settings do not match any of the above, so yours win.",
+  "trainingAdvanced": "Advanced",
+  "trainingEpochsLabel": "Epochs",
+  "trainingImageSizeLabel": "Image size",
+  "trainingBatchLabel": "Batch",
+  "trainingBatchAuto": "-1 lets it decide",
+  "trainingBackboneIs": "Network: {backbone}",
+  "@trainingBackboneIs": {
+    "placeholders": { "backbone": { "type": "String" } }
+  },
+  "trainingStart": "Train model",
+  "trainingRetrain": "Train again",
+  "trainingPreparing": "Preparing the dataset...",
+  "trainingEpoch": "Epoch {done} of {total}",
+  "@trainingEpoch": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "trainingRemaining": "About {minutes} min left",
+  "@trainingRemaining": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "trainingEngineNotReady": "The recognition engine is not installed yet. Set it up in settings.",
+  "trainingNoValidation": "nothing set aside to validate, so training cannot tell when to stop",
+  "trainingImbalanced": "One fernie has more than {count} times the regions of another: the model will learn to always answer the big one",
+  "@trainingImbalanced": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "trainingQueued": "Training queued",
+  "metricsLastTraining": "Last training",
+  "metricMap50": "mAP50",
+  "metricMap50to95": "mAP50-95",
+  "metricPrecision": "Precision",
+  "metricRecall": "Recall",
+  "metricsPerClass": "Per fernie",
+  "metricsConfusionMatrix": "Confusion matrix",
+  "metricsCurves": "Curves",
+  "metricsOpenRunFolder": "Open run folder",
+  "metricsRunFolderMissing": "That folder is no longer there.",
+  "metricsRunImagesMissing": "Those images are no longer in the run folder. Deleting it does not break the model: the weights are all it needs to recognise.",
+  "metricsNotTrainedYet": "Not trained yet.",
+  "metricsImportedWeights": "The weights come from outside, so there are no training metrics.",
+  "metricsRetry": "Try again",
+  "metricsRealPerformance": "Real performance",
+  "metricsRealPerformanceEmpty": "No data yet. It counts how many suggestions from this model you accept and reject while importing, which is the only honest measure of whether it works.",
+  "modelImportWeights": "Import weights",
+  "modelImportWeightsHint": "A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.",
+  "modelImportWeightsInvalid": "Those weights could not be read: {error}",
+  "@modelImportWeightsInvalid": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "modelImportWeightsDone": "Weights imported: {classes}",
+  "@modelImportWeightsDone": {
+    "placeholders": { "classes": { "type": "String" } }
+  },
+  "modelImportedBadge": "Imported weights",
+  "trainingFailedEngineStopped": "The recognition engine stopped mid-training. Try again; if it keeps happening, the machine is most likely running out of memory: lower the image size or the batch under Advanced.",
+  "trainingFailedOutOfMemory": "It ran out of memory. Lower the batch or the image size under Advanced and try again.",
+  "trainingFailedDataset": "The material could not be prepared. Some files may have moved or been deleted since the regions were marked.",
+  "trainingFailedWeights": "The starting weights are missing and could not be downloaded. Check the connection, or import weights of your own.",
+  "trainingFailedNoSpace": "There is not enough room on disk. A video dataset is thousands of frames, so it needs a few gigabytes free.",
+  "trainingFailedUnknown": "Training failed.",
+  "jobTrainingModel": "Training «{model}»",
+  "@jobTrainingModel": {
+    "placeholders": { "model": { "type": "String" } }
+  },
+  "jobsNone": "Nothing running",
+  "treeTitle": "Model tree",
+  "treeOpen": "Tree",
+  "treeEmpty": "Nothing in the tree yet. A model that is not here never runs when recognising: add one from the panel on the right.",
+  "treeSearchModel": "Search a model",
+  "treeAvailableModels": "Models",
+  "treeAllInTree": "They are all in the tree already.",
+  "treeNoModels": "There are no models yet.",
+  "treeRemoveNode": "Take out of the tree",
+  "treeNodeNotTrained": "Not trained",
+  "treeAddAsRoot": "Add on its own",
+  "treeAddAsChild": "Hang from «{parent}»",
+  "@treeAddAsChild": {
+    "placeholders": { "parent": { "type": "String" } }
+  },
+  "treeSelectedHint": "«{name}» is selected: what you add from the panel hangs from it.",
+  "@treeSelectedHint": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "treeClearSelection": "Deselect",
+  "treeEdgeAnyDetection": "anything",
+  "treeEdgeConditionTitle": "When does it run?",
+  "treeEdgeConditionMessage": "«{child}» only runs when «{parent}» detects this. Without a fernie it runs on any detection, which means the specialised models run all the time: it works, but it is the thing to narrow down.",
+  "@treeEdgeConditionMessage": {
+    "placeholders": { "child": { "type": "String" }, "parent": { "type": "String" } }
+  },
+  "treeEdgeDisconnect": "Unhook",
+  "treeFitToView": "Fit to view",
+  "treeZoomIn": "Zoom in",
+  "treeZoomOut": "Zoom out",
+  "treeCannotConnect": "That cannot be hooked up: it would make the tree bite its own tail.",
+  "treeOutsideCount": "{count, plural, =1{1 model outside the tree} other{{count} models outside the tree}}",
+  "@treeOutsideCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "viewerFavorite": "Mark as favourite",
   "viewerUnfavorite": "Remove from favourites",
   "viewerCopied": "Copied to the clipboard",

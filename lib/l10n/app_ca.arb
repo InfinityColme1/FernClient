@@ -97,6 +97,163 @@
   "viewerPauseWhenSeeking": "Aturar en agafar la barra",
   "viewerPauseWhenSeekingDescription": "El vídeo s’atura tan bon punt s’agafa la barra i es queda on es deixi. Apagat, continua reproduint-se des d’on es deixi. Marcar regions atura sempre, digui el que digui això: una regió es marca sobre un fotograma quiet.",
   "fernieUndo": "Desfer l’última regió marcada",
+  "createTooltip": "Crear",
+  "menuNewModel": "Nou model",
+  "newModelTitle": "Nou model",
+  "modelNameLabel": "Nom del model",
+  "modelFunctionLabel": "Què respon",
+  "modelFunctionBoolean": "Hi és?",
+  "modelFunctionBooleanDescription": "Diu si cadascun dels seus fernies és al contingut. Amb uns quants, contesta per cadascun per separat.",
+  "modelFunctionClassification": "Quin és?",
+  "modelFunctionClassificationDescription": "Distingeix entre els seus fernies i diu quin ha trobat, i on. En necessita almenys dos: amb un no hi ha entre què triar.",
+  "modelsTitle": "Models",
+  "modelsEmpty": "Encara no hi ha models",
+  "modelStatusUntrained": "Sense entrenar",
+  "modelStatusTraining": "Entrenant",
+  "modelStatusReady": "Llest",
+  "modelStatusFailed": "L’entrenament ha fallat",
+  "modelDegradedNotice": "Amb un sol fernie no hi ha entre què triar, així que respon si hi és o no. Afegeix-ne un altre perquè els distingeixi.",
+  "modelRegionCount": "{count, plural, =0{sense regions} =1{1 regió} other{{count} regions}}",
+  "@modelRegionCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFernieCount": "{count, plural, =0{sense fernies} =1{1 fernie} other{{count} fernies}}",
+  "@modelFernieCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelDeleteTitle": "Voleu esborrar aquest model?",
+  "modelDeleteMessage": "Els seus fernies es queden on són: són teus, no del model. El que es perd és el que havia après: els pesos, els gràfics de l’entrenament i tot el que va deixar al disc.",
+  "splitTrain": "Entrenar",
+  "splitValidation": "Validar",
+  "splitTest": "Provar",
+  "modelRemoveFernie": "Treure d’aquest model",
+  "modelMediaCount": "{count, plural, =0{sense continguts} =1{1 contingut} other{{count} continguts}}",
+  "@modelMediaCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewRegions": "Menys de {count} regions: no dona per entrenar",
+  "@modelTooFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFewRegions": "Menys de {count} regions: aprendrà poc",
+  "@modelFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewMedia": "Pocs continguts diferents: aprendrà el fons",
+  "modelAssignedFernies": "Fernies assignats",
+  "modelAddFernie": "Afegir fernie",
+  "modelNoFernies": "Un model sense fernies no té res a aprendre. Afegeix-ne almenys un.",
+  "modelApplySplitToAll": "Aplicar aquest repartiment a tots",
+  "modelRetrainNotice": "Canviar els fernies d’un model entrenat obliga a tornar-lo a entrenar: els seus pesos ja no signifiquen el mateix.",
+  "modelSaved": "Desat",
+  "trainingTitle": "Entrenament",
+  "presetFast": "Ràpid",
+  "presetFastDescription": "Per veure si la idea funciona abans de deixar l’equip tota la nit. També el raonable sense targeta gràfica.",
+  "presetBalanced": "Equilibrat",
+  "presetBalancedDescription": "El que es vol gairebé sempre: dona per fer servir el model de debò.",
+  "presetAccurate": "Acurat",
+  "presetAccurateDescription": "Quan ja hi ha moltes regions i el model importa. Triga una bona estona.",
+  "presetCustom": "Personalitzat",
+  "presetCustomDescription": "Els comandaments no coincideixen amb cap dels de dalt, així que manen els teus.",
+  "trainingAdvanced": "Avançat",
+  "trainingEpochsLabel": "Èpoques",
+  "trainingImageSizeLabel": "Mida d’imatge",
+  "trainingBatchLabel": "Lot",
+  "trainingBatchAuto": "-1 deixa que ho decideixi ell",
+  "trainingBackboneIs": "Xarxa: {backbone}",
+  "@trainingBackboneIs": {
+    "placeholders": { "backbone": { "type": "String" } }
+  },
+  "trainingStart": "Entrenar model",
+  "trainingRetrain": "Tornar a entrenar",
+  "trainingPreparing": "Preparant el material...",
+  "trainingEpoch": "Època {done} de {total}",
+  "@trainingEpoch": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "trainingRemaining": "Queden uns {minutes} min",
+  "@trainingRemaining": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "trainingEngineNotReady": "El motor de reconeixement encara no està instal·lat. Es prepara des dels ajustos.",
+  "trainingNoValidation": "no deixa res per validar, així que l’entrenament no sabrà quan aturar-se",
+  "trainingImbalanced": "Un fernie té més de {count} vegades les regions d’un altre: el model aprendrà a contestar sempre el majoritari",
+  "@trainingImbalanced": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "trainingQueued": "Entrenament a la cua",
+  "metricsLastTraining": "Últim entrenament",
+  "metricMap50": "mAP50",
+  "metricMap50to95": "mAP50-95",
+  "metricPrecision": "Precisió",
+  "metricRecall": "Recall",
+  "metricsPerClass": "Per fernie",
+  "metricsConfusionMatrix": "Matriu de confusió",
+  "metricsCurves": "Corbes",
+  "metricsOpenRunFolder": "Obrir carpeta de la run",
+  "metricsRunFolderMissing": "Aquesta carpeta ja no hi és.",
+  "metricsRunImagesMissing": "Aquestes imatges ja no són a la carpeta de la run. Esborrar-la no trenca el model: els pesos són l’únic que cal per reconèixer.",
+  "metricsNotTrainedYet": "Encara sense entrenar.",
+  "metricsImportedWeights": "Els pesos vénen de fora, així que no hi ha mètriques d’entrenament.",
+  "metricsRetry": "Tornar-ho a provar",
+  "metricsRealPerformance": "Rendiment real",
+  "metricsRealPerformanceEmpty": "Encara sense dades. Compta quants suggeriments d’aquest model acceptes i quants rebutges en importar, que és l’única mesura honesta de si serveix.",
+  "modelImportWeights": "Importar pesos",
+  "modelImportWeightsHint": "Un fitxer .pt entrenat en un altre lloc. Es copia a la carpeta de reconeixement perquè no desaparegui per sota del model.",
+  "modelImportWeightsInvalid": "No s’han pogut llegir aquests pesos: {error}",
+  "@modelImportWeightsInvalid": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "modelImportWeightsDone": "Pesos importats: {classes}",
+  "@modelImportWeightsDone": {
+    "placeholders": { "classes": { "type": "String" } }
+  },
+  "modelImportedBadge": "Pesos importats",
+  "trainingFailedEngineStopped": "El motor de reconeixement es va aturar a mitja feina. Torna-ho a provar; si es repeteix, el més probable és que l’equip s’estigui quedant sense memòria: abaixa la mida d’imatge o el lot a «Avançat».",
+  "trainingFailedOutOfMemory": "Es va quedar sense memòria. Abaixa el lot o la mida d’imatge a «Avançat» i torna-ho a provar.",
+  "trainingFailedDataset": "No s’ha pogut preparar el material. Pot ser que algun contingut s’hagi mogut o esborrat des que es van marcar les regions.",
+  "trainingFailedWeights": "Falten els pesos de partida i no s’han pogut descarregar. Comprova la connexió, o importa uns pesos teus.",
+  "trainingFailedNoSpace": "No hi cap al disc. Un conjunt de vídeo són milers de fotogrames, així que calen uns quants gigues lliures.",
+  "trainingFailedUnknown": "L’entrenament ha fallat.",
+  "jobTrainingModel": "Entrenant «{model}»",
+  "@jobTrainingModel": {
+    "placeholders": { "model": { "type": "String" } }
+  },
+  "jobsNone": "Res en marxa",
+  "treeTitle": "Arbre de models",
+  "treeOpen": "Arbre",
+  "treeEmpty": "Encara no hi ha res a l’arbre. Un model que no hi sigui no s’executa mai en reconèixer: posa-n’hi un des del plafó de la dreta.",
+  "treeSearchModel": "Cercar model",
+  "treeAvailableModels": "Models",
+  "treeAllInTree": "Ja hi són tots, a l’arbre.",
+  "treeNoModels": "Encara no hi ha models.",
+  "treeRemoveNode": "Treure de l’arbre",
+  "treeNodeNotTrained": "Sense entrenar",
+  "treeAddAsRoot": "Posar sol",
+  "treeAddAsChild": "Penjar de «{parent}»",
+  "@treeAddAsChild": {
+    "placeholders": { "parent": { "type": "String" } }
+  },
+  "treeSelectedHint": "«{name}» està triat: el que hi posis des del plafó en penjarà.",
+  "@treeSelectedHint": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "treeClearSelection": "Deixar",
+  "treeEdgeAnyDetection": "qualsevol cosa",
+  "treeEdgeConditionTitle": "Quan s’executa?",
+  "treeEdgeConditionMessage": "«{child}» només s’executa quan «{parent}» detecta això. Sense fernie s’executa davant qualsevol detecció, que és tenir els especialitzats corrent tota l’estona: funciona, però és el que cal afinar.",
+  "@treeEdgeConditionMessage": {
+    "placeholders": { "child": { "type": "String" }, "parent": { "type": "String" } }
+  },
+  "treeEdgeDisconnect": "Despenjar",
+  "treeFitToView": "Ajustar a la vista",
+  "treeZoomIn": "Apropar",
+  "treeZoomOut": "Allunyar",
+  "treeCannotConnect": "Això no es pot penjar: l’arbre es mossegaria la cua.",
+  "treeOutsideCount": "{count, plural, =1{1 model fora de l’arbre} other{{count} models fora de l’arbre}}",
+  "@treeOutsideCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "viewerFavorite": "Marca com a preferit",
   "viewerUnfavorite": "Treu dels preferits",
   "viewerCopied": "Copiat al porta-retalls",

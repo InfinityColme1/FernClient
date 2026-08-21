@@ -97,6 +97,163 @@
   "viewerPauseWhenSeeking": "Parar al coger la barra",
   "viewerPauseWhenSeekingDescription": "El vídeo se para en cuanto se coge la barra y se queda donde se suelte. Apagado, sigue reproduciéndose desde donde se deje. Marcar regiones para siempre, diga lo que diga esto: una región se marca sobre un fotograma quieto.",
   "fernieUndo": "Deshacer la última región marcada",
+  "createTooltip": "Crear",
+  "menuNewModel": "Nuevo modelo",
+  "newModelTitle": "Nuevo modelo",
+  "modelNameLabel": "Nombre del modelo",
+  "modelFunctionLabel": "Qué responde",
+  "modelFunctionBoolean": "¿Está?",
+  "modelFunctionBooleanDescription": "Dice si cada uno de sus fernies está en el contenido. Con varios, contesta por cada uno por separado.",
+  "modelFunctionClassification": "¿Cuál es?",
+  "modelFunctionClassificationDescription": "Distingue entre sus fernies y dice cuál ha encontrado, y dónde. Necesita al menos dos: con uno no hay entre qué elegir.",
+  "modelsTitle": "Modelos",
+  "modelsEmpty": "Todavía no hay modelos",
+  "modelStatusUntrained": "Sin entrenar",
+  "modelStatusTraining": "Entrenando",
+  "modelStatusReady": "Listo",
+  "modelStatusFailed": "El entrenamiento falló",
+  "modelDegradedNotice": "Con un solo fernie no hay entre qué elegir, así que responde si está o no está. Añade otro para que los distinga.",
+  "modelRegionCount": "{count, plural, =0{sin regiones} =1{1 región} other{{count} regiones}}",
+  "@modelRegionCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFernieCount": "{count, plural, =0{sin fernies} =1{1 fernie} other{{count} fernies}}",
+  "@modelFernieCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelDeleteTitle": "¿Borrar este modelo?",
+  "modelDeleteMessage": "Sus fernies se quedan donde están: son tuyos, no del modelo. Lo que se pierde es lo que había aprendido: los pesos, las gráficas del entrenamiento y todo lo que dejó en el disco.",
+  "splitTrain": "Entrenar",
+  "splitValidation": "Validar",
+  "splitTest": "Probar",
+  "modelRemoveFernie": "Sacar de este modelo",
+  "modelMediaCount": "{count, plural, =0{sin contenidos} =1{1 contenido} other{{count} contenidos}}",
+  "@modelMediaCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewRegions": "Menos de {count} regiones: no da para entrenar",
+  "@modelTooFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelFewRegions": "Menos de {count} regiones: aprenderá poco",
+  "@modelFewRegions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "modelTooFewMedia": "Pocos contenidos distintos: aprenderá el fondo",
+  "modelAssignedFernies": "Fernies asignados",
+  "modelAddFernie": "Añadir fernie",
+  "modelNoFernies": "Un modelo sin fernies no tiene nada que aprender. Añade al menos uno.",
+  "modelApplySplitToAll": "Aplicar este reparto a todos",
+  "modelRetrainNotice": "Cambiar los fernies de un modelo entrenado obliga a volver a entrenarlo: sus pesos ya no significan lo mismo.",
+  "modelSaved": "Guardado",
+  "trainingTitle": "Entrenamiento",
+  "presetFast": "Rápido",
+  "presetFastDescription": "Para ver si la idea funciona antes de dejar el equipo toda la noche. También lo razonable sin tarjeta gráfica.",
+  "presetBalanced": "Equilibrado",
+  "presetBalancedDescription": "Lo que se quiere casi siempre: da para usar el modelo de verdad.",
+  "presetAccurate": "Esmerado",
+  "presetAccurateDescription": "Cuando ya hay muchas regiones y el modelo importa. Tarda un buen rato.",
+  "presetCustom": "Personalizado",
+  "presetCustomDescription": "Los mandos no coinciden con ninguno de los de arriba, así que mandan los tuyos.",
+  "trainingAdvanced": "Avanzado",
+  "trainingEpochsLabel": "Épocas",
+  "trainingImageSizeLabel": "Tamaño de imagen",
+  "trainingBatchLabel": "Lote",
+  "trainingBatchAuto": "-1 deja que lo decida él",
+  "trainingBackboneIs": "Red: {backbone}",
+  "@trainingBackboneIs": {
+    "placeholders": { "backbone": { "type": "String" } }
+  },
+  "trainingStart": "Entrenar modelo",
+  "trainingRetrain": "Volver a entrenar",
+  "trainingPreparing": "Preparando el material...",
+  "trainingEpoch": "Época {done} de {total}",
+  "@trainingEpoch": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "trainingRemaining": "Quedan unos {minutes} min",
+  "@trainingRemaining": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "trainingEngineNotReady": "El motor de reconocimiento todavía no está instalado. Se prepara desde los ajustes.",
+  "trainingNoValidation": "no deja nada para validar, así que el entrenamiento no sabrá cuándo parar",
+  "trainingImbalanced": "Un fernie tiene más de {count} veces las regiones de otro: el modelo aprenderá a contestar siempre el mayoritario",
+  "@trainingImbalanced": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "trainingQueued": "Entrenamiento en cola",
+  "metricsLastTraining": "Último entrenamiento",
+  "metricMap50": "mAP50",
+  "metricMap50to95": "mAP50-95",
+  "metricPrecision": "Precisión",
+  "metricRecall": "Recall",
+  "metricsPerClass": "Por fernie",
+  "metricsConfusionMatrix": "Matriz de confusión",
+  "metricsCurves": "Curvas",
+  "metricsOpenRunFolder": "Abrir carpeta de la run",
+  "metricsRunFolderMissing": "Esa carpeta ya no está.",
+  "metricsRunImagesMissing": "Esas imágenes ya no están en la carpeta de la run. Borrarla no rompe el modelo: los pesos son lo único que hace falta para reconocer.",
+  "metricsNotTrainedYet": "Todavía sin entrenar.",
+  "metricsImportedWeights": "Los pesos vienen de fuera, así que no hay métricas de entrenamiento.",
+  "metricsRetry": "Volver a intentarlo",
+  "metricsRealPerformance": "Rendimiento real",
+  "metricsRealPerformanceEmpty": "Aún sin datos. Cuenta cuántas sugerencias de este modelo aceptas y cuántas rechazas al importar, que es la única medida honesta de si sirve.",
+  "modelImportWeights": "Importar pesos",
+  "modelImportWeightsHint": "Un fichero .pt entrenado en otro sitio. Se copia a la carpeta de reconocimiento para que no desaparezca por debajo del modelo.",
+  "modelImportWeightsInvalid": "No se han podido leer esos pesos: {error}",
+  "@modelImportWeightsInvalid": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "modelImportWeightsDone": "Pesos importados: {classes}",
+  "@modelImportWeightsDone": {
+    "placeholders": { "classes": { "type": "String" } }
+  },
+  "modelImportedBadge": "Pesos importados",
+  "trainingFailedEngineStopped": "El motor de reconocimiento se paró a media faena. Vuelve a intentarlo; si se repite, lo más probable es que el equipo se esté quedando sin memoria: baja el tamaño de imagen o el lote en «Avanzado».",
+  "trainingFailedOutOfMemory": "Se quedó sin memoria. Baja el lote o el tamaño de imagen en «Avanzado» y vuelve a intentarlo.",
+  "trainingFailedDataset": "No se pudo preparar el material. Puede que algún contenido se haya movido o borrado desde que se marcaron las regiones.",
+  "trainingFailedWeights": "Faltan los pesos de partida y no se han podido descargar. Comprueba la conexión, o importa unos pesos tuyos.",
+  "trainingFailedNoSpace": "No cabe en el disco. Un conjunto de vídeo son miles de fotogramas, así que hacen falta unos cuantos gigas libres.",
+  "trainingFailedUnknown": "El entrenamiento ha fallado.",
+  "jobTrainingModel": "Entrenando «{model}»",
+  "@jobTrainingModel": {
+    "placeholders": { "model": { "type": "String" } }
+  },
+  "jobsNone": "Nada en marcha",
+  "treeTitle": "Árbol de modelos",
+  "treeOpen": "Árbol",
+  "treeEmpty": "Todavía no hay nada en el árbol. Un modelo que no esté aquí no se ejecuta nunca al reconocer: mete uno desde el panel de la derecha.",
+  "treeSearchModel": "Buscar modelo",
+  "treeAvailableModels": "Modelos",
+  "treeAllInTree": "Ya están todos en el árbol.",
+  "treeNoModels": "Todavía no hay modelos.",
+  "treeRemoveNode": "Sacar del árbol",
+  "treeNodeNotTrained": "Sin entrenar",
+  "treeAddAsRoot": "Meter suelto",
+  "treeAddAsChild": "Colgar de «{parent}»",
+  "@treeAddAsChild": {
+    "placeholders": { "parent": { "type": "String" } }
+  },
+  "treeSelectedHint": "«{name}» está elegido: lo que metas desde el panel colgará de él.",
+  "@treeSelectedHint": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "treeClearSelection": "Soltar",
+  "treeEdgeAnyDetection": "cualquier cosa",
+  "treeEdgeConditionTitle": "¿Cuándo se ejecuta?",
+  "treeEdgeConditionMessage": "«{child}» sólo se ejecuta cuando «{parent}» detecta esto. Sin fernie se ejecuta ante cualquier detección, que es tener los especializados corriendo todo el rato: funciona, pero es lo que hay que afinar.",
+  "@treeEdgeConditionMessage": {
+    "placeholders": { "child": { "type": "String" }, "parent": { "type": "String" } }
+  },
+  "treeEdgeDisconnect": "Descolgar",
+  "treeFitToView": "Ajustar a la vista",
+  "treeZoomIn": "Acercar",
+  "treeZoomOut": "Alejar",
+  "treeCannotConnect": "Eso no se puede colgar: el árbol se mordería la cola.",
+  "treeOutsideCount": "{count, plural, =1{1 modelo fuera del árbol} other{{count} modelos fuera del árbol}}",
+  "@treeOutsideCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "viewerFavorite": "Marcar como favorito",
   "viewerUnfavorite": "Quitar de favoritos",
   "viewerCopied": "Copiado al portapapeles",

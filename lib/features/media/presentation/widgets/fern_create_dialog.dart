@@ -18,6 +18,10 @@ import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/usecases/save_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
+import 'package:Fern/features/recognition/domain/usecases/save_model_usecase.dart';
+import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/models_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
@@ -36,7 +40,8 @@ import 'package:go_router/go_router.dart';
 enum CreateDialogType {
   tag(icon: Icons.label_outline),
   creator(icon: Icons.person_outline),
-  fernie(icon: Icons.face_retouching_natural, iconAsset: icFernie);
+  fernie(icon: Icons.face_retouching_natural, iconAsset: icFernie),
+  model(icon: Icons.hub_outlined);
 
   const CreateDialogType({required this.icon, this.iconAsset});
 
@@ -49,18 +54,21 @@ enum CreateDialogType {
         CreateDialogType.tag => texts.newTagTitle,
         CreateDialogType.creator => texts.newCreatorTitle,
         CreateDialogType.fernie => texts.newFernieTitle,
+        CreateDialogType.model => texts.newModelTitle,
       };
 
   String nameLabel(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.tagNameLabel,
         CreateDialogType.creator => texts.creatorNameLabel,
         CreateDialogType.fernie => texts.fernieNameLabel,
+        CreateDialogType.model => texts.modelNameLabel,
       };
 
   String secondaryLabel(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.parentTagLabel,
         CreateDialogType.creator => texts.socialProfilesLabel,
         CreateDialogType.fernie => '',
+        CreateDialogType.model => texts.modelFunctionLabel,
       };
 }
 
@@ -99,6 +107,8 @@ class FernCreateDialog extends StatefulWidget {
 
   const FernCreateDialog.fernie({super.key}) : type = CreateDialogType.fernie;
 
+  const FernCreateDialog.model({super.key}) : type = CreateDialogType.model;
+
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
 }
@@ -108,6 +118,12 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   final _saveTag = getIt<SaveTagUseCase>();
   final _saveCreator = getIt<SaveCreatorUseCase>();
   final _saveFernie = getIt<SaveFernieUseCase>();
+  final _saveModel = getIt<SaveModelUseCase>();
+
+  /// Qué pregunta va a responder el modelo. De fábrica, la más simple: los dos
+  /// son detección, y quien no sepa cuál quiere casi siempre quiere saber si
+  /// algo está o no está.
+  ModelFunction _function = ModelFunction.boolean;
   final _avatarStorage = getIt<AvatarStorageService>();
 
   final TextEditingController _nameController = TextEditingController();
@@ -282,6 +298,25 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         getIt<FerniesBloc>().add(const LoadFerniesEvent());
 
         navigator.pop(fernie);
+
+      case CreateDialogType.model:
+        final result = await _saveModel(
+          params: RecognitionModelEntity(
+            id: unsavedId,
+            name: name,
+            picturePath: _selectedImagePath,
+            function: _function,
+            createdAt: DateTime.now(),
+          ),
+        );
+
+        final model = result.data;
+        if (!mounted || result is! DataSuccess || model == null) return;
+
+        // El modelo nuevo tiene que salir en su rejilla sin tener que reiniciar.
+        getIt<ModelsBloc>().add(const LoadModelsEvent());
+
+        navigator.pop(model);
     }
   }
 
@@ -338,6 +373,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
             // Un fernie nace sin nada más: sin regiones, que se le marcan desde
             // el visor, y sin enlace, que se le pone en su ficha.
             CreateDialogType.fernie => _fernieHint(texts),
+            CreateDialogType.model => _functionField(texts),
           },
         ],
       ),
@@ -363,6 +399,41 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       ),
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
+    );
+  }
+
+  /// Qué pregunta va a responder el modelo.
+  ///
+  /// Se elige al crearlo porque cambia con qué se entrena, no sólo cómo se lee
+  /// la salida; y se puede cambiar luego en su ficha, avisando de que hay que
+  /// volver a entrenar.
+  Widget _functionField(AppLocalizations texts) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.type.secondaryLabel(texts),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: AppSpacing.s),
+        for (final function in ModelFunction.values)
+          FernRadioTile<ModelFunction>(
+            value: function,
+            groupValue: _function,
+            label: switch (function) {
+              ModelFunction.boolean => texts.modelFunctionBoolean,
+              ModelFunction.classification => texts.modelFunctionClassification,
+            },
+            description: switch (function) {
+              ModelFunction.boolean => texts.modelFunctionBooleanDescription,
+              ModelFunction.classification =>
+                texts.modelFunctionClassificationDescription,
+            },
+            onChanged: _isBusy
+                ? null
+                : (value) => setState(() => _function = value),
+          ),
+      ],
     );
   }
 

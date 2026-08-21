@@ -564,6 +564,660 @@ abstract class AppLocalizations {
   /// **'Undo the last region marked'**
   String get fernieUndo;
 
+  /// No description provided for @createTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get createTooltip;
+
+  /// No description provided for @menuNewModel.
+  ///
+  /// In en, this message translates to:
+  /// **'New model'**
+  String get menuNewModel;
+
+  /// No description provided for @newModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New model'**
+  String get newModelTitle;
+
+  /// No description provided for @modelNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model name'**
+  String get modelNameLabel;
+
+  /// No description provided for @modelFunctionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What it answers'**
+  String get modelFunctionLabel;
+
+  /// No description provided for @modelFunctionBoolean.
+  ///
+  /// In en, this message translates to:
+  /// **'Is it there?'**
+  String get modelFunctionBoolean;
+
+  /// No description provided for @modelFunctionBooleanDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Says whether each of its fernies is in the media. With several, it answers for each one on its own.'**
+  String get modelFunctionBooleanDescription;
+
+  /// No description provided for @modelFunctionClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Which one is it?'**
+  String get modelFunctionClassification;
+
+  /// No description provided for @modelFunctionClassificationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tells its fernies apart and says which one it found, and where. Needs at least two: there is nothing to choose between with one.'**
+  String get modelFunctionClassificationDescription;
+
+  /// No description provided for @modelsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Models'**
+  String get modelsTitle;
+
+  /// No description provided for @modelsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No models yet'**
+  String get modelsEmpty;
+
+  /// No description provided for @modelStatusUntrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Not trained'**
+  String get modelStatusUntrained;
+
+  /// No description provided for @modelStatusTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get modelStatusTraining;
+
+  /// No description provided for @modelStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get modelStatusReady;
+
+  /// No description provided for @modelStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Training failed'**
+  String get modelStatusFailed;
+
+  /// No description provided for @modelDegradedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'With a single fernie there is nothing to choose between, so it answers whether it is there. Add another one to tell them apart.'**
+  String get modelDegradedNotice;
+
+  /// No description provided for @modelRegionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no regions} =1{1 region} other{{count} regions}}'**
+  String modelRegionCount(int count);
+
+  /// No description provided for @modelFernieCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no fernies} =1{1 fernie} other{{count} fernies}}'**
+  String modelFernieCount(int count);
+
+  /// No description provided for @modelDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this model?'**
+  String get modelDeleteTitle;
+
+  /// No description provided for @modelDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Its fernies stay where they are: they belong to you, not to the model. What is lost is what it had learned: the weights, the training charts and everything it left on disk.'**
+  String get modelDeleteMessage;
+
+  /// No description provided for @splitTrain.
+  ///
+  /// In en, this message translates to:
+  /// **'Train'**
+  String get splitTrain;
+
+  /// No description provided for @splitValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate'**
+  String get splitValidation;
+
+  /// No description provided for @splitTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test'**
+  String get splitTest;
+
+  /// No description provided for @modelRemoveFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'Take out of this model'**
+  String get modelRemoveFernie;
+
+  /// No description provided for @modelMediaCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no media} =1{1 media} other{{count} media}}'**
+  String modelMediaCount(int count);
+
+  /// No description provided for @modelTooFewRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer than {count} regions: not enough to train'**
+  String modelTooFewRegions(int count);
+
+  /// No description provided for @modelFewRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer than {count} regions: it will learn little'**
+  String modelFewRegions(int count);
+
+  /// No description provided for @modelTooFewMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Too few different media: it will learn the background'**
+  String get modelTooFewMedia;
+
+  /// No description provided for @modelAssignedFernies.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned fernies'**
+  String get modelAssignedFernies;
+
+  /// No description provided for @modelAddFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'Add fernie'**
+  String get modelAddFernie;
+
+  /// No description provided for @modelNoFernies.
+  ///
+  /// In en, this message translates to:
+  /// **'A model with no fernies has nothing to learn. Add at least one.'**
+  String get modelNoFernies;
+
+  /// No description provided for @modelApplySplitToAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply this split to all'**
+  String get modelApplySplitToAll;
+
+  /// No description provided for @modelRetrainNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the fernies of a trained model means training it again: its weights no longer mean the same thing.'**
+  String get modelRetrainNotice;
+
+  /// No description provided for @modelSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get modelSaved;
+
+  /// No description provided for @trainingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get trainingTitle;
+
+  /// No description provided for @presetFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick'**
+  String get presetFast;
+
+  /// No description provided for @presetFastDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To see whether the idea works before leaving the machine running all night. Also the sensible one without a graphics card.'**
+  String get presetFastDescription;
+
+  /// No description provided for @presetBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get presetBalanced;
+
+  /// No description provided for @presetBalancedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What you want most of the time: enough to use the model for real.'**
+  String get presetBalancedDescription;
+
+  /// No description provided for @presetAccurate.
+  ///
+  /// In en, this message translates to:
+  /// **'Thorough'**
+  String get presetAccurate;
+
+  /// No description provided for @presetAccurateDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When there are already plenty of regions and the model matters. Takes a good while.'**
+  String get presetAccurateDescription;
+
+  /// No description provided for @presetCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get presetCustom;
+
+  /// No description provided for @presetCustomDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The settings do not match any of the above, so yours win.'**
+  String get presetCustomDescription;
+
+  /// No description provided for @trainingAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get trainingAdvanced;
+
+  /// No description provided for @trainingEpochsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Epochs'**
+  String get trainingEpochsLabel;
+
+  /// No description provided for @trainingImageSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Image size'**
+  String get trainingImageSizeLabel;
+
+  /// No description provided for @trainingBatchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch'**
+  String get trainingBatchLabel;
+
+  /// No description provided for @trainingBatchAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'-1 lets it decide'**
+  String get trainingBatchAuto;
+
+  /// No description provided for @trainingBackboneIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Network: {backbone}'**
+  String trainingBackboneIs(String backbone);
+
+  /// No description provided for @trainingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Train model'**
+  String get trainingStart;
+
+  /// No description provided for @trainingRetrain.
+  ///
+  /// In en, this message translates to:
+  /// **'Train again'**
+  String get trainingRetrain;
+
+  /// No description provided for @trainingPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the dataset...'**
+  String get trainingPreparing;
+
+  /// No description provided for @trainingEpoch.
+  ///
+  /// In en, this message translates to:
+  /// **'Epoch {done} of {total}'**
+  String trainingEpoch(int done, int total);
+
+  /// No description provided for @trainingRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'About {minutes} min left'**
+  String trainingRemaining(int minutes);
+
+  /// No description provided for @trainingEngineNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'The recognition engine is not installed yet. Set it up in settings.'**
+  String get trainingEngineNotReady;
+
+  /// No description provided for @trainingNoValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'nothing set aside to validate, so training cannot tell when to stop'**
+  String get trainingNoValidation;
+
+  /// No description provided for @trainingImbalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'One fernie has more than {count} times the regions of another: the model will learn to always answer the big one'**
+  String trainingImbalanced(int count);
+
+  /// No description provided for @trainingQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Training queued'**
+  String get trainingQueued;
+
+  /// No description provided for @metricsLastTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Last training'**
+  String get metricsLastTraining;
+
+  /// No description provided for @metricMap50.
+  ///
+  /// In en, this message translates to:
+  /// **'mAP50'**
+  String get metricMap50;
+
+  /// No description provided for @metricMap50to95.
+  ///
+  /// In en, this message translates to:
+  /// **'mAP50-95'**
+  String get metricMap50to95;
+
+  /// No description provided for @metricPrecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Precision'**
+  String get metricPrecision;
+
+  /// No description provided for @metricRecall.
+  ///
+  /// In en, this message translates to:
+  /// **'Recall'**
+  String get metricRecall;
+
+  /// No description provided for @metricsPerClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Per fernie'**
+  String get metricsPerClass;
+
+  /// No description provided for @metricsConfusionMatrix.
+  ///
+  /// In en, this message translates to:
+  /// **'Confusion matrix'**
+  String get metricsConfusionMatrix;
+
+  /// No description provided for @metricsCurves.
+  ///
+  /// In en, this message translates to:
+  /// **'Curves'**
+  String get metricsCurves;
+
+  /// No description provided for @metricsOpenRunFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open run folder'**
+  String get metricsOpenRunFolder;
+
+  /// No description provided for @metricsRunFolderMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'That folder is no longer there.'**
+  String get metricsRunFolderMissing;
+
+  /// No description provided for @metricsRunImagesMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Those images are no longer in the run folder. Deleting it does not break the model: the weights are all it needs to recognise.'**
+  String get metricsRunImagesMissing;
+
+  /// No description provided for @metricsNotTrainedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not trained yet.'**
+  String get metricsNotTrainedYet;
+
+  /// No description provided for @metricsImportedWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'The weights come from outside, so there are no training metrics.'**
+  String get metricsImportedWeights;
+
+  /// No description provided for @metricsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get metricsRetry;
+
+  /// No description provided for @metricsRealPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Real performance'**
+  String get metricsRealPerformance;
+
+  /// No description provided for @metricsRealPerformanceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet. It counts how many suggestions from this model you accept and reject while importing, which is the only honest measure of whether it works.'**
+  String get metricsRealPerformanceEmpty;
+
+  /// No description provided for @modelImportWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'Import weights'**
+  String get modelImportWeights;
+
+  /// No description provided for @modelImportWeightsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.'**
+  String get modelImportWeightsHint;
+
+  /// No description provided for @modelImportWeightsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Those weights could not be read: {error}'**
+  String modelImportWeightsInvalid(String error);
+
+  /// No description provided for @modelImportWeightsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Weights imported: {classes}'**
+  String modelImportWeightsDone(String classes);
+
+  /// No description provided for @modelImportedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported weights'**
+  String get modelImportedBadge;
+
+  /// No description provided for @trainingFailedEngineStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'The recognition engine stopped mid-training. Try again; if it keeps happening, the machine is most likely running out of memory: lower the image size or the batch under Advanced.'**
+  String get trainingFailedEngineStopped;
+
+  /// No description provided for @trainingFailedOutOfMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'It ran out of memory. Lower the batch or the image size under Advanced and try again.'**
+  String get trainingFailedOutOfMemory;
+
+  /// No description provided for @trainingFailedDataset.
+  ///
+  /// In en, this message translates to:
+  /// **'The material could not be prepared. Some files may have moved or been deleted since the regions were marked.'**
+  String get trainingFailedDataset;
+
+  /// No description provided for @trainingFailedWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'The starting weights are missing and could not be downloaded. Check the connection, or import weights of your own.'**
+  String get trainingFailedWeights;
+
+  /// No description provided for @trainingFailedNoSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough room on disk. A video dataset is thousands of frames, so it needs a few gigabytes free.'**
+  String get trainingFailedNoSpace;
+
+  /// No description provided for @trainingFailedUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Training failed.'**
+  String get trainingFailedUnknown;
+
+  /// No description provided for @jobTrainingModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Training «{model}»'**
+  String jobTrainingModel(String model);
+
+  /// No description provided for @jobsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing running'**
+  String get jobsNone;
+
+  /// No description provided for @treeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Model tree'**
+  String get treeTitle;
+
+  /// No description provided for @treeOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree'**
+  String get treeOpen;
+
+  /// No description provided for @treeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in the tree yet. A model that is not here never runs when recognising: add one from the panel on the right.'**
+  String get treeEmpty;
+
+  /// No description provided for @treeSearchModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a model'**
+  String get treeSearchModel;
+
+  /// No description provided for @treeAvailableModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Models'**
+  String get treeAvailableModels;
+
+  /// No description provided for @treeAllInTree.
+  ///
+  /// In en, this message translates to:
+  /// **'They are all in the tree already.'**
+  String get treeAllInTree;
+
+  /// No description provided for @treeNoModels.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no models yet.'**
+  String get treeNoModels;
+
+  /// No description provided for @treeRemoveNode.
+  ///
+  /// In en, this message translates to:
+  /// **'Take out of the tree'**
+  String get treeRemoveNode;
+
+  /// No description provided for @treeNodeNotTrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Not trained'**
+  String get treeNodeNotTrained;
+
+  /// No description provided for @treeAddAsRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Add on its own'**
+  String get treeAddAsRoot;
+
+  /// No description provided for @treeAddAsChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Hang from «{parent}»'**
+  String treeAddAsChild(String parent);
+
+  /// No description provided for @treeSelectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'«{name}» is selected: what you add from the panel hangs from it.'**
+  String treeSelectedHint(String name);
+
+  /// No description provided for @treeClearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect'**
+  String get treeClearSelection;
+
+  /// No description provided for @treeEdgeAnyDetection.
+  ///
+  /// In en, this message translates to:
+  /// **'anything'**
+  String get treeEdgeAnyDetection;
+
+  /// No description provided for @treeEdgeConditionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When does it run?'**
+  String get treeEdgeConditionTitle;
+
+  /// No description provided for @treeEdgeConditionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'«{child}» only runs when «{parent}» detects this. Without a fernie it runs on any detection, which means the specialised models run all the time: it works, but it is the thing to narrow down.'**
+  String treeEdgeConditionMessage(String child, String parent);
+
+  /// No description provided for @treeEdgeDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Unhook'**
+  String get treeEdgeDisconnect;
+
+  /// No description provided for @treeFitToView.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to view'**
+  String get treeFitToView;
+
+  /// No description provided for @treeZoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get treeZoomIn;
+
+  /// No description provided for @treeZoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get treeZoomOut;
+
+  /// No description provided for @treeCannotConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'That cannot be hooked up: it would make the tree bite its own tail.'**
+  String get treeCannotConnect;
+
+  /// No description provided for @treeOutsideCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 model outside the tree} other{{count} models outside the tree}}'**
+  String treeOutsideCount(int count);
+
   /// No description provided for @viewerFavorite.
   ///
   /// In en, this message translates to:
