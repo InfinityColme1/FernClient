@@ -22,25 +22,35 @@ const MediaSummaryModelSchema = CollectionSchema(
       name: r'deletedAt',
       type: IsarType.dateTime,
     ),
-    r'importSource': PropertySchema(
+    r'hasPendingSuggestions': PropertySchema(
       id: 1,
+      name: r'hasPendingSuggestions',
+      type: IsarType.bool,
+    ),
+    r'importSource': PropertySchema(
+      id: 2,
       name: r'importSource',
       type: IsarType.string,
     ),
     r'isDeleted': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'isImported': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'isImported',
       type: IsarType.bool,
     ),
     r'path': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'path',
       type: IsarType.string,
+    ),
+    r'recognizedAt': PropertySchema(
+      id: 6,
+      name: r'recognizedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _mediaSummaryModelEstimateSize,
@@ -72,6 +82,19 @@ const MediaSummaryModelSchema = CollectionSchema(
           name: r'importSource',
           type: IndexType.hash,
           caseSensitive: true,
+        )
+      ],
+    ),
+    r'hasPendingSuggestions': IndexSchema(
+      id: -1682699791791004983,
+      name: r'hasPendingSuggestions',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'hasPendingSuggestions',
+          type: IndexType.value,
+          caseSensitive: false,
         )
       ],
     )
@@ -109,10 +132,12 @@ void _mediaSummaryModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.deletedAt);
-  writer.writeString(offsets[1], object.importSource);
-  writer.writeBool(offsets[2], object.isDeleted);
-  writer.writeBool(offsets[3], object.isImported);
-  writer.writeString(offsets[4], object.path);
+  writer.writeBool(offsets[1], object.hasPendingSuggestions);
+  writer.writeString(offsets[2], object.importSource);
+  writer.writeBool(offsets[3], object.isDeleted);
+  writer.writeBool(offsets[4], object.isImported);
+  writer.writeString(offsets[5], object.path);
+  writer.writeDateTime(offsets[6], object.recognizedAt);
 }
 
 MediaSummaryModel _mediaSummaryModelDeserialize(
@@ -123,11 +148,13 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
 ) {
   final object = MediaSummaryModel();
   object.deletedAt = reader.readDateTimeOrNull(offsets[0]);
+  object.hasPendingSuggestions = reader.readBool(offsets[1]);
   object.id = id;
-  object.importSource = reader.readString(offsets[1]);
-  object.isDeleted = reader.readBool(offsets[2]);
-  object.isImported = reader.readBool(offsets[3]);
-  object.path = reader.readString(offsets[4]);
+  object.importSource = reader.readString(offsets[2]);
+  object.isDeleted = reader.readBool(offsets[3]);
+  object.isImported = reader.readBool(offsets[4]);
+  object.path = reader.readString(offsets[5]);
+  object.recognizedAt = reader.readDateTimeOrNull(offsets[6]);
   return object;
 }
 
@@ -141,13 +168,17 @@ P _mediaSummaryModelDeserializeProp<P>(
     case 0:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
-    case 2:
       return (reader.readBool(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
+      return (reader.readBool(offset)) as P;
+    case 5:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -228,6 +259,15 @@ extension MediaSummaryModelQueryWhereSort
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere>
+      anyHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'hasPendingSuggestions'),
+      );
     });
   }
 }
@@ -391,6 +431,51 @@ extension MediaSummaryModelQueryWhere
       }
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      hasPendingSuggestionsEqualTo(bool hasPendingSuggestions) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'hasPendingSuggestions',
+        value: [hasPendingSuggestions],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      hasPendingSuggestionsNotEqualTo(bool hasPendingSuggestions) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [],
+              upper: [hasPendingSuggestions],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [hasPendingSuggestions],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [hasPendingSuggestions],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [],
+              upper: [hasPendingSuggestions],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
 }
 
 extension MediaSummaryModelQueryFilter
@@ -465,6 +550,16 @@ extension MediaSummaryModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hasPendingSuggestionsEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasPendingSuggestions',
+        value: value,
       ));
     });
   }
@@ -816,6 +911,80 @@ extension MediaSummaryModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'recognizedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'recognizedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'recognizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'recognizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'recognizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'recognizedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension MediaSummaryModelQueryObject
@@ -851,6 +1020,20 @@ extension MediaSummaryModelQuerySortBy
       sortByDeletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deletedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByHasPendingSuggestionsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.desc);
     });
   }
 
@@ -909,6 +1092,20 @@ extension MediaSummaryModelQuerySortBy
       return query.addSortBy(r'path', Sort.desc);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByRecognizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByRecognizedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.desc);
+    });
+  }
 }
 
 extension MediaSummaryModelQuerySortThenBy
@@ -924,6 +1121,20 @@ extension MediaSummaryModelQuerySortThenBy
       thenByDeletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deletedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByHasPendingSuggestionsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.desc);
     });
   }
 
@@ -995,6 +1206,20 @@ extension MediaSummaryModelQuerySortThenBy
       return query.addSortBy(r'path', Sort.desc);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByRecognizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByRecognizedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.desc);
+    });
+  }
 }
 
 extension MediaSummaryModelQueryWhereDistinct
@@ -1003,6 +1228,13 @@ extension MediaSummaryModelQueryWhereDistinct
       distinctByDeletedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'deletedAt');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasPendingSuggestions');
     });
   }
 
@@ -1033,6 +1265,13 @@ extension MediaSummaryModelQueryWhereDistinct
       return query.addDistinctBy(r'path', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByRecognizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'recognizedAt');
+    });
+  }
 }
 
 extension MediaSummaryModelQueryProperty
@@ -1047,6 +1286,13 @@ extension MediaSummaryModelQueryProperty
       deletedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'deletedAt');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, bool, QQueryOperations>
+      hasPendingSuggestionsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasPendingSuggestions');
     });
   }
 
@@ -1072,6 +1318,13 @@ extension MediaSummaryModelQueryProperty
   QueryBuilder<MediaSummaryModel, String, QQueryOperations> pathProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'path');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, DateTime?, QQueryOperations>
+      recognizedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'recognizedAt');
     });
   }
 }

@@ -207,7 +207,7 @@ class JobQueue {
     final context = JobContext(
       job: _jobs[_indexOf(job.id)],
       token: token,
-      report: (done, {total}) => _report(job.id, done, total),
+      report: (done, {total, stage}) => _report(job.id, done, total, stage),
     );
 
     // Deliberadamente sin `await`: encolar no bloquea a quien encola, y el
@@ -241,11 +241,15 @@ class JobQueue {
     }
   }
 
-  void _report(String id, int done, int? total) {
+  void _report(String id, int done, int? total, String? stage) {
     _update(id, (current) {
       if (current.status != JobStatus.running) return current;
 
-      return current.copyWith(done: done, total: total ?? current.total);
+      return current.copyWith(
+        done: done,
+        total: total ?? current.total,
+        stage: stage ?? current.stage,
+      );
     });
   }
 

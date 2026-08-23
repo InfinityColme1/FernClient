@@ -30,14 +30,24 @@ class NotificationService {
         _settingsRepository = settingsRepository,
         _sounds = sounds;
 
+  /// Con qué clave se recuerda a dónde lleva un aviso.
+  String _routeKey(NotificationKind kind) => '${_countKey(kind)}_route';
+
   String _countKey(NotificationKind kind) =>
       '$notificationCountPreferenceKeyPrefix${kind.id}';
 
   /// Cuántos avisos hay sin mirar, por clase.
-  AppNotificationCounts get counts => AppNotificationCounts({
-        for (final kind in NotificationKind.values)
-          kind: _preferences.getInt(_countKey(kind)) ?? 0,
-      });
+  AppNotificationCounts get counts => AppNotificationCounts(
+        {
+          for (final kind in NotificationKind.values)
+            kind: _preferences.getInt(_countKey(kind)) ?? 0,
+        },
+        routes: {
+          for (final kind in NotificationKind.values)
+            if (_preferences.getString(_routeKey(kind)) case final route?)
+              kind: route,
+        },
+      );
 
   Stream<AppNotificationCounts> get changes => _controller.stream;
 
@@ -46,13 +56,31 @@ class NotificationService {
   /// El contador sube aunque el usuario haya apagado el sonido: lo que se apaga
   /// es cómo se le cuenta, no que haya pasado. Con los avisos apagados del todo
   /// no se anota nada, que es lo que el usuario ha pedido.
-  Future<void> notify(NotificationKind kind, {int count = 1}) async {
+  /// Avisa de algo.
+  ///
+  /// Con [route] se dice a dónde lleva este aviso en concreto, cuando no es a la
+  /// pantalla de siempre de su tipo: reconocer contenido definitivo termina en
+  /// la pantalla de contenido, y llevar allí a la de importación es mandar al
+  /// usuario donde no está lo que acaba de reconocer.
+  Future<void> notify(
+    NotificationKind kind, {
+    int count = 1,
+    String? route,
+  }) async {
     final settings = _settingsRepository.getSettings().notifications;
     if (!settings.enabled) return;
 
     if (settings.showsBadge(kind)) {
       final updated = (_preferences.getInt(_countKey(kind)) ?? 0) + count;
       await _preferences.setInt(_countKey(kind), updated);
+
+      // Manda el último: si dos reconocimientos seguidos acaban en pantallas
+      // distintas, el contador es uno solo y tiene que estar en alguna. La del
+      // último es la que el usuario tiene fresca.
+      if (route != null) {
+        await _preferences.setString(_routeKey(kind), route);
+      }
+
       _controller.add(counts);
     }
 
@@ -68,11 +96,17 @@ class NotificationService {
   Future<void> markRouteSeen(String route) async {
     var changed = false;
 
+    final current = counts;
+
     for (final kind in NotificationKind.values) {
-      if (kind.route != route) continue;
+      // Por donde lleva **ahora**, no por su pantalla de siempre: un aviso de
+      // reconocimiento puede haber acabado en la de contenido, y darlo por visto
+      // al pasar por importación lo apagaría sin que nadie lo haya mirado.
+      if (current.routeOf(kind) != route) continue;
       if ((_preferences.getInt(_countKey(kind)) ?? 0) == 0) continue;
 
       await _preferences.remove(_countKey(kind));
+      await _preferences.remove(_routeKey(kind));
       changed = true;
     }
 
@@ -84,6 +118,7 @@ class NotificationService {
   Future<void> clearAll() async {
     for (final kind in NotificationKind.values) {
       await _preferences.remove(_countKey(kind));
+      await _preferences.remove(_routeKey(kind));
     }
 
     _controller.add(counts);

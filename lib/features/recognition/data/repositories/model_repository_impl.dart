@@ -1,6 +1,8 @@
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/model_tree_edge_model.dart';
+import 'package:Fern/features/recognition/data/models/model_tree_node_model.dart';
 import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
@@ -78,6 +80,33 @@ class ModelRepositoryImpl implements ModelRepository {
         // para otros. Lo que desaparece es que estuvieran metidos en éste.
         await _database.modelFernieModels
             .deleteAll([for (final row in assignments) row.id]);
+
+        // Y su sitio en el árbol, si lo tenía. Va en **esta misma transacción**
+        // y no en un paso aparte: un nodo apuntando a un modelo que ya no existe
+        // no se puede pintar ni ejecutar, así que dejarlo a medias es dejar
+        // basura que nadie va a reconocer meses después. Al leer el árbol se
+        // filtraban, sí, pero eso es una consulta por fila muerta en cada
+        // relectura.
+        final node = await _database.modelTreeNodeModels
+            .filter()
+            .modelIdEqualTo(id)
+            .findFirst();
+
+        if (node != null) {
+          final edges = await _database.modelTreeEdgeModels
+              .filter()
+              .parentNodeIdEqualTo(node.id)
+              .or()
+              .childNodeIdEqualTo(node.id)
+              .findAll();
+
+          // Los hijos que se queden sin padres pasan a ser raíces solos: ser
+          // raíz es no tener aristas entrantes, y eso se calcula al leer.
+          await _database.modelTreeEdgeModels
+              .deleteAll([for (final edge in edges) edge.id]);
+
+          await _database.modelTreeNodeModels.delete(node.id);
+        }
 
         await _database.recognitionModelModels.delete(id);
       });

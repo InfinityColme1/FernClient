@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_failure.dart';
@@ -328,25 +331,35 @@ class SidecarProvisioner {
     return false;
   }
 
-  /// Deja en disco el script del sidecar y el fichero de sustituciones.
+  /// Deja en disco el script del sidecar.
   ///
-  /// Se reescribe cuando la versión que trae la aplicación no es la que hay
-  /// guardada: así una actualización de FeRN actualiza también el script sin
-  /// tener que reinstalar el entorno entero.
+  /// Se reescribe cuando el que trae la aplicación no es el que hay guardado:
+  /// así una actualización de FeRN actualiza también el script sin tener que
+  /// reinstalar el entorno entero.
+  ///
+  /// Lo que se compara es la **huella del contenido** y no un número puesto a
+  /// mano. Con el número había que acordarse de subirlo en cada cambio del
+  /// script, y no acordarse no daba ningún error: la aplicación arrancaba tan
+  /// contenta y el sidecar seguía siendo el viejo, así que un método nuevo
+  /// respondía «Unknown method» en todas las instalaciones que ya existían.
+  /// Pasó de verdad con `inspect`, que es el que mira unos pesos traídos de
+  /// fuera. Con la huella no hay nada que recordar.
   Future<void> writeScript({bool force = false}) async {
+    final script = await rootBundle.loadString(sidecarScriptAsset);
+    final version = sha1.convert(utf8.encode(script)).toString();
+
     final versionFile = File(paths.sidecarVersionFile);
     final current =
         versionFile.existsSync() ? await versionFile.readAsString() : null;
 
     if (!force &&
-        current?.trim() == sidecarScriptVersion &&
+        current?.trim() == version &&
         File(paths.sidecarScript).existsSync()) {
       return;
     }
 
-    final script = await rootBundle.loadString(sidecarScriptAsset);
     await File(paths.sidecarScript).writeAsString(script);
-    await versionFile.writeAsString(sidecarScriptVersion);
+    await versionFile.writeAsString(version);
   }
 
   /// Cambia opencv por su variante sin interfaz gráfica, que ocupa la tercera

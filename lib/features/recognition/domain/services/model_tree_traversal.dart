@@ -133,3 +133,101 @@ bool _opens(
   return found.any((detection) =>
       detection.fernieId == condition && detection.confidence >= threshold);
 }
+
+/// Qué contesta un nodo cuando se le dan **varios contenidos de una vez**.
+///
+/// Devuelve lo detectado por contenido. Un contenido sin nada que decir puede
+/// faltar del mapa o venir con la lista vacía: las dos cosas significan lo
+/// mismo.
+typedef BatchPredictor = Future<Map<int, List<TreeDetection>>> Function(
+  ModelTreeNodeEntity node,
+  List<int> mediaIds,
+);
+
+/// Recorre el árbol con muchos contenidos a la vez, un nodo por llamada.
+///
+/// Es el mismo recorrido que [runModelTree] —mismos niveles, misma poda, mismas
+/// reglas para abrir una rama— pero pidiendo las predicciones de todo un nivel
+/// juntas. La diferencia es de coste, no de resultado: reconocer trescientos
+/// contenidos con un árbol de tres modelos pasa de novecientas llamadas al motor
+/// a tres.
+///
+/// **La poda sigue siendo por contenido**, que es lo que hace que esto no sea
+/// una simplificación: al segundo nivel sólo bajan los contenidos cuyo padre
+/// abrió esa rama, no todos los del lote. Un nodo sin ningún contenido que le
+/// toque no se ejecuta.
+///
+/// Que el resultado sea idéntico al de recorrer los contenidos de uno en uno es
+/// una promesa comprobada, no una esperanza: está en
+/// `test/model_tree_traversal_test.dart`.
+Future<Map<int, TreeRun>> runModelTreeBatched({
+  required ModelTreeEntity tree,
+  required List<int> mediaIds,
+  required BatchPredictor predict,
+}) async {
+  final detections = {for (final id in mediaIds) id: <TreeDetection>[]};
+  final executed = {for (final id in mediaIds) id: <int>[]};
+  final skipped = {for (final id in mediaIds) id: <int>[]};
+
+  // Lo ya visto **por contenido**: un nodo con dos padres se ejecuta una vez
+  // para cada contenido, no una para el lote.
+  final seen = {
+    for (final id in mediaIds) id: <int>{for (final root in tree.roots) root.id},
+  };
+
+  var level = {
+    for (final root in tree.roots) root.id: (node: root, media: [...mediaIds]),
+  };
+
+  while (level.isNotEmpty) {
+    final next = <int, ({ModelTreeNodeEntity node, List<int> media})>{};
+
+    for (final entry in level.values) {
+      final node = entry.node;
+
+      // Un nodo al que no le toca ningún contenido no se pregunta. Pasa con un
+      // lote vacío, y preguntarle al motor por una lista de cero imágenes es una
+      // llamada entera para que conteste que nada.
+      if (entry.media.isEmpty) continue;
+
+      if (!node.isRunnable) {
+        // Se salta y se cuenta, para cada contenido al que le tocaba. Lo que
+        // cuelga de él tampoco se ejecuta.
+        for (final id in entry.media) {
+          skipped[id]!.add(node.id);
+        }
+
+        continue;
+      }
+
+      final found = await predict(node, entry.media);
+
+      for (final id in entry.media) {
+        final mine = found[id] ?? const <TreeDetection>[];
+
+        executed[id]!.add(node.id);
+        detections[id]!.addAll(mine);
+
+        for (final edge in tree.edgesFrom(node.id)) {
+          if (!_opens(edge, mine, node)) continue;
+
+          final child = tree.nodeById(edge.childNodeId);
+          if (child == null || !seen[id]!.add(child.id)) continue;
+
+          (next[child.id] ??= (node: child, media: <int>[])).media.add(id);
+        }
+      }
+    }
+
+    level = next;
+  }
+
+  return {
+    for (final id in mediaIds)
+      id: TreeRun(
+        detections: detections[id]!,
+        executed: executed[id]!,
+        skipped: skipped[id]!,
+      ),
+  };
+}

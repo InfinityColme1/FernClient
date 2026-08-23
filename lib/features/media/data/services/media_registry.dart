@@ -22,11 +22,22 @@ class MediaRegistry {
   final Isar _database;
   final TagHierarchy _tagHierarchy;
 
+  /// A quién avisar de que ha nacido un contenido.
+  ///
+  /// Es el único sitio por el que pasan todos, así que es el único sitio donde
+  /// hace falta enganchar lo que tenga que ocurrirles a todos —hoy, mandarlos a
+  /// reconocer—. Es una función y no un servicio para que el alta no tenga que
+  /// saber quién escucha ni para qué: este fichero es de la biblioteca y el
+  /// reconocimiento es otra cosa.
+  final void Function(int mediaId)? _onRegistered;
+
   MediaRegistry({
     required Isar database,
     required TagHierarchy tagHierarchy,
+    void Function(int mediaId)? onRegistered,
   })  : _database = database,
-        _tagHierarchy = tagHierarchy;
+        _tagHierarchy = tagHierarchy,
+        _onRegistered = onRegistered;
 
   /// Identificador de un contenido a partir de su ruta. Es el mismo desde
   /// siempre: cambiarlo dejaría sin reconocer lo que ya está guardado.
@@ -126,6 +137,9 @@ class MediaRegistry {
       summary.details.value = details;
       await summary.details.save();
     });
+
+    // Después de guardar, no antes: quien escuche va a querer leerlo.
+    _onRegistered?.call(summary.id);
 
     return summary.toEntity();
   }

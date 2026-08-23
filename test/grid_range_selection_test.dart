@@ -9,6 +9,8 @@
 // clic con mayusculas, y que la rejilla de recortes se lo pasa.
 
 import 'package:Fern/config/theme/app_theme.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
 import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
@@ -18,10 +20,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// La rejilla pregunta qué contenidos están señalados por el último aviso de
+/// reconocimiento. No hace falta ninguno para esta prueba, pero sin registrarlo
+/// la rejilla no se puede ni construir.
+void _registerHighlight() {
+  if (getIt.isRegistered<RecognitionHighlight>()) return;
+
+  getIt.registerSingleton<RecognitionHighlight>(RecognitionHighlight());
+}
+
 const _media = MediaSummaryEntity(id: 1, path: 'no_existe.jpg');
 const _crop = RegionCrop(x: 0.1, y: 0.1, w: 0.4, h: 0.4);
 
 Future<void> _pump(WidgetTester tester, Widget child) {
+  _registerHighlight();
+
   return tester.pumpWidget(MaterialApp(
     theme: AppTheme.lightTheme,
     localizationsDelegates: AppLocalizations.localizationsDelegates,

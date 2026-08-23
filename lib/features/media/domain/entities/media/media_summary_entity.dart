@@ -22,6 +22,21 @@ class MediaSummaryEntity extends Equatable {
   /// dato del contenido y lo pone quien lo revisa.
   final ImportSource importSource;
 
+  /// Si algún modelo ha propuesto algo sobre esto y nadie lo ha contestado.
+  ///
+  /// Está en el sumario y no se pregunta por las sugerencias de cada celda a
+  /// propósito: la rejilla de importación pinta cientos de miniaturas, y una
+  /// consulta por celda para decidir si lleva un distintivo es una consulta por
+  /// celda de más.
+  final bool hasPendingSuggestions;
+
+  /// Cuándo se miró por última vez con los modelos. `null` si nunca.
+  ///
+  /// Va junto a lo anterior porque el filtro de la pantalla de importación las
+  /// necesita a las dos: «con sugerencias» y «sin mirar nunca» son dos listas
+  /// distintas, y la segunda no se puede sacar de la primera.
+  final DateTime? recognizedAt;
+
   const MediaSummaryEntity({
     required this.id,
     required this.path,
@@ -29,8 +44,19 @@ class MediaSummaryEntity extends Equatable {
     this.isDeleted = false,
     this.deletedAt,
     this.importSource = ImportSource.local,
+    this.hasPendingSuggestions = false,
+    this.recognizedAt,
   });
 
   @override
-  List<Object?> get props => [id, path, isImported, isDeleted, deletedAt, importSource];
+  List<Object?> get props => [
+        id,
+        path,
+        isImported,
+        isDeleted,
+        deletedAt,
+        importSource,
+        hasPendingSuggestions,
+        recognizedAt,
+      ];
 }

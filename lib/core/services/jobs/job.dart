@@ -63,6 +63,14 @@ class Job extends Equatable {
   /// Qué ha fallado, cuando [status] es [JobStatus.failed].
   final String? error;
 
+  /// Qué está haciendo ahora mismo, dicho por quien lo ejecuta.
+  ///
+  /// Va aparte del nombre porque cambia: el nombre es «Biblioteca entera» de
+  /// principio a fin, y esto es «Figuras de prueba» y un momento después
+  /// «Formas nuevas». Sin ello, un trabajo largo es una barra que avanza sin
+  /// que se sepa en qué se está yendo el tiempo.
+  final String? stage;
+
   /// Lo que necesita saber quien lo ejecute: el modelo que se entrena, los
   /// contenidos que se reconocen. La cola no lo mira, sólo lo transporta.
   final Map<String, Object?> payload;
@@ -98,6 +106,7 @@ class Job extends Equatable {
     this.done = 0,
     this.total = 0,
     this.error,
+    this.stage,
     this.payload = const {},
     this.startedAt,
     this.finishedAt,
@@ -116,6 +125,7 @@ class Job extends Equatable {
     int? done,
     int? total,
     String? error,
+    String? stage,
     DateTime? startedAt,
     DateTime? finishedAt,
   }) {
@@ -129,6 +139,7 @@ class Job extends Equatable {
       done: done ?? this.done,
       total: total ?? this.total,
       error: error ?? this.error,
+      stage: stage ?? this.stage,
       startedAt: startedAt ?? this.startedAt,
       finishedAt: finishedAt ?? this.finishedAt,
     );

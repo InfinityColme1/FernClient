@@ -1,4 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/utils/media_type.dart';
+import 'package:Fern/l10n/app_localizations.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/services/jobs/job_queue.dart';
@@ -13,6 +16,26 @@ import 'package:Fern/features/recognition/data/repositories/model_repository_imp
 import 'package:Fern/features/recognition/data/services/dataset_builder.dart';
 import 'package:Fern/features/recognition/data/services/training_job_runner.dart';
 import 'package:Fern/features/recognition/data/repositories/model_tree_repository_impl.dart';
+import 'package:Fern/core/services/media_preview_service.dart';
+import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
+import 'package:Fern/features/recognition/data/repositories/recognition_result_repository_impl.dart';
+import 'package:Fern/features/recognition/data/services/media_recognizer.dart';
+import 'package:Fern/features/recognition/data/services/recognition_job_runner.dart';
+import 'package:Fern/features/recognition/domain/repositories/recognition_result_repository.dart';
+import 'package:Fern/features/recognition/domain/usecases/accept_suggestions_above_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/answer_suggestions_usecase.dart';
+import 'package:Fern/features/recognition/domain/services/frame_sampling.dart';
+import 'package:Fern/features/recognition/data/services/gif_frame_extractor.dart';
+import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
+import 'package:Fern/features/recognition/domain/usecases/purge_old_rejections_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/turn_detection_into_region_usecase.dart';
+import 'package:Fern/features/recognition/data/services/import_recognition_hook.dart';
+import 'package:Fern/features/recognition/data/services/recognition_launcher.dart';
+import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
+import 'package:Fern/features/recognition/data/services/recognition_log_store.dart';
+import 'package:Fern/features/recognition/domain/usecases/can_recognize_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_recognizable_media_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_media_suggestions_usecase.dart';
 import 'package:Fern/features/recognition/data/services/model_files.dart';
 import 'package:Fern/features/recognition/domain/repositories/model_tree_repository.dart';
 import 'package:Fern/features/recognition/presentation/blocs/model_tree_bloc.dart';
@@ -226,8 +249,16 @@ Future<void> initializeDependencies() async {
 
   // Por aquí entra todo el contenido nuevo, venga del disco o de una API.
   getIt.registerLazySingleton<MediaRegistry>(() =>
-      MediaRegistry(database: getIt<Isar>(), tagHierarchy: getIt())
-  );
+      MediaRegistry(
+        database: getIt<Isar>(),
+        tagHierarchy: getIt(),
+        // Lo que acaba de nacer se manda a reconocer. Se resuelve el enganche
+        // aquí dentro y no al montar esto porque el alta se registra mucho
+        // antes que el reconocimiento, y pedirlo ahora sería pedirlo demasiado
+        // pronto.
+        onRegistered: (mediaId) =>
+            getIt<ImportRecognitionHook>().mediaArrived(mediaId),
+      ));
 
   getIt.registerLazySingleton<LocalMediaRepository>(() =>
       LocalMediaRepositoryImpl(
@@ -667,6 +698,118 @@ Future<void> initializeDependencies() async {
     (context) => getIt<TrainingJobRunner>().run(context),
   );
 
+  // Lo que los modelos proponen sobre un contenido. Vive aparte de las etiquetas
+  // del contenido porque una propuesta no es una etiqueta: hasta que el usuario
+  // la acepta no toca nada suyo.
+  getIt.registerLazySingleton<RecognitionResultRepository>(
+    () => RecognitionResultRepositoryImpl(database: getIt()),
+  );
+
+  // Perezoso a propósito: el repositorio del que tira se registra unas líneas
+  // más abajo, y en ansioso esto reventaría al arrancar.
+  getIt.registerLazySingleton<GetMediaSuggestionsUseCase>(
+    () => GetMediaSuggestionsUseCase(
+      results: getIt(),
+      fernies: getIt(),
+      library: getIt(),
+    ),
+  );
+
+  getIt.registerLazySingleton<AnswerSuggestionsUseCase>(
+    () => AnswerSuggestionsUseCase(getIt()),
+  );
+
+  getIt.registerLazySingleton<AcceptSuggestionsAboveUseCase>(
+    () => AcceptSuggestionsAboveUseCase(
+      getSuggestions: getIt(),
+      answer: getIt(),
+      library: getIt(),
+    ),
+  );
+
+  getIt.registerLazySingleton<CanRecognizeUseCase>(
+    () => CanRecognizeUseCase(getIt()),
+  );
+
+  getIt.registerLazySingleton<GetRecognizableMediaUseCase>(
+    () => GetRecognizableMediaUseCase(getIt()),
+  );
+
+  // Por aquí pasan los cuatro puntos de entrada del D16. Uno solo, y no uno por
+  // pantalla: la comprobación de si hay con qué reconocer es lo que evita
+  // encolar un trabajo que termina en milisegundos sin dejar rastro, y basta
+  // que una pantalla se la salte para que el usuario vuelva a encontrarse un
+  // botón que no hace nada.
+  getIt.registerLazySingleton<RecognitionLauncher>(
+    () => RecognitionLauncher(canRecognize: getIt(), jobs: getIt()),
+  );
+
+  getIt.registerLazySingleton<SuggestionSpotlight>(() => SuggestionSpotlight());
+
+  getIt.registerLazySingleton<PurgeOldRejectionsUseCase>(
+    () => PurgeOldRejectionsUseCase(getIt()),
+  );
+
+  getIt.registerLazySingleton<TurnDetectionIntoRegionUseCase>(
+    () => TurnDetectionIntoRegionUseCase(getIt()),
+  );
+
+  getIt.registerLazySingleton<ImportRecognitionHook>(
+    () => ImportRecognitionHook(
+      launcher: getIt(),
+      // Se lee en cada tanda: entre que llega el primer fichero y sale el
+      // trabajo pueden pasar minutos, y lo que vale es lo que el usuario quiere
+      // ahora, no lo que quería cuando empezó la importación.
+      isEnabled: () =>
+          getIt<SettingsRepository>().getSettings().recognizeOnImport,
+      // El nombre del trabajo se resuelve con el idioma puesto, que es lo que
+      // hay que hacer fuera de la interfaz: aquí no hay ningún `BuildContext`
+      // del que sacarlo.
+      name: () => lookupAppLocalizations(
+        Locale(getIt<SettingsRepository>().getSettings().language.code),
+      ).recognizeJobImported,
+    ),
+  );
+
+  getIt.registerLazySingleton<MediaRecognizer>(
+    () => MediaRecognizer(
+      models: getIt(),
+      // Cuántos fotogramas se miran de un vídeo se resuelve **en cada
+      // reconocimiento** y no al montar esto: el usuario puede cambiarlo entre
+      // dos trabajos sin reiniciar.
+      frameSamples: () =>
+          getIt<SettingsRepository>().getSettings().frameSamples,
+      predict: _predictWith,
+      durationOf: _durationOf,
+      extractFrames: _extractFrames,
+    ),
+  );
+
+  // El parte de lo que hizo cada reconocimiento. En memoria y único: es
+  // material de diagnóstico que sólo interesa mientras la pregunta está fresca.
+  getIt.registerSingleton<RecognitionLogStore>(RecognitionLogStore());
+
+  // Qué contenidos señalar al llegar a la pantalla del último aviso.
+  getIt.registerSingleton<RecognitionHighlight>(RecognitionHighlight());
+
+  getIt.registerLazySingleton<RecognitionJobRunner>(
+    () => RecognitionJobRunner(
+      tree: getIt(),
+      results: getIt(),
+      recognizer: getIt(),
+      pathOf: _pathOfMedia,
+      logs: getIt(),
+      returnToReview: () =>
+          getIt<SettingsRepository>().getSettings().returnRecognizedToImport,
+      notifyFinished: _notifyRecognitionFinished,
+    ),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.recognition,
+    (context) => getIt<RecognitionJobRunner>().run(context),
+  );
+
   // Un entrenamiento que se quedó a medias porque el equipo se apagó deja el
   // modelo marcado para siempre, y así no se dejaría entrenar nunca más. Se
   // desatasca al arrancar, antes de que ninguna pantalla lo lea.
@@ -715,6 +858,167 @@ Future<void> initializeDependencies() async {
 
 /// Las regiones con las que se entrena un modelo, listas para el dataset.
 ///
+/// Avisa de que hay sugerencias esperando, y **dónde**.
+///
+/// El aviso lleva a la pantalla en la que están los contenidos, no siempre a la
+/// de importación: reconocer contenido ya definitivo terminaba mandando al
+/// usuario a un sitio donde no está lo que acaba de reconocer.
+///
+/// Y deja señalados esos contenidos, para que al llegar se vea cuáles son entre
+/// las trescientas miniaturas de la rejilla.
+Future<void> _notifyRecognitionFinished(Set<int> mediaIds) async {
+  final pending = await _hasPendingReview(mediaIds);
+  final route = pending ? importRoute : mediaRoute;
+
+  getIt<RecognitionHighlight>().show(route: route, mediaIds: mediaIds);
+
+  // Cuántos, no cuántas veces. El contador del menú dice lo que hay pendiente
+  // de mirar, y lo que hay pendiente son contenidos: un «1» después de
+  // reconocer trescientos no invita a ir a verlo.
+  await getIt<NotificationService>().notify(
+    NotificationKind.recognitionFinished,
+    count: mediaIds.length,
+    route: route,
+  );
+}
+
+/// Si alguno de estos contenidos está todavía pendiente de revisar.
+///
+/// Basta uno: un lote mezclado se resuelve en la pantalla de importación, que es
+/// donde el usuario tiene que pasar de todas formas.
+Future<bool> _hasPendingReview(Set<int> mediaIds) async {
+  for (final id in mediaIds) {
+    final found = await getIt<GetMediaDetailsUsecase>()(params: id);
+
+    if (found is DataSuccess && found.data?.isImported == false) return true;
+  }
+
+  return false;
+}
+
+/// Dónde está guardado un contenido.
+Future<String?> _pathOfMedia(int mediaId) async {
+  final result = await getIt<GetMediaDetailsUsecase>()(params: mediaId);
+
+  return result is DataSuccess ? result.data?.path : null;
+}
+
+/// El descodificador de GIF del reconocimiento, con su caché de uno.
+final _gifFrames = GifFrameExtractor();
+
+/// Cuánto dura un contenido, si es de los que duran.
+///
+/// Un GIF no pasa por el reproductor de vídeo: `GifFrames` lo descodifica en
+/// otro hilo y dice su duración de verdad, no la que libmpv deduzca.
+Future<Duration?> _durationOf(String path) async {
+  if (path.isGifPath) return _gifFrames.durationOf(path);
+
+  final preview = await MediaPreviewService.instance.load(path);
+
+  return preview?.duration;
+}
+
+/// Saca los fotogramas que hay que mirar de un vídeo.
+///
+/// Con el servicio de previsualizaciones, que los pide **de una vez**: abrir el
+/// fichero es lo caro —crear el reproductor, esperar a que diga su duración, su
+/// tamaño y su primer fotograma—, y hacerlo cinco veces por vídeo era lo que
+/// convertía un lote de vídeos en minutos de espera. Además los cachea en
+/// disco, así que volver a reconocer el mismo vídeo no lo abre siquiera.
+///
+/// Los que no se puedan sacar se saltan. Un fotograma perdido es una mirada
+/// menos, no un reconocimiento fallido.
+Future<List<SampledFrame>> _extractFrames(String path, List<Duration> at) async {
+  // El GIF va por su lado: sus fotogramas son los que son, y dos momentos que
+  // caigan en el mismo dan una sola mirada. Los momentos que salen son los de
+  // inicio de cada fotograma, no los que se pidieron.
+  if (path.isGifPath) {
+    final frames = await _gifFrames.extract(path, at);
+    final moments = frames.keys.toList()..sort();
+
+    return framesInOrder(moments, {
+      for (final entry in frames.entries)
+        entry.key: SampledFrame(
+          path: entry.value,
+          frameMs: entry.key.inMilliseconds,
+        ),
+    });
+  }
+
+  final frames = await MediaPreviewService.instance.loadFrames(path, at);
+
+  return framesInOrder(at, {
+    for (final entry in frames.entries)
+      entry.key: SampledFrame(
+        path: entry.value,
+        frameMs: entry.key.inMilliseconds,
+      ),
+  });
+}
+
+/// Lo que ve un modelo en una imagen.
+///
+/// Traduce lo que devuelve el sidecar a lo que entiende el reconocedor.
+///
+/// El listón lo pone quien llama y **no el modelo**. Antes lo ponía el modelo,
+/// que ahorraba traer detecciones por el tubo, pero dejaba a la aplicación sin
+/// poder distinguir «no ha visto nada» de «lo vio al 27 % y tu listón está en el
+/// 35 %». Lo primero no se puede arreglar; lo segundo sí, y era lo que pasaba de
+/// verdad. Lo que sobra son unas pocas cajas por imagen.
+Future<List<RawDetection>> _predictWith(
+  RecognitionModelEntity model,
+  String imagePath,
+  double confidence,
+) async {
+  final weights = model.weightsPath;
+  if (weights == null) return const [];
+
+  final result = await getIt<RecognitionEngine>().predict({
+    'weights': weights,
+    'images': [imagePath],
+    // La que pide quien llama, no la del modelo: se pregunta por debajo de su
+    // listón para poder contar después qué vio y descartó.
+    'conf': confidence,
+    'imgsz': model.imgsz,
+  });
+
+  final images = result['results'];
+  if (images is! List) return const [];
+
+  final detections = <RawDetection>[];
+
+  for (final image in images) {
+    if (image is! Map) continue;
+
+    final found = image['detections'];
+    if (found is! List) continue;
+
+    for (final one in found) {
+      if (one is! Map) continue;
+
+      final classIndex = one['class'];
+      final confidence = one['conf'];
+      if (classIndex is! int || confidence is! num) continue;
+
+      // La caja llega en el formato de ultralytics —centro y tamaño, ya
+      // normalizados— y aquí se guarda con la esquina superior izquierda, que
+      // es como están las regiones y como el visor las pinta.
+      final box = boxFromCenter(one['box']);
+
+      detections.add(RawDetection(
+        classIndex: classIndex,
+        confidence: confidence.toDouble(),
+        x: box?.x,
+        y: box?.y,
+        w: box?.w,
+        h: box?.h,
+      ));
+    }
+  }
+
+  return detections;
+}
+
 /// Junta lo de los dos repositorios: del de modelos salen los fernies y su
 /// número de clase, y del de fernies, las regiones de cada uno con el contenido
 /// al que pertenecen.

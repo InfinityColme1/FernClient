@@ -120,9 +120,8 @@ class TreeCanvas extends StatelessWidget {
           if (onEdgeTap != null)
             for (final line in _lines())
               Positioned(
-                left: (line.from.dx + line.to.dx) / 2 -
-                    treeEdgeLabelMaxWidth / 2,
-                top: (line.from.dy + line.to.dy) / 2 - AppSizes.iconLarge / 2,
+                left: line.labelPoint.dx - treeEdgeLabelMaxWidth / 2,
+                top: line.labelPoint.dy - AppSizes.iconLarge / 2,
                 width: treeEdgeLabelMaxWidth,
                 height: AppSizes.iconLarge,
                 child: _EdgeHandle(onTap: () => onEdgeTap!(line.edgeId)),

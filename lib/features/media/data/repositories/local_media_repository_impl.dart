@@ -1238,6 +1238,99 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
+  @override
+  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds) async {
+    try {
+      final media = await _appDatabase.mediaModels.get(mediaId);
+      if (media == null) {
+        return DataException(Exception('El contenido $mediaId no existe'));
+      }
+
+      final asked = (await _appDatabase.tagModels.getAll(tagIds)).nonNulls
+          .toList(growable: false);
+
+      if (asked.isEmpty) return const DataSuccess(0);
+
+      // Con las etiquetas van las que están por encima de ellas, igual que al
+      // ponerlas a mano desde el diálogo. Sin esto, aceptar «Rombo simple» no
+      // pone «Rombo» y el contenido no aparece al buscar por la etiqueta padre:
+      // la misma acción daría dos resultados distintos según por dónde se haga.
+      final withAncestors = await _tagHierarchy.withAncestors(asked);
+      final tags = withAncestors.isEmpty ? asked : withAncestors;
+
+      await _appDatabase.writeTxn(() async {
+        // Sin `reset`: esto suma a lo que el contenido ya tuviera. Con `reset`
+        // aceptar una sugerencia borraría las etiquetas puestas a mano.
+        await media.tags.update(link: tags);
+      });
+
+      return DataSuccess(tags.length);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
+  Future<DataState<bool>> setMediaCreator(int mediaId, int creatorId) async {
+    try {
+      final media = await _appDatabase.mediaModels.get(mediaId);
+      final creator = await _appDatabase.creatorModels.get(creatorId);
+
+      if (media == null || creator == null) return const DataSuccess(false);
+
+      await _appDatabase.writeTxn(() async {
+        media.creator.value = creator;
+        await media.creator.save();
+      });
+
+      return const DataSuccess(true);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
+  Future<DataState<List<int>>> getRecognizableMediaIds({
+    bool onlyUnrecognized = true,
+  }) async {
+    try {
+      final summaries = await _appDatabase.mediaSummaryModels.where().findAll();
+
+      return DataSuccess([
+        for (final summary in summaries)
+          // Lo marcado para borrar se queda fuera: reconocerlo sería gastar
+          // horas en contenido que sale solo de la base de datos en una semana.
+          if (!summary.isDeleted &&
+              !(onlyUnrecognized && summary.recognizedAt != null))
+            summary.id,
+      ]);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
+  Future<DataState<TagEntity?>> getTag(int id) async {
+    try {
+      final model = await _appDatabase.tagModels.get(id);
+
+      return DataSuccess(model?.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
+  Future<DataState<CreatorEntity?>> getCreator(int id) async {
+    try {
+      final model = await _appDatabase.creatorModels.get(id);
+
+      return DataSuccess(model?.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   /// Las etiquetas en forma de árbol, para la sección de etiquetas del menú
   /// lateral.
   ///

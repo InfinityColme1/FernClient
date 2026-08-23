@@ -6,7 +6,9 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
+import 'package:Fern/features/recognition/data/services/import_recognition_hook.dart';
 import 'package:Fern/features/recognition/data/services/recognition_engine.dart';
+import 'package:Fern/features/recognition/domain/usecases/purge_old_rejections_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_expired_deleted_media_usecase.dart';
 import 'package:Fern/features/media/presentation/services/dialog_import_decisions.dart';
 import 'package:Fern/features/settings/domain/entities/theme_settings_entity.dart';
@@ -14,6 +16,9 @@ import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/features/settings/presentation/theme_palette.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
@@ -46,6 +51,11 @@ Future<void> main() async {
   // base de datos al arrancar, sin que haya que entrar en la pantalla de
   // eliminados a mirar.
   await getIt<PurgeExpiredDeletedMediaUseCase>()();
+
+  // Y con ella, los rechazos viejos. Van juntos porque son lo mismo: cosas que
+  // caducan y que nadie va a ir a limpiar a mano. Sin `await`: no hay ninguna
+  // pantalla esperando a que termine, y arrancar es lo que no puede esperar.
+  unawaited(getIt<PurgeOldRejectionsUseCase>()());
 
   runApp(const MyApp());
 }
@@ -148,6 +158,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<AppExitResponse> _onExitRequested() async {
+    // Lo que estuviera esperando para mandarse a reconocer se queda sin mandar:
+    // el temporizador está vivo y encolaría un trabajo contra una aplicación que
+    // ya se está yendo.
+    getIt<ImportRecognitionHook>().dispose();
+
     await getIt<RecognitionEngine>().dispose();
 
     return AppExitResponse.exit;

@@ -63,6 +63,48 @@ FERNIES = [
     },
 ]
 
+# El material del arbol de tres modelos.
+#
+# Son dos juegos distintos porque los dos modelos nuevos comprueban cosas
+# distintas del arbol, y mezclarlos no dejaria ver cual de los dos ha etiquetado
+# que.
+#
+# Las variantes de rombo llevan **el mismo cuerpo** que el Rombo de arriba y solo
+# cambian la marca de dentro. Es a proposito: el modelo padre tiene que seguir
+# viendo un Rombo en ellas, porque si no lo ve, el hijo no llega a ejecutarse
+# nunca y la prueba del arbol no prueba nada.
+VARIANTS = [
+    {
+        'name': 'Rombo simple',
+        'shape': 'diamond',
+        'color': (214, 69, 89),
+        'mark': (255, 244, 214),
+    },
+    {
+        'name': 'Rombo doble',
+        'shape': 'diamond-double',
+        'color': (214, 69, 89),
+        'mark': (255, 244, 214),
+    },
+]
+
+# Formas que el modelo de figuras no ha visto nunca: es lo que hace del hermano
+# un modelo de verdad independiente y no una copia del primero.
+SIBLINGS = [
+    {
+        'name': 'Estrella',
+        'shape': 'star',
+        'color': (232, 176, 46),
+        'mark': (255, 248, 226),
+    },
+    {
+        'name': 'Hexagono',
+        'shape': 'hexagon',
+        'color': (129, 84, 190),
+        'mark': (240, 232, 255),
+    },
+]
+
 
 def background(size, rng):
     """Un fondo distinto cada vez: degradado al azar mas grano."""
@@ -119,6 +161,43 @@ def draw_fernie(image, fernie, box, angle):
                      width * 0.64, height * 0.64], fill=mark)
         pen.line([(width * 0.5, height * 0.14), (width * 0.5, height * 0.30)],
                  fill=mark, width=max(2, width // 16))
+    elif shape == 'diamond-double':
+        # El mismo rombo, con dos barras en vez de una. El cuerpo es identico a
+        # proposito: el modelo padre tiene que seguir viendo un Rombo.
+        pen.polygon(
+            [(width / 2, 2), (width - 3, height / 2),
+             (width / 2, height - 3), (2, height / 2)],
+            fill=color,
+        )
+        pen.ellipse([width * 0.36, height * 0.36,
+                     width * 0.64, height * 0.64], fill=mark)
+        pen.line([(width * 0.38, height * 0.14), (width * 0.38, height * 0.30)],
+                 fill=mark, width=max(2, width // 18))
+        pen.line([(width * 0.62, height * 0.14), (width * 0.62, height * 0.30)],
+                 fill=mark, width=max(2, width // 18))
+    elif shape == 'star':
+        points = []
+        for step in range(10):
+            angle_step = math.pi / 5 * step - math.pi / 2
+            radius = (width / 2 - 3) if step % 2 == 0 else (width / 5)
+            points.append((
+                width / 2 + radius * math.cos(angle_step),
+                height / 2 + radius * math.sin(angle_step),
+            ))
+        pen.polygon(points, fill=color)
+        pen.ellipse([width * 0.42, height * 0.42,
+                     width * 0.58, height * 0.58], fill=mark)
+    elif shape == 'hexagon':
+        points = []
+        for step in range(6):
+            angle_step = math.pi / 3 * step
+            points.append((
+                width / 2 + (width / 2 - 3) * math.cos(angle_step),
+                height / 2 + (height / 2 - 3) * math.sin(angle_step),
+            ))
+        pen.polygon(points, fill=color)
+        pen.rectangle([width * 0.30, height * 0.44,
+                       width * 0.70, height * 0.56], fill=mark)
     else:
         pen.polygon(
             [(width / 2, 2), (width - 3, height - 3), (2, height - 3)],
@@ -184,8 +263,9 @@ def place(rng, size, count):
     return boxes
 
 
-def make_images(out, rng, count):
-    folder = os.path.join(out, 'imagenes')
+def make_images(out, rng, count, fernies=FERNIES, folder='imagenes',
+                prefix='img'):
+    folder = os.path.join(out, folder)
     os.makedirs(folder, exist_ok=True)
 
     entries = []
@@ -196,17 +276,18 @@ def make_images(out, rng, count):
         # Una de cada tres lleva dos figuras: hace falta para que el modelo
         # aprenda a distinguirlas y no solo a decir «hay algo».
         how_many = 2 if index % 3 == 0 else 1
-        chosen = rng.sample(range(len(FERNIES)), how_many)
+        how_many = min(how_many, len(fernies))
+        chosen = rng.sample(range(len(fernies)), how_many)
         boxes = place(rng, IMAGE_SIZE, how_many)
 
         regions = []
 
         for fernie_index, box in zip(chosen, boxes):
             drawn = draw_fernie(
-                image, FERNIES[fernie_index], box, rng.uniform(-25, 25),
+                image, fernies[fernie_index], box, rng.uniform(-25, 25),
             )
             regions.append({
-                'fernie': FERNIES[fernie_index]['name'],
+                'fernie': fernies[fernie_index]['name'],
                 **normalise(drawn, IMAGE_SIZE),
             })
 
@@ -216,7 +297,7 @@ def make_images(out, rng, count):
         # En JPEG y no en PNG: el grano del fondo hace que un PNG de 640x480
         # pese medio mega, y cien imagenes de prueba no tienen por que ocupar
         # cincuenta.
-        name = 'img-%03d.jpg' % index
+        name = '%s-%03d.jpg' % (prefix, index)
         image.convert('RGB').save(
             os.path.join(folder, name), quality=88, optimize=True,
         )
@@ -305,14 +386,37 @@ def main():
     parser.add_argument('--out', required=True, help='Carpeta de salida.')
     parser.add_argument('--images', type=int, default=96)
     parser.add_argument('--videos-per-fernie', type=int, default=2)
+    parser.add_argument(
+        '--set',
+        dest='which',
+        choices=['base', 'arbol'],
+        default='base',
+        help='«base» es el material de siempre; «arbol» el de los dos modelos '
+             'nuevos (variantes de rombo y formas nuevas), sin videos.',
+    )
     args = parser.parse_args()
 
-    rng = random.Random(SEED)
+    rng = random.Random(SEED if args.which == 'base' else SEED + 1)
     out = os.path.abspath(args.out)
     os.makedirs(out, exist_ok=True)
 
-    entries = make_images(out, rng, args.images)
-    entries += make_videos(out, rng, args.videos_per_fernie)
+    if args.which == 'base':
+        fernies = FERNIES
+        entries = make_images(out, rng, args.images)
+        entries += make_videos(out, rng, args.videos_per_fernie)
+    else:
+        # Sin videos: el material del arbol es para entrenar dos modelos
+        # pequenos y comprobar el recorrido, no para volver a probar el
+        # muestreo de fotogramas, que ya esta cubierto.
+        fernies = VARIANTS + SIBLINGS
+        entries = make_images(
+            out, rng, args.images, fernies=VARIANTS,
+            folder='variantes', prefix='var',
+        )
+        entries += make_images(
+            out, rng, args.images, fernies=SIBLINGS,
+            folder='nuevas', prefix='new',
+        )
 
     counts = {}
     for entry in entries:
@@ -320,7 +424,7 @@ def main():
             counts[region['fernie']] = counts.get(region['fernie'], 0) + 1
 
     manifest = {
-        'fernies': [fernie['name'] for fernie in FERNIES],
+        'fernies': [fernie['name'] for fernie in fernies],
         'media': entries,
     }
 

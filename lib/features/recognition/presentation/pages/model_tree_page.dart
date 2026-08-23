@@ -8,7 +8,10 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/model_tree_entity.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_recognizable_media_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/model_tree_bloc.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
+import 'package:Fern/features/recognition/presentation/widgets/recognize_library_dialog.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_states.dart';
 import 'package:Fern/features/recognition/presentation/widgets/edge_condition_dialog.dart';
@@ -222,10 +225,59 @@ class _ModelTreePageState extends State<ModelTreePage> {
             ),
           ],
           const Spacer(),
+          // Reconocer la biblioteca entera se pide desde aquí y no desde la
+          // rejilla: ésta es la pantalla que enseña **qué va a ejecutarse**, y
+          // es donde se entiende que el resultado depende del árbol que se está
+          // mirando.
+          FernPillButton(
+            label: texts.recognizeLibrary,
+            icon: Icons.auto_awesome_outlined,
+            backgroundColor: context.colors.secondary,
+            foregroundColor: context.colors.black,
+            onPressed: _recognizeLibrary,
+          ),
+          const SizedBox(width: AppSpacing.m),
           _zoomControls(context, texts),
         ],
       ),
     );
+  }
+
+  /// Manda a reconocer la biblioteca, preguntando antes cuánto hay que mirar.
+  ///
+  /// Se pregunta porque las dos respuestas son legítimas y cuestan cosas muy
+  /// distintas: quien acaba de importar cuatro cosas quiere sólo lo nuevo, y
+  /// quien acaba de entrenar un modelo mejor lo quiere todo. Lanzarlo sobre todo
+  /// sin avisar puede dejar el equipo trabajando horas.
+  Future<void> _recognizeLibrary() async {
+    final fresh = await _idsOf(onlyUnrecognized: true);
+    final all = await _idsOf(onlyUnrecognized: false);
+
+    if (!mounted) return;
+
+    final scope = await showFernDialog<RecognitionScope, ModelTreeBloc>(
+      context: context,
+      builder: (_) => RecognizeLibraryDialog(
+        unrecognized: fresh.length,
+        total: all.length,
+      ),
+    );
+
+    if (scope == null || !mounted) return;
+
+    await requestRecognition(
+      context,
+      scope == RecognitionScope.onlyUnrecognized ? fresh : all,
+      name: AppLocalizations.of(context).recognizeJobLibrary,
+    );
+  }
+
+  Future<List<int>> _idsOf({required bool onlyUnrecognized}) async {
+    final found = await getIt<GetRecognizableMediaUseCase>()(
+      params: RecognizableMediaParams(onlyUnrecognized: onlyUnrecognized),
+    );
+
+    return found is DataSuccess ? found.data ?? const [] : const [];
   }
 
   Widget _zoomControls(BuildContext context, AppLocalizations texts) {
@@ -283,8 +335,18 @@ class _ModelTreePageState extends State<ModelTreePage> {
     final content = treeCanvasSize(_bloc.state.tree);
     if (content.width <= 0 || content.height <= 0) return;
 
+    // Menos el relleno del panel: lo medido es la superficie entera, y el árbol
+    // se dibuja dentro de ella. Sin descontarlo, «encajar» dejaba el borde de
+    // los nodos de los extremos justo por fuera.
+    final visible = Size(
+      box.size.width - AppSpacing.l * 2,
+      box.size.height - AppSpacing.l * 2,
+    );
+
+    if (visible.width <= 0 || visible.height <= 0) return;
+
     final scale = math
-        .min(box.size.width / content.width, box.size.height / content.height)
+        .min(visible.width / content.width, visible.height / content.height)
         .clamp(treeMinZoom, 1.0);
 
     setState(() {
@@ -306,22 +368,10 @@ class _ModelTreePageState extends State<ModelTreePage> {
       return const Center(child: FernProgressIndicator());
     }
 
-    if (state.tree.nodes.isEmpty) {
-      return FernSurface(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Center(
-          child: Text(
-            texts.treeEmpty,
-            textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: context.colors.unremarked),
-          ),
-        ),
-      );
-    }
-
+    // El vacío va **dentro** de la zona que recoge, no en vez de ella. Estaba
+    // fuera, así que con el árbol vacío arrastrar un modelo al lienzo no hacía
+    // nada: justo lo primero que se intenta, y justo lo que el propio mensaje
+    // está pidiendo que se haga.
     return FernDropSlot<TreeDragPayload>(
       // El fondo del lienzo es «aquí no cuelga de nadie»: un modelo se mete
       // suelto y un nodo se suelta de sus padres. Las dos cosas acaban en lo
@@ -332,37 +382,60 @@ class _ModelTreePageState extends State<ModelTreePage> {
       builder: (context, dropState) => FernSurface(
         key: _canvasKey,
         padding: const EdgeInsets.all(AppSpacing.l),
-        child: Listener(
-          onPointerDown: _onPointerDown,
-          onPointerMove: _onPointerMove,
-          onPointerUp: (_) => _panFrom = null,
-          onPointerCancel: (_) => _panFrom = null,
-          child: InteractiveViewer(
-            transformationController: _viewer,
-            minScale: treeMinZoom,
-            maxScale: treeMaxZoom,
-            // Con sitio de sobra alrededor: si no, desplazar el lienzo se
-            // detiene en seco al llegar al borde del árbol y parece atascado.
-            boundaryMargin: const EdgeInsets.all(AppSpacing.xxxl * 4),
-            constrained: false,
-            // Desplazar es con el botón central, **el mismo reparto de gestos
-            // que el modo fernie**: dos convenciones distintas en la misma
-            // aplicación es lo que hace que no se recuerde ninguna. De paso, el
-            // botón izquierdo queda entero para arrastrar tarjetas.
-            panEnabled: false,
-            child: TreeCanvas(
-              tree: state.tree,
-              selectedNodeId: state.selectedNodeId,
-              edgeLabels: _edgeLabels(state, texts),
-              isSimplified: _scale < treeSimplifyBelow,
-              onNodeTap: (id) => _bloc.add(SelectTreeNodeEvent(
-                state.selectedNodeId == id ? null : id,
-              )),
-              onNodeRemove: (id) => _bloc.add(RemoveTreeNodeEvent(id)),
-              onEdgeTap: (id) => _openEdge(state, id),
-              onDropOnNode: _onDropOnNode,
-            ),
-          ),
+        child: state.tree.nodes.isEmpty
+            ? _empty(context, texts)
+            : _zoomableCanvas(context, texts, state),
+      ),
+    );
+  }
+
+  Widget _empty(BuildContext context, AppLocalizations texts) {
+    return Center(
+      child: Text(
+        texts.treeEmpty,
+        textAlign: TextAlign.center,
+        style: Theme.of(context)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(color: context.colors.unremarked),
+      ),
+    );
+  }
+
+  Widget _zoomableCanvas(
+    BuildContext context,
+    AppLocalizations texts,
+    ModelTreeState state,
+  ) {
+    return Listener(
+      onPointerDown: _onPointerDown,
+      onPointerMove: _onPointerMove,
+      onPointerUp: (_) => _panFrom = null,
+      onPointerCancel: (_) => _panFrom = null,
+      child: InteractiveViewer(
+        transformationController: _viewer,
+        minScale: treeMinZoom,
+        maxScale: treeMaxZoom,
+        // Con sitio de sobra alrededor: si no, desplazar el lienzo se detiene
+        // en seco al llegar al borde del árbol y parece atascado.
+        boundaryMargin: const EdgeInsets.all(AppSpacing.xxxl * 4),
+        constrained: false,
+        // Desplazar es con el botón central, **el mismo reparto de gestos que
+        // el modo fernie**: dos convenciones distintas en la misma aplicación
+        // es lo que hace que no se recuerde ninguna. De paso, el botón
+        // izquierdo queda entero para arrastrar tarjetas.
+        panEnabled: false,
+        child: TreeCanvas(
+          tree: state.tree,
+          selectedNodeId: state.selectedNodeId,
+          edgeLabels: _edgeLabels(state, texts),
+          isSimplified: _scale < treeSimplifyBelow,
+          onNodeTap: (id) => _bloc.add(SelectTreeNodeEvent(
+            state.selectedNodeId == id ? null : id,
+          )),
+          onNodeRemove: (id) => _bloc.add(RemoveTreeNodeEvent(id)),
+          onEdgeTap: (id) => _openEdge(state, id),
+          onDropOnNode: _onDropOnNode,
         ),
       ),
     );
@@ -513,10 +586,7 @@ class _ModelTreePageState extends State<ModelTreePage> {
       return;
     }
 
+    // La etiqueta nueva sale sola: el nombre lo resuelve el bloc al releer.
     _bloc.add(SetEdgeConditionEvent(edgeId: edgeId, fernieId: result.fernieId));
-
-    // Se repinta para que la etiqueta nueva salga con su nombre: los fernies ya
-    // están guardados, así que no cuesta nada.
-    setState(() {});
   }
 }

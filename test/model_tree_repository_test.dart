@@ -410,6 +410,39 @@ void main() {
   });
 
   group('un modelo borrado por fuera', () {
+    test('se lleva su nodo y sus aristas de la base de datos', () async {
+      final parentModel = await addModel('General');
+      final parent = (await tree.addModel(modelId: parentModel)).data!;
+      final child = await addNode('Especializado');
+
+      await tree.connect(parentNodeId: parent.id, childNodeId: child);
+      await models.deleteModel(parentModel);
+
+      // Filtrarlos al leer no basta: las filas se quedaban para siempre, y cada
+      // relectura del arbol preguntaba por el modelo de cada una.
+      expect(await isar.modelTreeNodeModels.count(), 1);
+      expect(await isar.modelTreeEdgeModels.count(), 0);
+    });
+
+    test('el hijo que se queda sin padre pasa a ser raiz', () async {
+      final parentModel = await addModel('General');
+      final parent = (await tree.addModel(modelId: parentModel)).data!;
+      final child = await addNode('Especializado');
+
+      await tree.connect(parentNodeId: parent.id, childNodeId: child);
+      await models.deleteModel(parentModel);
+
+      expect((await read()).roots.map((node) => node.id), [child]);
+    });
+
+    test('borrar un modelo que no estaba en el arbol no rompe nada', () async {
+      final modelId = await addModel('Suelto');
+      await addNode('En el arbol');
+
+      expect(await models.deleteModel(modelId), isA<DataSuccess>());
+      expect((await read()).nodes, hasLength(1));
+    });
+
     test('deja de verse en el arbol', () async {
       final modelId = await addModel('General');
       await tree.addModel(modelId: modelId);

@@ -13,7 +13,11 @@ class JobContext {
   /// Avisa de que van [done] unidades de [total]. Pasar [total] permite
   /// ajustarlo sobre la marcha, que es lo normal: hasta que no se cuenta lo que
   /// hay no se sabe cuánto es.
-  final void Function(int done, {int? total}) report;
+  ///
+  /// Con [stage] se dice además **en qué se está yendo el tiempo**: el nombre
+  /// del modelo que mira ahora mismo, por ejemplo. Sin eso, un trabajo largo es
+  /// una barra que avanza y nada más.
+  final void Function(int done, {int? total, String? stage}) report;
 
   const JobContext({
     required this.job,

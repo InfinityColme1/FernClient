@@ -18,9 +18,21 @@ import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_events.dart';
+import 'package:Fern/core/services/jobs/job_queue.dart';
+import 'package:Fern/features/recognition/domain/usecases/answer_suggestions_usecase.dart';
+import 'package:Fern/features/recognition/data/services/recognition_launcher.dart';
+import 'package:Fern/features/recognition/domain/usecases/get_media_suggestions_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_states.dart';
+import 'package:Fern/features/recognition/presentation/blocs/suggestions_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/suggestions_events.dart';
+import 'package:Fern/features/recognition/presentation/blocs/suggestions_states.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
+import 'package:Fern/features/recognition/data/services/recognition_log_store.dart';
+import 'package:Fern/features/recognition/domain/entities/recognition_log_entity.dart';
+import 'package:Fern/features/recognition/presentation/widgets/recognition_log_dialog.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
+import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
 import 'package:Fern/features/recognition/presentation/widgets/assign_region_menu.dart';
 import 'package:Fern/features/media/presentation/services/media_playback_controller.dart';
 import 'package:Fern/features/recognition/domain/services/region_track.dart';
@@ -76,6 +88,19 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     addRegions: getIt<AddFernieRegionsUseCase>(),
     updateRegion: getIt<UpdateFernieRegionUseCase>(),
     deleteRegion: getIt<DeleteFernieRegionUseCase>(),
+  );
+
+  /// Lo que los modelos proponen sobre lo que se está viendo, y el botón de
+  /// pedirlo.
+  ///
+  /// Nace y muere con la pantalla por lo mismo que el anterior: las sugerencias
+  /// son de un contenido concreto, y guardarlas en un bloc global sería
+  /// arrastrar las de algo que ya nadie está mirando.
+  late final SuggestionsBloc _suggestions = SuggestionsBloc(
+    getSuggestions: getIt<GetMediaSuggestionsUseCase>(),
+    answer: getIt<AnswerSuggestionsUseCase>(),
+    launcher: getIt<RecognitionLauncher>(),
+    jobs: getIt<JobQueue>(),
   );
 
   /// El zoom y el desplazamiento, compartidos entre el visor y la capa que
@@ -142,6 +167,10 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// El resaltado: se oscurece todo menos la región, se queda así un momento y
   /// se vuelve a la normalidad. Los pesos son los milisegundos de cada tramo,
   /// así que cambiar las constantes cambia el reparto sin tocar nada más.
+  /// Dónde vio el modelo lo que el panel de sugerencias está señalando.
+  late final SuggestionSpotlight _spotlight = getIt<SuggestionSpotlight>();
+
+
   late final Animation<double> _highlight = TweenSequence<double>([
     TweenSequenceItem(
       tween: Tween(
@@ -237,6 +266,10 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     _transformation.dispose();
     _playback.dispose();
     _fernieMode.close();
+    _suggestions.close();
+    // El señalado vive fuera de esta pantalla porque lo enciende el panel, así
+    // que apagarlo al salir es cosa de aquí: nadie más sabe que se ha salido.
+    _spotlight.release();
     _keyboardFocusNode.dispose();
     super.dispose();
   }
@@ -262,6 +295,17 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   void _onMediaChanged(MediaEntity media) {
     if (_fernieMode.state.mediaId != media.id) {
       _fernieMode.add(LoadMediaRegionsEvent(media.id));
+
+      // Y con el contenido se va lo que estuviera señalado: la caja es de la
+      // imagen anterior, y dejarla puesta la pinta sobre ésta en un sitio que no
+      // significa nada.
+      _spotlight.release();
+    }
+
+    // Se leen tenga el panel abierto o no: el botón de la barra necesita saber
+    // si este contenido ya se está reconociendo antes de que nadie abra nada.
+    if (_suggestions.state.mediaId != media.id) {
+      _suggestions.add(LoadSuggestionsEvent(media.id));
     }
 
     if (_sizeRequestedFor == media.path) return;
@@ -766,6 +810,22 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             if (media != null) _onMediaChanged(media);
           },
         ),
+        // En qué ha quedado cada pulsación del botón de reconocer.
+        BlocListener<SuggestionsBloc, SuggestionsState>(
+          bloc: _suggestions,
+          listenWhen: (previous, current) =>
+              previous.attempts != current.attempts,
+          listener: (context, state) => _reportAttempt(state),
+        ),
+        // En qué ha quedado el reconocimiento de este contenido. El botón se
+        // apaga mientras trabaja y se vuelve a encender al acabar, y eso por sí
+        // solo no distingue «no ha visto nada» de «está roto».
+        BlocListener<SuggestionsBloc, SuggestionsState>(
+          bloc: _suggestions,
+          listenWhen: (previous, current) =>
+              previous.finishedRuns != current.finishedRuns,
+          listener: (context, state) => _reportRun(state),
+        ),
         // El panel de información se cierra al entrar al modo y se restaura al
         // salir, tal y como estuviera.
         BlocListener<FernieModeBloc, FernieModeState>(
@@ -946,7 +1006,11 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             ),
 
             // LADO DERECHO: Panel de Información
-            _InfoPanel(isOpen: state.showInfo, fernieMode: _fernieMode),
+            _InfoPanel(
+              isOpen: state.showInfo,
+              fernieMode: _fernieMode,
+              suggestions: _suggestions,
+            ),
           ],
         ),
       ),
@@ -1056,6 +1120,29 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   ///
   /// Es lo que hace útil el botón de reproducir del modo: sirve para comprobar
   /// si lo marcado acompaña a lo que se mueve debajo.
+  /// La caja de la sugerencia que el panel está señalando, si toca enseñarla.
+  ///
+  /// En contenido que se mueve sólo se enseña si es de este fotograma: una caja
+  /// dibujada sobre el fotograma equivocado dice que el modelo vio algo donde no
+  /// lo vio.
+  RegionVisual? _spotlightVisual(int currentFrame) {
+    final box = _spotlight.box;
+    if (box == null) return null;
+
+    final frameMs = _spotlight.frameMs;
+    if (frameMs != null &&
+        _playback.isPlayable &&
+        !_playback.isSameFrame(frameMs, currentFrame)) {
+      return null;
+    }
+
+    return RegionVisual(
+      rect: Rect.fromLTWH(box.x, box.y, box.w, box.h),
+      label: _spotlight.label,
+      isDimmed: true,
+    );
+  }
+
   List<RegionVisual> _buildTracks(List<RegionView> views, int currentFrame) {
     // Sólo mientras suena. Parado, el recorrido es un estorbo: se está marcando
     // fotograma a fotograma y lo que hace falta es el fotograma limpio.
@@ -1178,9 +1265,24 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // Se repinta con las dos animaciones y con la reproducción: el resaltado
     // mueve el velo, el desvanecido enseña y esconde las regiones, y la posición
     // decide cuáles son de este fotograma.
+    final spottedIndex = views.length + onionViews.length;
+
     return AnimatedBuilder(
-      animation: Listenable.merge([_highlight, _regionsFade, _playback]),
-      builder: (context, _) => FernRegionSelectionLayer(
+      animation: Listenable.merge(
+        [_highlight, _regionsFade, _playback, _spotlight],
+      ),
+      builder: (context, _) {
+        // Dentro del constructor y no fuera: lo que se está señalando cambia
+        // con el ratón, y calcularlo antes deja al dibujo con el valor que
+        // había cuando se montó la pantalla, que es siempre «nada».
+        //
+        // Fuera del modo fernie las regiones se pintan con opacidad cero, así
+        // que una caja más en la lista no se vería. El resaltado sí manda sobre
+        // esa opacidad —es lo que hace visible una región al llegar desde la
+        // rejilla de fernies—, y es por donde tiene que ir ésta.
+        final spotted = _spotlightVisual(currentFrame);
+
+        return FernRegionSelectionLayer(
         enabled: fernieState.isFernieMode,
         tool: fernieState.tool == FernieTool.edit
             ? FernRegionTool.edit
@@ -1212,10 +1314,17 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           // se muevan: lo que pase de ahí es una copia por hacer, no una región.
           for (final onion in onionViews)
             RegionVisual(rect: onion.rect, label: onion.label, isDimmed: true),
+          // Dónde vio el modelo lo que el panel está señalando. Va al final por
+          // lo mismo que el papel cebolla: es una caja de mirar, no una región,
+          // y no puede moverle el índice a las que sí lo son.
+          if (spotted != null) spotted,
         ],
         previews: _buildTracks(views, currentFrame),
-        highlightedIndex: _highlightIndexIn(fernieState),
-        highlightIntensity: _highlight.value,
+        // Señalar una detección manda sobre el resaltado que venga de la
+        // rejilla de fernies: es lo que el usuario está mirando ahora mismo.
+        highlightedIndex:
+            spotted != null ? spottedIndex : _highlightIndexIn(fernieState),
+        highlightIntensity: spotted != null ? 1 : _highlight.value,
         regionsOpacity: _regionsFade.value,
         // Un toque sobre el contenido reproduce y para, como en cualquier
         // reproductor. Sólo mirando: marcando, un toque significa otra cosa.
@@ -1245,7 +1354,8 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         selectionOverlayBuilder: (context, _) =>
             _buildRegionTab(fernieState.selectedIndex!),
         child: viewer,
-      ),
+        );
+      },
     );
   }
 
@@ -1691,6 +1801,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         asset: icFernie,
         onPressed: canMark ? _enterFernieMode : null,
       ),
+      _buildRecognizeAction(enabled: media != null),
       _buildAction(
         tooltip: l10n.mediaInfoTitle,
         icon: Symbols.info,
@@ -1727,6 +1838,108 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             : () => context.read<MediaBloc>().add(const ToggleFavoriteEvent()),
       ),
     ];
+  }
+
+  /// El botón de mandar esto a reconocer.
+  ///
+  /// Va aparte del resto porque es el único que depende de un bloc que no está
+  /// en el árbol: mientras el trabajo esté vivo el botón se apaga y el icono se
+  /// rellena, que es lo que dice «esto ya está pedido» sin ocupar sitio con un
+  /// texto ni mover la barra con un indicador de progreso.
+  Widget _buildRecognizeAction({required bool enabled}) {
+    final l10n = AppLocalizations.of(context);
+
+    return BlocBuilder<SuggestionsBloc, SuggestionsState>(
+      bloc: _suggestions,
+      builder: (context, state) {
+        final isBusy = state.isRecognizing;
+
+        return _buildAction(
+          tooltip: isBusy ? l10n.viewerRecognizing : l10n.viewerRecognize,
+          icon: Symbols.auto_awesome,
+          fill: isBusy ? 1 : 0,
+          color: isBusy ? context.colors.terciary : Colors.white,
+          onPressed: (enabled && !isBusy) ? _recognize : null,
+        );
+      },
+    );
+  }
+
+  /// Manda el contenido actual a la cola y lo cuenta.
+  ///
+  /// El aviso no sobra: encolar no se ve por ningún lado —la barra sólo cambia
+  /// cuando el trabajo arranca, que puede ser dentro de un rato si hay algo por
+  /// delante—, así que sin él pulsar el botón parecería no hacer nada.
+  /// Pide reconocer. Lo que se cuente después lo decide el bloc.
+  ///
+  /// El aviso no sale de aquí porque saber si se puede reconocer es una lectura
+  /// de la base de datos: contestarlo desde el botón obligaría a hacerlo antes
+  /// de tener la respuesta, y nada más abrir un contenido todavía no la hay.
+  void _recognize() => _suggestions.add(const RecognizeCurrentMediaEvent());
+
+  /// Cuenta cómo ha quedado el reconocimiento de este contenido.
+  ///
+  /// El aviso lleva a algún sitio: pulsándolo se abre el parte de lo que hizo
+  /// cada modelo. Es donde se contesta «¿por qué aquí no ha salido nada?», que
+  /// casi nunca es «no vio nada» sino «lo vio poco», y eso sí se puede arreglar.
+  void _reportRun(SuggestionsState state) {
+    final l10n = AppLocalizations.of(context);
+    final log = _logOf(state);
+
+    showFernToast(
+      context,
+      state.lastRunSuggestions > 0
+          ? l10n.recognizeFoundCount(state.lastRunSuggestions)
+          : l10n.recognizeFoundNothing,
+      icon: Icons.info_outline,
+      // Sin parte no hay a dónde llevar, y entonces el aviso se va solo como
+      // cualquier otro.
+      onTap: log == null
+          ? null
+          : () => showFernDialog<void, MediaBloc>(
+                context: context,
+                builder: (_) => RecognitionLogDialog(logs: [log]),
+              ),
+    );
+  }
+
+  /// El parte de lo que pasó con este contenido, si se guardó alguno.
+  MediaRecognitionLog? _logOf(SuggestionsState state) {
+    final jobId = state.lastJobId;
+    final mediaId = state.mediaId;
+    if (jobId == null || mediaId == null) return null;
+
+    return getIt<RecognitionLogStore>().forMedia(jobId, mediaId);
+  }
+
+  /// Cuenta en qué ha quedado la petición.
+  ///
+  /// Encolar no se ve por ningún lado —la barra sólo cambia cuando el trabajo
+  /// arranca, que puede ser dentro de un rato si hay otro por delante— y no
+  /// poder encolar tampoco: las dos cosas se parecen demasiado a que el botón
+  /// esté roto.
+  /// Cuenta en qué ha quedado la petición.
+  ///
+  /// El recado sale del mismo sitio que el de los otros tres puntos de entrada
+  /// del D16: son los mismos motivos y no pueden explicarse distinto según desde
+  /// dónde se pida.
+  void _reportAttempt(SuggestionsState state) {
+    final queued = state.lastAttempt == RecognitionAttempt.queued;
+
+    showFernToast(
+      context,
+      recognitionMessage(
+        AppLocalizations.of(context),
+        RecognitionRequest(
+          outcome: queued
+              ? RecognitionOutcome.queued
+              : RecognitionOutcome.notReady,
+          readiness: state.readiness,
+          count: 1,
+        ),
+      ),
+      icon: queued ? Icons.info_outline : Icons.error_outline_rounded,
+    );
   }
 
   /// Todos los botones de la barra salen de aquí: mismo juego de iconos, mismo
@@ -1861,7 +2074,14 @@ class _InfoPanel extends StatelessWidget {
   /// El modo del visor, que la sección de fernies del panel necesita mirar.
   final FernieModeBloc fernieMode;
 
-  const _InfoPanel({required this.isOpen, required this.fernieMode});
+  /// Lo propuesto por los modelos, que el panel enseña bajo las etiquetas.
+  final SuggestionsBloc suggestions;
+
+  const _InfoPanel({
+    required this.isOpen,
+    required this.fernieMode,
+    required this.suggestions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1882,7 +2102,7 @@ class _InfoPanel extends StatelessWidget {
       },
       child: SizedBox(
         width: AppSizes.infoPanelWidth,
-        child: MediaInfo(fernieMode: fernieMode),
+        child: MediaInfo(fernieMode: fernieMode, suggestions: suggestions),
       ),
     );
   }

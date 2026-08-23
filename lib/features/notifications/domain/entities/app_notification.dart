@@ -24,8 +24,13 @@ enum NotificationKind {
   /// los sonidos elegidos se quedarían huérfanos.
   final String id;
 
-  /// La pantalla donde se resuelve. Es donde va el contador y el sitio al que,
-  /// al llegar, se da por visto el aviso.
+  /// La pantalla donde se resuelve **por defecto**. Es donde va el contador y
+  /// el sitio al que, al llegar, se da por visto el aviso.
+  ///
+  /// Por defecto y no siempre: el reconocimiento se puede lanzar sobre contenido
+  /// definitivo, y llevar entonces a la pantalla de importación es mandar al
+  /// usuario a un sitio donde no está lo que acaba de reconocer. Quien avisa
+  /// puede decir a dónde lleva el suyo.
   final String route;
 
   static NotificationKind? fromId(String id) {
@@ -45,18 +50,28 @@ enum NotificationKind {
 class AppNotificationCounts {
   final Map<NotificationKind, int> byKind;
 
-  const AppNotificationCounts(this.byKind);
+  /// A dónde lleva cada aviso, cuando no es a su pantalla de siempre.
+  ///
+  /// Lo apunta quien avisa. El caso que lo justifica: reconocer contenido
+  /// definitivo termina en la pantalla de contenido, no en la de importación,
+  /// que es donde no está.
+  final Map<NotificationKind, String> routes;
+
+  const AppNotificationCounts(this.byKind, {this.routes = const {}});
 
   static const empty = AppNotificationCounts({});
 
   int of(NotificationKind kind) => byKind[kind] ?? 0;
+
+  /// A dónde lleva este aviso ahora mismo.
+  String routeOf(NotificationKind kind) => routes[kind] ?? kind.route;
 
   /// Cuánto hay pendiente en una pantalla, sumando todo lo que lleva allí: la
   /// importación recoge tanto lo reconocido como lo recién traído de fuera.
   int forRoute(String route) {
     var total = 0;
     for (final entry in byKind.entries) {
-      if (entry.key.route == route) total += entry.value;
+      if (routeOf(entry.key) == route) total += entry.value;
     }
 
     return total;

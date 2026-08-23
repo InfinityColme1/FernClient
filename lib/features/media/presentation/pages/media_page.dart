@@ -4,6 +4,8 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
+import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
@@ -24,24 +26,64 @@ class MediaPage extends StatefulWidget {
 }
 
 class _MediaPageState extends State<MediaPage> {
+  late final RecognitionHighlight _highlight = getIt<RecognitionHighlight>();
+
+  /// Con qué evento se vuelve a leer lo que se está viendo.
+  ///
+  /// La pantalla enseña cosas distintas según lo que se le haya pedido —toda la
+  /// biblioteca, una búsqueda, una etiqueta—, y releer con el evento de la
+  /// biblioteca entera después de una búsqueda tiraría la búsqueda.
+  MediaEvents get _reload {
+    final bloc = getIt<MediaBloc>();
+    final suggestion = bloc.state.searchSuggestion;
+    final searchQuery = bloc.state.searchQuery;
+
+    return switch ((suggestion, searchQuery)) {
+      (final SearchSuggestionEntity suggestion, _) =>
+        SearchSuggestionSelectedEvent(suggestion),
+      (_, final String query) => SearchMediaEvent(query),
+      _ => const LoadMediaLibraryEvent(),
+    };
+  }
+
+  /// Un reconocimiento ha terminado sobre esta pantalla.
+  ///
+  /// Sin esto, el aviso salta pero la rejilla sigue siendo la de antes: los
+  /// distintivos no aparecen hasta que el usuario sale y vuelve, que es
+  /// exactamente lo que el aviso le estaba pidiendo que no hiciera falta.
+  void _onRecognized() {
+    if (!mounted) return;
+
+    final bloc = getIt<MediaBloc>();
+
+    if (!shouldReloadOnRecognition(
+      highlighted: _highlight.route,
+      screen: mediaRoute,
+      hasSelection: bloc.state.selectedIds.isNotEmpty,
+      isViewingMedia: bloc.state is DetailedMedia,
+    )) {
+      return;
+    }
+
+    bloc.add(_reload);
+  }
+
+  @override
+  void dispose() {
+    _highlight.removeListener(_onRecognized);
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
+    _highlight.addListener(_onRecognized);
 
     // Si hay una búsqueda en marcha (se ha escrito en el buscador desde otra
     // pantalla) se repite, no se descarta: es lo que se ha pedido ver. Y se
     // repite tal cual era: si venía de pulsar una sugerencia, por esa
     // sugerencia; si no, por el texto.
-    final bloc = getIt<MediaBloc>();
-    final suggestion = bloc.state.searchSuggestion;
-    final searchQuery = bloc.state.searchQuery;
-
-    bloc.add(switch ((suggestion, searchQuery)) {
-      (final SearchSuggestionEntity suggestion, _) =>
-        SearchSuggestionSelectedEvent(suggestion),
-      (_, final String query) => SearchMediaEvent(query),
-      _ => const LoadMediaLibraryEvent(),
-    });
+    getIt<MediaBloc>().add(_reload);
   }
 
   @override
@@ -121,6 +163,20 @@ class _MediaView extends StatelessWidget {
                               .add(const FavoriteSelectedMediaEvent())
                           : null,
                       icon: const Icon(Icons.favorite_border),
+                    ),
+                    // Reconocer lo que esté seleccionado. Es el segundo de
+                    // los cuatro puntos de entrada del D16, y pasa por el mismo
+                    // sitio que los otros tres.
+                    IconButton(
+                      tooltip: texts.recognizeSelectedTooltip,
+                      onPressed: hasSelection
+                          ? () => requestRecognition(
+                                context,
+                                state.selectedIds.toList(),
+                                name: texts.recognizeJobSelection,
+                              )
+                          : null,
+                      icon: const Icon(Icons.auto_awesome_outlined),
                     ),
                     IconButton(
                       tooltip: texts.deleteSelectedTooltip,

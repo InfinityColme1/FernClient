@@ -122,6 +122,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
       libraryPath: _preferences.getString(libraryPathPreferenceKey),
       avatarsPath: _preferences.getString(avatarsPathPreferenceKey) ??
           defaultAvatarsPath,
+      // Acotado al leerlo y no sólo al escribirlo: un valor imposible en las
+      // preferencias —tocado a mano, o de una versión con otros límites— dejaría
+      // la biblioteca reconociéndose durante horas.
+      returnRecognizedToImport:
+          _preferences.getBool(returnRecognizedPreferenceKey) ?? true,
+      recognizeOnImport:
+          _preferences.getBool(recognizeOnImportPreferenceKey) ?? true,
+      frameSamples:
+          (_preferences.getInt(frameSamplesPreferenceKey) ?? defaultFrameSamples)
+              .clamp(minFrameSamples, maxFrameSamples),
       recognitionPath: _preferences.getString(recognitionPathPreferenceKey) ??
           defaultRecognitionPath,
       organization: FileOrganizationCriteria.fromId(
@@ -205,6 +215,18 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setString(
       recognitionPathPreferenceKey,
       settings.recognitionPath,
+    );
+    await _preferences.setBool(
+      returnRecognizedPreferenceKey,
+      settings.returnRecognizedToImport,
+    );
+    await _preferences.setBool(
+      recognizeOnImportPreferenceKey,
+      settings.recognizeOnImport,
+    );
+    await _preferences.setInt(
+      frameSamplesPreferenceKey,
+      settings.frameSamples.clamp(minFrameSamples, maxFrameSamples),
     );
 
     await _preferences.setBool(

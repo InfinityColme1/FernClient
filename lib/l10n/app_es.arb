@@ -32,6 +32,7 @@
 
   "mediaFetched": "{count, plural, =1{1 archivo encontrado} other{{count} archivos encontrados}}",
   "selectedCount": "{count} seleccionados",
+  "selectedOfCount": "{selected} de {total} seleccionados",
 
   "deletedCount": "{count, plural, =0{Nada marcado para borrar} =1{1 archivo marcado para borrar} other{{count} archivos marcados para borrar}}",
   "deletedRetentionNotice": "{days, plural, =1{Se borra definitivamente al cabo de 1 día} other{Se borra definitivamente al cabo de {days} días}}",
@@ -751,5 +752,92 @@
 
   "fernieRegionCount": "{count, plural, =0{Sin regiones} =1{1 región} other{{count} regiones}}",
   "fernieMediaCount": "{count, plural, =0{en ningún contenido} =1{en 1 contenido} other{en {count} contenidos}}",
-  "fernieRecommendedRegions": "Se recomiendan al menos {count} regiones"
+  "fernieRecommendedRegions": "Se recomiendan al menos {count} regiones",
+
+  "viewerRecognize": "Reconocer con los modelos",
+  "viewerRecognizing": "Reconociendo…",
+  "viewerRecognizeQueued": "Reconocimiento en cola",
+  "suggestionsTitle": "Sugerencias",
+  "suggestionConfidence": "{percent}%",
+  "suggestionFromModel": "Lo propone un modelo, todavía sin confirmar",
+  "suggestionCreatorTitle": "Creador propuesto",
+  "suggestionsNone": "Aquí no hay nada propuesto",
+
+  "actionAccept": "Aceptar",
+  "actionReject": "Rechazar",
+  "suggestionAcceptAll": "Aceptar todas",
+  "suggestionRejectAll": "Rechazar todas",
+
+  "recognizeNoModelsInTree": "Todavía no hay ningún modelo en el árbol. Añade uno desde la pantalla del árbol de modelos.",
+  "recognizeNoTrainedModels": "Ningún modelo del árbol está entrenado. Entrena uno, o importa sus pesos desde la pantalla del modelo.",
+  "recognizeUnavailable": "No se ha podido leer el árbol de modelos.",
+  "recognizeFoundNothing": "Los modelos no han encontrado nada aquí",
+
+  "recognizeNothingToDo": "Aquí no queda nada por reconocer",
+  "recognizeSelectedTooltip": "Reconocer la selección",
+  "recognizeTagTooltip": "Reconocer todo lo de esta etiqueta",
+  "recognizeCreatorTooltip": "Reconocer todo lo de este creador",
+  "recognizeLibrary": "Reconocer la biblioteca",
+  "recognizeLibraryTitle": "Reconocer toda la biblioteca",
+  "recognizeLibraryQuestion": "Reconocer cuesta una predicción por imagen, y varias por vídeo. Elige cuánto hay que mirar.",
+  "recognizeLibraryOnlyNew": "Sólo lo que no se ha mirado nunca",
+  "recognizeLibraryAll": "Todo, otra vez",
+  "recognizeLibraryAllHint": "Útil después de entrenar un modelo mejor.",
+  "recognizeJobLibrary": "Biblioteca entera",
+  "recognizeJobSelection": "Selección",
+  "recognizeQueuedCount": "{count, plural, =0{No se ha encolado nada} =1{1 contenido en cola para reconocer} other{{count} contenidos en cola para reconocer}}",
+  "recognizeCountable": "{count, plural, =1{1 contenido} other{{count} contenidos}}",
+
+  "recognitionLogTitle": "Qué hicieron los modelos",
+  "recognitionLogNearMiss": "visto, bajo el listón",
+  "recognitionLogNothing": "nada",
+  "recognitionLogVerdictProposed": "lo propone",
+  "recognitionLogVerdictBelow": "lo vio, pero por debajo del {percent} %",
+  "recognitionLogVerdictNothing": "no vio nada",
+  "recognitionLogVerdictNotReached": "no corrió: su rama no se abrió",
+  "recognitionLogVerdictUntrained": "no corrió: no tiene pesos",
+  "jobDetailTooltip": "Ver qué hicieron los modelos",
+  "jobsClearFinished": "Dar por vistas las terminadas",
+  "recognitionLogFromToast": "Pulsa para ver qué hicieron los modelos",
+  "recognitionLogSubtitle": "{count, plural, =1{Un contenido} other{{count} contenidos}}",
+  "recognitionLogProposed": "{count, plural, =1{1 sugerencia} other{{count} sugerencias}}",
+
+  "jobDone": "Terminada",
+
+  "recognizeFoundCount": "{count, plural, =1{1 sugerencia. Pulsa para ver cómo} other{{count} sugerencias. Pulsa para ver cómo}}",
+
+  "recognitionPanelTitle": "Al reconocer",
+  "recognitionThresholdLabel": "Confianza mínima para proponer",
+  "recognitionThresholdDescription": "Por debajo de esto, lo que vea no se propone.",
+  "recognitionThresholdEverything": "Se propone todo lo que vea, por poco seguro que esté.",
+  "recognitionThresholdAll": "Todo",
+  "recognitionThresholdLower": "Bajar el listón",
+  "recognitionThresholdRaise": "Subir el listón",
+  "recognitionThresholdApplies": "Vale para el próximo reconocimiento. Lo ya propuesto no cambia.",
+
+  "recognizeReturnTitle": "Saldrán de la biblioteca por un rato",
+  "recognizeReturnHint": "Sólo los que reciban alguna sugerencia. Se puede apagar en Ajustes, en Reconocimiento.",
+  "recognizeReturnConfirm": "Reconocer de todas formas",
+  "returnRecognizedLabel": "Devolver a importación el contenido reconocido",
+  "returnRecognizedDescription": "Lo que reciba una sugerencia deja de ser definitivo hasta que lo valides. Apagado, las sugerencias se siguen viendo en el panel del visor y no se mueve nada de sitio.",
+  "recognizeReturnWarning": "{count, plural, =1{Un contenido volverá a la pantalla de importación hasta que valides sus etiquetas.} other{{count} contenidos volverán a la pantalla de importación hasta que valides sus etiquetas.}}",
+
+  "suggestionsPendingBadge": "Tiene sugerencias sin mirar",
+
+  "suggestionFilterAll": "Todo",
+  "suggestionFilterWith": "Con sugerencias",
+  "suggestionFilterNever": "Sin mirar nunca",
+
+  "acceptAboveTooltip": "Acepta lo que los modelos ven con más de un {percent} % de seguridad, en la selección. No da nada por definitivo.",
+  "acceptAboveDone": "{count, plural, =0{Nada llegaba con seguridad suficiente} =1{1 sugerencia aceptada} other{{count} sugerencias aceptadas}}",
+  "actionClearSelection": "Dejar de seleccionar",
+  "acceptAboveLabel": "Aceptar más del {percent} %",
+  "importShowLabel": "Ver",
+  "importFetchLabel": "Traer",
+  "recognizeJobImported": "Recién importado",
+  "recognizeOnImportLabel": "Reconocer lo que acaba de importarse",
+  "recognizeOnImportDescription": "El contenido nuevo pasa por los modelos solo, en cuanto la importación se calma. No cuesta nada si no hay ningún modelo entrenado.",
+  "suggestionMarkRegion": "Guardar como región de este fernie",
+  "suggestionRegionSaved": "Región guardada. Cuenta para el próximo entrenamiento.",
+  "suggestionRegionFailed": "No se ha podido guardar la región"
 }

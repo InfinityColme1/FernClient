@@ -268,8 +268,10 @@ def _detections_of(result, conf):
         if confidence < conf:
             continue
 
-        # xywhn: centro y tamano ya normalizados, que es el formato con el que
-        # trabaja FeRN al guardar las regiones.
+        # xywhn: centro y tamano ya normalizados, que es el formato de
+        # ultralytics. FeRN guarda las regiones con la esquina superior
+        # izquierda, asi que las convierte al recibirlas: aqui va lo que
+        # ultralytics da, sin tocar.
         x, y, w, h = [float(value) for value in box.xywhn[0]]
         detections.append({
             "class": int(box.cls[0]),

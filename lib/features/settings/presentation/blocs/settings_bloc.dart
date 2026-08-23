@@ -45,6 +45,8 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
     on<PauseWhenSeekingToggledEvent>(onPauseWhenSeekingToggled);
+    on<RecognizeOnImportToggledEvent>(onRecognizeOnImportToggled);
+    on<ReturnRecognizedToggledEvent>(onReturnRecognizedToggled);
     on<ThemeModeChangedEvent>(onThemeModeChanged);
     on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
@@ -195,6 +197,26 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(autoTagRemoteSource: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onRecognizeOnImportToggled(
+    RecognizeOnImportToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(recognizeOnImport: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onReturnRecognizedToggled(
+    ReturnRecognizedToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(returnRecognizedToImport: event.enabled),
       emit,
     );
   }

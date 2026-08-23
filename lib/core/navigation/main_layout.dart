@@ -7,6 +7,11 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar.dart';
 import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
 import 'package:Fern/features/jobs/presentation/widgets/jobs_indicator.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
+import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
+import 'package:Fern/features/recognition/data/services/recognition_log_store.dart';
+import 'package:Fern/features/recognition/presentation/widgets/recognition_log_dialog.dart';
 import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
@@ -144,6 +149,14 @@ class _MainLayoutState extends State<MainLayout> {
     final route = GoRouterState.of(context).matchedLocation;
     if (route == _lastSeenRoute && !isPending) return;
 
+    // Cambiar de pantalla es dar por visto lo señalado. Es una de las tres
+    // formas: las otras son pasar el ratón por encima y abrir un contenido.
+    //
+    // Se apaga al **salir** y no al llegar: apagarlo al llegar lo borraría antes
+    // de que la rejilla llegara a pintarlo.
+    final highlight = getIt<RecognitionHighlight>();
+    if (_lastSeenRoute != null && highlight.route != route) highlight.clear();
+
     _lastSeenRoute = route;
 
     // En el fotograma siguiente: durante la construcción no se puede tocar el
@@ -229,7 +242,20 @@ class _MainLayoutState extends State<MainLayout> {
         actions: [
           // Sólo asoma cuando hay algo corriendo por detrás, así que el resto
           // del tiempo la barra queda como estaba.
-          const JobsIndicator(),
+          //
+          // El detalle de un reconocimiento se enchufa desde aquí y no desde
+          // dentro: la lista de tareas es de la aplicación entera, y bastaría un
+          // caso especial por tipo de trabajo para que acabara importando media
+          // aplicación.
+          JobsIndicator(
+            hasDetail: (job) => getIt<RecognitionLogStore>().has(job.id),
+            onDetail: (context, job) => showFernDialog<void, JobsBloc>(
+              context: context,
+              builder: (_) => RecognitionLogDialog(
+                logs: getIt<RecognitionLogStore>().of(job.id),
+              ),
+            ),
+          ),
           FernPopupMenu<_CreateOption>(
             options: _createOptions(AppLocalizations.of(context)),
             onSelected: _onCreateSelected,
@@ -242,6 +268,8 @@ class _MainLayoutState extends State<MainLayout> {
             ),
           ),
           IconButton(
+            // Los demás de esta barra lo llevan y éste se había quedado sin él.
+            tooltip: AppLocalizations.of(context).settingsTitle,
             onPressed: _openSettings,
             icon: const Icon(Icons.settings),
           ),

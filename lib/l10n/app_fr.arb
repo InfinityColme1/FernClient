@@ -32,6 +32,7 @@
 
   "mediaFetched": "{count, plural, =1{1 média trouvé} other{{count} médias trouvés}}",
   "selectedCount": "{count} sélectionnés",
+  "selectedOfCount": "{selected} sur {total} sélectionnés",
 
   "deletedCount": "{count, plural, =0{Rien à supprimer} =1{1 média marqué pour suppression} other{{count} médias marqués pour suppression}}",
   "deletedRetentionNotice": "{days, plural, =1{Supprimé définitivement au bout d'1 jour} other{Supprimé définitivement au bout de {days} jours}}",
@@ -751,5 +752,92 @@
 
   "fernieRegionCount": "{count, plural, =0{Aucune région} =1{1 région} other{{count} régions}}",
   "fernieMediaCount": "{count, plural, =0{dans aucun contenu} =1{dans 1 contenu} other{dans {count} contenus}}",
-  "fernieRecommendedRegions": "Au moins {count} régions sont recommandées"
+  "fernieRecommendedRegions": "Au moins {count} régions sont recommandées",
+
+  "viewerRecognize": "Reconnaître avec les modèles",
+  "viewerRecognizing": "Reconnaissance en cours…",
+  "viewerRecognizeQueued": "Reconnaissance en file d'attente",
+  "suggestionsTitle": "Suggestions",
+  "suggestionConfidence": "{percent} %",
+  "suggestionFromModel": "Proposé par un modèle, pas encore confirmé",
+  "suggestionCreatorTitle": "Créateur proposé",
+  "suggestionsNone": "Rien de proposé ici",
+
+  "actionAccept": "Accepter",
+  "actionReject": "Refuser",
+  "suggestionAcceptAll": "Tout accepter",
+  "suggestionRejectAll": "Tout refuser",
+
+  "recognizeNoModelsInTree": "Il n'y a encore aucun modèle dans l'arbre. Ajoutez-en un depuis l'écran de l'arbre de modèles.",
+  "recognizeNoTrainedModels": "Aucun modèle de l'arbre n'est entraîné. Entraînez-en un, ou importez ses poids depuis l'écran du modèle.",
+  "recognizeUnavailable": "L'arbre de modèles n'a pas pu être lu.",
+  "recognizeFoundNothing": "Les modèles n'ont rien trouvé ici",
+
+  "recognizeNothingToDo": "Il ne reste rien à reconnaître ici",
+  "recognizeSelectedTooltip": "Reconnaître la sélection",
+  "recognizeTagTooltip": "Reconnaître tout ce qui porte ce tag",
+  "recognizeCreatorTooltip": "Reconnaître tout de ce créateur",
+  "recognizeLibrary": "Reconnaître la bibliothèque",
+  "recognizeLibraryTitle": "Reconnaître toute la bibliothèque",
+  "recognizeLibraryQuestion": "Reconnaître coûte une prédiction par image, et plusieurs par vidéo. Choisissez l'étendue.",
+  "recognizeLibraryOnlyNew": "Seulement ce qui n'a jamais été examiné",
+  "recognizeLibraryAll": "Tout, à nouveau",
+  "recognizeLibraryAllHint": "Utile après avoir entraîné un meilleur modèle.",
+  "recognizeJobLibrary": "Bibliothèque entière",
+  "recognizeJobSelection": "Sélection",
+  "recognizeQueuedCount": "{count, plural, =0{Rien mis en file} =1{1 élément en file pour la reconnaissance} other{{count} éléments en file pour la reconnaissance}}",
+  "recognizeCountable": "{count, plural, =1{1 élément} other{{count} éléments}}",
+
+  "recognitionLogTitle": "Ce qu'ont fait les modèles",
+  "recognitionLogNearMiss": "vu, sous le seuil",
+  "recognitionLogNothing": "rien",
+  "recognitionLogVerdictProposed": "le propose",
+  "recognitionLogVerdictBelow": "vu, mais sous les {percent} %",
+  "recognitionLogVerdictNothing": "n'a rien vu",
+  "recognitionLogVerdictNotReached": "n'a pas tourné : sa branche ne s'est pas ouverte",
+  "recognitionLogVerdictUntrained": "n'a pas tourné : il n'a pas de poids",
+  "jobDetailTooltip": "Voir ce qu'ont fait les modèles",
+  "jobsClearFinished": "Marquer les terminées comme vues",
+  "recognitionLogFromToast": "Touchez pour voir ce qu'ont fait les modèles",
+  "recognitionLogSubtitle": "{count, plural, =1{Un élément} other{{count} éléments}}",
+  "recognitionLogProposed": "{count, plural, =1{1 suggestion} other{{count} suggestions}}",
+
+  "jobDone": "Termin\u00e9e",
+
+  "recognizeFoundCount": "{count, plural, =1{1 suggestion. Touchez pour voir comment} other{{count} suggestions. Touchez pour voir comment}}",
+
+  "recognitionPanelTitle": "À la reconnaissance",
+  "recognitionThresholdLabel": "Confiance minimale pour proposer",
+  "recognitionThresholdDescription": "En dessous, ce qu'il voit n'est pas proposé.",
+  "recognitionThresholdEverything": "Tout ce qu'il voit est proposé, même sans certitude.",
+  "recognitionThresholdAll": "Tout",
+  "recognitionThresholdLower": "Baisser le seuil",
+  "recognitionThresholdRaise": "Relever le seuil",
+  "recognitionThresholdApplies": "S'applique à la prochaine reconnaissance. Ce qui est déjà proposé ne change pas.",
+
+  "recognizeReturnTitle": "Ils quitteront la bibliothèque un moment",
+  "recognizeReturnHint": "Seulement ceux qui reçoivent une suggestion. Désactivable dans Réglages, section Reconnaissance.",
+  "recognizeReturnConfirm": "Reconnaître quand même",
+  "returnRecognizedLabel": "Renvoyer le contenu reconnu vers l'importation",
+  "returnRecognizedDescription": "Ce qui reçoit une suggestion cesse d'être définitif jusqu'à validation. Désactivé, les suggestions restent visibles dans le panneau et rien ne bouge.",
+  "recognizeReturnWarning": "{count, plural, =1{Un élément retournera à l'écran d'importation jusqu'à ce que vous validiez ses tags.} other{{count} éléments retourneront à l'écran d'importation jusqu'à ce que vous validiez leurs tags.}}",
+
+  "suggestionsPendingBadge": "A des suggestions en attente",
+
+  "suggestionFilterAll": "Tout",
+  "suggestionFilterWith": "Avec suggestions",
+  "suggestionFilterNever": "Jamais examiné",
+
+  "acceptAboveTooltip": "Accepte ce dont les modèles sont sûrs à plus de {percent} %, dans la sélection. Ne valide rien.",
+  "acceptAboveDone": "{count, plural, =0{Rien n'était assez sûr} =1{1 suggestion acceptée} other{{count} suggestions acceptées}}",
+  "actionClearSelection": "Quitter la sélection",
+  "acceptAboveLabel": "Accepter au-delà de {percent} %",
+  "importShowLabel": "Afficher",
+  "importFetchLabel": "Récupérer",
+  "recognizeJobImported": "Tout juste importé",
+  "recognizeOnImportLabel": "Reconnaître ce qui vient d'être importé",
+  "recognizeOnImportDescription": "Le nouveau contenu passe par les modèles tout seul, une fois l'import calmé. Ne coûte rien si aucun modèle n'est entraîné.",
+  "suggestionMarkRegion": "Enregistrer comme région de ce fernie",
+  "suggestionRegionSaved": "Région enregistrée. Elle compte pour le prochain entraînement.",
+  "suggestionRegionFailed": "La région n'a pas pu être enregistrée"
 }

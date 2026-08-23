@@ -33,6 +33,20 @@ class MediaSummaryModel {
   /// marcado.
   DateTime? deletedAt;
 
+  /// Tiene sugerencias sin revisar.
+  ///
+  /// Se guarda aquí, repetido, para poder filtrar la rejilla de importación sin
+  /// preguntar por las sugerencias de cada elemento: son cientos de contenidos y
+  /// serían cientos de consultas por cada pintado.
+  @Index()
+  bool hasPendingSuggestions = false;
+
+  /// Cuándo se reconoció por última vez.
+  ///
+  /// Evita repasar lo ya hecho al pedir «reconocer toda la biblioteca», que con
+  /// unos miles de contenidos es la diferencia entre unos minutos y una tarde.
+  DateTime? recognizedAt;
+
   final details = IsarLink<MediaModel>();
 
   MediaSummaryModel();
@@ -44,7 +58,9 @@ class MediaSummaryModel {
         isImported: isImported,
         isDeleted: isDeleted,
         deletedAt: deletedAt,
-        importSource: ImportSource.fromId(importSource)
+        importSource: ImportSource.fromId(importSource),
+        hasPendingSuggestions: hasPendingSuggestions,
+        recognizedAt: recognizedAt,
     );
   }
 

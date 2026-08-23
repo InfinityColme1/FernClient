@@ -111,6 +111,37 @@ class AppSettingsEntity extends Equatable {
   /// carpeta, la aplicación necesita saber dónde escribir.
   final String recognitionPath;
 
+  /// Cuántos fotogramas se miran de un vídeo al reconocer.
+  ///
+  /// Es el ajuste que más afecta al tiempo de reconocer una biblioteca: el coste
+  /// es una predicción por fotograma. Cinco basta casi siempre; subirlo encuentra
+  /// personajes que salen poco, a cambio de tardar proporcionalmente más.
+  final int frameSamples;
+
+  /// Si el contenido ya definitivo vuelve a la pantalla de importación cuando se
+  /// le encuentra algo que revisar.
+  ///
+  /// Activado de fábrica, y es el comportamiento que pide la decisión D16: una
+  /// sugerencia sin validar es contenido a medias, y dejarlo en la biblioteca
+  /// como si nada esconde el trabajo pendiente hasta que alguien se acuerde de
+  /// mirarlo.
+  ///
+  /// Apagarlo no esconde nada: las sugerencias se siguen viendo en el panel del
+  /// visor y se aceptan desde ahí. Lo que cambia es que el contenido no se mueve
+  /// de sitio.
+  final bool returnRecognizedToImport;
+
+  /// Lo que acaba de importarse se manda a reconocer solo.
+  ///
+  /// Activado de fábrica, que es lo que pide la decisión D15. No cuesta nada
+  /// a quien no tiene modelos entrenados: sin ninguno con pesos no se encola
+  /// trabajo alguno.
+  ///
+  /// Apagarlo no quita nada: reconocer sigue estando en la barra de la
+  /// pantalla de importación y en los otros tres sitios de la D16. Lo que
+  /// cambia es quién decide cuándo se pone el equipo a trabajar.
+  final bool recognizeOnImport;
+
   final FileOrganizationCriteria organization;
 
   /// Al contenido que llega de una plataforma se le pone además una etiqueta con
@@ -194,6 +225,9 @@ class AppSettingsEntity extends Equatable {
     this.libraryPath,
     required this.avatarsPath,
     required this.recognitionPath,
+    this.frameSamples = defaultFrameSamples,
+    this.returnRecognizedToImport = true,
+    this.recognizeOnImport = true,
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
@@ -222,6 +256,9 @@ class AppSettingsEntity extends Equatable {
     String? libraryPath,
     String? avatarsPath,
     String? recognitionPath,
+    int? frameSamples,
+    bool? returnRecognizedToImport,
+    bool? recognizeOnImport,
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
@@ -245,6 +282,10 @@ class AppSettingsEntity extends Equatable {
       libraryPath: libraryPath ?? this.libraryPath,
       avatarsPath: avatarsPath ?? this.avatarsPath,
       recognitionPath: recognitionPath ?? this.recognitionPath,
+      frameSamples: frameSamples ?? this.frameSamples,
+      returnRecognizedToImport:
+          returnRecognizedToImport ?? this.returnRecognizedToImport,
+      recognizeOnImport: recognizeOnImport ?? this.recognizeOnImport,
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
@@ -271,6 +312,9 @@ class AppSettingsEntity extends Equatable {
         libraryPath,
         avatarsPath,
         recognitionPath,
+        frameSamples,
+        returnRecognizedToImport,
+        recognizeOnImport,
         organization,
         autoTagRemoteSource,
         showListAvatars,

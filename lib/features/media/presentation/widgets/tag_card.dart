@@ -7,10 +7,12 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_source_urls_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
@@ -259,9 +261,16 @@ class _TagCardState extends State<TagCard> {
           children: [
             // En la esquina superior derecha, como en el diálogo de creación: es
             // la misma acción y se busca en el mismo sitio.
-            Align(
-              alignment: Alignment.topRight,
-              child: _assignUrlsButton(texts),
+            // Arriba a la derecha, junto a las direcciones: son las dos
+            // acciones que no editan la etiqueta. Reconocer estaba abajo con las
+            // demás, pero eran cuatro píldoras contadas y la quinta pasaba la
+            // fila a dos líneas, con lo que la ficha ya no cabía en la pantalla.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _recognizeButton(texts),
+                _assignUrlsButton(texts),
+              ],
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -385,6 +394,34 @@ class _TagCardState extends State<TagCard> {
       backgroundColor: context.colors.secondary,
       foregroundColor: context.colors.black,
       onPressed: _parentQuery.trim().isEmpty ? null : _removeParent,
+    );
+  }
+
+  /// Manda a reconocer todo el contenido de esta etiqueta.
+  ///
+  /// Es el cuarto punto de entrada del D16, y el único que no parte de una
+  /// selección: aquí la lista sale de la base de datos. Va por el mismo sitio
+  /// que los otros tres, que es quien mira si hay con qué reconocer y lo
+  /// cuenta.
+  Widget _recognizeButton(AppLocalizations texts) {
+    return IconButton(
+      icon: const Icon(
+        Icons.auto_awesome_outlined,
+        size: AppSizes.iconExtraLarge,
+      ),
+      tooltip: texts.recognizeTagTooltip,
+      onPressed: _isBusy ? null : _recognizeAll,
+    );
+  }
+
+  Future<void> _recognizeAll() async {
+    final found = await getIt<GetMediaByTagUseCase>()(params: widget.tag.id);
+    if (!mounted) return;
+
+    await requestRecognition(
+      context,
+      found is DataSuccess ? [for (final one in found.data ?? const []) one.id] : const [],
+      name: widget.tag.name,
     );
   }
 

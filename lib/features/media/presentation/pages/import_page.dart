@@ -8,6 +8,10 @@ import 'package:Fern/features/browser/domain/entities/browser_session_source.dar
 import 'package:Fern/features/browser/presentation/widgets/session_expired_dialog.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/media/suggestion_filter.dart';
+import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
+import 'package:Fern/features/recognition/domain/usecases/accept_suggestions_above_usecase.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_remote_import_dialog.dart';
@@ -77,12 +81,84 @@ class _ImportView extends StatefulWidget {
 }
 
 class _ImportViewState extends State<_ImportView> {
+  late final RecognitionHighlight _highlight = getIt<RecognitionHighlight>();
+
+  @override
+  void initState() {
+    super.initState();
+    _highlight.addListener(_onRecognized);
+  }
+
+  @override
+  void dispose() {
+    _highlight.removeListener(_onRecognized);
+    super.dispose();
+  }
+
+  /// Un reconocimiento ha terminado sobre esta pantalla.
+  ///
+  /// Sin esto, el aviso salta pero la rejilla sigue siendo la de antes: los
+  /// distintivos no aparecen hasta que el usuario sale y vuelve, que es
+  /// exactamente lo que el aviso le estaba pidiendo que no hiciera falta.
+  void _onRecognized() {
+    if (!mounted) return;
+
+    final bloc = context.read<MediaBloc>();
+
+    if (!shouldReloadOnRecognition(
+      highlighted: _highlight.route,
+      screen: importRoute,
+      hasSelection: bloc.state.selectedIds.isNotEmpty,
+      isViewingMedia: bloc.state is DetailedMedia,
+    )) {
+      return;
+    }
+
+    bloc.add(const LoadScannedMediaEvent());
+  }
+
   /// Tope de contenidos nuevos que se trae el próximo escaneo.
   ///
   /// Es de la pantalla y no del bloc: no cambia lo que se está viendo, sólo
   /// cuánto se pide la próxima vez. De partida no hay tope, que es traerse todo
   /// lo que haya.
   int _limit = unlimitedImportLimit;
+
+  /// Con qué parte de lo pendiente se está trabajando.
+  ///
+  /// Vive en la pantalla y no en el bloc: es cómo se está mirando la lista, no
+  /// qué lista es. Cambiar de fuente no lo toca, que es lo que se quiere: quien
+  /// está despachando sugerencias sigue despachándolas al cambiar de fuente.
+  SuggestionFilter _filter = SuggestionFilter.all;
+
+  /// Acepta de golpe lo que los modelos ven con más seguridad en la selección.
+  ///
+  /// El listón es el mismo con el que el panel pinta una sugerencia como fiable:
+  /// si el color prometiera «bueno» por debajo de donde este botón acepta,
+  /// estaría prometiendo algo que el botón no hace.
+  Future<void> _acceptAbove(BuildContext context, MediaStates state) async {
+    final result = await getIt<AcceptSuggestionsAboveUseCase>()(
+      params: AcceptAboveParams(
+        mediaIds: state.selectedIds.toList(),
+        threshold: suggestionHighConfidence,
+      ),
+    );
+
+    if (!context.mounted) return;
+
+    showFernToast(
+      context,
+      AppLocalizations.of(context).acceptAboveDone(result.data?.accepted ?? 0),
+      icon: Icons.info_outline,
+    );
+
+    // Las celdas dejan de llevar el distintivo en cuanto no les queda nada sin
+    // contestar, y eso vive en el sumario: hay que releer. Releer, no volver a
+    // escanear la fuente: lo que ha cambiado está en la base de datos.
+    if (context.mounted) {
+      context.read<MediaBloc>().add(const LoadScannedMediaEvent());
+    }
+  }
 
   /// Si la fuente elegida se puede usar tal y como está configurada.
   ///
@@ -366,7 +442,13 @@ class _ImportViewState extends State<_ImportView> {
         }
       },
       builder: (context, state) {
-        final hasMedia = state.mediaList != null && state.mediaList!.isNotEmpty;
+        // Lo que hay, y lo que el filtro deja ver. La rejilla y el recuento van
+        // sobre lo segundo: enseñar un número que no cuadra con lo que se está
+        // viendo es peor que no enseñarlo.
+        final all = state.mediaList ?? const <MediaSummaryEntity>[];
+        final visible = [for (final one in all) if (_filter.matches(one)) one];
+
+        final hasMedia = all.isNotEmpty;
         // Los botones masivos actúan sobre la selección de la rejilla, así que
         // sin selección no hay nada que borrar ni que confirmar.
         final selectedCount = state.selectedIds.length;
@@ -398,7 +480,25 @@ class _ImportViewState extends State<_ImportView> {
                   builder: (context, settings) {
                     final isConfigured = _isConfigured(source, settings);
 
+                    // Seleccionar cambia a qué se está jugando: ya no se trata
+                    // de traer contenido sino de decidir sobre lo que hay. La
+                    // fila se sustituye entera en vez de encender tres botones
+                    // más, que es lo que la reventaba justo cuando más falta
+                    // hacía que se entendiera.
+                    if (hasSelection) {
+                      return _SelectionBar(
+                        selected: selectedCount,
+                        total: visible.length,
+                        onAcceptAbove: () => _acceptAbove(context, state),
+                        onDelete: () =>
+                            _discardSelection(context, selectedCount),
+                      );
+                    }
+
                     return Row(
+                      // Los controles con rótulo son más altos, y lo que tiene
+                      // que cuadrar es su base, no su centro.
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         FernDropdownPill<ImportSource>(
                           value: source,
@@ -423,23 +523,41 @@ class _ImportViewState extends State<_ImportView> {
                         ],
                         const Spacer(),
                         // CENTER: Stats
+                        //
+                        // Con selección se dice una sola cosa —«3 de 332
+                        // seleccionados»— y no dos. Dos textos ocupan el ancho
+                        // que necesitan los botones de la derecha, y la cuenta
+                        // total sin la selección al lado tampoco decía gran
+                        // cosa.
                         if (hasMedia) ...[
-                          if (hasSelection) ...[
-                            Text(
-                              texts.selectedCount(selectedCount),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: context.colors.terciary,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.l),
-                          ],
+                          // Entero, sin recortar: es un numero, y un numero a
+                          // medias con puntos suspensivos no dice nada.
                           Text(
-                            texts.mediaFetched(state.mediaList!.length),
+                            texts.mediaFetched(visible.length),
                             style: theme.textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           const Spacer(),
+                        ],
+
+                        // Con qué parte de lo pendiente se está trabajando.
+                        // Revisar lo ya propuesto y mirar a mano lo que nadie ha
+                        // visto son dos trabajos distintos, y se hacen mejor por
+                        // separado.
+                        if (hasMedia) ...[
+                          _LabeledControl(
+                            label: texts.importShowLabel,
+                            child: FernDropdownPill<SuggestionFilter>(
+                              value: _filter,
+                              items: SuggestionFilter.values,
+                              labelBuilder: (filter) => filter.label(texts),
+                              onChanged: (filter) {
+                                if (filter == null) return;
+                                setState(() => _filter = filter);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s),
                         ],
 
                         // RIGHT: Actions
@@ -450,21 +568,24 @@ class _ImportViewState extends State<_ImportView> {
                         // De la que no se escanea no se enseña, que ahí no hay
                         // nada que topar.
                         if (canScan) ...[
-                          Tooltip(
-                            // Lo que hace cada opción no cabe en la píldora, así
-                            // que se explica aquí la que esté puesta.
-                            message: _limit == untilLastImportLimit
-                                ? texts.importLimitSinceLastTooltip
-                                : texts.importLimitTooltip,
-                            child: FernDropdownPill<int>(
-                              value: _limit,
-                              items: importLimitOptions,
-                              labelBuilder: (limit) =>
-                                  importLimitLabel(limit, texts),
-                              onChanged: (limit) {
-                                if (limit == null) return;
-                                setState(() => _limit = limit);
-                              },
+                          _LabeledControl(
+                            label: texts.importFetchLabel,
+                            child: Tooltip(
+                              // Lo que hace cada opción no cabe en la píldora,
+                              // así que se explica aquí la que esté puesta.
+                              message: _limit == untilLastImportLimit
+                                  ? texts.importLimitSinceLastTooltip
+                                  : texts.importLimitTooltip,
+                              child: FernDropdownPill<int>(
+                                value: _limit,
+                                items: importLimitOptions,
+                                labelBuilder: (limit) =>
+                                    importLimitLabel(limit, texts),
+                                onChanged: (limit) {
+                                  if (limit == null) return;
+                                  setState(() => _limit = limit);
+                                },
+                              ),
                             ),
                           ),
                           const SizedBox(width: AppSpacing.s),
@@ -494,30 +615,6 @@ class _ImportViewState extends State<_ImportView> {
                               : null,
                           icon: const Icon(Icons.folder_open_outlined),
                         ),
-                        if (hasMedia) ...[
-                          const SizedBox(width: AppSpacing.s),
-                          FernPillButton(
-                            label: texts.actionDelete,
-                            icon: Icons.delete_outline,
-                            backgroundColor: context.colors.error,
-                            foregroundColor: Colors.white,
-                            onPressed: hasSelection
-                                ? () => _discardSelection(context, selectedCount)
-                                : null,
-                          ),
-                          const SizedBox(width: AppSpacing.s),
-                          FernPillButton(
-                            label: texts.actionConfirm,
-                            icon: Icons.check,
-                            backgroundColor: context.colors.primary,
-                            foregroundColor: context.colors.black,
-                            onPressed: hasSelection
-                                ? () => context
-                                    .read<MediaBloc>()
-                                    .add(const ConfirmSelectedMediaEvent())
-                                : null,
-                          ),
-                        ],
                       ],
                     );
                   },
@@ -527,7 +624,7 @@ class _ImportViewState extends State<_ImportView> {
               // GRID
               Expanded(
                 child: MediaGrid(
-                  mediaList: state.mediaList ?? [],
+                  mediaList: visible,
                   columns: 4,
                   isLoading: state.isBusy,
                   // Una importación puede durar mucho, así que se puede parar
@@ -540,6 +637,128 @@ class _ImportViewState extends State<_ImportView> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Lo que se puede hacer con lo que está marcado.
+///
+/// Sustituye a la barra de la pantalla en cuanto hay algo seleccionado, en vez
+/// de sumarse a ella. Son dos momentos distintos —traer contenido y decidir
+/// sobre el que ya está— y meterlos en la misma fila obligaba a elegir entre
+/// que no cupieran o quitar opciones que sí hacen falta.
+class _SelectionBar extends StatelessWidget {
+  final int selected;
+  final int total;
+  final VoidCallback onAcceptAbove;
+  final VoidCallback onDelete;
+
+  const _SelectionBar({
+    required this.selected,
+    required this.total,
+    required this.onAcceptAbove,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        // Salir de la selección tiene que estar a mano: es la forma de volver a
+        // la barra de antes, y si no se ve, la pantalla parece haberse quedado
+        // en otro sitio.
+        IconButton(
+          tooltip: texts.actionClearSelection,
+          onPressed: () =>
+              context.read<MediaBloc>().add(const ClearMediaSelectionEvent()),
+          icon: const Icon(Icons.close),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Flexible(
+          child: Text(
+            texts.selectedOfCount(selected, total),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: context.colors.terciary,
+            ),
+          ),
+        ),
+        const Spacer(),
+        // Despachar de golpe lo que los modelos ven con más seguridad. Es lo que
+        // hace usable revisar trescientos: decir que sí trescientas veces a lo
+        // evidente es lo que hace que nadie revise nada.
+        Tooltip(
+          message: texts.acceptAboveTooltip(
+            (suggestionHighConfidence * 100).round(),
+          ),
+          child: FernPillButton(
+            label: texts.acceptAboveLabel(
+              (suggestionHighConfidence * 100).round(),
+            ),
+            icon: Icons.done_all,
+            backgroundColor: context.colors.secondary,
+            foregroundColor: context.colors.black,
+            onPressed: onAcceptAbove,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        FernPillButton(
+          label: texts.actionDelete,
+          icon: Icons.delete_outline,
+          backgroundColor: context.colors.error,
+          foregroundColor: Colors.white,
+          onPressed: onDelete,
+        ),
+        const SizedBox(width: AppSpacing.s),
+        FernPillButton(
+          label: texts.actionConfirm,
+          icon: Icons.check,
+          backgroundColor: context.colors.primary,
+          foregroundColor: context.colors.black,
+          onPressed: () =>
+              context.read<MediaBloc>().add(const ConfirmSelectedMediaEvent()),
+        ),
+      ],
+    );
+  }
+}
+
+
+/// Un control con un rótulo encima que dice qué es.
+///
+/// Dos desplegables uno al lado del otro no se distinguen por su contenido:
+/// «Todo» y «Todos» se leen igual, y hay que abrirlos para saber cuál es cuál.
+/// El rótulo es lo que evita esa apertura a ciegas.
+class _LabeledControl extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _LabeledControl({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.m),
+          child: Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(color: context.colors.unremarked),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        child,
+      ],
     );
   }
 }

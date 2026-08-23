@@ -32,6 +32,7 @@
 
   "mediaFetched": "{count, plural, =1{1 fitxer trobat} other{{count} fitxers trobats}}",
   "selectedCount": "{count} seleccionats",
+  "selectedOfCount": "{selected} de {total} seleccionats",
 
   "deletedCount": "{count, plural, =0{Res marcat per esborrar} =1{1 fitxer marcat per esborrar} other{{count} fitxers marcats per esborrar}}",
   "deletedRetentionNotice": "{days, plural, =1{S'esborra definitivament al cap d'1 dia} other{S'esborra definitivament al cap de {days} dies}}",
@@ -751,5 +752,92 @@
 
   "fernieRegionCount": "{count, plural, =0{Sense regions} =1{1 regió} other{{count} regions}}",
   "fernieMediaCount": "{count, plural, =0{en cap contingut} =1{en 1 contingut} other{en {count} continguts}}",
-  "fernieRecommendedRegions": "Es recomanen com a mínim {count} regions"
+  "fernieRecommendedRegions": "Es recomanen com a mínim {count} regions",
+
+  "viewerRecognize": "Reconeix amb els models",
+  "viewerRecognizing": "S'està reconeixent…",
+  "viewerRecognizeQueued": "Reconeixement a la cua",
+  "suggestionsTitle": "Suggeriments",
+  "suggestionConfidence": "{percent}%",
+  "suggestionFromModel": "Ho proposa un model, encara sense confirmar",
+  "suggestionCreatorTitle": "Creador proposat",
+  "suggestionsNone": "Aquí no hi ha res proposat",
+
+  "actionAccept": "Accepta",
+  "actionReject": "Rebutja",
+  "suggestionAcceptAll": "Accepta-les totes",
+  "suggestionRejectAll": "Rebutja-les totes",
+
+  "recognizeNoModelsInTree": "Encara no hi ha cap model a l'arbre. Afegeix-ne un des de la pantalla de l'arbre de models.",
+  "recognizeNoTrainedModels": "Cap model de l'arbre no està entrenat. Entrena'n un, o importa'n els pesos des de la pantalla del model.",
+  "recognizeUnavailable": "No s'ha pogut llegir l'arbre de models.",
+  "recognizeFoundNothing": "Els models no han trobat res aquí",
+
+  "recognizeNothingToDo": "Aquí no queda res per reconèixer",
+  "recognizeSelectedTooltip": "Reconeix la selecció",
+  "recognizeTagTooltip": "Reconeix tot el d'aquesta etiqueta",
+  "recognizeCreatorTooltip": "Reconeix tot el d'aquest creador",
+  "recognizeLibrary": "Reconeix la biblioteca",
+  "recognizeLibraryTitle": "Reconeix tota la biblioteca",
+  "recognizeLibraryQuestion": "Reconèixer costa una predicció per imatge, i unes quantes per vídeo. Tria quant se n'ha de mirar.",
+  "recognizeLibraryOnlyNew": "Només el que no s'ha mirat mai",
+  "recognizeLibraryAll": "Tot, una altra vegada",
+  "recognizeLibraryAllHint": "Útil després d'entrenar un model millor.",
+  "recognizeJobLibrary": "Biblioteca sencera",
+  "recognizeJobSelection": "Selecció",
+  "recognizeQueuedCount": "{count, plural, =0{No s'ha encuat res} =1{1 contingut a la cua per reconèixer} other{{count} continguts a la cua per reconèixer}}",
+  "recognizeCountable": "{count, plural, =1{1 contingut} other{{count} continguts}}",
+
+  "recognitionLogTitle": "Què han fet els models",
+  "recognitionLogNearMiss": "vist, sota el llistó",
+  "recognitionLogNothing": "res",
+  "recognitionLogVerdictProposed": "ho proposa",
+  "recognitionLogVerdictBelow": "ho va veure, però per sota del {percent} %",
+  "recognitionLogVerdictNothing": "no va veure res",
+  "recognitionLogVerdictNotReached": "no va córrer: la seva branca no es va obrir",
+  "recognitionLogVerdictUntrained": "no va córrer: no té pesos",
+  "jobDetailTooltip": "Mira què han fet els models",
+  "jobsClearFinished": "Dona per vistes les acabades",
+  "recognitionLogFromToast": "Prem per veure què han fet els models",
+  "recognitionLogSubtitle": "{count, plural, =1{Un contingut} other{{count} continguts}}",
+  "recognitionLogProposed": "{count, plural, =1{1 suggeriment} other{{count} suggeriments}}",
+
+  "jobDone": "Acabada",
+
+  "recognizeFoundCount": "{count, plural, =1{1 suggeriment. Prem per veure com} other{{count} suggeriments. Prem per veure com}}",
+
+  "recognitionPanelTitle": "En reconèixer",
+  "recognitionThresholdLabel": "Confiança mínima per proposar",
+  "recognitionThresholdDescription": "Per sota d'això, el que vegi no es proposa.",
+  "recognitionThresholdEverything": "Es proposa tot el que vegi, per poc segur que estigui.",
+  "recognitionThresholdAll": "Tot",
+  "recognitionThresholdLower": "Abaixa el llistó",
+  "recognitionThresholdRaise": "Apuja el llistó",
+  "recognitionThresholdApplies": "Val per al pròxim reconeixement. El que ja s'ha proposat no canvia.",
+
+  "recognizeReturnTitle": "Sortiran de la biblioteca una estona",
+  "recognizeReturnHint": "Només els que rebin algun suggeriment. Es pot apagar a Configuració, a Reconeixement.",
+  "recognizeReturnConfirm": "Reconeix igualment",
+  "returnRecognizedLabel": "Retorna a importació el contingut reconegut",
+  "returnRecognizedDescription": "El que rebi un suggeriment deixa de ser definitiu fins que el validis. Apagat, els suggeriments es continuen veient al panell del visor i no es mou res de lloc.",
+  "recognizeReturnWarning": "{count, plural, =1{Un contingut tornarà a la pantalla d'importació fins que en validis les etiquetes.} other{{count} continguts tornaran a la pantalla d'importació fins que en validis les etiquetes.}}",
+
+  "suggestionsPendingBadge": "Té suggeriments sense mirar",
+
+  "suggestionFilterAll": "Tot",
+  "suggestionFilterWith": "Amb suggeriments",
+  "suggestionFilterNever": "Sense mirar mai",
+
+  "acceptAboveTooltip": "Accepta el que els models veuen amb més d'un {percent} % de seguretat, a la selecció. No dona res per definitiu.",
+  "acceptAboveDone": "{count, plural, =0{Res no arribava amb prou seguretat} =1{1 suggeriment acceptat} other{{count} suggeriments acceptats}}",
+  "actionClearSelection": "Deixa de seleccionar",
+  "acceptAboveLabel": "Accepta més del {percent} %",
+  "importShowLabel": "Veure",
+  "importFetchLabel": "Portar",
+  "recognizeJobImported": "Acabat d'importar",
+  "recognizeOnImportLabel": "Reconeix el que s'acaba d'importar",
+  "recognizeOnImportDescription": "El contingut nou passa pels models sol, quan la importació es calma. No costa res si no hi ha cap model entrenat.",
+  "suggestionMarkRegion": "Desa com a regió d'aquest fernie",
+  "suggestionRegionSaved": "Regió desada. Compta per al proper entrenament.",
+  "suggestionRegionFailed": "No s'ha pogut desar la regió"
 }

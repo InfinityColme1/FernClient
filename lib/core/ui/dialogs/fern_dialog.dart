@@ -57,17 +57,22 @@ class FernDialog extends StatelessWidget {
                   if (trailingAction != null) trailingAction!,
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (leftContent != null)
-                      Expanded(flex: 1, child: leftContent!),
-                    if (hasBothColumns) SizedBox(width: columnSpacing),
-                    if (rightContent != null)
-                      Expanded(flex: 1, child: rightContent!),
-                  ],
+              // Flexible y no fijo: es la parte que tiene que ceder cuando el
+              // diálogo no cabe. La cabecera y el botón de acción ocupan lo que
+              // ocupan y no se pueden encoger.
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (leftContent != null)
+                        Expanded(flex: 1, child: leftContent!),
+                      if (hasBothColumns) SizedBox(width: columnSpacing),
+                      if (rightContent != null)
+                        Expanded(flex: 1, child: rightContent!),
+                    ],
+                  ),
                 ),
               ),
               if (actionButton != null) ...[

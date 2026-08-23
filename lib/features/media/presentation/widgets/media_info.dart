@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
@@ -12,9 +13,20 @@ import 'package:Fern/features/media/presentation/widgets/assign_tag_dialog.dart'
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_events.dart';
+import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/recognition/domain/entities/media_suggestion_entity.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_states.dart';
+import 'package:Fern/features/recognition/presentation/blocs/suggestions_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/suggestions_events.dart';
+import 'package:Fern/features/recognition/presentation/blocs/suggestions_states.dart';
+import 'package:Fern/features/recognition/presentation/widgets/suggestion_row.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
+import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
+import 'package:Fern/features/recognition/domain/usecases/turn_detection_into_region_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,7 +44,17 @@ class MediaInfo extends StatelessWidget {
   /// `InheritedWidget` que hay que desmontar con cuidado al salir.
   final FernieModeBloc fernieMode;
 
-  const MediaInfo({super.key, required this.fernieMode});
+  /// Lo que los modelos proponen sobre este contenido.
+  ///
+  /// Llega por parámetro por lo mismo que [fernieMode]: lo crea el visor, vive
+  /// con él y muere con él.
+  final SuggestionsBloc suggestions;
+
+  const MediaInfo({
+    super.key,
+    required this.fernieMode,
+    required this.suggestions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +79,11 @@ class MediaInfo extends StatelessWidget {
             child: Column(
               children: [
                 Expanded(
-                  child: _InfoContent(media: media, fernieMode: fernieMode),
+                  child: _InfoContent(
+                    media: media,
+                    fernieMode: fernieMode,
+                    suggestions: suggestions,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.l),
 
@@ -82,6 +108,13 @@ class MediaInfo extends StatelessWidget {
                           context
                               .read<MediaBloc>()
                               .add(SaveMediaEvent(media, goToNext: goToNext));
+
+                          // Lo aceptado pasa a estarlo de verdad justo aquí:
+                          // hasta ahora sólo era una etiqueta más entre los
+                          // cambios sin guardar. Va **antes** de que el visor
+                          // pueda cerrarse o saltar al siguiente, que es lo que
+                          // vacía el estado del bloc.
+                          suggestions.add(const SuggestionsCommittedEvent());
 
                           if (state.isNew && !goToNext) context.pop();
                         }
@@ -125,8 +158,13 @@ class MediaInfo extends StatelessWidget {
 class _InfoContent extends StatelessWidget {
   final MediaEntity media;
   final FernieModeBloc fernieMode;
+  final SuggestionsBloc suggestions;
 
-  const _InfoContent({required this.media, required this.fernieMode});
+  const _InfoContent({
+    required this.media,
+    required this.fernieMode,
+    required this.suggestions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +186,18 @@ class _InfoContent extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.l),
               _CreatorRow(media: media),
+              _SuggestionList(
+                bloc: suggestions,
+                pick: (state) => state.creatorSuggestions,
+                fallbackIcon: Icons.person,
+                title: texts.suggestionCreatorTitle,
+                // El creador es uno: aceptar el último sustituye al anterior,
+                // que es lo mismo que hace el diálogo de asignarlo.
+                apply: (context, which) => _updateMedia(
+                  context,
+                  media.copyWith(creator: which.last.creator),
+                ),
+              ),
               const SizedBox(height: AppSpacing.l),
               _FerniesSection(media: media, fernieMode: fernieMode),
               const SizedBox(height: AppSpacing.l),
@@ -182,6 +232,27 @@ class _InfoContent extends StatelessWidget {
               ),
             );
           },
+        ),
+
+        // Debajo de las etiquetas de verdad y encima del "+": lo que el
+        // contenido lleva va primero, y lo que un modelo propone después, que es
+        // el orden en el que se lee «esto es, y esto podría ser».
+        SliverToBoxAdapter(
+          child: _SuggestionList(
+            bloc: suggestions,
+            // Las que no proponen nada van aquí también: no se pueden
+            // aceptar, pero sí rechazar, que es lo que las quita de en medio y
+            // deja de señalar el contenido como pendiente.
+            pick: (state) => [
+              ...state.tagSuggestions,
+              ...state.unlinkedSuggestions,
+            ],
+            fallbackIcon: Icons.label,
+            apply: (context, which) async => _updateMedia(
+              context,
+              media.copyWith(tags: await _withTags(media, which)),
+            ),
+          ),
         ),
 
         SliverToBoxAdapter(
@@ -393,4 +464,249 @@ class _CreatorRow extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Las sugerencias de una clase, o nada si no hay ninguna.
+///
+/// No reserva sitio cuando está vacía —ni cabecera, ni hueco, ni un «no hay
+/// sugerencias»—: la mayoría de los contenidos no tienen ninguna, y una sección
+/// vacía permanente en un panel estrecho es papel gastado en decir que no pasa
+/// nada.
+class _SuggestionList extends StatelessWidget {
+  final SuggestionsBloc bloc;
+
+  /// Cuáles de las que hay le tocan a esta lista.
+  final List<MediaSuggestionEntity> Function(SuggestionsState) pick;
+
+  /// Qué hacer con el contenido al aceptar. Es lo único que cambia entre la
+  /// lista de etiquetas y la de creador: una añade a una lista y la otra
+  /// sustituye un valor.
+  ///
+  /// Vacío significa que no hay nada que poner —el fernie no enlaza nada, o su
+  /// etiqueta ya no existe—, y entonces no aparece el botón de aceptar.
+  final void Function(BuildContext, List<MediaSuggestionEntity>)? apply;
+
+  final IconData fallbackIcon;
+
+  /// Encabezado, si esta lista necesita decir de qué va. Las de etiqueta no lo
+  /// llevan: van justo debajo de las etiquetas y se entiende solo.
+  final String? title;
+
+  const _SuggestionList({
+    required this.bloc,
+    required this.pick,
+    required this.fallbackIcon,
+    this.apply,
+    this.title,
+  });
+
+  /// Dice que sí: pone lo propuesto en el contenido y aparta la sugerencia.
+  ///
+  /// Las dos cosas van juntas siempre. La etiqueta se queda entre los cambios
+  /// sin guardar del contenido, y la sugerencia no baja a la base de datos hasta
+  /// que se guarde: si se apuntara ya y el usuario se fuera sin guardar,
+  /// quedaría contestada sin que la etiqueta llegara a ponerse.
+  void _accept(BuildContext context, List<MediaSuggestionEntity> which) {
+    // Aceptar en bloque salta las que no tienen nada que proponer: siguen ahí
+    // esperando a que alguien las rechace, que es lo único que se puede hacer
+    // con ellas.
+    final acceptable = [for (final one in which) if (_canAccept(one)) one];
+    if (acceptable.isEmpty) return;
+
+    apply!(context, acceptable);
+    bloc.add(SuggestionsAcceptedEvent(acceptable));
+
+    getIt<SuggestionSpotlight>()
+        .releaseIf([for (final one in acceptable) one.id]);
+  }
+
+  /// Si hay algo que poner en el contenido al decir que sí.
+  bool _canAccept(MediaSuggestionEntity suggestion) =>
+      apply != null && suggestion.proposes != FernieLinkKind.none;
+
+  void _reject(List<MediaSuggestionEntity> which) {
+    if (which.isEmpty) return;
+
+    bloc.add(SuggestionsRejectedEvent(which));
+
+    getIt<SuggestionSpotlight>()
+        .releaseIf([for (final one in which) one.id]);
+  }
+
+  /// Enseña sobre el contenido dónde vio el modelo lo que propone esta fila.
+  void _spotlight(MediaSuggestionEntity? suggestion) {
+    final spotlight = getIt<SuggestionSpotlight>();
+    final box = suggestion?.box;
+
+    if (suggestion == null || box == null) {
+      spotlight.clear();
+
+      return;
+    }
+
+    spotlight.show(
+      id: suggestion.id,
+      box: box,
+      label: suggestion.label,
+      frameMs: suggestion.frameMs,
+    );
+  }
+
+  /// Deja la caja puesta, o la quita si ya lo estaba.
+  void _pin(MediaSuggestionEntity suggestion) {
+    final box = suggestion.box;
+    if (box == null) return;
+
+    getIt<SuggestionSpotlight>().pin(
+      id: suggestion.id,
+      box: box,
+      label: suggestion.label,
+      frameMs: suggestion.frameMs,
+    );
+  }
+
+  /// Guarda lo que el modelo vio como región del fernie que lo vio.
+  ///
+  /// No contesta la sugerencia: marcar dónde está algo y decir que la etiqueta
+  /// es correcta son dos cosas, y quien acaba de guardar la región puede querer
+  /// rechazar la etiqueta igualmente.
+  Future<void> _markRegion(
+    BuildContext context,
+    MediaSuggestionEntity suggestion,
+  ) async {
+    final result =
+        await getIt<TurnDetectionIntoRegionUseCase>()(params: suggestion);
+
+    if (!context.mounted) return;
+
+    final texts = AppLocalizations.of(context);
+
+    showFernToast(
+      context,
+      result is DataSuccess
+          ? texts.suggestionRegionSaved
+          : texts.suggestionRegionFailed,
+      icon: result is DataSuccess
+          ? Icons.info_outline
+          : Icons.error_outline_rounded,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
+    return BlocBuilder<SuggestionsBloc, SuggestionsState>(
+      bloc: bloc,
+      builder: (context, state) {
+        final suggestions = pick(state);
+        if (suggestions.isEmpty) return const SizedBox.shrink();
+
+        final label = title;
+
+        // Con una sola no hay nada que agrupar: los dos botones de la fila ya
+        // hacen exactamente lo mismo que harían los de «todas», y repetirlos
+        // encima sólo haría dudar de si son distintos.
+        final canAnswerAll = suggestions.length > 1;
+        final canAcceptAll = suggestions.any(_canAccept);
+
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.m),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (label != null) ...[
+                Text(
+                  label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(color: context.colors.unremarked),
+                ),
+                const SizedBox(height: AppSpacing.s),
+              ],
+              for (final suggestion in suggestions)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.m),
+                  child: SuggestionRow(
+                    suggestion: suggestion,
+                    fallbackIcon: fallbackIcon,
+                    onAccept: _canAccept(suggestion)
+                        ? () => _accept(context, [suggestion])
+                        : null,
+                    onReject: () => _reject([suggestion]),
+                    onMarkRegion: () => _markRegion(context, suggestion),
+                    onSpotlight: _spotlight,
+                    onSpotlightPinned: _pin,
+                  ),
+                ),
+              if (canAnswerAll)
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => _reject(suggestions),
+                      child: Text(texts.suggestionRejectAll),
+                    ),
+                    if (canAcceptAll)
+                      TextButton(
+                        onPressed: () => _accept(context, suggestions),
+                        child: Text(texts.suggestionAcceptAll),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Deja el contenido con los cambios puestos, sin bajarlos a la base de datos.
+///
+/// Se queda entre lo que está sin guardar, igual que la descripción o las
+/// etiquetas que se añaden a mano: aceptar una sugerencia no es una excepción a
+/// cómo funciona el panel, y confirmarla en el acto dejaría media pantalla
+/// transaccional y media inmediata.
+void _updateMedia(BuildContext context, MediaEntity media) {
+  context.read<MediaBloc>().add(UpdateMediaInfoEvent(media));
+}
+
+/// Las etiquetas del contenido más las que se acaban de aceptar.
+///
+/// Sin repetir: dos modelos distintos pueden proponer la misma etiqueta, y
+/// aceptar las dos no puede dejarla puesta dos veces.
+///
+/// Con las que están **por encima** de las aceptadas, igual que al ponerlas a
+/// mano desde el diálogo. Sin eso, aceptar «Rombo simple» no pone «Rombo» y el
+/// contenido no aparece al buscar por la etiqueta padre: la misma acción daría
+/// dos resultados distintos según por dónde se haga.
+Future<List<TagEntity>> _withTags(
+  MediaEntity media,
+  List<MediaSuggestionEntity> accepted,
+) async {
+  final tags = List<TagEntity>.of(media.tags ?? const []);
+  final puestas = <TagEntity>[];
+
+  for (final one in accepted) {
+    final tag = one.tag;
+    if (tag == null) continue;
+    if (tags.any((existing) => existing.id == tag.id)) continue;
+
+    tags.add(tag);
+    puestas.add(tag);
+  }
+
+  if (puestas.isEmpty) return tags;
+
+  final ancestors = await getIt<GetTagAncestorsUseCase>()(params: puestas);
+  if (ancestors is! DataSuccess || ancestors.data == null) return tags;
+
+  for (final tag in ancestors.data!) {
+    if (tags.any((existing) => existing.id == tag.id)) continue;
+
+    tags.add(tag);
+  }
+
+  return tags;
 }

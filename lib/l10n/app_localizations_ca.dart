@@ -118,6 +118,11 @@ class AppLocalizationsCa extends AppLocalizations {
   }
 
   @override
+  String selectedOfCount(int selected, int total) {
+    return '$selected de $total seleccionats';
+  }
+
+  @override
   String deletedCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2035,4 +2040,312 @@ class AppLocalizationsCa extends AppLocalizations {
   String fernieRecommendedRegions(int count) {
     return 'Es recomanen com a mínim $count regions';
   }
+
+  @override
+  String get viewerRecognize => 'Reconeix amb els models';
+
+  @override
+  String get viewerRecognizing => 'S\'està reconeixent…';
+
+  @override
+  String get viewerRecognizeQueued => 'Reconeixement a la cua';
+
+  @override
+  String get suggestionsTitle => 'Suggeriments';
+
+  @override
+  String suggestionConfidence(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get suggestionFromModel =>
+      'Ho proposa un model, encara sense confirmar';
+
+  @override
+  String get suggestionCreatorTitle => 'Creador proposat';
+
+  @override
+  String get suggestionsNone => 'Aquí no hi ha res proposat';
+
+  @override
+  String get actionAccept => 'Accepta';
+
+  @override
+  String get actionReject => 'Rebutja';
+
+  @override
+  String get suggestionAcceptAll => 'Accepta-les totes';
+
+  @override
+  String get suggestionRejectAll => 'Rebutja-les totes';
+
+  @override
+  String get recognizeNoModelsInTree =>
+      'Encara no hi ha cap model a l\'arbre. Afegeix-ne un des de la pantalla de l\'arbre de models.';
+
+  @override
+  String get recognizeNoTrainedModels =>
+      'Cap model de l\'arbre no està entrenat. Entrena\'n un, o importa\'n els pesos des de la pantalla del model.';
+
+  @override
+  String get recognizeUnavailable =>
+      'No s\'ha pogut llegir l\'arbre de models.';
+
+  @override
+  String get recognizeFoundNothing => 'Els models no han trobat res aquí';
+
+  @override
+  String get recognizeNothingToDo => 'Aquí no queda res per reconèixer';
+
+  @override
+  String get recognizeSelectedTooltip => 'Reconeix la selecció';
+
+  @override
+  String get recognizeTagTooltip => 'Reconeix tot el d\'aquesta etiqueta';
+
+  @override
+  String get recognizeCreatorTooltip => 'Reconeix tot el d\'aquest creador';
+
+  @override
+  String get recognizeLibrary => 'Reconeix la biblioteca';
+
+  @override
+  String get recognizeLibraryTitle => 'Reconeix tota la biblioteca';
+
+  @override
+  String get recognizeLibraryQuestion =>
+      'Reconèixer costa una predicció per imatge, i unes quantes per vídeo. Tria quant se n\'ha de mirar.';
+
+  @override
+  String get recognizeLibraryOnlyNew => 'Només el que no s\'ha mirat mai';
+
+  @override
+  String get recognizeLibraryAll => 'Tot, una altra vegada';
+
+  @override
+  String get recognizeLibraryAllHint =>
+      'Útil després d\'entrenar un model millor.';
+
+  @override
+  String get recognizeJobLibrary => 'Biblioteca sencera';
+
+  @override
+  String get recognizeJobSelection => 'Selecció';
+
+  @override
+  String recognizeQueuedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts a la cua per reconèixer',
+      one: '1 contingut a la cua per reconèixer',
+      zero: 'No s\'ha encuat res',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recognizeCountable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts',
+      one: '1 contingut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recognitionLogTitle => 'Què han fet els models';
+
+  @override
+  String get recognitionLogNearMiss => 'vist, sota el llistó';
+
+  @override
+  String get recognitionLogNothing => 'res';
+
+  @override
+  String get recognitionLogVerdictProposed => 'ho proposa';
+
+  @override
+  String recognitionLogVerdictBelow(int percent) {
+    return 'ho va veure, però per sota del $percent %';
+  }
+
+  @override
+  String get recognitionLogVerdictNothing => 'no va veure res';
+
+  @override
+  String get recognitionLogVerdictNotReached =>
+      'no va córrer: la seva branca no es va obrir';
+
+  @override
+  String get recognitionLogVerdictUntrained => 'no va córrer: no té pesos';
+
+  @override
+  String get jobDetailTooltip => 'Mira què han fet els models';
+
+  @override
+  String get jobsClearFinished => 'Dona per vistes les acabades';
+
+  @override
+  String get recognitionLogFromToast => 'Prem per veure què han fet els models';
+
+  @override
+  String recognitionLogSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts',
+      one: 'Un contingut',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recognitionLogProposed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suggeriments',
+      one: '1 suggeriment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobDone => 'Acabada';
+
+  @override
+  String recognizeFoundCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suggeriments. Prem per veure com',
+      one: '1 suggeriment. Prem per veure com',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recognitionPanelTitle => 'En reconèixer';
+
+  @override
+  String get recognitionThresholdLabel => 'Confiança mínima per proposar';
+
+  @override
+  String get recognitionThresholdDescription =>
+      'Per sota d\'això, el que vegi no es proposa.';
+
+  @override
+  String get recognitionThresholdEverything =>
+      'Es proposa tot el que vegi, per poc segur que estigui.';
+
+  @override
+  String get recognitionThresholdAll => 'Tot';
+
+  @override
+  String get recognitionThresholdLower => 'Abaixa el llistó';
+
+  @override
+  String get recognitionThresholdRaise => 'Apuja el llistó';
+
+  @override
+  String get recognitionThresholdApplies =>
+      'Val per al pròxim reconeixement. El que ja s\'ha proposat no canvia.';
+
+  @override
+  String get recognizeReturnTitle => 'Sortiran de la biblioteca una estona';
+
+  @override
+  String get recognizeReturnHint =>
+      'Només els que rebin algun suggeriment. Es pot apagar a Configuració, a Reconeixement.';
+
+  @override
+  String get recognizeReturnConfirm => 'Reconeix igualment';
+
+  @override
+  String get returnRecognizedLabel =>
+      'Retorna a importació el contingut reconegut';
+
+  @override
+  String get returnRecognizedDescription =>
+      'El que rebi un suggeriment deixa de ser definitiu fins que el validis. Apagat, els suggeriments es continuen veient al panell del visor i no es mou res de lloc.';
+
+  @override
+  String recognizeReturnWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count continguts tornaran a la pantalla d\'importació fins que en validis les etiquetes.',
+      one:
+          'Un contingut tornarà a la pantalla d\'importació fins que en validis les etiquetes.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get suggestionsPendingBadge => 'Té suggeriments sense mirar';
+
+  @override
+  String get suggestionFilterAll => 'Tot';
+
+  @override
+  String get suggestionFilterWith => 'Amb suggeriments';
+
+  @override
+  String get suggestionFilterNever => 'Sense mirar mai';
+
+  @override
+  String acceptAboveTooltip(int percent) {
+    return 'Accepta el que els models veuen amb més d\'un $percent % de seguretat, a la selecció. No dona res per definitiu.';
+  }
+
+  @override
+  String acceptAboveDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suggeriments acceptats',
+      one: '1 suggeriment acceptat',
+      zero: 'Res no arribava amb prou seguretat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get actionClearSelection => 'Deixa de seleccionar';
+
+  @override
+  String acceptAboveLabel(int percent) {
+    return 'Accepta més del $percent %';
+  }
+
+  @override
+  String get importShowLabel => 'Veure';
+
+  @override
+  String get importFetchLabel => 'Portar';
+
+  @override
+  String get recognizeJobImported => 'Acabat d\'importar';
+
+  @override
+  String get recognizeOnImportLabel => 'Reconeix el que s\'acaba d\'importar';
+
+  @override
+  String get recognizeOnImportDescription =>
+      'El contingut nou passa pels models sol, quan la importació es calma. No costa res si no hi ha cap model entrenat.';
+
+  @override
+  String get suggestionMarkRegion => 'Desa com a regió d\'aquest fernie';
+
+  @override
+  String get suggestionRegionSaved =>
+      'Regió desada. Compta per al proper entrenament.';
+
+  @override
+  String get suggestionRegionFailed => 'No s\'ha pogut desar la regió';
 }

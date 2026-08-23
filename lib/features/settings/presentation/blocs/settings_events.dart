@@ -115,6 +115,25 @@ class AutoTagRemoteSourceToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Enciende o apaga que lo reconocido vuelva a la pantalla de importación.
+class RecognizeOnImportToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const RecognizeOnImportToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class ReturnRecognizedToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ReturnRecognizedToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 /// Enciende o apaga que coger la barra de un vídeo lo pare.
 ///
 /// Sólo en el modo de mirar: marcando regiones se para siempre, porque una

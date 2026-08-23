@@ -23,6 +23,20 @@ class TreeEdgeLine {
     this.label,
     this.isHighlighted = false,
   });
+
+  /// Dónde va la etiqueta, y con ella la zona que se puede pulsar.
+  ///
+  /// Cerca del hijo y no en mitad del trazo: en mitad, todas las aristas de un
+  /// mismo padre caen casi en el mismo punto —salen todas de ahí— y con cinco
+  /// hijos las etiquetas se amontonan unas encima de otras. Pulsar una acaba
+  /// abriendo la de al lado.
+  ///
+  /// Junto al hijo se separan solas, porque los hijos ya están separados. Y
+  /// además se lee mejor: la etiqueta queda justo encima de la caja que abre.
+  ///
+  /// Lo calcula la línea y no quien la pinta porque lo usan dos —el pintor y la
+  /// zona pulsable— y tienen que dar exactamente el mismo punto.
+  Offset get labelPoint => Offset.lerp(from, to, treeEdgeLabelAt)!;
 }
 
 /// Dibuja las aristas del árbol y sus etiquetas.
@@ -104,11 +118,7 @@ class TreeEdgePainter extends CustomPainter {
       ellipsis: '…',
     )..layout(maxWidth: treeEdgeLabelMaxWidth);
 
-    // En medio de la curva, que es donde no tapa a ninguna de las dos tarjetas.
-    final center = Offset(
-      (edge.from.dx + edge.to.dx) / 2,
-      (edge.from.dy + edge.to.dy) / 2,
-    );
+    final center = edge.labelPoint;
 
     final box = Rect.fromCenter(
       center: center,

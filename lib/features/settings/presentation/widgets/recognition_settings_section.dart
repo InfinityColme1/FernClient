@@ -71,6 +71,36 @@ class RecognitionSettingsSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
               child: Divider(),
             ),
+            // Reconocer solo lo que llega. Va antes de lo de después de
+            // reconocer porque es lo primero que pasa, y leerlo en ese orden es
+            // lo que hace que se entienda por qué el contenido se mueve.
+            FernCheckboxTile(
+              label: texts.recognizeOnImportLabel,
+              description: texts.recognizeOnImportDescription,
+              value: state.settings.recognizeOnImport,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(RecognizeOnImportToggledEvent(value)),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(),
+            ),
+            // Lo que pasa **después** de reconocer, que es lo que más sorprende
+            // de esta función: el contenido desaparece de la biblioteca sin que
+            // nada lo explique si no se sabe que esto existe.
+            FernCheckboxTile(
+              label: texts.returnRecognizedLabel,
+              description: texts.returnRecognizedDescription,
+              value: state.settings.returnRecognizedToImport,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(ReturnRecognizedToggledEvent(value)),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(),
+            ),
             const SidecarSetupPanel(),
           ],
         );

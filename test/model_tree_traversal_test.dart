@@ -417,4 +417,198 @@ void main() {
       expect(run.executed, [1]);
     });
   });
+
+  group('en lote', () {
+    /// El árbol con el que se comprueba todo: una raíz que abre un hijo sólo si
+    /// ve el fernie 1, un nieto sin condición, y una segunda raíz suelta.
+    final tree = ModelTreeEntity(
+      nodes: [_node(1), _node(2), _node(3), _node(4)],
+      edges: [
+        _edge(1, 1, 2, onFernie: 1),
+        _edge(2, 2, 3),
+      ],
+    );
+
+    /// Lo que cada nodo ve en cada contenido.
+    const respuestas = <int, Map<int, List<(int, double)>>>{
+      // Abre la rama: ve el fernie 1.
+      10: {
+        1: [(1, 0.9)],
+        2: [(7, 0.8)],
+        3: [(8, 0.7)],
+        4: [(9, 0.6)],
+      },
+      // No la abre: ve otra cosa.
+      20: {
+        1: [(5, 0.9)],
+        2: [(7, 0.8)],
+        3: [(8, 0.7)],
+        4: [(9, 0.6)],
+      },
+      // La ve, pero por debajo del listón del padre.
+      30: {
+        1: [(1, 0.2)],
+        2: [(7, 0.8)],
+        3: [(8, 0.7)],
+        4: [(9, 0.6)],
+      },
+      // No ve nada.
+      40: <int, List<(int, double)>>{},
+    };
+
+    List<TreeDetection> answer(int media, int node) => [
+          for (final pair in respuestas[media]?[node] ?? const <(int, double)>[])
+            _seen(pair.$1, pair.$2),
+        ];
+
+    test('da exactamente lo mismo que ir de uno en uno', () async {
+      final media = respuestas.keys.toList();
+
+      final uno = <int, TreeRun>{};
+      for (final id in media) {
+        uno[id] = await runModelTree(
+          tree: tree,
+          predict: (node) async => answer(id, node.id),
+        );
+      }
+
+      final lote = await runModelTreeBatched(
+        tree: tree,
+        mediaIds: media,
+        predict: (node, ids) async => {
+          for (final id in ids) id: answer(id, node.id),
+        },
+      );
+
+      // La promesa entera del paso: mismos niveles, misma poda, mismas reglas.
+      // Lo que cambia es el coste, no el resultado.
+      expect(lote, uno);
+    });
+
+    test('un nodo se pide una vez por nivel, no una por contenido', () async {
+      final llamadas = <int>[];
+
+      await runModelTreeBatched(
+        tree: tree,
+        mediaIds: respuestas.keys.toList(),
+        predict: (node, ids) async {
+          llamadas.add(node.id);
+
+          return {for (final id in ids) id: answer(id, node.id)};
+        },
+      );
+
+      // Cuatro contenidos y cuatro nodos: de dieciséis llamadas a cuatro.
+      expect(llamadas..sort(), [1, 2, 3, 4]);
+    });
+
+    test('al hijo sólo bajan los contenidos que abrieron su rama', () async {
+      final bajaron = <int, List<int>>{};
+
+      await runModelTreeBatched(
+        tree: tree,
+        mediaIds: respuestas.keys.toList(),
+        predict: (node, ids) async {
+          bajaron[node.id] = [...ids];
+
+          return {for (final id in ids) id: answer(id, node.id)};
+        },
+      );
+
+      // Es lo que hace que esto no sea una simplificación: sin ello, el lote
+      // ejecutaría los especializados sobre todo el mundo.
+      expect(bajaron[1], [10, 20, 30, 40]);
+      expect(bajaron[2], [10]);
+      expect(bajaron[3], [10]);
+      expect(bajaron[4], [10, 20, 30, 40]);
+    });
+
+    test('un nodo sin contenidos que le toquen no se ejecuta', () async {
+      final llamadas = <int>[];
+
+      await runModelTreeBatched(
+        tree: tree,
+        // Ninguno abre la rama del 2.
+        mediaIds: const [20, 30],
+        predict: (node, ids) async {
+          llamadas.add(node.id);
+
+          return {for (final id in ids) id: answer(id, node.id)};
+        },
+      );
+
+      expect(llamadas..sort(), [1, 4]);
+    });
+
+    test('el que no está entrenado se cuenta en cada contenido', () async {
+      final roto = ModelTreeEntity(
+        nodes: [_node(1, isTrained: false), _node(2)],
+        edges: [_edge(1, 1, 2)],
+      );
+
+      final lote = await runModelTreeBatched(
+        tree: roto,
+        mediaIds: const [10, 20],
+        predict: (node, ids) async => const {},
+      );
+
+      expect(lote[10]!.skipped, [1]);
+      expect(lote[20]!.skipped, [1]);
+      expect(lote[10]!.executed, isEmpty);
+    });
+
+    test('sin contenidos no se pregunta nada', () async {
+      final llamadas = <int>[];
+
+      final lote = await runModelTreeBatched(
+        tree: tree,
+        mediaIds: const [],
+        predict: (node, ids) async {
+          llamadas.add(node.id);
+
+          return const {};
+        },
+      );
+
+      expect(lote, isEmpty);
+      expect(llamadas, isEmpty);
+    });
+
+    test('un nodo con dos padres se pide una sola vez', () async {
+      // Dos raíces que llevan las dos al mismo hijo.
+      final rombo = ModelTreeEntity(
+        nodes: [_node(1), _node(4), _node(2)],
+        edges: [_edge(1, 1, 2), _edge(2, 4, 2)],
+      );
+
+      final llamadas = <int>[];
+
+      final lote = await runModelTreeBatched(
+        tree: rombo,
+        mediaIds: const [10],
+        predict: (node, ids) async {
+          llamadas.add(node.id);
+
+          return {for (final id in ids) id: [_seen(1)]};
+        },
+      );
+
+      // Ejecutarlo dos veces sería predecir dos veces lo mismo y guardar la
+      // sugerencia por duplicado.
+      expect(llamadas.where((one) => one == 2).length, 1);
+      expect(lote[10]!.executed, [1, 4, 2]);
+    });
+
+    test('un contenido del que el motor no dice nada no rompe', () async {
+      final lote = await runModelTreeBatched(
+        tree: tree,
+        mediaIds: const [10, 20],
+        // Contesta sólo por uno: el otro simplemente no está en el mapa.
+        predict: (node, ids) async => {10: answer(10, node.id)},
+      );
+
+      expect(lote[20]!.detections, isEmpty);
+      expect(lote[20]!.executed, [1, 4]);
+    });
+  });
 }

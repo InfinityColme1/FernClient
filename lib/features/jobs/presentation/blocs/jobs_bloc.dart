@@ -47,6 +47,15 @@ class JobsState extends Equatable {
   List<Job> get failed =>
       jobs.where((job) => job.status == JobStatus.failed).toList(growable: false);
 
+  /// Los que terminaron bien y siguen en la historia de la cola.
+  ///
+  /// Se enseñan sólo si tienen algo que ofrecer —un parte de lo que hicieron los
+  /// modelos, por ejemplo—: una lista que se llena de trabajos hechos y sin nada
+  /// que mirar es ruido permanente en la barra.
+  List<Job> get completed => jobs
+      .where((job) => job.status == JobStatus.completed)
+      .toList(growable: false);
+
   /// Hay algo que enseñar en la barra superior.
   bool get hasSomethingToShow => active.isNotEmpty || failed.isNotEmpty;
 

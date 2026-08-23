@@ -2,6 +2,9 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/region_geometry.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
+import 'package:Fern/features/media/presentation/widgets/highlight_scroll_marks.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
@@ -231,15 +234,31 @@ class MediaGrid extends StatelessWidget {
       _ => _buildGrid(orderedIds),
     };
 
+    final highlight = getIt<RecognitionHighlight>();
+
     return Padding(
       padding: _padding,
       child: FernBusyOverlay(
         isBusy: isLoading,
         action: _stopButton(context),
         radius: hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,
-        child: hasSurface
-            ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
-            : content,
+        // Las marcas van **encima** del scroll y fuera de la superficie: dicen a
+        // qué altura está lo señalado, que en una rejilla de trescientas
+        // miniaturas casi siempre queda fuera de la pantalla.
+        child: Stack(
+          children: [
+            hasSurface
+                ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
+                : content,
+            ListenableBuilder(
+              listenable: highlight,
+              builder: (context, _) => HighlightScrollMarks(
+                orderedIds: orderedIds,
+                highlighted: highlight.mediaIds,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -353,24 +372,36 @@ class MediaGrid extends StatelessWidget {
   }
 
   Widget _buildItem(MediaSummaryEntity media, List<int> orderedIds) {
+    final highlight = getIt<RecognitionHighlight>();
+
     return BlocSelector<MediaBloc, MediaStates, bool>(
       selector: (state) => state.selectedIds.contains(media.id),
-      builder: (context, isSelected) => MediaItem(
-        media: media,
-        isSelected: isSelected,
-        onTap: () =>
-            context.read<MediaBloc>().add(MediaClickedEvent(media: media)),
-        onSelectionToggled: () =>
-            context.read<MediaBloc>().add(ToggleMediaSelectionEvent(media: media)),
-        // Mayúsculas + clic: la selección se estira hasta aquí desde el último
-        // elemento marcado, siguiendo el orden de la rejilla.
-        onRangeSelectionRequested: () => context.read<MediaBloc>().add(
-              SelectMediaRangeEvent(media: media, orderedIds: orderedIds),
-            ),
-        // Si el contenido no se pinta porque su fichero ya no está, la fila de
-        // la base de datos sobra y el elemento desaparece de la rejilla.
-        onLoadFailed: () =>
-            context.read<MediaBloc>().add(MediaLoadFailedEvent(media.id)),
+      builder: (context, isSelected) => ListenableBuilder(
+        // Se escucha aquí y no arriba para que apagar el destacado no rehaga la
+        // rejilla entera: son trescientas celdas, y cada una sabe si le toca.
+        listenable: highlight,
+        builder: (context, _) => MediaItem(
+          media: media,
+          isSelected: isSelected,
+          isHighlighted: highlight.contains(media.id),
+          // Pasar el ratón por encima es una de las tres formas de dar el aviso
+          // por visto; las otras dos son salir de la pantalla y abrir algo.
+          onHighlightSeen: highlight.clear,
+          onTap: () =>
+              context.read<MediaBloc>().add(MediaClickedEvent(media: media)),
+          onSelectionToggled: () => context
+              .read<MediaBloc>()
+              .add(ToggleMediaSelectionEvent(media: media)),
+          // Mayúsculas + clic: la selección se estira hasta aquí desde el último
+          // elemento marcado, siguiendo el orden de la rejilla.
+          onRangeSelectionRequested: () => context.read<MediaBloc>().add(
+                SelectMediaRangeEvent(media: media, orderedIds: orderedIds),
+              ),
+          // Si el contenido no se pinta porque su fichero ya no está, la fila de
+          // la base de datos sobra y el elemento desaparece de la rejilla.
+          onLoadFailed: () =>
+              context.read<MediaBloc>().add(MediaLoadFailedEvent(media.id)),
+        ),
       ),
     );
   }

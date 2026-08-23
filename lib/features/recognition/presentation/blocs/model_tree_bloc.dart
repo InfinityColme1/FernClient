@@ -408,10 +408,14 @@ class ModelTreeBloc extends Bloc<ModelTreeEvents, ModelTreeState> {
   /// como mucho, y pedir la lista entera de fernies para sacar tres nombres es
   /// leer de más en cada relectura.
   ///
-  /// Lo que ya se sabía no se vuelve a preguntar: relees el árbol en cada
-  /// cambio, y la mayoría de las veces las condiciones son las mismas.
+  /// **Se preguntan todos cada vez**, y no sólo los que no se supieran. Este
+  /// bloc es único y vive mientras viva la aplicación: guardándose lo ya sabido,
+  /// un fernie al que se le cambia el nombre seguía apareciendo con el viejo en
+  /// la arista hasta reiniciar, y uno borrado seguía dando nombre a una clase
+  /// que ya no existe. Son cuatro consultas de nada; el cache costaba más de lo
+  /// que ahorraba.
   Future<Map<int, String>> _namesOfConditions(ModelTreeEntity tree) async {
-    final names = Map<int, String>.from(state.fernieNames);
+    final names = <int, String>{};
 
     for (final edge in tree.edges) {
       final fernieId = edge.conditionFernieId;

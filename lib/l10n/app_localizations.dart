@@ -264,6 +264,12 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String selectedCount(int count);
 
+  /// No description provided for @selectedOfCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{selected} of {total} selected'**
+  String selectedOfCount(int selected, int total);
+
   /// No description provided for @deletedCount.
   ///
   /// In en, this message translates to:
@@ -3329,6 +3335,456 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'At least {count} regions are recommended'**
   String fernieRecommendedRegions(int count);
+
+  /// No description provided for @viewerRecognize.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise with models'**
+  String get viewerRecognize;
+
+  /// No description provided for @viewerRecognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognising…'**
+  String get viewerRecognizing;
+
+  /// No description provided for @viewerRecognizeQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition queued'**
+  String get viewerRecognizeQueued;
+
+  /// No description provided for @suggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get suggestionsTitle;
+
+  /// No description provided for @suggestionConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String suggestionConfidence(int percent);
+
+  /// No description provided for @suggestionFromModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested by a model, not confirmed yet'**
+  String get suggestionFromModel;
+
+  /// No description provided for @suggestionCreatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested creator'**
+  String get suggestionCreatorTitle;
+
+  /// No description provided for @suggestionsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing suggested here'**
+  String get suggestionsNone;
+
+  /// No description provided for @actionAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get actionAccept;
+
+  /// No description provided for @actionReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get actionReject;
+
+  /// No description provided for @suggestionAcceptAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept all'**
+  String get suggestionAcceptAll;
+
+  /// No description provided for @suggestionRejectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject all'**
+  String get suggestionRejectAll;
+
+  /// No description provided for @recognizeNoModelsInTree.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no models in the tree yet. Add one from the model tree screen.'**
+  String get recognizeNoModelsInTree;
+
+  /// No description provided for @recognizeNoTrainedModels.
+  ///
+  /// In en, this message translates to:
+  /// **'No model in the tree has been trained yet. Train one, or import its weights from the model screen.'**
+  String get recognizeNoTrainedModels;
+
+  /// No description provided for @recognizeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The model tree could not be read.'**
+  String get recognizeUnavailable;
+
+  /// No description provided for @recognizeFoundNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'The models did not find anything here'**
+  String get recognizeFoundNothing;
+
+  /// No description provided for @recognizeNothingToDo.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nothing left to recognise here'**
+  String get recognizeNothingToDo;
+
+  /// No description provided for @recognizeSelectedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise the selection'**
+  String get recognizeSelectedTooltip;
+
+  /// No description provided for @recognizeTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise everything with this tag'**
+  String get recognizeTagTooltip;
+
+  /// No description provided for @recognizeCreatorTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise everything by this creator'**
+  String get recognizeCreatorTooltip;
+
+  /// No description provided for @recognizeLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise the library'**
+  String get recognizeLibrary;
+
+  /// No description provided for @recognizeLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise the whole library'**
+  String get recognizeLibraryTitle;
+
+  /// No description provided for @recognizeLibraryQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognising takes about one prediction per image, and several per video. Choose how much to go through.'**
+  String get recognizeLibraryQuestion;
+
+  /// No description provided for @recognizeLibraryOnlyNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what has never been looked at'**
+  String get recognizeLibraryOnlyNew;
+
+  /// No description provided for @recognizeLibraryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything, again'**
+  String get recognizeLibraryAll;
+
+  /// No description provided for @recognizeLibraryAllHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Useful after training a better model.'**
+  String get recognizeLibraryAllHint;
+
+  /// No description provided for @recognizeJobLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole library'**
+  String get recognizeJobLibrary;
+
+  /// No description provided for @recognizeJobSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection'**
+  String get recognizeJobSelection;
+
+  /// No description provided for @recognizeQueuedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing queued} =1{1 item queued to recognise} other{{count} items queued to recognise}}'**
+  String recognizeQueuedCount(int count);
+
+  /// No description provided for @recognizeCountable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String recognizeCountable(int count);
+
+  /// No description provided for @recognitionLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What the models did'**
+  String get recognitionLogTitle;
+
+  /// No description provided for @recognitionLogNearMiss.
+  ///
+  /// In en, this message translates to:
+  /// **'seen, below the bar'**
+  String get recognitionLogNearMiss;
+
+  /// No description provided for @recognitionLogNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'nothing'**
+  String get recognitionLogNothing;
+
+  /// No description provided for @recognitionLogVerdictProposed.
+  ///
+  /// In en, this message translates to:
+  /// **'suggested'**
+  String get recognitionLogVerdictProposed;
+
+  /// No description provided for @recognitionLogVerdictBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'seen, but under {percent}%'**
+  String recognitionLogVerdictBelow(int percent);
+
+  /// No description provided for @recognitionLogVerdictNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'saw nothing'**
+  String get recognitionLogVerdictNothing;
+
+  /// No description provided for @recognitionLogVerdictNotReached.
+  ///
+  /// In en, this message translates to:
+  /// **'did not run: its branch never opened'**
+  String get recognitionLogVerdictNotReached;
+
+  /// No description provided for @recognitionLogVerdictUntrained.
+  ///
+  /// In en, this message translates to:
+  /// **'did not run: it has no weights'**
+  String get recognitionLogVerdictUntrained;
+
+  /// No description provided for @jobDetailTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'See what the models did'**
+  String get jobDetailTooltip;
+
+  /// No description provided for @jobsClearFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss the finished ones'**
+  String get jobsClearFinished;
+
+  /// No description provided for @recognitionLogFromToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to see what the models did'**
+  String get recognitionLogFromToast;
+
+  /// No description provided for @recognitionLogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One item} other{{count} items}}'**
+  String recognitionLogSubtitle(int count);
+
+  /// No description provided for @recognitionLogProposed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 suggestion} other{{count} suggestions}}'**
+  String recognitionLogProposed(int count);
+
+  /// No description provided for @jobDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get jobDone;
+
+  /// No description provided for @recognizeFoundCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 suggestion found. Tap to see how} other{{count} suggestions found. Tap to see how}}'**
+  String recognizeFoundCount(int count);
+
+  /// No description provided for @recognitionPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When recognising'**
+  String get recognitionPanelTitle;
+
+  /// No description provided for @recognitionThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum confidence to suggest'**
+  String get recognitionThresholdLabel;
+
+  /// No description provided for @recognitionThresholdDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Below this, what it sees is not proposed.'**
+  String get recognitionThresholdDescription;
+
+  /// No description provided for @recognitionThresholdEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything it sees gets proposed, however unsure.'**
+  String get recognitionThresholdEverything;
+
+  /// No description provided for @recognitionThresholdAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get recognitionThresholdAll;
+
+  /// No description provided for @recognitionThresholdLower.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower the bar'**
+  String get recognitionThresholdLower;
+
+  /// No description provided for @recognitionThresholdRaise.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise the bar'**
+  String get recognitionThresholdRaise;
+
+  /// No description provided for @recognitionThresholdApplies.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to the next recognition. What is already suggested does not change.'**
+  String get recognitionThresholdApplies;
+
+  /// No description provided for @recognizeReturnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'They will leave the library for a while'**
+  String get recognizeReturnTitle;
+
+  /// No description provided for @recognizeReturnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the ones that get a suggestion. You can turn this off in Settings, under Recognition.'**
+  String get recognizeReturnHint;
+
+  /// No description provided for @recognizeReturnConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise anyway'**
+  String get recognizeReturnConfirm;
+
+  /// No description provided for @returnRecognizedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Send recognised content back to importing'**
+  String get returnRecognizedLabel;
+
+  /// No description provided for @returnRecognizedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Content that gets a suggestion stops being final until you validate it. Turned off, the suggestions still show in the viewer panel and nothing moves.'**
+  String get returnRecognizedDescription;
+
+  /// No description provided for @recognizeReturnWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One item will go back to the import screen until you validate its tags.} other{{count} items will go back to the import screen until you validate their tags.}}'**
+  String recognizeReturnWarning(int count);
+
+  /// No description provided for @suggestionsPendingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Has suggestions waiting'**
+  String get suggestionsPendingBadge;
+
+  /// No description provided for @suggestionFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get suggestionFilterAll;
+
+  /// No description provided for @suggestionFilterWith.
+  ///
+  /// In en, this message translates to:
+  /// **'With suggestions'**
+  String get suggestionFilterWith;
+
+  /// No description provided for @suggestionFilterNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never looked at'**
+  String get suggestionFilterNever;
+
+  /// No description provided for @acceptAboveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts what the models are over {percent}% sure about, in the selection. It does not mark anything as final.'**
+  String acceptAboveTooltip(int percent);
+
+  /// No description provided for @acceptAboveDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing was confident enough} =1{1 suggestion accepted} other{{count} suggestions accepted}}'**
+  String acceptAboveDone(int count);
+
+  /// No description provided for @actionClearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get actionClearSelection;
+
+  /// No description provided for @acceptAboveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept over {percent}%'**
+  String acceptAboveLabel(int percent);
+
+  /// No description provided for @importShowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get importShowLabel;
+
+  /// No description provided for @importFetchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch'**
+  String get importFetchLabel;
+
+  /// No description provided for @recognizeJobImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Just imported'**
+  String get recognizeJobImported;
+
+  /// No description provided for @recognizeOnImportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise what has just been imported'**
+  String get recognizeOnImportLabel;
+
+  /// No description provided for @recognizeOnImportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'New content goes to the models on its own, once the import settles. Costs nothing if no model is trained.'**
+  String get recognizeOnImportDescription;
+
+  /// No description provided for @suggestionMarkRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a region of this fernie'**
+  String get suggestionMarkRegion;
+
+  /// No description provided for @suggestionRegionSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Region saved. It counts for the next training.'**
+  String get suggestionRegionSaved;
+
+  /// No description provided for @suggestionRegionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The region could not be saved'**
+  String get suggestionRegionFailed;
 }
 
 class _AppLocalizationsDelegate

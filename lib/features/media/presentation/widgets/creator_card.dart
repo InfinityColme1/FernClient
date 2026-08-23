@@ -8,9 +8,11 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_source_urls_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_creator_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
@@ -291,11 +293,16 @@ class _CreatorCardState extends State<CreatorCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // En la esquina superior derecha, como en la ficha de etiqueta: es la
-            // misma acción y se busca en el mismo sitio.
-            Align(
-              alignment: Alignment.topRight,
-              child: _assignUrlsButton(texts),
+            // Arriba a la derecha, como en la ficha de etiqueta: son las dos
+            // acciones que no editan al creador. Reconocer estaba abajo con las
+            // demás, pero eran cuatro píldoras contadas y la quinta pasaba la
+            // fila a dos líneas, con lo que la ficha ya no cabía en la pantalla.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _recognizeButton(texts),
+                _assignUrlsButton(texts),
+              ],
             ),
             // Con el alto que le den: la ficha lo tiene fijo (lo pone la
             // pantalla) y este bloque es el que se queda con lo que sobre.
@@ -546,6 +553,37 @@ class _CreatorCardState extends State<CreatorCard> {
   /// Le quita el creador a lo que esté seleccionado en la rejilla (pasa al
   /// desconocido). Sin nada seleccionado no hay a quién quitárselo, así que queda
   /// atenuado.
+  /// Manda a reconocer todo el contenido de este creador.
+  ///
+  /// Es el cuarto punto de entrada del D16, y el único que no parte de una
+  /// selección: aquí la lista sale de la base de datos. Va por el mismo sitio
+  /// que los otros tres, que es quien mira si hay con qué reconocer y lo
+  /// cuenta.
+  Widget _recognizeButton(AppLocalizations texts) {
+    return IconButton(
+      icon: const Icon(
+        Icons.auto_awesome_outlined,
+        size: AppSizes.iconExtraLarge,
+      ),
+      tooltip: texts.recognizeCreatorTooltip,
+      onPressed: _isBusy ? null : _recognizeAll,
+    );
+  }
+
+  Future<void> _recognizeAll() async {
+    final found =
+        await getIt<GetMediaByCreatorUseCase>()(params: widget.creator.id);
+    if (!mounted) return;
+
+    await requestRecognition(
+      context,
+      found is DataSuccess
+          ? [for (final one in found.data ?? const []) one.id]
+          : const [],
+      name: widget.creator.name,
+    );
+  }
+
   Widget _unassignButton(AppLocalizations texts) {
     return BlocSelector<MediaBloc, MediaStates, bool>(
       selector: (state) => state.selectedIds.isNotEmpty,

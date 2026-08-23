@@ -21,6 +21,8 @@ import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/model_tree_edge_model.dart';
+import 'package:Fern/features/recognition/data/models/model_tree_node_model.dart';
 import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
 import 'package:Fern/features/recognition/data/repositories/model_repository_impl.dart';
 import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
@@ -60,6 +62,12 @@ void main() {
         FernieRegionModelSchema,
         RecognitionModelModelSchema,
         ModelFernieModelSchema,
+        // Los del arbol tambien, aunque este fichero no lo pruebe: borrar un
+        // modelo se lleva su sitio en el arbol en la misma transaccion, y una
+        // base de pruebas que no se parece a la de la aplicacion falla por
+        // parecerse poco, no por el codigo.
+        ModelTreeNodeModelSchema,
+        ModelTreeEdgeModelSchema,
       ],
       directory: directory.path,
       inspector: false,

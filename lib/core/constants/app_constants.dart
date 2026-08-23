@@ -289,11 +289,15 @@ const sidecarUltralyticsPackage = 'ultralytics>=8.3.0,<8.4.0';
 const torchCpuIndexUrl = 'https://download.pytorch.org/whl/cpu';
 const torchCudaIndexUrl = 'https://download.pytorch.org/whl/cu124';
 
-/// El script del sidecar y su versión. Al arrancar se compara con la que haya
-/// escrita en disco y se reescribe si no coinciden.
+/// El script del sidecar.
+///
+/// Al arrancar se compara la **huella** del que trae la aplicación con la que
+/// haya escrita en disco y se reescribe si no coinciden. Antes esto era un
+/// número a mano, y pasó lo que tenía que pasar: se añadió un método nuevo al
+/// script sin acordarse de subirlo, y todas las instalaciones existentes se
+/// quedaron con el script viejo para siempre. Con la huella no hay nada que
+/// acordarse de hacer.
 const sidecarScriptAsset = 'assets/python/fern_sidecar.py';
-
-const sidecarScriptVersion = '1';
 
 /// Cuánto se deja al sidecar sin peticiones antes de cerrarlo. Cargar un modelo
 /// cuesta segundos, así que tampoco conviene cerrarlo en cuanto se calla.
@@ -729,6 +733,15 @@ const disabledOptionOpacity = 0.4;
 /// vuelve a poner el contador a cero (deja de estar marcado).
 const deletedRetention = Duration(days: 7);
 
+/// Cuánto se guarda un rechazo antes de tirarlo.
+///
+/// Noventa días. Bastante más que la papelera porque no estorba a nadie —no se
+/// ve en ninguna pantalla— y porque lo que mide tarda en cambiar: el acierto de
+/// un modelo se juzga sobre meses de uso, no sobre una tarde. Y bastante menos
+/// que para siempre, porque un rechazo de hace tres meses es de un modelo que se
+/// ha entrenado dos veces desde entonces y ya no habla de él.
+const rejectionRetention = Duration(days: 90);
+
 // Animations
 const hoverAnimationDuration = Duration(milliseconds: 150);
 const drawerAnimationDuration = Duration(milliseconds: 300);
@@ -1098,6 +1111,47 @@ const treeSimplifyBelow = 0.5;
 const treeEdgeWidth = 2.0;
 const treeArrowSize = 10.0;
 
+/// Con qué clave se guarda si lo reconocido vuelve a importación.
+const returnRecognizedPreferenceKey = 'recognition_return_to_import';
+const recognizeOnImportPreferenceKey = 'recognition_on_import';
+
+/// Cuánto se espera desde el último contenido importado antes de mandarlo
+/// todo a reconocer de una vez.
+///
+/// Una importación va soltando ficheros de uno en uno durante minutos.
+/// Encolar un trabajo por cada uno llenaría la lista de tareas con
+/// trescientas entradas de un segundo; esperar a que la importación se calme
+/// deja **un** trabajo con todo dentro, que es lo que el usuario entiende
+/// como «reconocer lo que acaba de llegar».
+const recognitionImportDebounce = Duration(seconds: 3);
+
+/// Cuántos contenidos se dejan acumular antes de mandarlos sin esperar más.
+///
+/// Sin tope, una importación de miles de ficheros que dure media hora no
+/// reconocería nada hasta el final. Con él, el trabajo va saliendo por
+/// tandas y se puede ir revisando mientras lo demás sigue llegando.
+const recognitionImportBatchMax = 200;
+
+/// Con qué clave se guarda cuántos fotogramas se miran de un vídeo.
+const frameSamplesPreferenceKey = 'recognition_frame_samples';
+
+/// Cuántos fotogramas se miran de un contenido que se mueve, al reconocer.
+///
+/// Cinco de fábrica: mirarlo entero es pagar una predicción por fotograma
+/// —treinta por segundo— para responder algo que casi siempre se decide con
+/// cinco. Es el ajuste que más afecta al tiempo total de reconocer una
+/// biblioteca.
+const defaultFrameSamples = 5;
+const minFrameSamples = 1;
+const maxFrameSamples = 20;
+
+/// En qué punto del trazo va la etiqueta de una arista, de padre a hijo.
+///
+/// Cerca del hijo: en mitad del trazo, todas las aristas de un mismo padre caen
+/// casi encima unas de otras, y con cinco hijos no hay forma de pulsar la que se
+/// quiere. Junto al hijo se separan solas.
+const treeEdgeLabelAt = 0.78;
+
 /// Lo ancha que puede ser la etiqueta de una arista antes de cortarse.
 ///
 /// Es el nombre de un fernie: más allá de esto tapa la tarjeta de al lado, y lo
@@ -1209,3 +1263,72 @@ const videoProbeTimeout = Duration(seconds: 12);
 const videoScreenshotAttempts = 10;
 const videoScreenshotRetryDelay = Duration(milliseconds: 120);
 const maxConcurrentVideoJobs = 2;
+
+/// Cuánto se espera a que un salto dentro de un vídeo ya abierto llegue a su
+/// sitio.
+///
+/// Mucho más corto que [videoProbeTimeout], que es lo que cuesta **abrir** un
+/// fichero: con el vídeo abierto y decodificando, un salto es cuestión de
+/// décimas. Con el mismo listón de doce segundos, cinco saltos que fallen
+/// convierten un vídeo en un minuto de espera.
+const videoSeekTimeout = Duration(seconds: 3);
+
+/// Margen para que el fotograma del salto acabe de pintarse.
+///
+/// La posición llega antes que la imagen; sin esta pausa la captura sale con el
+/// fotograma de antes del salto, y lo que se reconoce no es lo que se dice
+/// haber mirado.
+const videoSeekSettle = Duration(milliseconds: 150);
+
+/// A partir de qué confianza una sugerencia se pinta como buena.
+///
+/// Es el mismo listón que el de la aceptación masiva: lo que se enseña de una
+/// forma tiene que ser lo mismo que «aceptar todo lo que esté por encima»
+/// aceptaría, o el color estaría prometiendo algo distinto de lo que el botón
+/// hace.
+const suggestionHighConfidence = 0.8;
+
+/// Lo desvaído que va el porcentaje de una sugerencia poco fiable.
+///
+/// El tercer tramo se distingue con opacidad y no con otro color porque la
+/// paleta no da para tres: la elige el usuario, y en la clara el gris de los
+/// textos secundarios y el de lo apagado son exactamente el mismo. Además
+/// «cuanto menos seguro, más tenue» se entiende sin que nadie lo explique.
+const suggestionLowOpacity = 0.55;
+
+/// Por debajo de esto una sugerencia se pinta como poco fiable.
+///
+/// No se esconde: media docena de aciertos raros al año salen de aquí, y lo que
+/// hace falta es que se note de un vistazo cuáles hay que mirar con calma.
+const suggestionLowConfidence = 0.5;
+
+/// Con qué confianza mínima se le pregunta al motor al reconocer.
+///
+/// Muy por debajo del listón de cualquier modelo, y a propósito: lo que queda
+/// entre esta cifra y el listón del modelo **no se propone**, pero se apunta.
+/// Es lo que permite contestar «lo vio al 27 %, y tu listón está en el 35 %» en
+/// vez de «no ha detectado nada», que es lo mismo dicho de una forma que no deja
+/// arreglar nada.
+///
+/// Por debajo de esto sí se tira: son cajas al azar sobre el fondo.
+const recognitionFloor = 0.05;
+
+/// Lo grueso del marco con el que se señala un contenido del último aviso.
+///
+/// Un marco y no un tinte por encima: el tinte cambiaría los colores del propio
+/// contenido, que es justo lo que el usuario ha venido a mirar.
+const mediaHighlightBorderWidth = 3.0;
+
+/// Lo que miden las marcas del scroll que señalan lo del último aviso.
+///
+/// Estrechas y cortas a propósito: son una pista de hacia dónde desplazarse, no
+/// un elemento con el que se interactúe. Anchas competirían con la propia barra.
+const highlightMarkWidth = 4.0;
+const highlightMarkHeight = 10.0;
+
+/// A partir de cuántos contenidos se avisa de que van a salir de la biblioteca.
+///
+/// Con uno o dos el efecto se ve y se deshace en un momento; con veinte, quien
+/// lo lanzó vuelve a la rejilla y se encuentra media biblioteca vacía sin saber
+/// por qué. El aviso es para eso, no para pedir permiso en cada pulsación.
+const recognitionReturnWarningCount = 5;

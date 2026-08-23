@@ -208,7 +208,7 @@ void main() {
           payload: const {TrainingJobRunner.modelIdKey: 7},
         ),
         token: token,
-        report: (done, {total}) => reported.add(done),
+        report: (done, {total, stage}) => reported.add(done),
       ),
     );
   }

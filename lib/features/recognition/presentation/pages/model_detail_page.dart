@@ -20,6 +20,7 @@ import 'package:Fern/features/recognition/data/services/recognition_engine.dart'
 import 'package:Fern/features/recognition/data/services/training_job_runner.dart';
 import 'package:Fern/features/recognition/presentation/widgets/fernie_split_row.dart';
 import 'package:Fern/features/recognition/presentation/widgets/metrics_panel.dart';
+import 'package:Fern/features/recognition/presentation/widgets/recognition_panel.dart';
 import 'package:Fern/features/recognition/presentation/widgets/run_images_dialog.dart';
 import 'package:Fern/features/recognition/presentation/widgets/training_panel.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
@@ -312,6 +313,11 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
                 ),
                 const SizedBox(height: AppSpacing.l),
                 _fernies(context, texts, state, model),
+                const SizedBox(height: AppSpacing.l),
+                // Cómo se entrena, con qué, **cómo se usa** y qué tal salió. El
+                // listón de confianza va aquí y no con los mandos de entrenar
+                // porque no es lo mismo: se puede cambiar sin volver a entrenar.
+                RecognitionPanel(model: model, onChanged: _saveSettings),
                 const SizedBox(height: AppSpacing.l),
                 MetricsPanel(
                   model: model,

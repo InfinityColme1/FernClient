@@ -104,6 +104,128 @@ class MediaPreviewService {
     });
   }
 
+  /// Los fotogramas de [moments] de un mismo fichero, en **una sola apertura**.
+  ///
+  /// Es la diferencia entre reconocer un vídeo en segundos o en minutos. Pedir
+  /// los cinco fotogramas con cinco `load()` abre el fichero cinco veces, y
+  /// abrirlo es lo caro: crear el reproductor, esperar a que diga su duración,
+  /// esperar a que diga su tamaño y esperar al primer fotograma. Los saltos
+  /// dentro de un fichero ya abierto son décimas.
+  ///
+  /// Devuelve, por cada momento pedido, la ruta del fotograma en disco. Los que
+  /// no se puedan sacar se omiten: un fotograma perdido es una mirada menos, no
+  /// un reconocimiento fallido.
+  ///
+  /// Se reaprovecha lo que ya esté en la caché de disco, así que volver a
+  /// reconocer un vídeo con los mismos ajustes no vuelve a abrirlo.
+  Future<Map<Duration, String>> loadFrames(
+    String path,
+    List<Duration> moments,
+  ) async {
+    final file = File(path);
+    if (moments.isEmpty || !file.existsSync()) return const {};
+
+    final directory = await _ensureThumbnailDir();
+    final stat = file.statSync();
+
+    final found = <Duration, String>{};
+    final missing = <Duration>[];
+
+    for (final moment in moments) {
+      final thumbnail =
+          File(p.join(directory.path, '${_cacheKey(path, stat, moment)}.jpg'));
+
+      if (thumbnail.existsSync()) {
+        found[moment] = thumbnail.path;
+      } else {
+        missing.add(moment);
+      }
+    }
+
+    if (missing.isEmpty) return found;
+
+    // Un solo hueco para todo el lote: son una apertura, no una por fotograma.
+    await _acquireSlot();
+    try {
+      found.addAll(await _extractFrames(path, directory, stat, missing));
+    } on Object catch (error) {
+      debugPrint('MediaPreviewService: no se pudo muestrear "$path": $error');
+    } finally {
+      _releaseSlot();
+    }
+
+    return found;
+  }
+
+  /// Abre el fichero una vez y va saltando de un momento al siguiente.
+  Future<Map<Duration, String>> _extractFrames(
+    String path,
+    Directory directory,
+    FileStat stat,
+    List<Duration> moments,
+  ) async {
+    final player = Player(
+      configuration: const PlayerConfiguration(
+        muted: true,
+        logLevel: MPVLogLevel.error,
+      ),
+    );
+    // Imprescindible aunque no se pinte: sin salida de vídeo libmpv no
+    // decodifica el fotograma que queremos capturar.
+    final controller = VideoController(player);
+
+    final frames = <Duration, String>{};
+
+    try {
+      await player.open(Media(path), play: false);
+
+      // Esto se paga una vez, no una por fotograma. Era el grueso del coste.
+      final duration = await player.stream.duration
+          .firstWhere((value) => value > Duration.zero)
+          .timeout(videoProbeTimeout, onTimeout: () => Duration.zero);
+
+      final platform = await controller.platform.future;
+      await platform.waitUntilFirstFrameRendered
+          .timeout(videoProbeTimeout, onTimeout: () {});
+
+      // De menor a mayor: saltar hacia adelante es más barato que ir y volver.
+      final ordered = [...moments]..sort();
+
+      for (final moment in ordered) {
+        // Un momento que se sale del fichero se recorta a su final en vez de
+        // saltarse: el vídeo puede haberse recortado desde que se muestreó.
+        final wanted =
+            duration > Duration.zero && moment >= duration ? Duration.zero : moment;
+
+        await player.seek(wanted);
+        await _waitForPosition(player, wanted);
+
+        final bytes = await _screenshot(player);
+        if (bytes == null) continue;
+
+        final thumbnail =
+            File(p.join(directory.path, '${_cacheKey(path, stat, moment)}.jpg'));
+        await thumbnail.writeAsBytes(bytes, flush: true);
+
+        frames[moment] = thumbnail.path;
+      }
+
+      return frames;
+    } finally {
+      // `Player.dispose()` libera también el [VideoController] asociado.
+      await player.dispose();
+    }
+  }
+
+  /// Espera a que el salto llegue a su sitio, y a que la imagen le siga.
+  Future<void> _waitForPosition(Player player, Duration wanted) async {
+    await player.stream.position
+        .firstWhere((value) => (value - wanted).abs() < videoSeekSettle * 4)
+        .timeout(videoSeekTimeout, onTimeout: () => wanted);
+
+    await Future<void>.delayed(videoSeekSettle);
+  }
+
   Future<MediaPreview?> _loadImage(String path) async {
     final buffer = await ui.ImmutableBuffer.fromFilePath(path);
     try {

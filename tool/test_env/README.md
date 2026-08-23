@@ -123,6 +123,8 @@ el `best.pt` de la carpeta de la run: se importa igual.
 | `generate_media.py` | Genera las imágenes, los vídeos y el `labels.json` con las cajas exactas. |
 | `make_external_weights.py` | Deja un `.pt` de fuera con el que probar la importación. |
 | `seed.dart` | Escribe en la base de datos de FeRN: contenidos, fernies, regiones y el modelo. |
+| `seed_tree.dart` | Lo mismo para el árbol de tres modelos, y enlaza los fernies con etiquetas. |
+| `show_suggestions.dart` | Enseña qué propuso cada modelo sobre cada contenido, leído de la base de datos. |
 | `prepare.ps1` | Los tres, en orden. |
 
 Los de Python se lanzan con el intérprete del entorno de reconocimiento:
@@ -139,6 +141,101 @@ compilado, se le pasa con `--isar`.
 dart run tool/test_env/seed.dart --media D:\pruebas          # sembrar
 dart run tool/test_env/seed.dart --media D:\pruebas --clean  # quitar lo sembrado
 ```
+
+## El árbol de tres modelos
+
+`prepare.ps1` deja **un modelo suelto**, que sirve para probar el entrenamiento
+pero no el reconocimiento: un modelo solo no tiene poda que comprobar, y sin
+etiquetas enlazadas sus detecciones no proponen nada.
+
+Para eso está el segundo juego:
+
+```powershell
+$py = "$env:USERPROFILE\Documents\Fern\recognition\runtime\venv\Scripts\python.exe"
+$out = "$env:USERPROFILE\Documents\Fern\pruebas-arbol"
+
+& $py .\tool\test_env\generate_media.py --out $out --set arbol --images 115
+dart run tool/test_env/seed_tree.dart --media $out
+```
+
+Deja esto:
+
+```
+Figuras de prueba  ──[si ve un Rombo]──>  Variantes de rombo
+Formas nuevas      (otra raíz, independiente)
+```
+
+- **Variantes de rombo** (hijo): `Rombo simple` y `Rombo doble`. Las dos llevan
+  **el mismo cuerpo** que el Rombo del modelo padre y sólo cambian la marca de
+  dentro. Es a propósito: el padre tiene que seguir viendo un Rombo en ellas,
+  porque si no lo ve, el hijo no llega a ejecutarse nunca y la prueba del árbol
+  no prueba nada.
+- **Formas nuevas** (hermano): `Estrella` y `Hexágono`, formas que el modelo de
+  figuras no ha visto jamás. Es lo que lo hace un modelo independiente de verdad
+  y no una copia del primero.
+- La arista lleva condición. Sin ella, un Cubo abriría la rama de los rombos, y
+  eso no se distingue de que la poda esté rota: los dos casos dan sugerencias.
+
+Y **enlaza cada fernie con una etiqueta de su nombre**, los tres de antes
+incluidos. Sin enlace, reconocer propone detecciones que no tienen nada que poner
+en el contenido: se ven en el panel, pero sólo se pueden rechazar.
+
+Los dos modelos nuevos nacen con veinte épocas y el `yolo11n` de 512, por debajo
+del preset rápido. Existen para comprobar el recorrido y el etiquetado, no para
+ser buenos: son figuras planas de colores distintos, que se separan en unas pocas
+épocas. El panel dirá «Personalizado», que es la verdad.
+
+### Qué mirar
+
+- Entrenar los dos y ver que el indicador de tareas aguanta **dos a la vez**.
+- **Árbol de modelos** → «Reconocer la biblioteca» → «Sólo lo que no se ha mirado
+  nunca».
+- Abrir una imagen de `variantes\` y ver en el panel dos sugerencias: la del
+  padre (`Rombo`) y la del hijo (`Rombo simple` o `Rombo doble`).
+- Abrir una de `nuevas\` y ver sólo las del hermano. **Ninguna del hijo**: el
+  padre no ve ningún Rombo ahí, así que esa rama no se ejecuta. Es la prueba de
+  que la poda funciona.
+- Aceptar una sugerencia, guardar, y comprobar que la etiqueta queda puesta.
+
+Mirar el panel uno a uno no deja ver **la forma del resultado**, que es lo que
+importa cuando el árbol tiene ramas. Para eso:
+
+```powershell
+dart run tool/test_env/show_suggestions.dart --filter new-
+```
+
+En las imágenes de `nuevas\` no debería salir ninguna sugerencia de «Variantes de
+rombo» **salvo** que el modelo padre haya visto un Rombo ahí: la regla que se
+comprueba no es «el hijo no sale nunca», es «el hijo sale **si y sólo si** el
+padre disparó su condición».
+
+### Lo que este material todavía no prueba bien
+
+Cada modelo se entrena **sólo con su familia de figuras**, así que ninguno ve las
+otras como ejemplos negativos y las confunde: en una prueba real salieron 173
+sugerencias cruzadas de 412. Por encima del 80 % de confianza el acierto sube al
+90 %, así que para probar el flujo sirve, pero mezclar figuras de las tres
+familias en las mismas imágenes lo dejaría mucho más limpio.
+
+### Para quitarlo
+
+```powershell
+dart run tool/test_env/seed_tree.dart --media "$env:USERPROFILE\Documents\Fern\pruebas-arbol" --clean
+```
+
+## Si entrenar tarda mucho, mira si hay tarjeta gráfica
+
+El sidecar dice con qué está entrenando:
+
+```powershell
+$rt = "$env:USERPROFILE\Documents\Fern\recognition\runtime"
+'{"id":"1","method":"env_info","params":{}}' | & "$rt\venv\Scripts\python.exe" "$rt\fern_sidecar.py"
+```
+
+Si contesta `"device": "cpu"` y `"torch": "...+cpu"`, está entrenando por
+procesador aunque haya una tarjeta gráfica en el equipo: lo que se instaló fue la
+rueda de torch sin CUDA. Con figuras de prueba da igual —son minutos—, pero con
+material de verdad es la diferencia entre un rato y una noche.
 
 ## Si algo se queda a medias
 

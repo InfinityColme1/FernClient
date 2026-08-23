@@ -5,11 +5,13 @@
 // deja de decir quien ejecuta a quien, que es lo unico que decide.
 
 import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/config/theme/app_theme.dart';
 import 'package:Fern/features/recognition/domain/entities/model_tree_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/features/recognition/presentation/widgets/tree_canvas.dart';
 import 'package:Fern/features/recognition/presentation/widgets/tree_drag_payload.dart';
+import 'package:Fern/features/recognition/presentation/widgets/tree_edge_painter.dart';
 import 'package:Fern/features/recognition/presentation/widgets/tree_node_card.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -191,6 +193,91 @@ void main() {
     });
   });
 
+  group('las etiquetas de un mismo padre', () {
+    /// Las lineas que pinta el lienzo para un arbol dado.
+    List<TreeEdgeLine> linesOf(ModelTreeEntity tree) {
+      final lines = <TreeEdgeLine>[];
+
+      for (final edge in tree.edges) {
+        final parent = tree.nodeById(edge.parentNodeId)!;
+        final child = tree.nodeById(edge.childNodeId)!;
+
+        lines.add(TreeEdgeLine(
+          edgeId: edge.id,
+          from: Offset(
+            treeNodeOffset(parent).dx + AppSizes.treeNodeWidth / 2,
+            treeNodeOffset(parent).dy + AppSizes.treeNodeHeight,
+          ),
+          to: Offset(
+            treeNodeOffset(child).dx + AppSizes.treeNodeWidth / 2,
+            treeNodeOffset(child).dy,
+          ),
+        ));
+      }
+
+      return lines;
+    }
+
+    test('no se amontonan con varios hijos', () {
+      // Un padre con cinco hijos: es el caso que se vio de verdad, con las
+      // etiquetas unas encima de otras y sin forma de pulsar la que se queria.
+      final tree = ModelTreeEntity(
+        nodes: [
+          _node(1, column: 2),
+          for (var id = 2; id <= 6; id++) _node(id, row: 1, column: (id - 2).toDouble()),
+        ],
+        edges: [
+          for (var id = 2; id <= 6; id++)
+            ModelTreeEdgeEntity(id: id, parentNodeId: 1, childNodeId: id),
+        ],
+      );
+
+      final points = [for (final line in linesOf(tree)) line.labelPoint.dx]
+        ..sort();
+
+      for (var index = 1; index < points.length; index++) {
+        expect(
+          points[index] - points[index - 1],
+          greaterThanOrEqualTo(treeEdgeLabelMaxWidth),
+          reason: 'dos etiquetas se pisan',
+        );
+      }
+    });
+
+    test('cada una cae cerca de su hijo', () {
+      final tree = ModelTreeEntity(
+        nodes: [_node(1), _node(2, row: 1, column: 3)],
+        edges: const [
+          ModelTreeEdgeEntity(id: 1, parentNodeId: 1, childNodeId: 2),
+        ],
+      );
+
+      final line = linesOf(tree).single;
+
+      // Mas cerca del hijo que del padre: es lo que las separa, porque los hijos
+      // ya estan separados entre si.
+      expect(
+        (line.labelPoint.dx - line.to.dx).abs(),
+        lessThan((line.labelPoint.dx - line.from.dx).abs()),
+      );
+    });
+
+    test('la etiqueta y la zona pulsable son el mismo punto', () {
+      final tree = ModelTreeEntity(
+        nodes: [_node(1), _node(2, row: 1, column: 1)],
+        edges: const [
+          ModelTreeEdgeEntity(id: 1, parentNodeId: 1, childNodeId: 2),
+        ],
+      );
+
+      final line = linesOf(tree).single;
+
+      // Lo calcula la propia linea justamente para que no puedan separarse: si
+      // el pintor y la zona pulsable no coinciden, se pulsa donde no se ve nada.
+      expect(line.labelPoint, Offset.lerp(line.from, line.to, treeEdgeLabelAt));
+    });
+  });
+
   group('lo que se puede soltar sobre un nodo', () {
     /// Un lienzo montado a mano, solo para preguntarle que acepta.
     TreeCanvas canvasOf(ModelTreeEntity tree) => TreeCanvas(
@@ -267,8 +354,19 @@ void main() {
       );
 
       // Una curva de dos pixeles no se acierta con el raton: cada arista lleva
-      // su propia zona pulsable donde esta la etiqueta.
-      await tester.tapAt(tester.getCenter(find.byType(TreeCanvas)));
+      // su propia zona pulsable **donde esta su etiqueta**, que es cerca del
+      // hijo y no en mitad del trazo.
+      final origin = tester.getTopLeft(find.byType(TreeCanvas));
+      final from = Offset(
+        AppSizes.treeNodeWidth / 2,
+        AppSizes.treeNodeHeight,
+      );
+      final to = Offset(
+        AppSizes.treeNodeWidth / 2,
+        AppSizes.treeNodeHeight + AppSizes.treeRowGap,
+      );
+
+      await tester.tapAt(origin + Offset.lerp(from, to, treeEdgeLabelAt)!);
       await tester.pump();
 
       expect(tapped, [9]);

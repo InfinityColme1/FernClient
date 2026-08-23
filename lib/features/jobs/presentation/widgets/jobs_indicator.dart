@@ -27,14 +27,33 @@ extension JobTypeLabels on JobType {
 /// Al pulsarlo se despliega la lista con lo que lleva cada trabajo y un botón
 /// para pararlo.
 class JobsIndicator extends StatelessWidget {
-  const JobsIndicator({super.key});
+  /// Si de este trabajo hay algo más que enseñar.
+  ///
+  /// Llega por parámetro para que esto no tenga que saber de reconocimiento: la
+  /// lista de tareas es de la aplicación entera, y bastaría un caso especial por
+  /// tipo de trabajo para que acabara importando media aplicación.
+  final bool Function(Job job)? hasDetail;
+
+  /// Qué hacer al pedir ese detalle.
+  final void Function(BuildContext context, Job job)? onDetail;
+
+  const JobsIndicator({super.key, this.hasDetail, this.onDetail});
+
+  /// Los trabajos terminados que tienen algo que enseñar.
+  List<Job> _finishedWithDetail(JobsState state) {
+    final has = hasDetail;
+    if (has == null) return const [];
+
+    return [for (final job in state.completed) if (has(job)) job];
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<JobsBloc, JobsState>(
       builder: (context, state) {
         final texts = AppLocalizations.of(context);
-        final visible = [...state.active, ...state.failed];
+        final finished = _finishedWithDetail(state);
+        final visible = [...state.active, ...state.failed, ...finished];
 
         if (visible.isEmpty) {
           return IconButton(
@@ -65,7 +84,23 @@ class JobsIndicator extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-            for (final job in visible) _JobRow(job: job),
+            for (final job in visible)
+              _JobRow(
+                job: job,
+                onDetail: hasDetail?.call(job) == true && onDetail != null
+                    ? () => onDetail!(context, job)
+                    : null,
+              ),
+            if (finished.isNotEmpty)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => context
+                      .read<JobsBloc>()
+                      .add(const ClearFinishedJobsEvent()),
+                  child: Text(texts.jobsClearFinished),
+                ),
+              ),
           ],
         );
       },
@@ -114,7 +149,10 @@ class JobsIndicator extends StatelessWidget {
 class _JobRow extends StatelessWidget {
   final Job job;
 
-  const _JobRow({required this.job});
+  /// Qué hacer al pedir el detalle, si este trabajo tiene alguno.
+  final VoidCallback? onDetail;
+
+  const _JobRow({required this.job, this.onDetail});
 
   /// Cómo se llama esto en la lista.
   ///
@@ -151,6 +189,15 @@ class _JobRow extends StatelessWidget {
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
+              // El detalle se ofrece esté vivo o terminado: mientras corre ya
+              // hay algo que mirar de lo que lleva hecho.
+              if (onDetail != null)
+                IconButton(
+                  tooltip: texts.jobDetailTooltip,
+                  iconSize: AppSizes.iconMedium,
+                  onPressed: onDetail,
+                  icon: const Icon(Icons.receipt_long_outlined),
+                ),
               if (job.status.isActive)
                 IconButton(
                   tooltip: texts.jobCancelTooltip,
@@ -169,6 +216,12 @@ class _JobRow extends StatelessWidget {
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: context.colors.error),
             )
+          else if (job.status == JobStatus.completed)
+            Text(
+              texts.jobDone,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: context.colors.unremarked),
+            )
           else if (job.status == JobStatus.queued)
             Text(
               texts.jobQueued,
@@ -179,6 +232,20 @@ class _JobRow extends StatelessWidget {
             // Sin total no se sabe cuánto queda, así que la barra da vueltas en
             // lugar de mentir con un porcentaje.
             LinearProgressIndicator(value: job.progress),
+            // En qué se está yendo el tiempo ahora mismo: con un árbol de tres
+            // modelos, saber cuál está mirando es la diferencia entre una barra
+            // que avanza y una que parece colgada.
+            if (job.stage case final stage?)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  stage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: context.colors.unremarked),
+                ),
+              ),
             if (job.total > 0)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.xs),

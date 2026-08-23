@@ -118,6 +118,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String selectedOfCount(int selected, int total) {
+    return '$selected de $total seleccionados';
+  }
+
+  @override
   String deletedCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2035,4 +2040,313 @@ class AppLocalizationsEs extends AppLocalizations {
   String fernieRecommendedRegions(int count) {
     return 'Se recomiendan al menos $count regiones';
   }
+
+  @override
+  String get viewerRecognize => 'Reconocer con los modelos';
+
+  @override
+  String get viewerRecognizing => 'Reconociendo…';
+
+  @override
+  String get viewerRecognizeQueued => 'Reconocimiento en cola';
+
+  @override
+  String get suggestionsTitle => 'Sugerencias';
+
+  @override
+  String suggestionConfidence(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get suggestionFromModel =>
+      'Lo propone un modelo, todavía sin confirmar';
+
+  @override
+  String get suggestionCreatorTitle => 'Creador propuesto';
+
+  @override
+  String get suggestionsNone => 'Aquí no hay nada propuesto';
+
+  @override
+  String get actionAccept => 'Aceptar';
+
+  @override
+  String get actionReject => 'Rechazar';
+
+  @override
+  String get suggestionAcceptAll => 'Aceptar todas';
+
+  @override
+  String get suggestionRejectAll => 'Rechazar todas';
+
+  @override
+  String get recognizeNoModelsInTree =>
+      'Todavía no hay ningún modelo en el árbol. Añade uno desde la pantalla del árbol de modelos.';
+
+  @override
+  String get recognizeNoTrainedModels =>
+      'Ningún modelo del árbol está entrenado. Entrena uno, o importa sus pesos desde la pantalla del modelo.';
+
+  @override
+  String get recognizeUnavailable =>
+      'No se ha podido leer el árbol de modelos.';
+
+  @override
+  String get recognizeFoundNothing => 'Los modelos no han encontrado nada aquí';
+
+  @override
+  String get recognizeNothingToDo => 'Aquí no queda nada por reconocer';
+
+  @override
+  String get recognizeSelectedTooltip => 'Reconocer la selección';
+
+  @override
+  String get recognizeTagTooltip => 'Reconocer todo lo de esta etiqueta';
+
+  @override
+  String get recognizeCreatorTooltip => 'Reconocer todo lo de este creador';
+
+  @override
+  String get recognizeLibrary => 'Reconocer la biblioteca';
+
+  @override
+  String get recognizeLibraryTitle => 'Reconocer toda la biblioteca';
+
+  @override
+  String get recognizeLibraryQuestion =>
+      'Reconocer cuesta una predicción por imagen, y varias por vídeo. Elige cuánto hay que mirar.';
+
+  @override
+  String get recognizeLibraryOnlyNew => 'Sólo lo que no se ha mirado nunca';
+
+  @override
+  String get recognizeLibraryAll => 'Todo, otra vez';
+
+  @override
+  String get recognizeLibraryAllHint =>
+      'Útil después de entrenar un modelo mejor.';
+
+  @override
+  String get recognizeJobLibrary => 'Biblioteca entera';
+
+  @override
+  String get recognizeJobSelection => 'Selección';
+
+  @override
+  String recognizeQueuedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenidos en cola para reconocer',
+      one: '1 contenido en cola para reconocer',
+      zero: 'No se ha encolado nada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recognizeCountable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenidos',
+      one: '1 contenido',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recognitionLogTitle => 'Qué hicieron los modelos';
+
+  @override
+  String get recognitionLogNearMiss => 'visto, bajo el listón';
+
+  @override
+  String get recognitionLogNothing => 'nada';
+
+  @override
+  String get recognitionLogVerdictProposed => 'lo propone';
+
+  @override
+  String recognitionLogVerdictBelow(int percent) {
+    return 'lo vio, pero por debajo del $percent %';
+  }
+
+  @override
+  String get recognitionLogVerdictNothing => 'no vio nada';
+
+  @override
+  String get recognitionLogVerdictNotReached =>
+      'no corrió: su rama no se abrió';
+
+  @override
+  String get recognitionLogVerdictUntrained => 'no corrió: no tiene pesos';
+
+  @override
+  String get jobDetailTooltip => 'Ver qué hicieron los modelos';
+
+  @override
+  String get jobsClearFinished => 'Dar por vistas las terminadas';
+
+  @override
+  String get recognitionLogFromToast =>
+      'Pulsa para ver qué hicieron los modelos';
+
+  @override
+  String recognitionLogSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenidos',
+      one: 'Un contenido',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recognitionLogProposed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sugerencias',
+      one: '1 sugerencia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get jobDone => 'Terminada';
+
+  @override
+  String recognizeFoundCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sugerencias. Pulsa para ver cómo',
+      one: '1 sugerencia. Pulsa para ver cómo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recognitionPanelTitle => 'Al reconocer';
+
+  @override
+  String get recognitionThresholdLabel => 'Confianza mínima para proponer';
+
+  @override
+  String get recognitionThresholdDescription =>
+      'Por debajo de esto, lo que vea no se propone.';
+
+  @override
+  String get recognitionThresholdEverything =>
+      'Se propone todo lo que vea, por poco seguro que esté.';
+
+  @override
+  String get recognitionThresholdAll => 'Todo';
+
+  @override
+  String get recognitionThresholdLower => 'Bajar el listón';
+
+  @override
+  String get recognitionThresholdRaise => 'Subir el listón';
+
+  @override
+  String get recognitionThresholdApplies =>
+      'Vale para el próximo reconocimiento. Lo ya propuesto no cambia.';
+
+  @override
+  String get recognizeReturnTitle => 'Saldrán de la biblioteca por un rato';
+
+  @override
+  String get recognizeReturnHint =>
+      'Sólo los que reciban alguna sugerencia. Se puede apagar en Ajustes, en Reconocimiento.';
+
+  @override
+  String get recognizeReturnConfirm => 'Reconocer de todas formas';
+
+  @override
+  String get returnRecognizedLabel =>
+      'Devolver a importación el contenido reconocido';
+
+  @override
+  String get returnRecognizedDescription =>
+      'Lo que reciba una sugerencia deja de ser definitivo hasta que lo valides. Apagado, las sugerencias se siguen viendo en el panel del visor y no se mueve nada de sitio.';
+
+  @override
+  String recognizeReturnWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count contenidos volverán a la pantalla de importación hasta que valides sus etiquetas.',
+      one:
+          'Un contenido volverá a la pantalla de importación hasta que valides sus etiquetas.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get suggestionsPendingBadge => 'Tiene sugerencias sin mirar';
+
+  @override
+  String get suggestionFilterAll => 'Todo';
+
+  @override
+  String get suggestionFilterWith => 'Con sugerencias';
+
+  @override
+  String get suggestionFilterNever => 'Sin mirar nunca';
+
+  @override
+  String acceptAboveTooltip(int percent) {
+    return 'Acepta lo que los modelos ven con más de un $percent % de seguridad, en la selección. No da nada por definitivo.';
+  }
+
+  @override
+  String acceptAboveDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sugerencias aceptadas',
+      one: '1 sugerencia aceptada',
+      zero: 'Nada llegaba con seguridad suficiente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get actionClearSelection => 'Dejar de seleccionar';
+
+  @override
+  String acceptAboveLabel(int percent) {
+    return 'Aceptar más del $percent %';
+  }
+
+  @override
+  String get importShowLabel => 'Ver';
+
+  @override
+  String get importFetchLabel => 'Traer';
+
+  @override
+  String get recognizeJobImported => 'Recién importado';
+
+  @override
+  String get recognizeOnImportLabel => 'Reconocer lo que acaba de importarse';
+
+  @override
+  String get recognizeOnImportDescription =>
+      'El contenido nuevo pasa por los modelos solo, en cuanto la importación se calma. No cuesta nada si no hay ningún modelo entrenado.';
+
+  @override
+  String get suggestionMarkRegion => 'Guardar como región de este fernie';
+
+  @override
+  String get suggestionRegionSaved =>
+      'Región guardada. Cuenta para el próximo entrenamiento.';
+
+  @override
+  String get suggestionRegionFailed => 'No se ha podido guardar la región';
 }

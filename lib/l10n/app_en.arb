@@ -47,6 +47,8 @@
     }
   },
   "selectedCount": "{count} selected",
+  "selectedOfCount": "{selected} of {total} selected",
+  "@selectedOfCount": {"placeholders": {"selected": {"type": "int"}, "total": {"type": "int"}}},
   "@selectedCount": {
     "placeholders": {
       "count": { "type": "int" }
@@ -853,5 +855,103 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+
+  "viewerRecognize": "Recognise with models",
+  "viewerRecognizing": "Recognising…",
+  "viewerRecognizeQueued": "Recognition queued",
+  "suggestionsTitle": "Suggestions",
+  "suggestionConfidence": "{percent}%",
+  "@suggestionConfidence": {"placeholders": {"percent": {"type": "int"}}},
+  "suggestionFromModel": "Suggested by a model, not confirmed yet",
+  "suggestionCreatorTitle": "Suggested creator",
+  "suggestionsNone": "Nothing suggested here",
+
+  "actionAccept": "Accept",
+  "actionReject": "Reject",
+  "suggestionAcceptAll": "Accept all",
+  "suggestionRejectAll": "Reject all",
+
+  "recognizeNoModelsInTree": "There are no models in the tree yet. Add one from the model tree screen.",
+  "recognizeNoTrainedModels": "No model in the tree has been trained yet. Train one, or import its weights from the model screen.",
+  "recognizeUnavailable": "The model tree could not be read.",
+  "recognizeFoundNothing": "The models did not find anything here",
+
+  "recognizeNothingToDo": "There is nothing left to recognise here",
+  "recognizeSelectedTooltip": "Recognise the selection",
+  "recognizeTagTooltip": "Recognise everything with this tag",
+  "recognizeCreatorTooltip": "Recognise everything by this creator",
+  "recognizeLibrary": "Recognise the library",
+  "recognizeLibraryTitle": "Recognise the whole library",
+  "recognizeLibraryQuestion": "Recognising takes about one prediction per image, and several per video. Choose how much to go through.",
+  "recognizeLibraryOnlyNew": "Only what has never been looked at",
+  "recognizeLibraryAll": "Everything, again",
+  "recognizeLibraryAllHint": "Useful after training a better model.",
+  "recognizeJobLibrary": "Whole library",
+  "recognizeJobSelection": "Selection",
+  "recognizeQueuedCount": "{count, plural, =0{Nothing queued} =1{1 item queued to recognise} other{{count} items queued to recognise}}",
+  "@recognizeQueuedCount": {"placeholders": {"count": {"type": "int"}}},
+  "recognizeCountable": "{count, plural, =1{1 item} other{{count} items}}",
+  "@recognizeCountable": {"placeholders": {"count": {"type": "int"}}},
+
+  "recognitionLogTitle": "What the models did",
+  "recognitionLogNearMiss": "seen, below the bar",
+  "recognitionLogNothing": "nothing",
+  "recognitionLogVerdictProposed": "suggested",
+  "recognitionLogVerdictBelow": "seen, but under {percent}%",
+  "@recognitionLogVerdictBelow": {"placeholders": {"percent": {"type": "int"}}},
+  "recognitionLogVerdictNothing": "saw nothing",
+  "recognitionLogVerdictNotReached": "did not run: its branch never opened",
+  "recognitionLogVerdictUntrained": "did not run: it has no weights",
+  "jobDetailTooltip": "See what the models did",
+  "jobsClearFinished": "Dismiss the finished ones",
+  "recognitionLogFromToast": "Tap to see what the models did",
+  "recognitionLogSubtitle": "{count, plural, =1{One item} other{{count} items}}",
+  "@recognitionLogSubtitle": {"placeholders": {"count": {"type": "int"}}},
+  "recognitionLogProposed": "{count, plural, =1{1 suggestion} other{{count} suggestions}}",
+  "@recognitionLogProposed": {"placeholders": {"count": {"type": "int"}}},
+
+  "jobDone": "Done",
+
+  "recognizeFoundCount": "{count, plural, =1{1 suggestion found. Tap to see how} other{{count} suggestions found. Tap to see how}}",
+  "@recognizeFoundCount": {"placeholders": {"count": {"type": "int"}}},
+
+  "recognitionPanelTitle": "When recognising",
+  "recognitionThresholdLabel": "Minimum confidence to suggest",
+  "recognitionThresholdDescription": "Below this, what it sees is not proposed.",
+  "recognitionThresholdEverything": "Everything it sees gets proposed, however unsure.",
+  "recognitionThresholdAll": "All",
+  "recognitionThresholdLower": "Lower the bar",
+  "recognitionThresholdRaise": "Raise the bar",
+  "recognitionThresholdApplies": "Applies to the next recognition. What is already suggested does not change.",
+
+  "recognizeReturnTitle": "They will leave the library for a while",
+  "recognizeReturnHint": "Only the ones that get a suggestion. You can turn this off in Settings, under Recognition.",
+  "recognizeReturnConfirm": "Recognise anyway",
+  "returnRecognizedLabel": "Send recognised content back to importing",
+  "returnRecognizedDescription": "Content that gets a suggestion stops being final until you validate it. Turned off, the suggestions still show in the viewer panel and nothing moves.",
+  "recognizeReturnWarning": "{count, plural, =1{One item will go back to the import screen until you validate its tags.} other{{count} items will go back to the import screen until you validate their tags.}}",
+  "@recognizeReturnWarning": {"placeholders": {"count": {"type": "int"}}},
+
+  "suggestionsPendingBadge": "Has suggestions waiting",
+
+  "suggestionFilterAll": "Everything",
+  "suggestionFilterWith": "With suggestions",
+  "suggestionFilterNever": "Never looked at",
+
+  "acceptAboveTooltip": "Accepts what the models are over {percent}% sure about, in the selection. It does not mark anything as final.",
+  "@acceptAboveTooltip": {"placeholders": {"percent": {"type": "int"}}},
+  "acceptAboveDone": "{count, plural, =0{Nothing was confident enough} =1{1 suggestion accepted} other{{count} suggestions accepted}}",
+  "@acceptAboveDone": {"placeholders": {"count": {"type": "int"}}},
+  "actionClearSelection": "Clear selection",
+  "acceptAboveLabel": "Accept over {percent}%",
+  "@acceptAboveLabel": {"placeholders": {"percent": {"type": "int"}}},
+  "importShowLabel": "Show",
+  "importFetchLabel": "Fetch",
+  "recognizeJobImported": "Just imported",
+  "recognizeOnImportLabel": "Recognise what has just been imported",
+  "recognizeOnImportDescription": "New content goes to the models on its own, once the import settles. Costs nothing if no model is trained.",
+  "suggestionMarkRegion": "Save as a region of this fernie",
+  "suggestionRegionSaved": "Region saved. It counts for the next training.",
+  "suggestionRegionFailed": "The region could not be saved"
 }

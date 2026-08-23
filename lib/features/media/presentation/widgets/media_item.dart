@@ -33,6 +33,18 @@ class MediaItem extends StatefulWidget {
   /// `true` si el elemento forma parte de la selección actual.
   final bool isSelected;
 
+  /// `true` mientras este contenido sea uno de los del último aviso.
+  ///
+  /// Va aparte de la selección porque no es lo mismo: la selección la hace el
+  /// usuario y dura hasta que la deshaga; esto lo pone la aplicación y se apaga
+  /// en cuanto él da señales de haberlo visto. Pintarlos igual haría creer que
+  /// hay veinte contenidos seleccionados.
+  final bool isHighlighted;
+
+  /// Se invoca la primera vez que el ratón pasa por encima estando señalado: es
+  /// una de las tres formas de dar el aviso por visto.
+  final VoidCallback? onHighlightSeen;
+
   /// Se invoca al pulsar el botón de selección que aparece al pasar el ratón.
   final VoidCallback? onSelectionToggled;
 
@@ -72,6 +84,8 @@ class MediaItem extends StatefulWidget {
     required this.media,
     this.onTap,
     this.isSelected = false,
+    this.isHighlighted = false,
+    this.onHighlightSeen,
     this.onSelectionToggled,
     this.onRangeSelectionRequested,
     this.onLoadFailed,
@@ -296,6 +310,10 @@ class _MediaItemState extends State<MediaItem> {
   }
 
   void _onHoverChanged(bool isHovered) {
+    // Pasar el ratón por encima es haberlo visto. Se avisa aunque el estado de
+    // hover no cambie de valor, porque lo que importa es el gesto.
+    if (isHovered && widget.isHighlighted) widget.onHighlightSeen?.call();
+
     if (_isHovered == isHovered) return;
     setState(() => _isHovered = isHovered);
 
@@ -379,11 +397,35 @@ class _MediaItemState extends State<MediaItem> {
     return crop.aspectRatio(Size(width.toDouble(), height.toDouble()));
   }
 
+  /// Un marco alrededor de lo que está señalado por el último aviso.
+  ///
+  /// Un marco y no un tinte encima: el tinte cambiaría los colores del propio
+  /// contenido, que es justo lo que el usuario ha venido a mirar.
+  Widget _highlighted(BuildContext context, Widget child) {
+    if (!widget.isHighlighted) return child;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        border: Border.all(
+          color: context.colors.terciary,
+          width: mediaHighlightBorderWidth,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(mediaHighlightBorderWidth),
+        child: child,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final aspectRatio = _aspectRatio;
 
-    return MouseRegion(
+    return _highlighted(
+      context,
+      MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => _onHoverChanged(true),
       onExit: (_) => _onHoverChanged(false),
@@ -409,6 +451,7 @@ class _MediaItemState extends State<MediaItem> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -566,7 +609,11 @@ class _MediaItemState extends State<MediaItem> {
   /// región marcada sobre un vídeo pendiente de revisar lleva los dos.
   Widget _buildTopLeftBadges() {
     final warning = widget.warning;
-    if (warning == null && !_isVideo) return const SizedBox.shrink();
+    final hasSuggestions = widget.media.hasPendingSuggestions;
+
+    if (warning == null && !_isVideo && !hasSuggestions) {
+      return const SizedBox.shrink();
+    }
 
     return Positioned(
       top: AppSpacing.s,
@@ -578,8 +625,38 @@ class _MediaItemState extends State<MediaItem> {
             _buildWarningBadge(warning),
             const SizedBox(width: AppSpacing.xs),
           ],
+          if (hasSuggestions) ...[
+            _buildSuggestionsBadge(),
+            const SizedBox(width: AppSpacing.xs),
+          ],
           if (_isVideo) _buildVideoBadge(),
         ],
+      ),
+    );
+  }
+
+  /// Aquí hay algo propuesto que nadie ha contestado.
+  ///
+  /// Sin esto, una rejilla de trescientas miniaturas no dice cuáles llevan
+  /// trabajo pendiente, y revisar es abrirlas una a una para descubrir que la
+  /// mayoría no tenía nada.
+  ///
+  /// El mismo icono con el que se pide reconocer: lo que marca es de dónde
+  /// viene, y usar otro obligaría a aprenderse dos.
+  Widget _buildSuggestionsBadge() {
+    return Tooltip(
+      message: AppLocalizations.of(context).suggestionsPendingBadge,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: context.colors.scrim.withValues(alpha: mediaBadgeOpacity),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.auto_awesome,
+          color: context.colors.terciary,
+          size: AppSizes.iconSmall,
+        ),
       ),
     );
   }

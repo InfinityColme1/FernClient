@@ -24,6 +24,40 @@ abstract class LocalMediaRepository {
 
   Future<DataState<List<MediaSummaryEntity>>> getMediaList();
 
+  /// Los identificadores del contenido que se puede mandar a reconocer.
+  ///
+  /// Sólo identificadores y no los contenidos enteros: reconocer la biblioteca
+  /// son decenas de miles de filas, y traerlas con sus etiquetas y su creador
+  /// para quedarse con el número es llenar la memoria de lo que nadie va a
+  /// mirar.
+  ///
+  /// Con [onlyUnrecognized] se deja fuera lo que ya se miró alguna vez. Es lo
+  /// que hace usable «reconocer toda la biblioteca» la segunda vez: sin ello,
+  /// cada pulsación vuelve a pagar por todo lo que ya está hecho.
+  ///
+  /// Lo que está en la papelera nunca sale: reconocerlo sería gastar horas en
+  /// contenido que se va a borrar solo en una semana.
+  /// Le añade estas etiquetas a un contenido, sin tocar nada más.
+  ///
+  /// Existe aparte de [saveMedia] porque aquél **da el contenido por
+  /// definitivo**, y eso es una decisión del usuario, no un efecto de aceptar
+  /// una sugerencia: en la pantalla de importación hay un botón de confirmar
+  /// justo al lado, y aceptar etiquetas en masa no puede hacer su trabajo por
+  /// él.
+  ///
+  /// Las que ya tenga se quedan: esto suma, no reemplaza.
+  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds);
+
+  /// Le pone este creador a un contenido, sin tocar nada más.
+  ///
+  /// Por lo mismo que lo anterior: poner un creador no es dar el contenido por
+  /// revisado.
+  Future<DataState<bool>> setMediaCreator(int mediaId, int creatorId);
+
+  Future<DataState<List<int>>> getRecognizableMediaIds({
+    bool onlyUnrecognized = true,
+  });
+
   /// Contenido pendiente de revisar, el de la pantalla de importación.
   ///
   /// [source] filtra por la fuente de la que llegó; con [ImportSource.all] se
@@ -204,6 +238,17 @@ abstract class LocalMediaRepository {
   Future<DataState> removeCreatorFromMedia(int creatorId, List<int> mediaIds);
 
   Future<DataState<List<TagEntity>>> getTags();
+
+  /// Una etiqueta por su identificador, o `null` si ya no existe.
+  ///
+  /// Que no exista no es un fallo: los enlaces que guardan otras cosas —los de
+  /// los fernies, sin ir más lejos— apuntan por identificador y sobreviven a que
+  /// alguien borre la etiqueta. Quien pregunta necesita poder distinguir «no
+  /// está» de «no se ha podido leer».
+  Future<DataState<TagEntity?>> getTag(int id);
+
+  /// Un creador por su identificador, o `null` si ya no existe.
+  Future<DataState<CreatorEntity?>> getCreator(int id);
 
   /// Las etiquetas en forma de árbol: sólo las que no cuelgan de ninguna otra,
   /// cada una con sus descendientes ya cargados.

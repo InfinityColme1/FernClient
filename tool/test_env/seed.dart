@@ -262,7 +262,7 @@ Future<CreatorModel> _unknownCreator(Isar isar) async {
 /// La biblioteca de verdad no se toca, que sería un estropicio difícil de
 /// deshacer.
 Future<void> _clean(Isar isar, String media) async {
-  final prefix = _canonical(media);
+  final prefix = _folderPrefix(media);
 
   final summaries = await isar.mediaSummaryModels.where().findAll();
   final ids = summaries
@@ -293,6 +293,17 @@ Future<void> _clean(Isar isar, String media) async {
 /// El manifiesto lo escribe Python con barras invertidas y los argumentos llegan
 /// con barras normales: sin igualarlas, la limpieza no encontraba nada y se
 /// callaba, que es la peor forma de fallar.
+/// La carpeta, en la forma con la que se compara: siempre terminada en barra.
+///
+/// La barra no es un detalle: sin ella, «pruebas» es prefijo de «pruebas-arbol»
+/// y limpiar la primera carpeta se llevaría por delante el contenido de la
+/// segunda, que no tiene nada que ver.
+String _folderPrefix(String path) {
+  final canonical = _canonical(path);
+
+  return canonical.endsWith('/') ? canonical : '$canonical/';
+}
+
 String _canonical(String path) =>
     p.normalize(path).replaceAll(r'\', '/').toLowerCase();
 
