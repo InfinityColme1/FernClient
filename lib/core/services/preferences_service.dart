@@ -25,6 +25,39 @@ class PreferencesService {
   }
 
 
+  /// Anota que se acaba de terminar un escaneo de contenido repetido.
+  ///
+  /// La sella el escaneo al acabar bien, venga del botón o de la aplicación:
+  /// buscar repetidos a mano y que la aplicación lo repita sola al día siguiente
+  /// es trabajo tirado, y quien lo acaba de hacer no distingue un escaneo de
+  /// otro.
+  Future<bool> setLastDuplicateScan(DateTime at) async {
+    return await _prefs.setString(
+      lastDuplicateScanPreferenceKey,
+      at.toIso8601String(),
+    );
+  }
+
+
+  /// Cuándo terminó el último escaneo de repetidos, o `null` si nunca se hizo.
+  DateTime? getLastDuplicateScan() {
+    final value = _prefs.getString(lastDuplicateScanPreferenceKey);
+    if (value == null) return null;
+
+    return DateTime.tryParse(value);
+  }
+
+
+  /// Olvida cuándo se escaneó por última vez, para que vuelva a tocar.
+  ///
+  /// La llama el borrado de huellas: dejar la marca puesta con la biblioteca sin
+  /// una sola huella deja la búsqueda automática dormida todo el periodo, y la
+  /// pantalla diciendo que se escaneó hace un momento.
+  Future<bool> clearLastDuplicateScan() async {
+    return await _prefs.remove(lastDuplicateScanPreferenceKey);
+  }
+
+
   String _lastImportKey(ImportSource source) =>
       '$lastImportPreferenceKeyPrefix${source.id}';
 

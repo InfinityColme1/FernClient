@@ -82,6 +82,35 @@ enum ViewerSaveBehavior {
   }
 }
 
+/// Cada cuánto busca la aplicación contenido repetido por su cuenta.
+///
+/// El mínimo es un mes (D17) y no es una cifra caprichosa: un escaneo completo
+/// sólo tiene algo que hacer cuando ha entrado contenido nuevo, y hasta la
+/// biblioteca más activa no cambia lo bastante en una semana como para que
+/// merezca la pena volver a mirarlo todo.
+enum DuplicateScanPeriod {
+  monthly(id: 'monthly', days: 30),
+  quarterly(id: 'quarterly', days: 90),
+  biannual(id: 'biannual', days: 182),
+  yearly(id: 'yearly', days: 365);
+
+  const DuplicateScanPeriod({required this.id, required this.days});
+
+  /// Con lo que se guarda. No cambiarlo: el periodo elegido se perdería.
+  final String id;
+
+  final int days;
+
+  Duration get span => Duration(days: days);
+
+  static DuplicateScanPeriod fromId(String? id) {
+    return DuplicateScanPeriod.values.firstWhere(
+      (period) => period.id == id,
+      orElse: () => DuplicateScanPeriod.quarterly,
+    );
+  }
+}
+
 /// Ajustes de la aplicación tal y como los ve la interfaz.
 ///
 /// [avatarsPath] nunca es nulo: aunque no se haya elegido carpeta, la
@@ -141,6 +170,26 @@ class AppSettingsEntity extends Equatable {
   /// pantalla de importación y en los otros tres sitios de la D16. Lo que
   /// cambia es quién decide cuándo se pone el equipo a trabajar.
   final bool recognizeOnImport;
+
+  /// A partir de qué distancia dos contenidos dejan de ser el mismo.
+  ///
+  /// De 0 a 16 bits distintos. Subirlo agrupa más y empieza a juntar cosas que
+  /// sólo se parecen; bajarlo deja duplicados sin encontrar. Ocho es el punto
+  /// donde todavía se agrupa lo que de verdad sobra.
+  final int duplicateThreshold;
+
+  /// La aplicación busca repetidos por su cuenta cada cierto tiempo.
+  ///
+  /// Encendido de fábrica: el contenido repetido no molesta el día que entra,
+  /// molesta seis meses después cuando ya hay cuarenta copias y nadie se acuerda
+  /// de mirarlo. Corre en segundo plano y con la prioridad más baja, así que a
+  /// quien no le interese sólo le cuesta un rato de disco cada tantos meses.
+  ///
+  /// Apagarlo no quita nada: buscar repetidos sigue estando en su pantalla.
+  final bool automaticDuplicateScan;
+
+  /// Cada cuánto lo hace, cuando [automaticDuplicateScan] está encendido.
+  final DuplicateScanPeriod duplicateScanPeriod;
 
   final FileOrganizationCriteria organization;
 
@@ -228,6 +277,9 @@ class AppSettingsEntity extends Equatable {
     this.frameSamples = defaultFrameSamples,
     this.returnRecognizedToImport = true,
     this.recognizeOnImport = true,
+    this.duplicateThreshold = defaultDuplicateThreshold,
+    this.automaticDuplicateScan = true,
+    this.duplicateScanPeriod = DuplicateScanPeriod.quarterly,
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
@@ -259,6 +311,9 @@ class AppSettingsEntity extends Equatable {
     int? frameSamples,
     bool? returnRecognizedToImport,
     bool? recognizeOnImport,
+    int? duplicateThreshold,
+    bool? automaticDuplicateScan,
+    DuplicateScanPeriod? duplicateScanPeriod,
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
@@ -286,6 +341,10 @@ class AppSettingsEntity extends Equatable {
       returnRecognizedToImport:
           returnRecognizedToImport ?? this.returnRecognizedToImport,
       recognizeOnImport: recognizeOnImport ?? this.recognizeOnImport,
+      duplicateThreshold: duplicateThreshold ?? this.duplicateThreshold,
+      automaticDuplicateScan:
+          automaticDuplicateScan ?? this.automaticDuplicateScan,
+      duplicateScanPeriod: duplicateScanPeriod ?? this.duplicateScanPeriod,
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
@@ -315,6 +374,9 @@ class AppSettingsEntity extends Equatable {
         frameSamples,
         returnRecognizedToImport,
         recognizeOnImport,
+        duplicateThreshold,
+        automaticDuplicateScan,
+        duplicateScanPeriod,
         organization,
         autoTagRemoteSource,
         showListAvatars,

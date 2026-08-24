@@ -2349,4 +2349,225 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get suggestionRegionFailed => 'No se ha podido guardar la región';
+
+  @override
+  String get duplicatesScanNow => 'Buscar ahora';
+
+  @override
+  String get duplicatesScanning => 'Buscando repetidos';
+
+  @override
+  String get duplicatesQueued =>
+      'Buscando contenido repetido. La primera vez puede tardar un rato.';
+
+  @override
+  String get duplicatesNone => 'No hay contenido repetido';
+
+  @override
+  String get duplicatesNoneHint =>
+      'Vuelve a buscar después de importar, o baja el listón de parecido en Ajustes.';
+
+  @override
+  String get duplicatesNeverScanned => 'Todavía no se ha buscado';
+
+  @override
+  String get duplicatesNeverScannedHint =>
+      'Pulsa «Buscar ahora» y Fern repasa la biblioteca entera. La primera vez puede tardar un rato.';
+
+  @override
+  String duplicatesScanFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Búsqueda terminada: $count grupos nuevos',
+      one: 'Búsqueda terminada: 1 grupo nuevo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesScanNothingNew(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Búsqueda terminada: nada nuevo. Quedan $count grupos por revisar.',
+      one: 'Búsqueda terminada: nada nuevo. Queda 1 grupo por revisar.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesScanClean =>
+      'Búsqueda terminada: no hay contenido repetido.';
+
+  @override
+  String get duplicatesScanStopped =>
+      'Búsqueda parada. Las huellas ya calculadas se quedan hechas.';
+
+  @override
+  String get duplicatesScanFailed =>
+      'La búsqueda no ha podido terminar. Vuelve a intentarlo.';
+
+  @override
+  String duplicatesGroupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count grupos',
+      one: '1 grupo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesDistance(int distance) {
+    return 'distancia $distance';
+  }
+
+  @override
+  String get duplicatesIdentical => 'idéntico';
+
+  @override
+  String duplicatesCopyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count copias',
+      one: '1 copia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesGroupPosition(int position, int total) {
+    return 'Grupo $position de $total';
+  }
+
+  @override
+  String get duplicatesKeepThis => 'Conservar esta';
+
+  @override
+  String get duplicatesMergeMetadata =>
+      'Fusionar metadatos en la copia conservada';
+
+  @override
+  String get duplicatesMergeMetadataHint =>
+      'Etiquetas, creador, favorito y descripción de las copias descartadas.';
+
+  @override
+  String get duplicatesNotDuplicates => 'No son duplicados';
+
+  @override
+  String get duplicatesApplyAndNext => 'Aplicar y siguiente';
+
+  @override
+  String duplicatesTagCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count etiquetas',
+      one: '1 etiqueta',
+      zero: 'Sin etiquetas',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesFavorite => 'Favorito';
+
+  @override
+  String get duplicatesNoCreator => 'Sin creador';
+
+  @override
+  String get duplicatesUnknownSize => 'Tamaño desconocido';
+
+  @override
+  String get duplicatesPickGroup => 'Elige un grupo para comparar sus copias';
+
+  @override
+  String get duplicatesApplyFailed =>
+      'No se ha podido resolver el grupo. No se ha borrado nada.';
+
+  @override
+  String get settingsDuplicates => 'Contenido repetido';
+
+  @override
+  String get duplicatesScanSectionTitle => 'Búsqueda automática';
+
+  @override
+  String get duplicatesScanSectionNote =>
+      'El contenido repetido no molesta el día que entra; molesta meses después, cuando ya hay cuarenta copias y nadie se acuerda de mirarlo.';
+
+  @override
+  String get duplicatesAutoScanLabel => 'Que Fern busque repetidos sola';
+
+  @override
+  String get duplicatesAutoScanDescription =>
+      'Al abrir Fern, si ha pasado el tiempo que elijas aquí abajo, repasa la biblioteca entera sin que se lo pidas: corre por detrás con la prioridad más baja, así que no estorba a lo que estés haciendo, y sólo te avisa si encuentra algo. Apagado, los repetidos sólo se buscan cuando pulses «Buscar ahora» en Contenido repetido.';
+
+  @override
+  String get duplicatesScanPeriodLabel => 'Cada cuánto';
+
+  @override
+  String get duplicatesPeriodMonthly => 'Cada mes';
+
+  @override
+  String get duplicatesPeriodQuarterly => 'Cada tres meses';
+
+  @override
+  String get duplicatesPeriodBiannual => 'Cada seis meses';
+
+  @override
+  String get duplicatesPeriodYearly => 'Cada año';
+
+  @override
+  String duplicatesLastScan(String date) {
+    return 'Último escaneo: $date';
+  }
+
+  @override
+  String get duplicatesLastScanNever => 'Todavía no se ha escaneado nunca';
+
+  @override
+  String get duplicatesOpenViewer => 'Ver a pantalla completa';
+
+  @override
+  String get duplicatesThresholdSectionTitle => 'Listón de similitud';
+
+  @override
+  String get duplicatesThresholdSectionNote =>
+      'Cuánto pueden diferenciarse dos contenidos y seguir contando como el mismo. Subirlo agrupa más y empieza a juntar cosas que sólo se parecen; bajarlo deja repetidos sin encontrar. Se aplica al escaneo siguiente, no a lo ya agrupado.';
+
+  @override
+  String get duplicatesThresholdLabel => 'Listón';
+
+  @override
+  String get duplicatesRehashSectionTitle => 'Empezar de cero';
+
+  @override
+  String get duplicatesRehashSectionNote =>
+      'Tira todas las huellas y las vuelve a calcular en el escaneo siguiente. Es la salida para cuando la agrupación sale mal y no se sabe por qué. Los grupos que ya has contestado se quedan como están.';
+
+  @override
+  String get duplicatesRehashButton => 'Recalcular todas las huellas';
+
+  @override
+  String get duplicatesRehashRunning => 'Borrando las huellas';
+
+  @override
+  String duplicatesRehashDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Borradas $count huellas. Se volverán a calcular en el escaneo siguiente.',
+      one: 'Borrada 1 huella. Se volverá a calcular en el escaneo siguiente.',
+      zero: 'No había nada que borrar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesRehashFailed => 'No se han podido borrar las huellas.';
 }

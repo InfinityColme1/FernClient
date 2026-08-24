@@ -119,7 +119,7 @@ const firstSchemaVersion = 1;
 /// modelos de reconocimiento y sus fernies asignados. Son colecciones nuevas,
 /// así que Isar las crea sola y no hay ninguna migración que escribir: el número
 /// sube igual para dejar constancia de que el esquema no es el mismo.
-const currentSchemaVersion = 4;
+const currentSchemaVersion = 5;
 
 // Preferences keys
 /// Hasta qué versión se ha puesto al día la base de datos de este equipo.
@@ -742,6 +742,20 @@ const deletedRetention = Duration(days: 7);
 /// ha entrenado dos veces desde entonces y ya no habla de él.
 const rejectionRetention = Duration(days: 90);
 
+/// A partir de qué distancia dos contenidos dejan de ser el mismo.
+///
+/// De 0 a 64 bits distintos. Cero es idéntico; de uno a cinco es casi seguro la
+/// misma imagen recomprimida o con una marca de agua pequeña; hasta diez son
+/// recortes leves o cambios de color. Ocho es el punto donde todavía se agrupa lo
+/// que de verdad sobra sin empezar a juntar cosas que no.
+///
+/// Es un listón deliberadamente prudente: agrupar de más manda a la papelera
+/// contenido que no sobra, y eso es peor que dejar un duplicado sin encontrar.
+const defaultDuplicateThreshold = 8;
+
+/// Hasta dónde se puede mover ese listón desde los ajustes.
+const maxDuplicateThreshold = 16;
+
 // Animations
 const hoverAnimationDuration = Duration(milliseconds: 150);
 const drawerAnimationDuration = Duration(milliseconds: 300);
@@ -1114,6 +1128,20 @@ const treeArrowSize = 10.0;
 /// Con qué clave se guarda si lo reconocido vuelve a importación.
 const returnRecognizedPreferenceKey = 'recognition_return_to_import';
 const recognizeOnImportPreferenceKey = 'recognition_on_import';
+const duplicateThresholdPreferenceKey = 'duplicates_threshold';
+
+/// Con qué clave se guarda si la aplicación busca repetidos por su cuenta.
+const automaticDuplicateScanPreferenceKey = 'duplicates_auto_scan';
+
+/// Con qué clave se guarda cada cuánto lo hace.
+const duplicateScanPeriodPreferenceKey = 'duplicates_scan_period';
+
+/// Con qué clave se guarda cuándo terminó el último escaneo, en ISO 8601.
+///
+/// La escribe el escaneo al acabar bien, venga de donde venga: si el usuario
+/// acaba de buscar repetidos a mano, que la aplicación lo repita sola al día
+/// siguiente es trabajo tirado.
+const lastDuplicateScanPreferenceKey = 'duplicates_last_scan_at';
 
 /// Cuánto se espera desde el último contenido importado antes de mandarlo
 /// todo a reconocer de una vez.

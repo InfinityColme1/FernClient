@@ -25,6 +25,14 @@ import 'package:Fern/features/recognition/domain/repositories/recognition_result
 import 'package:Fern/features/recognition/domain/usecases/accept_suggestions_above_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/answer_suggestions_usecase.dart';
 import 'package:Fern/features/recognition/domain/services/frame_sampling.dart';
+import 'package:Fern/features/duplicates/data/repositories/duplicate_repository_impl.dart';
+import 'package:Fern/features/duplicates/data/services/automatic_duplicate_scan.dart';
+import 'package:Fern/features/duplicates/data/services/duplicate_scan_runner.dart';
+import 'package:Fern/features/duplicates/domain/usecases/rehash_library_usecase.dart';
+import 'package:Fern/features/duplicates/data/services/duplicate_details_loader.dart';
+import 'package:Fern/features/duplicates/domain/usecases/apply_duplicate_group_usecase.dart';
+import 'package:Fern/features/duplicates/data/services/duplicate_scanner.dart';
+import 'package:Fern/features/duplicates/domain/repositories/duplicate_repository.dart';
 import 'package:Fern/features/recognition/data/services/gif_frame_extractor.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
 import 'package:Fern/features/recognition/domain/usecases/purge_old_rejections_usecase.dart';
@@ -810,10 +818,86 @@ Future<void> initializeDependencies() async {
     (context) => getIt<RecognitionJobRunner>().run(context),
   );
 
+  getIt.registerLazySingleton<DuplicateRepository>(
+    () => DuplicateRepositoryImpl(database: getIt<Isar>()),
+  );
+
+  getIt.registerLazySingleton<DuplicateScanner>(
+    () => DuplicateScanner(
+      read: imageBytesOf,
+      write: (mediaId, hashes) =>
+          getIt<DuplicateRepository>().saveHashes(mediaId, hashes),
+    ),
+  );
+
+  getIt.registerLazySingleton<DuplicateScanRunner>(
+    () => DuplicateScanRunner(
+      repository: getIt(),
+      scanner: getIt(),
+      // Se lee en cada escaneo: entre uno y otro el usuario puede haber movido
+      // el listón desde los ajustes.
+      threshold: () => getIt<SettingsRepository>().getSettings().duplicateThreshold,
+      notify: (count) => getIt<NotificationService>().notify(
+        NotificationKind.duplicatesFound,
+        count: count,
+      ),
+      // La sella el escaneo al terminar bien, venga del botón o de la
+      // aplicación: para decidir cuándo toca el siguiente, los dos son el
+      // mismo trabajo.
+      stamp: () =>
+          getIt<PreferencesService>().setLastDuplicateScan(DateTime.now()),
+    ),
+  );
+
+  getIt.registerLazySingleton<RehashLibraryUseCase>(
+    () => RehashLibraryUseCase(
+      getIt<DuplicateRepository>(),
+      forgetLastScan: () =>
+          getIt<PreferencesService>().clearLastDuplicateScan(),
+    ),
+  );
+
+  getIt.registerLazySingleton<AutomaticDuplicateScan>(
+    () => AutomaticDuplicateScan(
+      jobs: getIt<JobQueue>(),
+      settings: () => getIt<SettingsRepository>().getSettings(),
+      lastScan: () => getIt<PreferencesService>().getLastDuplicateScan(),
+    ),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.duplicateScan,
+    (context) => getIt<DuplicateScanRunner>().run(context),
+  );
+
+  getIt.registerLazySingleton<DuplicateDetailsLoader>(
+    () => DuplicateDetailsLoader(
+      details: (mediaId) =>
+          getIt<GetMediaDetailsUsecase>()(params: mediaId),
+    ),
+  );
+
+  getIt.registerLazySingleton<ApplyDuplicateGroupUseCase>(
+    () => ApplyDuplicateGroupUseCase(
+      media: getIt<LocalMediaRepository>(),
+      duplicates: getIt<DuplicateRepository>(),
+      fernies: getIt<FernieRepository>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<DismissDuplicateGroupUseCase>(
+    () => DismissDuplicateGroupUseCase(getIt<DuplicateRepository>()),
+  );
+
   // Un entrenamiento que se quedó a medias porque el equipo se apagó deja el
   // modelo marcado para siempre, y así no se dejaría entrenar nunca más. Se
   // desatasca al arrancar, antes de que ninguna pantalla lo lea.
   await getIt<ClearStaleTrainingFlagsUseCase>()();
+
+  // Buscar repetidos por cuenta propia, si toca. Va después de registrar la
+  // cola y su ejecutor, y no espera a que termine: encolar es decir que hay que
+  // hacerlo, y esto corre mientras la aplicación todavía se está montando.
+  getIt<AutomaticDuplicateScan>().runIfDue();
   getIt<ModelsBloc>().add(const LoadModelsEvent());
 
   // Único como el de etiquetas: la lista de creadores se lee una vez y la

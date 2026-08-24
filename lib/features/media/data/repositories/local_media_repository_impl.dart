@@ -19,6 +19,7 @@ import 'package:Fern/features/media/domain/entities/search/media_search_section_
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
@@ -441,9 +442,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   ///
   /// Es el **único** sitio por el que un contenido desaparece de verdad, y por
   /// eso es también donde se limpia lo que le acompaña: las regiones de fernie
-  /// marcadas sobre él. Si cada sitio que borra hiciera su propia limpieza,
-  /// tarde o temprano uno se olvidaría y quedarían regiones apuntando a un
-  /// contenido que ya no está.
+  /// marcadas sobre él y los grupos de repetidos que hablaban de él. Si cada
+  /// sitio que borra hiciera su propia limpieza, tarde o temprano uno se
+  /// olvidaría y quedarían regiones apuntando a un contenido que ya no está.
   ///
   /// Ojo con quién llama a esto: mandar a la papelera **no** pasa por aquí. De
   /// la papelera se vuelve, y perder el trabajo de marcado al restablecer sería
@@ -462,11 +463,35 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       );
     }
 
+    final groupIds = await _duplicateGroupsOf(ids.toSet());
+
     await _appDatabase.writeTxn(() async {
       await _appDatabase.mediaSummaryModels.deleteAll(ids);
       await _appDatabase.mediaModels.deleteAll(ids);
       await _appDatabase.fernieRegionModels.deleteAll(regionIds);
+      await _appDatabase.duplicateGroupModels.deleteAll(groupIds);
     });
+  }
+
+  /// Los grupos de repetidos que hablaban de alguno de estos contenidos.
+  ///
+  /// Un grupo es una frase sobre unas copias concretas —«éstas dos son la
+  /// misma», «éstas dos no lo son», «ésta me la quedé»—: sin las copias no dice
+  /// nada, y guardarla es algo peor que inútil. El identificador de un contenido
+  /// es el hash de su ruta, así que el mismo fichero importado otra vez vuelve
+  /// con el mismo, y la frase de antes se le pegaría a lo que llegue después: un
+  /// par idéntico recién importado dado por resuelto sin haberlo mirado nadie.
+  ///
+  /// Se recorren todos y se cruzan aquí en lugar de preguntar por cada
+  /// contenido: los grupos son decenas y los contenidos que se borran de golpe
+  /// pueden ser miles.
+  Future<List<int>> _duplicateGroupsOf(Set<int> mediaIds) async {
+    final groups = await _appDatabase.duplicateGroupModels.where().findAll();
+
+    return [
+      for (final group in groups)
+        if (group.mediaIds.any(mediaIds.contains)) group.id,
+    ];
   }
 
   /// Borra del disco los ficheros de [ids].

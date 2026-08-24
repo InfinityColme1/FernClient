@@ -198,6 +198,36 @@ class ViewerSaveBehaviorChangedEvent extends SettingsEvents {
   List<Object?> get props => [behavior];
 }
 
+/// Enciende o apaga la búsqueda automática de contenido repetido.
+class AutomaticDuplicateScanToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const AutomaticDuplicateScanToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Cambia cada cuánto se busca contenido repetido por cuenta propia.
+class DuplicateScanPeriodChangedEvent extends SettingsEvents {
+  final DuplicateScanPeriod period;
+
+  const DuplicateScanPeriodChangedEvent(this.period);
+
+  @override
+  List<Object?> get props => [period];
+}
+
+/// Mueve el listón a partir del cual dos contenidos dejan de ser el mismo.
+class DuplicateThresholdChangedEvent extends SettingsEvents {
+  final int threshold;
+
+  const DuplicateThresholdChangedEvent(this.threshold);
+
+  @override
+  List<Object?> get props => [threshold];
+}
+
 /// Credenciales de Reddit tal y como han quedado tras tocar uno de sus campos.
 ///
 /// Llegan las cuatro juntas porque se guardan juntas: la fuente sólo sirve

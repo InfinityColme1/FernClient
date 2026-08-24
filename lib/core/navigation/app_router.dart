@@ -15,7 +15,7 @@ import 'package:Fern/features/recognition/presentation/pages/fernies_page.dart';
 import 'package:Fern/features/recognition/presentation/pages/model_detail_page.dart';
 import 'package:Fern/features/recognition/presentation/pages/model_tree_page.dart';
 import 'package:Fern/features/recognition/presentation/pages/models_page.dart';
-import 'package:Fern/features/recognition/presentation/pages/repeated_media_page.dart';
+import 'package:Fern/features/duplicates/presentation/pages/repeated_media_page.dart';
 import 'package:Fern/features/splash/presentation/pages/splash_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

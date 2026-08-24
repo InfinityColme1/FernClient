@@ -2352,4 +2352,229 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get suggestionRegionFailed => 'La région n\'a pas pu être enregistrée';
+
+  @override
+  String get duplicatesScanNow => 'Chercher maintenant';
+
+  @override
+  String get duplicatesScanning => 'Recherche de doublons';
+
+  @override
+  String get duplicatesQueued =>
+      'Recherche de contenu en double. La première fois peut prendre un moment.';
+
+  @override
+  String get duplicatesNone => 'Aucun contenu en double';
+
+  @override
+  String get duplicatesNoneHint =>
+      'Relancez après un import, ou baissez le seuil de ressemblance dans les Réglages.';
+
+  @override
+  String get duplicatesNeverScanned => 'Rien n\'a encore été analysé';
+
+  @override
+  String get duplicatesNeverScannedHint =>
+      'Appuyez sur « Chercher maintenant » et Fern parcourt toute la bibliothèque. La première fois peut prendre un moment.';
+
+  @override
+  String duplicatesScanFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Recherche terminée : $count nouveaux groupes',
+      one: 'Recherche terminée : 1 nouveau groupe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesScanNothingNew(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Recherche terminée : rien de nouveau. $count groupes restent à revoir.',
+      one: 'Recherche terminée : rien de nouveau. 1 groupe reste à revoir.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesScanClean =>
+      'Recherche terminée : aucun contenu en double.';
+
+  @override
+  String get duplicatesScanStopped =>
+      'Recherche arrêtée. Les empreintes déjà calculées restent faites.';
+
+  @override
+  String get duplicatesScanFailed =>
+      'La recherche n\'a pas pu aboutir. Réessayez.';
+
+  @override
+  String duplicatesGroupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groupes',
+      one: '1 groupe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesDistance(int distance) {
+    return 'distance $distance';
+  }
+
+  @override
+  String get duplicatesIdentical => 'identique';
+
+  @override
+  String duplicatesCopyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count copies',
+      one: '1 copie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesGroupPosition(int position, int total) {
+    return 'Groupe $position sur $total';
+  }
+
+  @override
+  String get duplicatesKeepThis => 'Garder celle-ci';
+
+  @override
+  String get duplicatesMergeMetadata =>
+      'Fusionner les métadonnées dans la copie conservée';
+
+  @override
+  String get duplicatesMergeMetadataHint =>
+      'Étiquettes, créateur, favori et description des copies écartées.';
+
+  @override
+  String get duplicatesNotDuplicates => 'Pas des doublons';
+
+  @override
+  String get duplicatesApplyAndNext => 'Appliquer et suivant';
+
+  @override
+  String duplicatesTagCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count étiquettes',
+      one: '1 étiquette',
+      zero: 'Aucune étiquette',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesFavorite => 'Favori';
+
+  @override
+  String get duplicatesNoCreator => 'Sans créateur';
+
+  @override
+  String get duplicatesUnknownSize => 'Taille inconnue';
+
+  @override
+  String get duplicatesPickGroup =>
+      'Choisis un groupe pour comparer ses copies';
+
+  @override
+  String get duplicatesApplyFailed =>
+      'Le groupe n\'a pas pu être résolu. Rien n\'a été supprimé.';
+
+  @override
+  String get settingsDuplicates => 'Contenu répété';
+
+  @override
+  String get duplicatesScanSectionTitle => 'Recherche automatique';
+
+  @override
+  String get duplicatesScanSectionNote =>
+      'Le contenu répété ne gêne pas le jour où il arrive ; il gêne des mois plus tard, quand il y a quarante copies et que personne ne pense à regarder.';
+
+  @override
+  String get duplicatesAutoScanLabel =>
+      'Laisser Fern chercher les doublons tout seul';
+
+  @override
+  String get duplicatesAutoScanDescription =>
+      'À l\'ouverture de Fern, si le délai choisi ci-dessous est écoulé, il parcourt toute la bibliothèque sans que vous le demandiez : il s\'exécute en arrière-plan avec la priorité la plus basse, sans jamais gêner ce que vous faites, et il ne vous prévient que s\'il trouve quelque chose. Désactivé, les doublons ne sont cherchés que lorsque vous appuyez sur « Chercher maintenant » dans Contenu en double.';
+
+  @override
+  String get duplicatesScanPeriodLabel => 'À quelle fréquence';
+
+  @override
+  String get duplicatesPeriodMonthly => 'Tous les mois';
+
+  @override
+  String get duplicatesPeriodQuarterly => 'Tous les trois mois';
+
+  @override
+  String get duplicatesPeriodBiannual => 'Tous les six mois';
+
+  @override
+  String get duplicatesPeriodYearly => 'Tous les ans';
+
+  @override
+  String duplicatesLastScan(String date) {
+    return 'Dernière analyse : $date';
+  }
+
+  @override
+  String get duplicatesLastScanNever => 'Jamais analysé jusqu\'ici';
+
+  @override
+  String get duplicatesOpenViewer => 'Voir en plein écran';
+
+  @override
+  String get duplicatesThresholdSectionTitle => 'Seuil de similarité';
+
+  @override
+  String get duplicatesThresholdSectionNote =>
+      'À quel point deux contenus peuvent différer tout en comptant pour le même. L\'augmenter regroupe davantage et commence à réunir des choses qui se ressemblent seulement ; le baisser laisse des répétitions non trouvées. Il s\'applique à la prochaine analyse, pas à ce qui est déjà regroupé.';
+
+  @override
+  String get duplicatesThresholdLabel => 'Seuil';
+
+  @override
+  String get duplicatesRehashSectionTitle => 'Repartir de zéro';
+
+  @override
+  String get duplicatesRehashSectionNote =>
+      'Jette toutes les empreintes et les recalcule à la prochaine analyse. C\'est la sortie de secours quand le regroupement se passe mal sans qu\'on sache pourquoi. Les groupes déjà traités restent tels quels.';
+
+  @override
+  String get duplicatesRehashButton => 'Recalculer toutes les empreintes';
+
+  @override
+  String get duplicatesRehashRunning => 'Suppression des empreintes';
+
+  @override
+  String duplicatesRehashDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count empreintes supprimées. Elles seront recalculées à la prochaine analyse.',
+      one:
+          '1 empreinte supprimée. Elle sera recalculée à la prochaine analyse.',
+      zero: 'Il n\'y avait rien à supprimer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesRehashFailed =>
+      'Les empreintes n\'ont pas pu être supprimées.';
 }

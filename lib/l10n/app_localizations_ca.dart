@@ -2348,4 +2348,226 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get suggestionRegionFailed => 'No s\'ha pogut desar la regió';
+
+  @override
+  String get duplicatesScanNow => 'Cerca ara';
+
+  @override
+  String get duplicatesScanning => 'Cercant repetits';
+
+  @override
+  String get duplicatesQueued =>
+      'Cercant contingut repetit. El primer cop pot trigar una estona.';
+
+  @override
+  String get duplicatesNone => 'No hi ha contingut repetit';
+
+  @override
+  String get duplicatesNoneHint =>
+      'Torna a cercar després d\'importar, o baixa el llistó de semblança a Configuració.';
+
+  @override
+  String get duplicatesNeverScanned => 'Encara no s\'ha cercat';
+
+  @override
+  String get duplicatesNeverScannedHint =>
+      'Prem «Cerca ara» i el Fern repassa tota la biblioteca. El primer cop pot trigar una estona.';
+
+  @override
+  String duplicatesScanFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Cerca acabada: $count grups nous',
+      one: 'Cerca acabada: 1 grup nou',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesScanNothingNew(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Cerca acabada: res de nou. Queden $count grups per revisar.',
+      one: 'Cerca acabada: res de nou. Queda 1 grup per revisar.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesScanClean =>
+      'Cerca acabada: no hi ha contingut repetit.';
+
+  @override
+  String get duplicatesScanStopped =>
+      'Cerca aturada. Les empremtes ja calculades es queden fetes.';
+
+  @override
+  String get duplicatesScanFailed =>
+      'La cerca no ha pogut acabar. Torna-ho a provar.';
+
+  @override
+  String duplicatesGroupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count grups',
+      one: '1 grup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesDistance(int distance) {
+    return 'distància $distance';
+  }
+
+  @override
+  String get duplicatesIdentical => 'idèntic';
+
+  @override
+  String duplicatesCopyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count còpies',
+      one: '1 còpia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesGroupPosition(int position, int total) {
+    return 'Grup $position de $total';
+  }
+
+  @override
+  String get duplicatesKeepThis => 'Conserva aquesta';
+
+  @override
+  String get duplicatesMergeMetadata =>
+      'Fusiona les metadades a la còpia conservada';
+
+  @override
+  String get duplicatesMergeMetadataHint =>
+      'Etiquetes, creador, preferit i descripció de les còpies descartades.';
+
+  @override
+  String get duplicatesNotDuplicates => 'No són duplicats';
+
+  @override
+  String get duplicatesApplyAndNext => 'Aplica i següent';
+
+  @override
+  String duplicatesTagCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count etiquetes',
+      one: '1 etiqueta',
+      zero: 'Sense etiquetes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesFavorite => 'Preferit';
+
+  @override
+  String get duplicatesNoCreator => 'Sense creador';
+
+  @override
+  String get duplicatesUnknownSize => 'Mida desconeguda';
+
+  @override
+  String get duplicatesPickGroup => 'Tria un grup per comparar-ne les còpies';
+
+  @override
+  String get duplicatesApplyFailed =>
+      'No s\'ha pogut resoldre el grup. No s\'ha esborrat res.';
+
+  @override
+  String get settingsDuplicates => 'Contingut repetit';
+
+  @override
+  String get duplicatesScanSectionTitle => 'Cerca automàtica';
+
+  @override
+  String get duplicatesScanSectionNote =>
+      'El contingut repetit no molesta el dia que entra; molesta mesos després, quan ja hi ha quaranta còpies i ningú no se\'n recorda de mirar-ho.';
+
+  @override
+  String get duplicatesAutoScanLabel => 'Que el Fern cerqui repetits sol';
+
+  @override
+  String get duplicatesAutoScanDescription =>
+      'En obrir el Fern, si ha passat el temps que triïs aquí sota, repassa tota la biblioteca sense que li ho demanis: corre per darrere amb la prioritat més baixa, així que no destorba el que estiguis fent, i només t\'avisa si troba alguna cosa. Apagat, els repetits només es cerquen quan prems «Cerca ara» a Contingut repetit.';
+
+  @override
+  String get duplicatesScanPeriodLabel => 'Cada quant';
+
+  @override
+  String get duplicatesPeriodMonthly => 'Cada mes';
+
+  @override
+  String get duplicatesPeriodQuarterly => 'Cada tres mesos';
+
+  @override
+  String get duplicatesPeriodBiannual => 'Cada sis mesos';
+
+  @override
+  String get duplicatesPeriodYearly => 'Cada any';
+
+  @override
+  String duplicatesLastScan(String date) {
+    return 'Darrer escaneig: $date';
+  }
+
+  @override
+  String get duplicatesLastScanNever => 'Encara no s\'ha escanejat mai';
+
+  @override
+  String get duplicatesOpenViewer => 'Veure a pantalla completa';
+
+  @override
+  String get duplicatesThresholdSectionTitle => 'Llistó de semblança';
+
+  @override
+  String get duplicatesThresholdSectionNote =>
+      'Quant es poden diferenciar dos continguts i seguir comptant com el mateix. Apujar-lo agrupa més i comença a ajuntar coses que només s\'assemblen; abaixar-lo deixa repetits sense trobar. S\'aplica a l\'escaneig següent, no al que ja s\'ha agrupat.';
+
+  @override
+  String get duplicatesThresholdLabel => 'Llistó';
+
+  @override
+  String get duplicatesRehashSectionTitle => 'Començar de zero';
+
+  @override
+  String get duplicatesRehashSectionNote =>
+      'Llença totes les empremtes i les torna a calcular en l\'escaneig següent. És la sortida per quan l\'agrupació surt malament i no se sap per què. Els grups que ja has contestat es queden com estan.';
+
+  @override
+  String get duplicatesRehashButton => 'Recalcular totes les empremtes';
+
+  @override
+  String get duplicatesRehashRunning => 'Esborrant les empremtes';
+
+  @override
+  String duplicatesRehashDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Esborrades $count empremtes. Es tornaran a calcular en l\'escaneig següent.',
+      one:
+          'Esborrada 1 empremta. Es tornarà a calcular en l\'escaneig següent.',
+      zero: 'No hi havia res a esborrar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesRehashFailed =>
+      'No s\'han pogut esborrar les empremtes.';
 }

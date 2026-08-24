@@ -1,3 +1,4 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/organize_library_files_usecase.dart';
@@ -50,6 +51,9 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<ThemeModeChangedEvent>(onThemeModeChanged);
     on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
+    on<AutomaticDuplicateScanToggledEvent>(onAutomaticDuplicateScanToggled);
+    on<DuplicateScanPeriodChangedEvent>(onDuplicateScanPeriodChanged);
+    on<DuplicateThresholdChangedEvent>(onDuplicateThresholdChanged);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<DanbooruSettingsChangedEvent>(onDanbooruSettingsChanged);
     on<GelbooruSettingsChangedEvent>(onGelbooruSettingsChanged);
@@ -275,6 +279,42 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(viewerSaveBehavior: event.behavior),
+      emit,
+    );
+  }
+
+  Future<void> onAutomaticDuplicateScanToggled(
+    AutomaticDuplicateScanToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(automaticDuplicateScan: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onDuplicateScanPeriodChanged(
+    DuplicateScanPeriodChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(duplicateScanPeriod: event.period),
+      emit,
+    );
+  }
+
+  /// Mover el listón no vuelve a agrupar nada por su cuenta: lo ya guardado se
+  /// hizo con el criterio de entonces y rehacerlo aquí tiraría los descartes
+  /// que el usuario ya había decidido. El listón nuevo entra en el escaneo
+  /// siguiente, que es quien lee este ajuste.
+  Future<void> onDuplicateThresholdChanged(
+    DuplicateThresholdChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(
+        duplicateThreshold: event.threshold.clamp(0, maxDuplicateThreshold),
+      ),
       emit,
     );
   }

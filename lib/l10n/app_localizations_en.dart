@@ -2336,4 +2336,222 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestionRegionFailed => 'The region could not be saved';
+
+  @override
+  String get duplicatesScanNow => 'Scan now';
+
+  @override
+  String get duplicatesScanning => 'Looking for repeats';
+
+  @override
+  String get duplicatesQueued =>
+      'Looking for repeats. It may take a while on the first run.';
+
+  @override
+  String get duplicatesNone => 'No repeated content found';
+
+  @override
+  String get duplicatesNoneHint =>
+      'Scan again after importing, or lower the similarity bar in Settings.';
+
+  @override
+  String get duplicatesNeverScanned => 'Nothing has been scanned yet';
+
+  @override
+  String get duplicatesNeverScannedHint =>
+      'Press “Scan now” and Fern goes through the whole library. It may take a while on the first run.';
+
+  @override
+  String duplicatesScanFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Scan finished: $count new groups',
+      one: 'Scan finished: 1 new group',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesScanNothingNew(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Scan finished: nothing new. $count groups still to review.',
+      one: 'Scan finished: nothing new. 1 group still to review.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesScanClean => 'Scan finished: no repeated content.';
+
+  @override
+  String get duplicatesScanStopped =>
+      'Scan stopped. The fingerprints already worked out stay done.';
+
+  @override
+  String get duplicatesScanFailed => 'The scan could not finish. Try again.';
+
+  @override
+  String duplicatesGroupCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesDistance(int distance) {
+    return 'distance $distance';
+  }
+
+  @override
+  String get duplicatesIdentical => 'identical';
+
+  @override
+  String duplicatesCopyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count copies',
+      one: '1 copy',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String duplicatesGroupPosition(int position, int total) {
+    return 'Group $position of $total';
+  }
+
+  @override
+  String get duplicatesKeepThis => 'Keep this one';
+
+  @override
+  String get duplicatesMergeMetadata => 'Merge metadata into the copy you keep';
+
+  @override
+  String get duplicatesMergeMetadataHint =>
+      'Tags, creator, favourite and description from the discarded copies.';
+
+  @override
+  String get duplicatesNotDuplicates => 'Not duplicates';
+
+  @override
+  String get duplicatesApplyAndNext => 'Apply and next';
+
+  @override
+  String duplicatesTagCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tags',
+      one: '1 tag',
+      zero: 'No tags',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesFavorite => 'Favourite';
+
+  @override
+  String get duplicatesNoCreator => 'No creator';
+
+  @override
+  String get duplicatesUnknownSize => 'Size unknown';
+
+  @override
+  String get duplicatesPickGroup => 'Pick a group to compare its copies';
+
+  @override
+  String get duplicatesApplyFailed =>
+      'The group could not be resolved. Nothing was deleted.';
+
+  @override
+  String get settingsDuplicates => 'Repeated content';
+
+  @override
+  String get duplicatesScanSectionTitle => 'Automatic search';
+
+  @override
+  String get duplicatesScanSectionNote =>
+      'Repeated content is not a nuisance the day it arrives; it is a nuisance months later, when there are forty copies and nobody remembers to look.';
+
+  @override
+  String get duplicatesAutoScanLabel => 'Let Fern look for repeats on its own';
+
+  @override
+  String get duplicatesAutoScanDescription =>
+      'When you open Fern, if the time you pick below has gone by, it goes through the whole library without you asking: it runs in the background at the lowest priority, so it never gets in the way of what you are doing, and it only tells you if it finds something. Turned off, repeats are only looked for when you press “Scan now” in Repeated media.';
+
+  @override
+  String get duplicatesScanPeriodLabel => 'How often';
+
+  @override
+  String get duplicatesPeriodMonthly => 'Every month';
+
+  @override
+  String get duplicatesPeriodQuarterly => 'Every three months';
+
+  @override
+  String get duplicatesPeriodBiannual => 'Every six months';
+
+  @override
+  String get duplicatesPeriodYearly => 'Every year';
+
+  @override
+  String duplicatesLastScan(String date) {
+    return 'Last scan: $date';
+  }
+
+  @override
+  String get duplicatesLastScanNever => 'Never scanned yet';
+
+  @override
+  String get duplicatesOpenViewer => 'Open full screen';
+
+  @override
+  String get duplicatesThresholdSectionTitle => 'Similarity bar';
+
+  @override
+  String get duplicatesThresholdSectionNote =>
+      'How different two contents may be and still count as the same one. Raising it groups more and starts joining things that merely look alike; lowering it leaves repeats unfound. It applies to the next scan, not to what has already been grouped.';
+
+  @override
+  String get duplicatesThresholdLabel => 'Bar';
+
+  @override
+  String get duplicatesRehashSectionTitle => 'Start over';
+
+  @override
+  String get duplicatesRehashSectionNote =>
+      'Throws away every fingerprint and works them out again on the next scan. The way out when grouping goes wrong and there is no telling why. Groups you already answered are kept.';
+
+  @override
+  String get duplicatesRehashButton => 'Recalculate every fingerprint';
+
+  @override
+  String get duplicatesRehashRunning => 'Clearing fingerprints';
+
+  @override
+  String duplicatesRehashDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count fingerprints cleared. They will be worked out again on the next scan.',
+      one:
+          '1 fingerprint cleared. It will be worked out again on the next scan.',
+      zero: 'There was nothing to clear',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duplicatesRehashFailed => 'The fingerprints could not be cleared.';
 }

@@ -3785,6 +3785,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The region could not be saved'**
   String get suggestionRegionFailed;
+
+  /// No description provided for @duplicatesScanNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan now'**
+  String get duplicatesScanNow;
+
+  /// No description provided for @duplicatesScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for repeats'**
+  String get duplicatesScanning;
+
+  /// No description provided for @duplicatesQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for repeats. It may take a while on the first run.'**
+  String get duplicatesQueued;
+
+  /// No description provided for @duplicatesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No repeated content found'**
+  String get duplicatesNone;
+
+  /// No description provided for @duplicatesNoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again after importing, or lower the similarity bar in Settings.'**
+  String get duplicatesNoneHint;
+
+  /// No description provided for @duplicatesNeverScanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been scanned yet'**
+  String get duplicatesNeverScanned;
+
+  /// No description provided for @duplicatesNeverScannedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Press “Scan now” and Fern goes through the whole library. It may take a while on the first run.'**
+  String get duplicatesNeverScannedHint;
+
+  /// No description provided for @duplicatesScanFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Scan finished: 1 new group} other{Scan finished: {count} new groups}}'**
+  String duplicatesScanFound(int count);
+
+  /// No description provided for @duplicatesScanNothingNew.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Scan finished: nothing new. 1 group still to review.} other{Scan finished: nothing new. {count} groups still to review.}}'**
+  String duplicatesScanNothingNew(int count);
+
+  /// No description provided for @duplicatesScanClean.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan finished: no repeated content.'**
+  String get duplicatesScanClean;
+
+  /// No description provided for @duplicatesScanStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan stopped. The fingerprints already worked out stay done.'**
+  String get duplicatesScanStopped;
+
+  /// No description provided for @duplicatesScanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan could not finish. Try again.'**
+  String get duplicatesScanFailed;
+
+  /// No description provided for @duplicatesGroupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 group} other{{count} groups}}'**
+  String duplicatesGroupCount(int count);
+
+  /// No description provided for @duplicatesDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'distance {distance}'**
+  String duplicatesDistance(int distance);
+
+  /// No description provided for @duplicatesIdentical.
+  ///
+  /// In en, this message translates to:
+  /// **'identical'**
+  String get duplicatesIdentical;
+
+  /// No description provided for @duplicatesCopyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 copy} other{{count} copies}}'**
+  String duplicatesCopyCount(int count);
+
+  /// No description provided for @duplicatesGroupPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Group {position} of {total}'**
+  String duplicatesGroupPosition(int position, int total);
+
+  /// No description provided for @duplicatesKeepThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this one'**
+  String get duplicatesKeepThis;
+
+  /// No description provided for @duplicatesMergeMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge metadata into the copy you keep'**
+  String get duplicatesMergeMetadata;
+
+  /// No description provided for @duplicatesMergeMetadataHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags, creator, favourite and description from the discarded copies.'**
+  String get duplicatesMergeMetadataHint;
+
+  /// No description provided for @duplicatesNotDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Not duplicates'**
+  String get duplicatesNotDuplicates;
+
+  /// No description provided for @duplicatesApplyAndNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply and next'**
+  String get duplicatesApplyAndNext;
+
+  /// No description provided for @duplicatesTagCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No tags} =1{1 tag} other{{count} tags}}'**
+  String duplicatesTagCount(int count);
+
+  /// No description provided for @duplicatesFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite'**
+  String get duplicatesFavorite;
+
+  /// No description provided for @duplicatesNoCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'No creator'**
+  String get duplicatesNoCreator;
+
+  /// No description provided for @duplicatesUnknownSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size unknown'**
+  String get duplicatesUnknownSize;
+
+  /// No description provided for @duplicatesPickGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a group to compare its copies'**
+  String get duplicatesPickGroup;
+
+  /// No description provided for @duplicatesApplyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The group could not be resolved. Nothing was deleted.'**
+  String get duplicatesApplyFailed;
+
+  /// No description provided for @settingsDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated content'**
+  String get settingsDuplicates;
+
+  /// No description provided for @duplicatesScanSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic search'**
+  String get duplicatesScanSectionTitle;
+
+  /// No description provided for @duplicatesScanSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated content is not a nuisance the day it arrives; it is a nuisance months later, when there are forty copies and nobody remembers to look.'**
+  String get duplicatesScanSectionNote;
+
+  /// No description provided for @duplicatesAutoScanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Let Fern look for repeats on its own'**
+  String get duplicatesAutoScanLabel;
+
+  /// No description provided for @duplicatesAutoScanDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When you open Fern, if the time you pick below has gone by, it goes through the whole library without you asking: it runs in the background at the lowest priority, so it never gets in the way of what you are doing, and it only tells you if it finds something. Turned off, repeats are only looked for when you press “Scan now” in Repeated media.'**
+  String get duplicatesAutoScanDescription;
+
+  /// No description provided for @duplicatesScanPeriodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How often'**
+  String get duplicatesScanPeriodLabel;
+
+  /// No description provided for @duplicatesPeriodMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every month'**
+  String get duplicatesPeriodMonthly;
+
+  /// No description provided for @duplicatesPeriodQuarterly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every three months'**
+  String get duplicatesPeriodQuarterly;
+
+  /// No description provided for @duplicatesPeriodBiannual.
+  ///
+  /// In en, this message translates to:
+  /// **'Every six months'**
+  String get duplicatesPeriodBiannual;
+
+  /// No description provided for @duplicatesPeriodYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every year'**
+  String get duplicatesPeriodYearly;
+
+  /// No description provided for @duplicatesLastScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Last scan: {date}'**
+  String duplicatesLastScan(String date);
+
+  /// No description provided for @duplicatesLastScanNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never scanned yet'**
+  String get duplicatesLastScanNever;
+
+  /// No description provided for @duplicatesOpenViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Open full screen'**
+  String get duplicatesOpenViewer;
+
+  /// No description provided for @duplicatesThresholdSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Similarity bar'**
+  String get duplicatesThresholdSectionTitle;
+
+  /// No description provided for @duplicatesThresholdSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'How different two contents may be and still count as the same one. Raising it groups more and starts joining things that merely look alike; lowering it leaves repeats unfound. It applies to the next scan, not to what has already been grouped.'**
+  String get duplicatesThresholdSectionNote;
+
+  /// No description provided for @duplicatesThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar'**
+  String get duplicatesThresholdLabel;
+
+  /// No description provided for @duplicatesRehashSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start over'**
+  String get duplicatesRehashSectionTitle;
+
+  /// No description provided for @duplicatesRehashSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Throws away every fingerprint and works them out again on the next scan. The way out when grouping goes wrong and there is no telling why. Groups you already answered are kept.'**
+  String get duplicatesRehashSectionNote;
+
+  /// No description provided for @duplicatesRehashButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate every fingerprint'**
+  String get duplicatesRehashButton;
+
+  /// No description provided for @duplicatesRehashRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing fingerprints'**
+  String get duplicatesRehashRunning;
+
+  /// No description provided for @duplicatesRehashDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{There was nothing to clear} =1{1 fingerprint cleared. It will be worked out again on the next scan.} other{{count} fingerprints cleared. They will be worked out again on the next scan.}}'**
+  String duplicatesRehashDone(int count);
+
+  /// No description provided for @duplicatesRehashFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The fingerprints could not be cleared.'**
+  String get duplicatesRehashFailed;
 }
 
 class _AppLocalizationsDelegate

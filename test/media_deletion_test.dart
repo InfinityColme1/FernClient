@@ -10,6 +10,8 @@ import 'dart:io';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
+import 'package:Fern/features/duplicates/domain/services/group_reconciliation.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
@@ -61,10 +63,12 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
-        // El borrado definitivo se lleva por delante las regiones de fernie, así
-        // que la base de datos de la prueba tiene que conocerlas.
+        // El borrado definitivo se lleva por delante las regiones de fernie y
+        // los grupos de repetidos, así que la base de datos de la prueba tiene
+        // que conocerlos.
         FernieModelSchema,
         FernieRegionModelSchema,
+        DuplicateGroupModelSchema,
       ],
       directory: directory.path,
       inspector: false,
@@ -127,6 +131,25 @@ void main() {
 
       return id;
     });
+  }
+
+  /// Un grupo de repetidos ya contestado sobre [mediaIds].
+  Future<int> newDuplicateGroup(
+    List<int> mediaIds, {
+    bool isResolved = true,
+    bool isDismissed = false,
+  }) {
+    return isar.writeTxn(
+      () => isar.duplicateGroupModels.put(
+        DuplicateGroupModel()
+          ..mediaIds = mediaIds
+          ..signature = signatureOf(mediaIds)
+          ..maxDistance = 0
+          ..foundAt = DateTime(2026)
+          ..isResolved = isResolved
+          ..isDismissed = isDismissed,
+      ),
+    );
   }
 
   group('el avatar de una etiqueta', () {
@@ -276,6 +299,81 @@ void main() {
       expect(await isar.mediaSummaryModels.get(purgedId), isNull);
       expect(await kept.exists(), isTrue);
       expect(await isar.mediaSummaryModels.get(keptId), isNotNull);
+    });
+  });
+
+  // Un grupo de repetidos es una frase sobre unas copias concretas. Sin ellas no
+  // dice nada, y quedarse guardado es peor que inútil: el identificador de un
+  // contenido es el hash de su ruta, así que el mismo fichero importado otra vez
+  // vuelve con el mismo y hereda lo que se dijo de lo anterior.
+  group('los grupos de repetidos', () {
+    test('se van con el contenido del que hablaban', () async {
+      final one = await newMedia(await newFile('a.jpg'), isDeleted: true);
+      final two = await newMedia(await newFile('b.jpg'), isDeleted: true);
+      await newDuplicateGroup([one, two]);
+
+      await repository.purgeDeletedMedia();
+
+      expect(await isar.duplicateGroupModels.count(), 0);
+    });
+
+    test('basta con que nombren a uno de los borrados', () async {
+      final alive = await newMedia(await newFile('viva.jpg'));
+      final purged = await newMedia(await newFile('fuera.jpg'), isDeleted: true);
+      await newDuplicateGroup([alive, purged]);
+
+      await repository.purgeDeletedMedia();
+
+      // El grupo ya no puede volver a formarse tal cual era, y con el hueco
+      // dentro no es una decisión que se pueda tomar.
+      expect(await isar.duplicateGroupModels.count(), 0);
+    });
+
+    test('el que no nombra a ninguno se queda', () async {
+      final first = await newMedia(await newFile('una.jpg'));
+      final second = await newMedia(await newFile('otra.jpg'));
+      await newDuplicateGroup([first, second]);
+
+      await newMedia(await newFile('fuera.jpg'), isDeleted: true);
+
+      await repository.purgeDeletedMedia();
+
+      expect(await isar.duplicateGroupModels.count(), 1);
+    });
+
+    test('también se lleva los descartados', () async {
+      final one = await newMedia(await newFile('a.jpg'), isDeleted: true);
+      final two = await newMedia(await newFile('b.jpg'), isDeleted: true);
+      await newDuplicateGroup([one, two], isResolved: false, isDismissed: true);
+
+      await repository.purgeDeletedMedia();
+
+      // «No son duplicados» vale mientras existan las imágenes de las que se
+      // dijo. Guardarlo sin ellas sería aplicárselo a lo que ocupe esa ruta
+      // después, que puede no tener nada que ver.
+      expect(await isar.duplicateGroupModels.count(), 0);
+    });
+
+    test('descartar contenido pendiente también los limpia', () async {
+      final one = await newMedia(await newFile('a.jpg'));
+      final two = await newMedia(await newFile('b.jpg'));
+      await newDuplicateGroup([one, two]);
+
+      await repository.deleteMediaList([one]);
+
+      expect(await isar.duplicateGroupModels.count(), 0);
+    });
+
+    // De la papelera se vuelve durante siete días, y con el contenido tiene que
+    // volver lo que se dijo de él.
+    test('mandar a la papelera no los toca', () async {
+      final one = await newMedia(await newFile('a.jpg'));
+      final two = await newMedia(await newFile('b.jpg'));
+      await newDuplicateGroup([one, two]);
+
+      await repository.markMediaListAsDeleted([one, two]);
+
+      expect(await isar.duplicateGroupModels.count(), 1);
     });
   });
 }

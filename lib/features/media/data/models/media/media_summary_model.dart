@@ -47,6 +47,27 @@ class MediaSummaryModel {
   /// unos miles de contenidos es la diferencia entre unos minutos y una tarde.
   DateTime? recognizedAt;
 
+  /// Cómo se ve este contenido, para reconocer que otro es el mismo.
+  ///
+  /// Los dos hashes perceptuales: no dicen qué bytes tiene el fichero sino qué
+  /// aspecto tiene la imagen, que es lo que hace que la misma foto bajada de dos
+  /// sitios distintos se reconozca aunque no comparta un solo byte.
+  ///
+  /// Indexado el primero: el escaneo agrupa por los bits altos para no comparar
+  /// todo contra todo, y ese índice es lo que hace que buscar candidatos no
+  /// recorra la tabla entera.
+  @Index()
+  int? perceptualHash;
+
+  int? dctHash;
+
+  /// Cuándo se calcularon. `null` es «todavía sin mirar».
+  ///
+  /// Es lo que hace el escaneo incremental: la primera pasada sobre una
+  /// biblioteca grande es la cara, y las siguientes sólo tocan lo que ha entrado
+  /// desde entonces.
+  DateTime? hashedAt;
+
   final details = IsarLink<MediaModel>();
 
   MediaSummaryModel();

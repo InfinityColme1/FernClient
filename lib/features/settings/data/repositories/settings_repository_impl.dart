@@ -129,6 +129,18 @@ class SettingsRepositoryImpl implements SettingsRepository {
           _preferences.getBool(returnRecognizedPreferenceKey) ?? true,
       recognizeOnImport:
           _preferences.getBool(recognizeOnImportPreferenceKey) ?? true,
+      // Acotado al leer y no sólo al escribir: una preferencia guardada por una
+      // versión anterior, o tocada a mano, no puede dejar el escaneo agrupando
+      // por un número imposible.
+      duplicateThreshold:
+          (_preferences.getInt(duplicateThresholdPreferenceKey) ??
+                  defaultDuplicateThreshold)
+              .clamp(0, maxDuplicateThreshold),
+      automaticDuplicateScan:
+          _preferences.getBool(automaticDuplicateScanPreferenceKey) ?? true,
+      duplicateScanPeriod: DuplicateScanPeriod.fromId(
+        _preferences.getString(duplicateScanPeriodPreferenceKey),
+      ),
       frameSamples:
           (_preferences.getInt(frameSamplesPreferenceKey) ?? defaultFrameSamples)
               .clamp(minFrameSamples, maxFrameSamples),
@@ -223,6 +235,18 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setBool(
       recognizeOnImportPreferenceKey,
       settings.recognizeOnImport,
+    );
+    await _preferences.setInt(
+      duplicateThresholdPreferenceKey,
+      settings.duplicateThreshold.clamp(0, maxDuplicateThreshold),
+    );
+    await _preferences.setBool(
+      automaticDuplicateScanPreferenceKey,
+      settings.automaticDuplicateScan,
+    );
+    await _preferences.setString(
+      duplicateScanPeriodPreferenceKey,
+      settings.duplicateScanPeriod.id,
     );
     await _preferences.setInt(
       frameSamplesPreferenceKey,
