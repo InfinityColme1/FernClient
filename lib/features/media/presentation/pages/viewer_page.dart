@@ -38,6 +38,8 @@ import 'package:Fern/features/media/presentation/services/media_playback_control
 import 'package:Fern/features/recognition/domain/services/region_track.dart';
 import 'package:Fern/features/recognition/presentation/widgets/fernie_confirm_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_timeline.dart';
+import 'package:Fern/features/media/data/services/nsfw_index.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_info.dart';
@@ -1837,8 +1839,37 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             ? null
             : () => context.read<MediaBloc>().add(const ToggleFavoriteEvent()),
       ),
+      // Esconder esto detrás del filtro NSFW, o sacarlo. Es el único sitio donde
+      // se puede quitar la marca de uno solo: la barra de la rejilla marca en
+      // tanda pero no sabe cómo está cada contenido, y aquí sí se sabe.
+      //
+      // Sólo con contraseña puesta, como el resto: sin ella marcar no escondería
+      // nada.
+      if (media != null && getIt<NsfwModeService>().isConfigured)
+        _buildAction(
+          tooltip: _isMarkedNsfw(media)
+              ? l10n.mediaNsfwUnmark
+              : l10n.mediaNsfwMark,
+          icon: Symbols.visibility_off,
+          fill: _isMarkedNsfw(media) ? 1 : 0,
+          color: _isMarkedNsfw(media) ? context.colors.terciary : Colors.white,
+          onPressed: () => context.read<MediaBloc>().add(
+                SetMediaNsfwEvent(
+                  mediaId: media.id,
+                  isNsfw: !_isMarkedNsfw(media),
+                ),
+              ),
+        ),
     ];
   }
+
+  /// Si este contenido lleva la marca NSFW **suya**, la que se pone a mano.
+  ///
+  /// No vale preguntar si está escondido: puede estarlo por una etiqueta, y
+  /// entonces el interruptor saldría encendido y al pulsarlo no pasaría nada
+  /// visible, porque la etiqueta lo seguiría escondiendo.
+  bool _isMarkedNsfw(MediaEntity media) =>
+      getIt<NsfwIndex>().isMarkedByHand(media.id);
 
   /// El botón de mandar esto a reconocer.
   ///

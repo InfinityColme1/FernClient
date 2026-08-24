@@ -184,6 +184,37 @@ abstract class LocalMediaRepository {
   /// quedan como raíces.
   Future<DataState> deleteTag(int tagId);
 
+  /// Marca o desmarca una etiqueta como contenido no apto, y devuelve a cuántos
+  /// contenidos afecta la decisión —los suyos y los de toda su rama de hijas—.
+  ///
+  /// La marca se guarda sólo en la etiqueta donde se pone: lo que cuelga de ella
+  /// queda bloqueado al resolverse la rama, no porque se le escriba nada.
+  Future<DataState<int>> setTagNsfw(int tagId, {required bool isNsfw});
+
+  /// Marca o desmarca contenido como NSFW, uno o muchos de una vez.
+  ///
+  /// Es una marca **propia** del contenido, aparte de la que le venga de sus
+  /// etiquetas: quitarla no lo saca de la rama de una etiqueta marcada, y
+  /// ponerla no depende de que tenga ninguna. Devuelve a cuántos ha cambiado de
+  /// verdad, que no son todos los que se piden: los que ya estaban como se pide
+  /// no cuentan.
+  Future<DataState<int>> setMediaNsfw(
+    List<int> mediaIds, {
+    required bool isNsfw,
+  });
+
+  /// Quita **todas** las marcas NSFW: las de las etiquetas y las que se
+  /// pusieron a mano sobre contenido suelto. Devuelve cuántas etiquetas había.
+  ///
+  /// Es la salida de quien ha perdido la contraseña y el código de
+  /// recuperación: se pierde el marcado, nunca el contenido.
+  ///
+  /// Las dos, y no sólo las etiquetas: dejar el contenido marcado con el filtro
+  /// desactivado no se nota —sin contraseña no se esconde nada— hasta que
+  /// alguien vuelve a poner una, y entonces desaparece de golpe contenido que
+  /// nadie ha marcado esta vez y que no hay forma de saber cuál era.
+  Future<DataState<int>> clearNsfwMarks();
+
   /// Contenido definitivo que tiene la etiqueta [tagId].
   ///
   /// Es lo que enseña la rejilla de la pantalla de gestión de etiquetas. Como en

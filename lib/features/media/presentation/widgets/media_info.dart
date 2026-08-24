@@ -27,6 +27,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
 import 'package:Fern/features/recognition/domain/usecases/turn_detection_into_region_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -229,6 +230,7 @@ class _InfoContent extends StatelessWidget {
                   iconSize: AppSizes.iconMedium,
                   backgroundColor: context.colors.secondary,
                 ),
+                trailing: tag.isUnderNsfw ? const NsfwTagMark() : null,
               ),
             );
           },

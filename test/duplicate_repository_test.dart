@@ -19,6 +19,7 @@ import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
@@ -27,6 +28,9 @@ void main() {
   late Isar isar;
   late DuplicateRepositoryImpl repository;
   late Map<String, DateTime?> modified;
+
+  /// Lo que el filtro esconde ahora mismo.
+  late Set<int> hidden;
 
   final isarLibrary = _isarLibrary();
 
@@ -58,9 +62,11 @@ void main() {
     );
 
     modified = {};
+    hidden = {};
     repository = DuplicateRepositoryImpl(
       database: isar,
       modifiedAt: (path) => modified[path],
+      visibility: _Hiding(() => hidden),
     );
   });
 
@@ -415,6 +421,72 @@ void main() {
     });
   });
 
+  // Comparar dos copias es abrirlas, así que un grupo cuyo contenido esconde el
+  // filtro NSFW no es una decisión que se pueda tomar. Y enseñarlo cuenta que
+  // ese contenido existe, que es justo lo que el filtro evita.
+  group('lo que el filtro esconde', () {
+    test('un grupo con el contenido escondido no se propone', () async {
+      await repository.saveGroups([await liveGroup([1, 2])]);
+
+      hidden = {2};
+
+      expect(result(await repository.getGroupsToReview()), isEmpty);
+    });
+
+    test('vuelve al quitar el filtro', () async {
+      await repository.saveGroups([await liveGroup([1, 2])]);
+
+      hidden = {2};
+      expect(result(await repository.getGroupsToReview()), isEmpty);
+
+      hidden = {};
+      expect(result(await repository.getGroupsToReview()), hasLength(1));
+    });
+
+    test('con tres copias y una escondida, la decisión sigue en pie', () async {
+      await repository.saveGroups([await liveGroup([1, 2, 3])]);
+
+      hidden = {3};
+
+      expect(result(await repository.getGroupsToReview()), hasLength(1));
+    });
+
+    // El caso que separa «vivas» de «comparables»: un grupo resuelto vuelve a
+    // abrirse cuando sus copias siguen vivas —alguien las sacó de la papelera—
+    // y eso no puede depender de si el filtro las esconde ahora mismo. Con el
+    // filtro puesto no se propondrá igualmente, pero al quitarlo tiene que estar
+    // ahí, no haberse perdido.
+    test('un grupo resuelto se reabre aunque el filtro lo esconda', () async {
+      await repository.saveGroups([await liveGroup([1, 2])]);
+      final group = result(await repository.getGroupsToReview()).single;
+      await repository.markResolved(group.id);
+
+      hidden = {2};
+      await repository.saveGroups([await liveGroup([1, 2])]);
+
+      hidden = {};
+
+      expect(result(await repository.getGroupsToReview()), hasLength(1));
+    });
+
+    // Guardar lo encontrado no mira el filtro, sólo si las copias siguen vivas.
+    // Si lo mirara, poner o quitar el filtro cambiaría lo que un escaneo decide
+    // sobre grupos que el usuario ya contestó.
+    test('guardar un escaneo no depende del filtro', () async {
+      await repository.saveGroups([await liveGroup([1, 2])]);
+      final group = result(await repository.getGroupsToReview()).single;
+      await repository.markDismissed(group.id);
+
+      hidden = {2};
+      await repository.saveGroups([await liveGroup([1, 2])]);
+
+      hidden = {};
+
+      // Sigue descartado: el filtro no lo ha resucitado.
+      expect(result(await repository.getGroupsToReview()), isEmpty);
+    });
+  });
+
   group('retirar lo que ya no se encuentra', () {
     // Sin esto la lista sólo crecía: al aparecer una copia más, el grupo pasa a
     // ser otro y el anterior se quedaba enseñando lo mismo por segunda vez.
@@ -569,4 +641,14 @@ String? _isarLibrary() {
   }
 
   return null;
+}
+
+/// Un filtro que esconde lo que se le diga en cada momento.
+class _Hiding extends ContentVisibility {
+  final Set<int> Function() _hidden;
+
+  const _Hiding(this._hidden);
+
+  @override
+  bool hidesDetails(int mediaId) => _hidden().contains(mediaId);
 }

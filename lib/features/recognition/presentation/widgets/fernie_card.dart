@@ -16,6 +16,7 @@ import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_states.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -314,6 +315,9 @@ class _FernieCardState extends State<FernieCard> {
               initialValue: _linkQuery,
               search: _searchLinkTags,
               labelOf: (tag) => tag.name,
+      // Las marcadas se distinguen al autocompletar: elegir una sin
+      // saberlo es esconder contenido sin querer.
+      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
               onSelected: (tag) => setState(() => _linkedId = tag.id),
               onChanged: (query) => setState(() => _linkQuery = query),
               debounce: searchDebounceDuration,

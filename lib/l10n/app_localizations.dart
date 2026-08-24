@@ -3960,6 +3960,468 @@ abstract class AppLocalizations {
   /// **'Repeated content'**
   String get settingsDuplicates;
 
+  /// No description provided for @settingsNsfw.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW content'**
+  String get settingsNsfw;
+
+  /// No description provided for @nsfwCoveredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW content'**
+  String get nsfwCoveredLabel;
+
+  /// No description provided for @nsfwViewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it behaves'**
+  String get nsfwViewsTitle;
+
+  /// No description provided for @nsfwViewsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What you see with the filter on and what you see with it off. Both apply to whatever is drawn next, with nothing to restart.'**
+  String get nsfwViewsNote;
+
+  /// No description provided for @nsfwUnlockedViewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Without the NSFW filter'**
+  String get nsfwUnlockedViewLabel;
+
+  /// No description provided for @nsfwUnlockedViewMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything together'**
+  String get nsfwUnlockedViewMixed;
+
+  /// No description provided for @nsfwUnlockedViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what is marked'**
+  String get nsfwUnlockedViewOnly;
+
+  /// No description provided for @nsfwUnlockedViewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'“Only what is marked” turns it into a separate library: while the filter is off, the rest of your content does not show up.'**
+  String get nsfwUnlockedViewNote;
+
+  /// No description provided for @nsfwLockedViewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'With the NSFW filter'**
+  String get nsfwLockedViewLabel;
+
+  /// No description provided for @nsfwLockedViewHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'It does not show up'**
+  String get nsfwLockedViewHidden;
+
+  /// No description provided for @nsfwLockedViewBlurred.
+  ///
+  /// In en, this message translates to:
+  /// **'It shows up covered'**
+  String get nsfwLockedViewBlurred;
+
+  /// No description provided for @nsfwChildTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking a tag also marks the ones under it'**
+  String get nsfwChildTagsLabel;
+
+  /// No description provided for @nsfwChildTagsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag that hangs from a marked one hides its content too, without having to mark it as well. Turned off, each tag answers only for its own. Nothing is rewritten either way: turn it on and off as you like.'**
+  String get nsfwChildTagsDescription;
+
+  /// No description provided for @nsfwLockedViewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Covered, marked content keeps its place in the grid, blurred and with a padlock; touching it asks for the password. It is handier, but it does show that something is there: how much, and what shape it has.'**
+  String get nsfwLockedViewNote;
+
+  /// No description provided for @nsfwSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW content filter'**
+  String get nsfwSectionTitle;
+
+  /// No description provided for @nsfwSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What you mark as NSFW gets hidden: with the filter on it shows up nowhere, not in the trash and not in searches.'**
+  String get nsfwSectionNote;
+
+  /// No description provided for @nsfwSectionWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This hides, it does not encrypt: the files stay in their folder under their own names, and anyone who opens the file explorer sees them.'**
+  String get nsfwSectionWarning;
+
+  /// No description provided for @nsfwNotConfiguredNote.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no password yet. Without one nothing can be marked, and what you have now is shown as always.'**
+  String get nsfwNotConfiguredNote;
+
+  /// No description provided for @nsfwConfigureAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password'**
+  String get nsfwConfigureAction;
+
+  /// No description provided for @nsfwStateLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW filter on: marked content is hidden'**
+  String get nsfwStateLocked;
+
+  /// No description provided for @nsfwStateUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW filter off: everything is shown'**
+  String get nsfwStateUnlocked;
+
+  /// No description provided for @nsfwOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off the NSFW filter'**
+  String get nsfwOpenAction;
+
+  /// No description provided for @nsfwCloseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the NSFW filter back on'**
+  String get nsfwCloseAction;
+
+  /// No description provided for @nsfwRememberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the filter off when Fern is opened again'**
+  String get nsfwRememberLabel;
+
+  /// No description provided for @nsfwRememberDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Turned off, closing Fern puts the filter back. Turned on it stays as you left it, and the first thing you see on opening is whatever you marked.'**
+  String get nsfwRememberDescription;
+
+  /// No description provided for @nsfwChangePasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the password'**
+  String get nsfwChangePasswordAction;
+
+  /// No description provided for @nsfwChangeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. The recovery code is still the same one.'**
+  String get nsfwChangeDone;
+
+  /// No description provided for @nsfwDisableNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Turning the filter off for good unmarks every tag and stops hiding anything. Your content is untouched: it was marked, not encrypted.'**
+  String get nsfwDisableNote;
+
+  /// No description provided for @nsfwDisableAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the filter off for good'**
+  String get nsfwDisableAction;
+
+  /// No description provided for @nsfwDisableDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Filter turned off. No tag was marked.} =1{Filter turned off and 1 tag unmarked.} other{Filter turned off and {count} tags unmarked.}}'**
+  String nsfwDisableDone(int count);
+
+  /// No description provided for @nsfwSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the password'**
+  String get nsfwSetupTitle;
+
+  /// No description provided for @nsfwPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get nsfwPasswordLabel;
+
+  /// No description provided for @nsfwPasswordRepeatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat it'**
+  String get nsfwPasswordRepeatLabel;
+
+  /// No description provided for @nsfwHintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint phrase (optional)'**
+  String get nsfwHintLabel;
+
+  /// No description provided for @nsfwHintNote.
+  ///
+  /// In en, this message translates to:
+  /// **'It is shown to you after three failed attempts, so it can be read without knowing the password: make it a hint for you, not the password written another way.'**
+  String get nsfwHintNote;
+
+  /// No description provided for @nsfwSetupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get nsfwSetupAction;
+
+  /// No description provided for @nsfwPasswordEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a password.'**
+  String get nsfwPasswordEmpty;
+
+  /// No description provided for @nsfwPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passwords are not the same.'**
+  String get nsfwPasswordMismatch;
+
+  /// No description provided for @nsfwCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recovery code'**
+  String get nsfwCodeTitle;
+
+  /// No description provided for @nsfwCodeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'It is the only thing that lifts the filter if you lose the password, and it is only shown now: Fern does not keep it, it keeps a fingerprint of it. Copy it or save it to a file before closing.'**
+  String get nsfwCodeIntro;
+
+  /// No description provided for @nsfwCodeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get nsfwCodeCopy;
+
+  /// No description provided for @nsfwCodeCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to the clipboard.'**
+  String get nsfwCodeCopied;
+
+  /// No description provided for @nsfwCodeSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to a file'**
+  String get nsfwCodeSave;
+
+  /// No description provided for @nsfwCodeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved in {path}'**
+  String nsfwCodeSaved(String path);
+
+  /// No description provided for @nsfwCodeSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be saved. Copy the code before closing.'**
+  String get nsfwCodeSaveFailed;
+
+  /// No description provided for @nsfwCodeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'I have it saved'**
+  String get nsfwCodeDone;
+
+  /// No description provided for @nsfwCodeFileHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code for Fern’s NSFW content filter. Keep it somewhere you can find it: it is the only thing that lifts the filter if you lose the password.'**
+  String get nsfwCodeFileHeader;
+
+  /// No description provided for @nsfwUnlockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off the NSFW filter'**
+  String get nsfwUnlockTitle;
+
+  /// No description provided for @nsfwUnlockAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it off'**
+  String get nsfwUnlockAction;
+
+  /// No description provided for @nsfwUnlockWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not the password.'**
+  String get nsfwUnlockWrong;
+
+  /// No description provided for @nsfwUnlockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your hint phrase: {hint}'**
+  String nsfwUnlockHint(String hint);
+
+  /// No description provided for @nsfwUnlockNoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You did not set a hint phrase. If you cannot remember the password, the recovery code is still there.'**
+  String get nsfwUnlockNoHint;
+
+  /// No description provided for @nsfwUnlockRecover.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the recovery code'**
+  String get nsfwUnlockRecover;
+
+  /// No description provided for @nsfwRecoverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover access'**
+  String get nsfwRecoverTitle;
+
+  /// No description provided for @nsfwRecoverIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the code you saved and pick a new password. The code is spent once used: you will get another one, and that will be the one that works from now on.'**
+  String get nsfwRecoverIntro;
+
+  /// No description provided for @nsfwRecoverCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code'**
+  String get nsfwRecoverCodeLabel;
+
+  /// No description provided for @nsfwRecoverAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover'**
+  String get nsfwRecoverAction;
+
+  /// No description provided for @nsfwRecoverWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is not right. Look again: dashes and capitals do not matter.'**
+  String get nsfwRecoverWrong;
+
+  /// No description provided for @nsfwChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the password'**
+  String get nsfwChangeTitle;
+
+  /// No description provided for @nsfwChangeCurrentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get nsfwChangeCurrentLabel;
+
+  /// No description provided for @nsfwChangeNewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get nsfwChangeNewLabel;
+
+  /// No description provided for @nsfwChangeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change it'**
+  String get nsfwChangeAction;
+
+  /// No description provided for @nsfwChangeWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That is not the current password.'**
+  String get nsfwChangeWrong;
+
+  /// No description provided for @nsfwDisableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the filter off for good'**
+  String get nsfwDisableTitle;
+
+  /// No description provided for @nsfwDisableWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The password is deleted, every tag is unmarked and its content shows up again. Nothing is removed from your library. To have the filter again you would set it up from scratch and mark the tags once more.'**
+  String get nsfwDisableWarning;
+
+  /// No description provided for @nsfwDisableSecretLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password or recovery code'**
+  String get nsfwDisableSecretLabel;
+
+  /// No description provided for @nsfwDisableWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither the password nor the code.'**
+  String get nsfwDisableWrong;
+
+  /// No description provided for @nsfwDisableFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The marks could not be removed, so the password has been left as it was. Try again.'**
+  String get nsfwDisableFailed;
+
+  /// No description provided for @tagNsfwAffected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{There is no content with this tag right now.} =1{Hides 1 item.} other{Hides {count} items.}}'**
+  String tagNsfwAffected(int count);
+
+  /// No description provided for @tagNsfwOnTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as NSFW · click to unmark'**
+  String get tagNsfwOnTooltip;
+
+  /// No description provided for @tagNsfwOffTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as NSFW'**
+  String get tagNsfwOffTooltip;
+
+  /// No description provided for @tagNsfwBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW tag'**
+  String get tagNsfwBadge;
+
+  /// No description provided for @mediaNsfwMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as NSFW'**
+  String get mediaNsfwMark;
+
+  /// No description provided for @mediaNsfwUnmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmark as NSFW'**
+  String get mediaNsfwUnmark;
+
+  /// No description provided for @mediaNsfwMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing changed.} =1{1 item marked as NSFW.} other{{count} items marked as NSFW.}}'**
+  String mediaNsfwMarked(int count);
+
+  /// No description provided for @mediaNsfwUnmarked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing changed.} =1{1 item unmarked.} other{{count} items unmarked.}}'**
+  String mediaNsfwUnmarked(int count);
+
+  /// No description provided for @mediaNsfwByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked by one of its tags'**
+  String get mediaNsfwByTag;
+
   /// No description provided for @duplicatesScanSectionTitle.
   ///
   /// In en, this message translates to:

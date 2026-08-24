@@ -2476,6 +2476,297 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDuplicates => 'Repeated content';
 
   @override
+  String get settingsNsfw => 'NSFW content';
+
+  @override
+  String get nsfwCoveredLabel => 'NSFW content';
+
+  @override
+  String get nsfwViewsTitle => 'How it behaves';
+
+  @override
+  String get nsfwViewsNote =>
+      'What you see with the filter on and what you see with it off. Both apply to whatever is drawn next, with nothing to restart.';
+
+  @override
+  String get nsfwUnlockedViewLabel => 'Without the NSFW filter';
+
+  @override
+  String get nsfwUnlockedViewMixed => 'Everything together';
+
+  @override
+  String get nsfwUnlockedViewOnly => 'Only what is marked';
+
+  @override
+  String get nsfwUnlockedViewNote =>
+      '“Only what is marked” turns it into a separate library: while the filter is off, the rest of your content does not show up.';
+
+  @override
+  String get nsfwLockedViewLabel => 'With the NSFW filter';
+
+  @override
+  String get nsfwLockedViewHidden => 'It does not show up';
+
+  @override
+  String get nsfwLockedViewBlurred => 'It shows up covered';
+
+  @override
+  String get nsfwChildTagsLabel => 'Marking a tag also marks the ones under it';
+
+  @override
+  String get nsfwChildTagsDescription =>
+      'A tag that hangs from a marked one hides its content too, without having to mark it as well. Turned off, each tag answers only for its own. Nothing is rewritten either way: turn it on and off as you like.';
+
+  @override
+  String get nsfwLockedViewNote =>
+      'Covered, marked content keeps its place in the grid, blurred and with a padlock; touching it asks for the password. It is handier, but it does show that something is there: how much, and what shape it has.';
+
+  @override
+  String get nsfwSectionTitle => 'NSFW content filter';
+
+  @override
+  String get nsfwSectionNote =>
+      'What you mark as NSFW gets hidden: with the filter on it shows up nowhere, not in the trash and not in searches.';
+
+  @override
+  String get nsfwSectionWarning =>
+      'This hides, it does not encrypt: the files stay in their folder under their own names, and anyone who opens the file explorer sees them.';
+
+  @override
+  String get nsfwNotConfiguredNote =>
+      'There is no password yet. Without one nothing can be marked, and what you have now is shown as always.';
+
+  @override
+  String get nsfwConfigureAction => 'Set a password';
+
+  @override
+  String get nsfwStateLocked => 'NSFW filter on: marked content is hidden';
+
+  @override
+  String get nsfwStateUnlocked => 'NSFW filter off: everything is shown';
+
+  @override
+  String get nsfwOpenAction => 'Turn off the NSFW filter';
+
+  @override
+  String get nsfwCloseAction => 'Turn the NSFW filter back on';
+
+  @override
+  String get nsfwRememberLabel =>
+      'Keep the filter off when Fern is opened again';
+
+  @override
+  String get nsfwRememberDescription =>
+      'Turned off, closing Fern puts the filter back. Turned on it stays as you left it, and the first thing you see on opening is whatever you marked.';
+
+  @override
+  String get nsfwChangePasswordAction => 'Change the password';
+
+  @override
+  String get nsfwChangeDone =>
+      'Password changed. The recovery code is still the same one.';
+
+  @override
+  String get nsfwDisableNote =>
+      'Turning the filter off for good unmarks every tag and stops hiding anything. Your content is untouched: it was marked, not encrypted.';
+
+  @override
+  String get nsfwDisableAction => 'Turn the filter off for good';
+
+  @override
+  String nsfwDisableDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Filter turned off and $count tags unmarked.',
+      one: 'Filter turned off and 1 tag unmarked.',
+      zero: 'Filter turned off. No tag was marked.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nsfwSetupTitle => 'Set the password';
+
+  @override
+  String get nsfwPasswordLabel => 'Password';
+
+  @override
+  String get nsfwPasswordRepeatLabel => 'Repeat it';
+
+  @override
+  String get nsfwHintLabel => 'Hint phrase (optional)';
+
+  @override
+  String get nsfwHintNote =>
+      'It is shown to you after three failed attempts, so it can be read without knowing the password: make it a hint for you, not the password written another way.';
+
+  @override
+  String get nsfwSetupAction => 'Save';
+
+  @override
+  String get nsfwPasswordEmpty => 'Write a password.';
+
+  @override
+  String get nsfwPasswordMismatch => 'The two passwords are not the same.';
+
+  @override
+  String get nsfwCodeTitle => 'Your recovery code';
+
+  @override
+  String get nsfwCodeIntro =>
+      'It is the only thing that lifts the filter if you lose the password, and it is only shown now: Fern does not keep it, it keeps a fingerprint of it. Copy it or save it to a file before closing.';
+
+  @override
+  String get nsfwCodeCopy => 'Copy';
+
+  @override
+  String get nsfwCodeCopied => 'Copied to the clipboard.';
+
+  @override
+  String get nsfwCodeSave => 'Save to a file';
+
+  @override
+  String nsfwCodeSaved(String path) {
+    return 'Saved in $path';
+  }
+
+  @override
+  String get nsfwCodeSaveFailed =>
+      'The file could not be saved. Copy the code before closing.';
+
+  @override
+  String get nsfwCodeDone => 'I have it saved';
+
+  @override
+  String get nsfwCodeFileHeader =>
+      'Recovery code for Fern’s NSFW content filter. Keep it somewhere you can find it: it is the only thing that lifts the filter if you lose the password.';
+
+  @override
+  String get nsfwUnlockTitle => 'Turn off the NSFW filter';
+
+  @override
+  String get nsfwUnlockAction => 'Turn it off';
+
+  @override
+  String get nsfwUnlockWrong => 'That is not the password.';
+
+  @override
+  String nsfwUnlockHint(String hint) {
+    return 'Your hint phrase: $hint';
+  }
+
+  @override
+  String get nsfwUnlockNoHint =>
+      'You did not set a hint phrase. If you cannot remember the password, the recovery code is still there.';
+
+  @override
+  String get nsfwUnlockRecover => 'Use the recovery code';
+
+  @override
+  String get nsfwRecoverTitle => 'Recover access';
+
+  @override
+  String get nsfwRecoverIntro =>
+      'Write the code you saved and pick a new password. The code is spent once used: you will get another one, and that will be the one that works from now on.';
+
+  @override
+  String get nsfwRecoverCodeLabel => 'Recovery code';
+
+  @override
+  String get nsfwRecoverAction => 'Recover';
+
+  @override
+  String get nsfwRecoverWrong =>
+      'That code is not right. Look again: dashes and capitals do not matter.';
+
+  @override
+  String get nsfwChangeTitle => 'Change the password';
+
+  @override
+  String get nsfwChangeCurrentLabel => 'Current password';
+
+  @override
+  String get nsfwChangeNewLabel => 'New password';
+
+  @override
+  String get nsfwChangeAction => 'Change it';
+
+  @override
+  String get nsfwChangeWrong => 'That is not the current password.';
+
+  @override
+  String get nsfwDisableTitle => 'Turn the filter off for good';
+
+  @override
+  String get nsfwDisableWarning =>
+      'The password is deleted, every tag is unmarked and its content shows up again. Nothing is removed from your library. To have the filter again you would set it up from scratch and mark the tags once more.';
+
+  @override
+  String get nsfwDisableSecretLabel => 'Password or recovery code';
+
+  @override
+  String get nsfwDisableWrong => 'Neither the password nor the code.';
+
+  @override
+  String get nsfwDisableFailed =>
+      'The marks could not be removed, so the password has been left as it was. Try again.';
+
+  @override
+  String tagNsfwAffected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Hides $count items.',
+      one: 'Hides 1 item.',
+      zero: 'There is no content with this tag right now.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagNsfwOnTooltip => 'Marked as NSFW · click to unmark';
+
+  @override
+  String get tagNsfwOffTooltip => 'Mark as NSFW';
+
+  @override
+  String get tagNsfwBadge => 'NSFW tag';
+
+  @override
+  String get mediaNsfwMark => 'Mark as NSFW';
+
+  @override
+  String get mediaNsfwUnmark => 'Unmark as NSFW';
+
+  @override
+  String mediaNsfwMarked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items marked as NSFW.',
+      one: '1 item marked as NSFW.',
+      zero: 'Nothing changed.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mediaNsfwUnmarked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items unmarked.',
+      one: '1 item unmarked.',
+      zero: 'Nothing changed.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mediaNsfwByTag => 'Marked by one of its tags';
+
+  @override
   String get duplicatesScanSectionTitle => 'Automatic search';
 
   @override

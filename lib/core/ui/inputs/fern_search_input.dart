@@ -21,6 +21,14 @@ class FernSearchInput extends StatefulWidget {
   final String initialValue;
 
   final List<String> suggestions;
+
+  /// Qué va detrás de cada sugerencia, si algo va.
+  ///
+  /// Existe para que los buscadores de etiquetas puedan marcar las NSFW: una
+  /// etiqueta marcada se autocompletaba igual que las demás, y quien la elegía
+  /// sin saberlo acababa de esconder contenido. Las sugerencias siguen siendo
+  /// texto —lo que se escribe en el campo al elegir una— y esto sólo decora.
+  final Widget? Function(String suggestion)? trailingOf;
   final ValueChanged<String>? onSelected;
   final ValueChanged<String>? onChanged;
   final double maxSuggestionsHeight;
@@ -39,6 +47,7 @@ class FernSearchInput extends StatefulWidget {
     this.hintText = '',
     this.initialValue = '',
     this.suggestions = const [],
+    this.trailingOf,
     this.onSelected,
     this.onChanged,
     this.maxSuggestionsHeight = 200,
@@ -113,6 +122,7 @@ class _FernSearchInputState extends State<FernSearchInput> {
                 shrinkWrap: true,
                 children: _visibleSuggestions
                     .map((suggestion) => ListTile(
+                          trailing: widget.trailingOf?.call(suggestion),
                           title: Text(
                             suggestion,
                             style: Theme.of(context)

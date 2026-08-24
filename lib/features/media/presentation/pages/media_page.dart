@@ -10,6 +10,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
 import 'package:Fern/features/media/presentation/widgets/search_filter_menu.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -178,6 +179,24 @@ class _MediaView extends StatelessWidget {
                           : null,
                       icon: const Icon(Icons.auto_awesome_outlined),
                     ),
+                    // Esconder la selección detrás del filtro NSFW. Sólo con
+                    // contraseña puesta: sin ella marcar no escondería nada y el
+                    // botón prometería algo que no va a pasar.
+                    //
+                    // Marca, no interruptor: la selección puede mezclar marcado
+                    // y sin marcar, y un botón que dependiera de eso haría cosas
+                    // distintas según lo que hubiera dentro. Para quitarla está
+                    // el visor, que sabe cómo está cada contenido.
+                    if (getIt<NsfwModeService>().isConfigured)
+                      IconButton(
+                        tooltip: texts.mediaNsfwMark,
+                        onPressed: hasSelection
+                            ? () => context.read<MediaBloc>().add(
+                                  const SetSelectedMediaNsfwEvent(isNsfw: true),
+                                )
+                            : null,
+                        icon: const Icon(Icons.visibility_off_outlined),
+                      ),
                     IconButton(
                       tooltip: texts.deleteSelectedTooltip,
                       onPressed: hasSelection

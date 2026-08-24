@@ -215,6 +215,9 @@ class _SidebarState extends State<Sidebar> {
           id: 'tag:${tag.id}',
           title: tag.name,
           icon: Icons.sell_outlined,
+          // Con el filtro quitado, una etiqueta NSFW se veía en el menú igual
+          // que las demás y no había forma de saber cuál escondía contenido.
+          isNsfw: tag.isUnderNsfw,
           avatarPath: showAvatars ? tag.picturePath : null,
           depth: depth,
           onTap: () => _filterByTag(tag),

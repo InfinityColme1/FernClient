@@ -73,6 +73,62 @@ void main() {
       expect(repository.getSettings().automaticDuplicateScan, isFalse);
     });
 
+    // El valor de fábrica está en dos sitios —el constructor de la entidad y el
+    // `?? true` con el que se lee la preferencia— y tienen que decir lo mismo:
+    // descuadrados, el comportamiento depende de por dónde se haya creado la
+    // entidad, que es de las cosas que nadie va a mirar.
+    test('la entidad nace arrastrando a las hijas', () {
+      const settings = AppSettingsEntity(
+        avatarsPath: 'avatares',
+        recognitionPath: 'reconocimiento',
+      );
+
+      expect(settings.nsfwMarksChildTags, isTrue);
+    });
+
+    // Arrastrar a las hijas viene encendido: quien marca una etiqueta madre está
+    // pensando en todo lo que hay debajo, y tener que repetir la marca rama por
+    // rama es donde se olvida una.
+    test('lo de las etiquetas hijas viene encendido y se puede apagar',
+        () async {
+      final repository = await _repository();
+
+      expect(repository.getSettings().nsfwMarksChildTags, isTrue);
+
+      await repository.saveSettings(
+        repository.getSettings().copyWith(nsfwMarksChildTags: false),
+      );
+
+      expect(repository.getSettings().nsfwMarksChildTags, isFalse);
+    });
+
+    test('cómo se comporta el modo NSFW', () async {
+      final repository = await _repository();
+
+      await repository.saveSettings(
+        repository.getSettings().copyWith(
+              nsfwUnlockedView: NsfwUnlockedView.onlyNsfw,
+              nsfwLockedView: NsfwLockedView.blurred,
+            ),
+      );
+
+      expect(
+        repository.getSettings().nsfwUnlockedView,
+        NsfwUnlockedView.onlyNsfw,
+      );
+      expect(repository.getSettings().nsfwLockedView, NsfwLockedView.blurred);
+    });
+
+    test('de fábrica, todo junto y escondido', () async {
+      final settings = (await _repository()).getSettings();
+
+      // Escondido de fábrica: es lo único que cumple lo que promete la función.
+      // Tapar deja ver que ahí hay algo, y eso es una elección que hay que
+      // hacer, no una que se herede.
+      expect(settings.nsfwUnlockedView, NsfwUnlockedView.mixed);
+      expect(settings.nsfwLockedView, NsfwLockedView.hidden);
+    });
+
     test('lo que se mueve, apagado', () async {
       final repository = await _repository();
 

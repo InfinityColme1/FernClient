@@ -42,6 +42,45 @@ class TagHierarchy {
     return found.values.toList();
   }
 
+  /// Las etiquetas que cuelgan de [tagIds], a cualquier profundidad y sin
+  /// ellas mismas.
+  ///
+  /// Es el camino contrario a [ancestorsOf] y hace falta para lo que se hereda
+  /// hacia abajo: una etiqueta marcada como no apta bloquea toda su rama, y
+  /// «toda su rama» son estas.
+  ///
+  /// La misma protección contra ciclos: una jerarquía mal formada —que la base
+  /// de datos no impide— dejaría esto dando vueltas para siempre, y colgada la
+  /// aplicación entera al arrancar.
+  Future<List<TagModel>> descendantsOf(Iterable<int> tagIds) async {
+    final found = <int, TagModel>{};
+    final visited = <int>{...tagIds};
+    final pending = <int>[...visited];
+
+    while (pending.isNotEmpty) {
+      final current = pending.removeLast();
+
+      for (final child in await _childrenOf(current)) {
+        if (!visited.add(child.id)) continue;
+
+        found[child.id] = child;
+        pending.add(child.id);
+      }
+    }
+
+    return found.values.toList();
+  }
+
+  /// Las etiquetas que cuelgan directamente de [tagId].
+  Future<List<TagModel>> _childrenOf(int tagId) async {
+    final tag = await _database.tagModels.get(tagId);
+    if (tag == null) return const [];
+
+    await tag.children.load();
+
+    return tag.children.toList();
+  }
+
   /// Las etiquetas que tienen a [tagId] entre sus hijas.
   ///
   /// Normalmente es una sola, pero la base de datos no lo impide, así que se

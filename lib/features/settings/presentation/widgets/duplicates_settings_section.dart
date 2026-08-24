@@ -198,7 +198,7 @@ class _DuplicatesSettingsSectionState extends State<DuplicatesSettingsSection> {
                   ? texts.duplicatesRehashRunning
                   : texts.duplicatesRehashButton,
               backgroundColor: context.colors.secondary,
-              foregroundColor: context.colors.white,
+              foregroundColor: context.colors.black,
               onPressed: _isRehashing ? null : () => _rehash(texts),
             ),
             if (_rehashResult case final result?) ...[

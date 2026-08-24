@@ -8,6 +8,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -171,9 +172,11 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
         fallbackIcon: Icons.label,
         radius: AppSizes.avatarSmall,
         iconSize: AppSizes.iconCompact,
-        backgroundColor: isPending ? context.colors.lightgray : context.colors.secondary,
+        backgroundColor:
+            isPending ? context.colors.lightgray : context.colors.secondary,
         iconColor: isPending ? context.colors.gray : context.colors.primary,
       ),
+      trailing: tag.isUnderNsfw ? const NsfwTagMark() : null,
     );
   }
 
@@ -211,6 +214,9 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
             hintText: texts.tagSearchHint,
             search: _search,
             labelOf: (tag) => tag.name,
+      // Las marcadas se distinguen al autocompletar: elegir una sin
+      // saberlo es esconder contenido sin querer.
+      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
             onSelected: _addTag,
             debounce: searchDebounceDuration,
           ),

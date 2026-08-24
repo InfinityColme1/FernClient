@@ -52,18 +52,23 @@ const MediaSummaryModelSchema = CollectionSchema(
       name: r'isImported',
       type: IsarType.bool,
     ),
-    r'path': PropertySchema(
+    r'isNsfw': PropertySchema(
       id: 7,
+      name: r'isNsfw',
+      type: IsarType.bool,
+    ),
+    r'path': PropertySchema(
+      id: 8,
       name: r'path',
       type: IsarType.string,
     ),
     r'perceptualHash': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'perceptualHash',
       type: IsarType.long,
     ),
     r'recognizedAt': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'recognizedAt',
       type: IsarType.dateTime,
     )
@@ -108,6 +113,19 @@ const MediaSummaryModelSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'hasPendingSuggestions',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'isNsfw': IndexSchema(
+      id: 3014435295683206251,
+      name: r'isNsfw',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'isNsfw',
           type: IndexType.value,
           caseSensitive: false,
         )
@@ -166,9 +184,10 @@ void _mediaSummaryModelSerialize(
   writer.writeString(offsets[4], object.importSource);
   writer.writeBool(offsets[5], object.isDeleted);
   writer.writeBool(offsets[6], object.isImported);
-  writer.writeString(offsets[7], object.path);
-  writer.writeLong(offsets[8], object.perceptualHash);
-  writer.writeDateTime(offsets[9], object.recognizedAt);
+  writer.writeBool(offsets[7], object.isNsfw);
+  writer.writeString(offsets[8], object.path);
+  writer.writeLong(offsets[9], object.perceptualHash);
+  writer.writeDateTime(offsets[10], object.recognizedAt);
 }
 
 MediaSummaryModel _mediaSummaryModelDeserialize(
@@ -186,9 +205,10 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
   object.importSource = reader.readString(offsets[4]);
   object.isDeleted = reader.readBool(offsets[5]);
   object.isImported = reader.readBool(offsets[6]);
-  object.path = reader.readString(offsets[7]);
-  object.perceptualHash = reader.readLongOrNull(offsets[8]);
-  object.recognizedAt = reader.readDateTimeOrNull(offsets[9]);
+  object.isNsfw = reader.readBool(offsets[7]);
+  object.path = reader.readString(offsets[8]);
+  object.perceptualHash = reader.readLongOrNull(offsets[9]);
+  object.recognizedAt = reader.readDateTimeOrNull(offsets[10]);
   return object;
 }
 
@@ -214,10 +234,12 @@ P _mediaSummaryModelDeserializeProp<P>(
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readLongOrNull(offset)) as P;
+    case 10:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -307,6 +329,14 @@ extension MediaSummaryModelQueryWhereSort
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'hasPendingSuggestions'),
+      );
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere> anyIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'isNsfw'),
       );
     });
   }
@@ -520,6 +550,51 @@ extension MediaSummaryModelQueryWhere
               indexName: r'hasPendingSuggestions',
               lower: [],
               upper: [hasPendingSuggestions],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      isNsfwEqualTo(bool isNsfw) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'isNsfw',
+        value: [isNsfw],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      isNsfwNotEqualTo(bool isNsfw) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [],
+              upper: [isNsfw],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [isNsfw],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [isNsfw],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [],
+              upper: [isNsfw],
               includeUpper: false,
             ));
       }
@@ -1089,6 +1164,16 @@ extension MediaSummaryModelQueryFilter
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      isNsfwEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isNsfw',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       pathEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1494,6 +1579,20 @@ extension MediaSummaryModelQuerySortBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       sortByPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.asc);
@@ -1650,6 +1749,20 @@ extension MediaSummaryModelQuerySortThenBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       thenByPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.asc);
@@ -1743,6 +1856,13 @@ extension MediaSummaryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isNsfw');
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct> distinctByPath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1816,6 +1936,12 @@ extension MediaSummaryModelQueryProperty
   QueryBuilder<MediaSummaryModel, bool, QQueryOperations> isImportedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isImported');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, bool, QQueryOperations> isNsfwProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isNsfw');
     });
   }
 

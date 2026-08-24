@@ -4,6 +4,8 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
@@ -19,6 +21,7 @@ import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +60,7 @@ class _TagCardState extends State<TagCard> {
   final _updateTag = getIt<UpdateTagUseCase>();
   final _deleteTag = getIt<DeleteTagUseCase>();
   final _saveTagSourceUrls = getIt<SaveTagSourceUrlsUseCase>();
+  final _setTagNsfw = getIt<SetTagNsfwUseCase>();
   final _avatarStorage = getIt<AvatarStorageService>();
 
   late final TextEditingController _nameController =
@@ -82,6 +86,15 @@ class _TagCardState extends State<TagCard> {
   /// campo, y arranca con el valor que se le pasa.
   Key _parentFieldKey = UniqueKey();
 
+  /// La etiqueta está marcada como contenido no apto.
+  ///
+  /// Se guarda en el momento de tocar el interruptor y no con el botón de
+  /// guardar: es una decisión que hace desaparecer contenido de la vista, y
+  /// dejarla a medias —marcada en pantalla, sin marcar en la base de datos—
+  /// sería la peor forma de contarlo.
+  late bool _isNsfw = widget.tag.isNsfw;
+
+  /// A cuántos contenidos afecta la marca, cuando se acaba de tocar.
   /// La etiqueta y todo lo que cuelga de ella, por identificador.
   late final Set<int> _ownBranch = _branchIds(widget.tag);
 
@@ -177,6 +190,36 @@ class _TagCardState extends State<TagCard> {
     context.read<MediaBloc>().add(LoadMediaByTagEvent(widget.tag.id));
   }
 
+  /// Marca o desmarca la etiqueta, y dice a cuánto afecta.
+  ///
+  /// Con el bloqueo cerrado, marcarla hace que la ficha y su contenido
+  /// desaparezcan de la pantalla en cuanto se relea: por eso el número se
+  /// enseña aquí y ahora, que es el único momento en el que se puede leer.
+  Future<void> _setNsfw(bool value) async {
+    final texts = AppLocalizations.of(context);
+
+    final result = await _setTagNsfw(
+      params: SetTagNsfwParams(tagId: widget.tag.id, isNsfw: value),
+    );
+
+    if (result is! DataSuccess<int> || !mounted) return;
+
+    setState(() => _isNsfw = value);
+
+    // Cuánto contenido acaba de esconderse, dicho al pulsar y no como texto fijo
+    // en la ficha: es la respuesta a lo que se acaba de hacer, y sólo hace falta
+    // ese momento. Con el filtro puesto, además, ese contenido desaparece de la
+    // rejilla de abajo, y sin decir cuánto era parecería que se ha perdido.
+    showFernToast(
+      context,
+      texts.tagNsfwAffected(result.data ?? 0),
+      icon: value ? Icons.visibility_off : Icons.visibility,
+    );
+
+    getIt<TagsBloc>().add(const LoadTagsEvent());
+    getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
+  }
+
   /// Abre el diálogo de las direcciones de la etiqueta y guarda lo que se
   /// confirme.
   ///
@@ -268,6 +311,7 @@ class _TagCardState extends State<TagCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                _nsfwButton(texts),
                 _recognizeButton(texts),
                 _assignUrlsButton(texts),
               ],
@@ -355,6 +399,32 @@ class _TagCardState extends State<TagCard> {
   ///
   /// Cambia de icono cuando ya hay alguna: es la única señal de que la etiqueta
   /// etiqueta sola, porque las direcciones no se ven en el formulario.
+  /// El interruptor de NSFW, hecho un icono más de la fila de arriba.
+  ///
+  /// Era un bloque con título, descripción y recuento, y ocupaba tanto que la
+  /// rejilla de contenido de debajo se salía de la pantalla. Aquí no añade una
+  /// sola línea de alto: reaprovecha la fila que ya estaba, y lo que hay que
+  /// saber —cuánto contenido afecta— se dice al pulsarlo, que es cuando importa,
+  /// y no permanentemente.
+  ///
+  /// Sólo con contraseña puesta. Sin ella, marcar no escondería nada (ver
+  /// `NsfwVisibility`) y el botón prometería algo que no va a pasar.
+  Widget _nsfwButton(AppLocalizations texts) {
+    if (!getIt<NsfwModeService>().isConfigured) return const SizedBox.shrink();
+
+    return IconButton(
+      icon: Icon(
+        _isNsfw ? Icons.visibility_off : Icons.visibility_off_outlined,
+        size: AppSizes.iconExtraLarge,
+        // Encendido, con el color con el que la aplicación marca lo que hay que
+        // mirar dos veces. Apagado se queda como los demás iconos de la fila.
+        color: _isNsfw ? context.colors.terciary : null,
+      ),
+      tooltip: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
+      onPressed: _isBusy ? null : () => _run(() => _setNsfw(!_isNsfw)),
+    );
+  }
+
   Widget _assignUrlsButton(AppLocalizations texts) {
     return IconButton(
       icon: Icon(
@@ -377,6 +447,9 @@ class _TagCardState extends State<TagCard> {
       initialValue: _parentQuery,
       search: _searchParentTags,
       labelOf: (tag) => tag.name,
+      // Las marcadas se distinguen al autocompletar: elegir una sin
+      // saberlo es esconder contenido sin querer.
+      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
       onSelected: (tag) => setState(() => _parent = tag),
       // Con `setState` para que el botón de quitar el padre siga al campo: sin
       // nada escrito no hay padre del que soltarse.

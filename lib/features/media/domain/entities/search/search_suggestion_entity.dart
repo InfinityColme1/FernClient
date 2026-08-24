@@ -17,13 +17,21 @@ class SearchSuggestionEntity extends Equatable {
   final String label;
   final String? imagePath;
 
+  /// La sugerencia es una etiqueta marcada como NSFW.
+  ///
+  /// Va aquí para que el buscador pueda distinguirla: con el filtro quitado, una
+  /// etiqueta marcada se autocompletaba igual que las demás, y elegirla sin
+  /// saberlo es filtrar por contenido escondido sin querer.
+  final bool isNsfw;
+
   const SearchSuggestionEntity({
     required this.id,
     required this.type,
     required this.label,
     this.imagePath,
+    this.isNsfw = false,
   });
 
   @override
-  List<Object?> get props => [id, type, label, imagePath];
+  List<Object?> get props => [id, type, label, imagePath, isNsfw];
 }

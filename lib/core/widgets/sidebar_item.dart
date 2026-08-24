@@ -34,6 +34,13 @@ class SidebarItem {
   /// pinta nada.
   final int badgeCount;
 
+  /// La etiqueta esconde contenido tras el filtro NSFW.
+  ///
+  /// El menú la marca con un distintivo al final de la fila, donde no tapa su
+  /// avatar: la imagen es con lo que se reconoce una etiqueta de un vistazo, y
+  /// quitársela para avisar de algo cuesta más de lo que aporta.
+  final bool isNsfw;
+
   SidebarItem({
     required this.id,
     required this.title,
@@ -43,6 +50,7 @@ class SidebarItem {
     this.avatarPath,
     this.depth = 0,
     this.badgeCount = 0,
+    this.isNsfw = false,
   });
 }
 

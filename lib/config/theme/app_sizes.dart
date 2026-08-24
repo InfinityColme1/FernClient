@@ -144,6 +144,15 @@ class AppSizes {
   static const double settingsLabelWidth = 180.0;
   static const double settingsValueWidth = 64.0;
 
+  /// El hueco que se le reserva al mensaje de «copiado» o «guardado en…» del
+  /// código de recuperación.
+  ///
+  /// Fijo y no según lo que ocupe el texto: el diálogo va centrado, así que un
+  /// mensaje que aparece le cambia el alto y le mueve los botones al usuario
+  /// justo después de pulsarlos. Dos líneas de texto pequeño, que es lo que
+  /// ocupa el mensaje más largo —el que lleva la ruta— acotado a dos.
+  static const double nsfwCodeResultHeight = 32.0;
+
   /// Alto máximo del registro de instalación del entorno de reconocimiento:
   /// lo justo para ver qué está pasando sin que se coma la pantalla.
   static const double sidecarLogHeight = 180.0;

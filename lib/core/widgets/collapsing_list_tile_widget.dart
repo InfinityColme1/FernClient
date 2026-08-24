@@ -4,6 +4,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:Fern/core/ui/display/fern_badge.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -42,6 +43,10 @@ class CollapsingListTile extends StatefulWidget {
   final Color selectedColor;
   final Color textSelectedColor;
   final Color unselectedColor;
+
+  /// La etiqueta esconde contenido tras el filtro NSFW: la fila lleva su
+  /// distintivo al final, donde no tapa el avatar.
+  final bool isNsfw;
   final Color textUnselectedColor;
 
   const CollapsingListTile({
@@ -61,6 +66,7 @@ class CollapsingListTile extends StatefulWidget {
     required this.selectedColor,
     required this.textSelectedColor,
     required this.unselectedColor,
+    this.isNsfw = false,
     required this.textUnselectedColor
   });
 
@@ -191,6 +197,12 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
                             : widget.textUnselectedColor
                       )),
                 ),
+              // Sólo con el menú desplegado: plegado no hay ni sitio ni título
+              // al que acompañar, y encogido no se leería.
+              if (widget.isNsfw && widget.isExpanded) ...[
+                SizedBox(width: sizedBoxAnimation.value),
+                const NsfwTagMark(),
+              ],
             ],
           ),
         ),

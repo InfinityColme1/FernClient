@@ -22,17 +22,27 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   final OrganizeLibraryFilesUseCase _organizeLibraryFiles;
   final MigrateRecognitionDataUseCase _migrateRecognitionData;
 
+  /// A quién avisar de que ha cambiado **qué** esconde el filtro NSFW.
+  ///
+  /// Casi ningún ajuste lo mueve: los de vista dicen cómo se pinta lo que ya se
+  /// ha decidido, y se leen al vuelo. Éste sí, porque cambia el conjunto de
+  /// etiquetas marcadas, y ese conjunto está en un índice que hay que rehacer
+  /// antes de que se pinte nada.
+  final Future<void> Function()? _onNsfwScopeChanged;
+
   SettingsBloc({
     required GetSettingsUseCase getSettings,
     required SaveSettingsUseCase saveSettings,
     required MigrateAvatarsUseCase migrateAvatars,
     required OrganizeLibraryFilesUseCase organizeLibraryFiles,
     required MigrateRecognitionDataUseCase migrateRecognitionData,
+    Future<void> Function()? onNsfwScopeChanged,
   })  : _getSettings = getSettings,
         _saveSettings = saveSettings,
         _migrateAvatars = migrateAvatars,
         _organizeLibraryFiles = organizeLibraryFiles,
         _migrateRecognitionData = migrateRecognitionData,
+        _onNsfwScopeChanged = onNsfwScopeChanged,
         super(SettingsState(settings: getSettings())) {
     on<LoadSettingsEvent>(onLoadSettings);
     on<LanguageChangedEvent>(onLanguageChanged);
@@ -54,6 +64,9 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<AutomaticDuplicateScanToggledEvent>(onAutomaticDuplicateScanToggled);
     on<DuplicateScanPeriodChangedEvent>(onDuplicateScanPeriodChanged);
     on<DuplicateScanMovingToggledEvent>(onDuplicateScanMovingToggled);
+    on<NsfwChildTagsToggledEvent>(onNsfwChildTagsToggled);
+    on<NsfwUnlockedViewChangedEvent>(onNsfwUnlockedViewChanged);
+    on<NsfwLockedViewChangedEvent>(onNsfwLockedViewChanged);
     on<DuplicateThresholdChangedEvent>(onDuplicateThresholdChanged);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<DanbooruSettingsChangedEvent>(onDanbooruSettingsChanged);
@@ -290,6 +303,44 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(automaticDuplicateScan: event.enabled),
+      emit,
+    );
+  }
+
+  /// Cambia qué esconde el filtro, así que hay que rehacer el índice **antes**
+  /// de que la pantalla vuelva a pintar: si no, la rejilla seguiría enseñando lo
+  /// que acaba de esconderse, o escondiendo lo que acaba de dejar de estarlo.
+  ///
+  /// No reescribe ninguna etiqueta: la rama se resuelve al leerla, así que esto
+  /// se enciende y se apaga sin consecuencias.
+  Future<void> onNsfwChildTagsToggled(
+    NsfwChildTagsToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _apply(
+      state.settings.copyWith(nsfwMarksChildTags: event.marksChildren),
+      emit,
+    );
+
+    await _onNsfwScopeChanged?.call();
+  }
+
+  Future<void> onNsfwUnlockedViewChanged(
+    NsfwUnlockedViewChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(nsfwUnlockedView: event.view),
+      emit,
+    );
+  }
+
+  Future<void> onNsfwLockedViewChanged(
+    NsfwLockedViewChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(nsfwLockedView: event.view),
       emit,
     );
   }

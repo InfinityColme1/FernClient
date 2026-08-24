@@ -94,6 +94,13 @@ import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:flutter/foundation.dart';
+import 'package:Fern/core/services/secret_storage.dart';
+import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/features/media/data/services/nsfw_index.dart';
+import 'package:Fern/features/nsfw/data/services/preferences_nsfw_storage.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
@@ -116,6 +123,7 @@ import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.da
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/remove_creator_from_media_usecase.dart';
@@ -147,11 +155,14 @@ import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
+import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
+import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -179,13 +190,30 @@ Future<void> initializeDependencies() async {
   // puede esperar a que `path_provider` responda: a partir de este punto los
   // ajustes se leen sin esperas.
   final documentsDirectory = await getApplicationDocumentsDirectory();
+  // Las credenciales de las fuentes remotas van cifradas con DPAPI, atadas a
+  // la cuenta de Windows. Hasta ahora estaban en claro en el fichero de
+  // preferencias.
+  getIt.registerLazySingleton<SecretStorage>(
+    () => SecretStorage(getIt<SharedPreferences>()),
+  );
+
   getIt.registerLazySingleton<SettingsRepository>(() => SettingsRepositoryImpl(
         preferences: getIt<SharedPreferences>(),
+        secrets: getIt<SecretStorage>(),
         defaultAvatarsPath:
             p.join(documentsDirectory.path, appName, avatarsFolderName),
         defaultRecognitionPath:
             p.join(documentsDirectory.path, appName, recognitionFolderName),
       ));
+
+  // Lo que quedara en claro se cifra al arrancar, una vez. Sin pedirle nada al
+  // usuario: sus credenciales siguen funcionando y no tiene que volver a
+  // escribirlas.
+  final migrated =
+      await getIt<SecretStorage>().migrate(SettingsRepositoryImpl.secretKeys);
+  if (migrated > 0) {
+    debugPrint('Credenciales cifradas por primera vez: $migrated');
+  }
 
   getIt.registerSingleton<GetSettingsUseCase>(
     GetSettingsUseCase(getIt())
@@ -269,6 +297,49 @@ Future<void> initializeDependencies() async {
             getIt<ImportRecognitionHook>().mediaArrived(mediaId),
       ));
 
+  // El bloqueo de contenido no apto. Las tres piezas van juntas y en este
+  // orden: el índice sabe **qué** está bloqueado, el modo sabe **si** el
+  // bloqueo está levantado, y lo que el repositorio pregunta es la suma de las
+  // dos.
+  getIt.registerLazySingleton<NsfwIndex>(() =>
+      NsfwIndex(
+        database: getIt<Isar>(),
+        hierarchy: getIt(),
+        // Se lee al reconstruir, no al montar: el usuario puede cambiarlo desde
+        // los ajustes y lo siguiente que se pinte ya sale como toca.
+        marksChildren: () =>
+            getIt<SettingsRepository>().getSettings().nsfwMarksChildTags,
+      )
+  );
+
+  getIt.registerLazySingleton<NsfwModeService>(() =>
+      NsfwModeService(
+        storage: PreferencesNsfwStorage(getIt<SharedPreferences>()),
+      )
+  );
+
+  getIt.registerLazySingleton<NsfwVisibility>(() =>
+      NsfwVisibility(
+        index: getIt(),
+        mode: getIt(),
+        // Se leen en el momento de preguntar, no ahora: cambiarlos en los
+        // ajustes tiene que notarse en lo siguiente que se pinte, sin reiniciar
+        // nada.
+        showsOnlyMarked: () =>
+            getIt<SettingsRepository>().getSettings().nsfwUnlockedView ==
+            NsfwUnlockedView.onlyNsfw,
+        covers: () =>
+            getIt<SettingsRepository>().getSettings().nsfwLockedView ==
+            NsfwLockedView.blurred,
+      )
+  );
+
+  // Lo bloqueado se resuelve antes de que se pinte nada: arrancar con el índice
+  // vacío es arrancar enseñando durante un instante justo lo que hay que
+  // esconder, y un instante basta.
+  await getIt<NsfwIndex>().rebuild();
+  getIt<NsfwModeService>().restore();
+
   getIt.registerLazySingleton<LocalMediaRepository>(() =>
       LocalMediaRepositoryImpl(
         appDatabase: getIt<Isar>(),
@@ -276,6 +347,11 @@ Future<void> initializeDependencies() async {
         avatarStorage: getIt(),
         registry: getIt(),
         tagHierarchy: getIt(),
+        visibility: getIt<NsfwVisibility>(),
+        // Cualquier cosa que toque etiquetas puede cambiar lo que está
+        // bloqueado, así que el índice se rehace desde el propio repositorio y
+        // no desde cada pantalla que marque algo.
+        onNsfwChanged: getIt<NsfwIndex>().rebuild,
       )
   );
 
@@ -388,6 +464,10 @@ Future<void> initializeDependencies() async {
     SetMediaFavoriteUseCase(getIt())
   );
 
+  getIt.registerSingleton<SetMediaNsfwUseCase>(
+    SetMediaNsfwUseCase(getIt<LocalMediaRepository>()),
+  );
+
   getIt.registerSingleton<SetMediaListFavoriteUseCase>(
     SetMediaListFavoriteUseCase(getIt())
   );
@@ -442,6 +522,10 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<DeleteTagUseCase>(
     DeleteTagUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SetTagNsfwUseCase>(
+    SetTagNsfwUseCase(getIt())
   );
 
   getIt.registerSingleton<GetMediaByTagUseCase>(
@@ -624,6 +708,15 @@ Future<void> initializeDependencies() async {
         migrateAvatars: getIt(),
         organizeLibraryFiles: getIt(),
         migrateRecognitionData: getIt(),
+        // Cambiar si la marca arrastra a las hijas cambia qué está escondido:
+        // se rehace el índice y se repinta lo que haya delante, igual que al
+        // quitar o poner el filtro.
+        onNsfwScopeChanged: () async {
+          await getIt<NsfwIndex>().rebuild();
+
+          getIt<TagsBloc>().add(const LoadTagsEvent());
+          getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
+        },
       ));
 
   // Único por el mismo motivo que el de ajustes: los contadores se pintan en el
@@ -820,7 +913,12 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerLazySingleton<DuplicateRepository>(
-    () => DuplicateRepositoryImpl(database: getIt<Isar>()),
+    () => DuplicateRepositoryImpl(
+      database: getIt<Isar>(),
+      // El mismo filtro que el contenido: un grupo de repetidos que no se puede
+      // abrir no se propone.
+      visibility: getIt<NsfwVisibility>(),
+    ),
   );
 
   getIt.registerLazySingleton<DuplicateScanner>(
@@ -948,12 +1046,26 @@ Future<void> initializeDependencies() async {
         removeCreatorFromMediaUseCase: getIt(),
         setMediaFavoriteUseCase: getIt(),
         setMediaListFavoriteUseCase: getIt(),
+    setMediaNsfwUseCase: getIt(),
         searchMediaUseCase: getIt(),
         searchMediaBySuggestionUseCase: getIt(),
         preferences: getIt(),
         notifications: getIt(),
       )
   );
+
+  // Abrir o cerrar el bloqueo no cambia el contenido, cambia **qué se puede
+  // ver**, así que hay que releer lo que ya estuviera pintado: sin esto, cerrar
+  // el modo deja la rejilla enseñando lo que acaba de esconderse hasta que el
+  // usuario cambie de pantalla, que es la forma más silenciosa de que falle un
+  // bloqueo.
+  //
+  // Va aquí, al final, porque necesita los dos blocs ya registrados, y sin
+  // cancelar la suscripción porque estos tres viven lo que vive la aplicación.
+  getIt<NsfwModeService>().changes.listen((_) {
+    getIt<TagsBloc>().add(const LoadTagsEvent());
+    getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
+  });
 }
 
 /// Las regiones con las que se entrena un modelo, listas para el dataset.

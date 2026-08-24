@@ -208,6 +208,36 @@ class AutomaticDuplicateScanToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Cambia qué se ve con el modo NSFW abierto.
+/// Enciende o apaga que marcar una etiqueta arrastre a las que cuelgan de ella.
+class NsfwChildTagsToggledEvent extends SettingsEvents {
+  final bool marksChildren;
+
+  const NsfwChildTagsToggledEvent(this.marksChildren);
+
+  @override
+  List<Object?> get props => [marksChildren];
+}
+
+class NsfwUnlockedViewChangedEvent extends SettingsEvents {
+  final NsfwUnlockedView view;
+
+  const NsfwUnlockedViewChangedEvent(this.view);
+
+  @override
+  List<Object?> get props => [view];
+}
+
+/// Cambia qué se ve con el modo NSFW cerrado.
+class NsfwLockedViewChangedEvent extends SettingsEvents {
+  final NsfwLockedView view;
+
+  const NsfwLockedViewChangedEvent(this.view);
+
+  @override
+  List<Object?> get props => [view];
+}
+
 /// Enciende o apaga el mirar vídeos y GIF al buscar repetidos.
 class DuplicateScanMovingToggledEvent extends SettingsEvents {
   final bool enabled;

@@ -25,6 +25,8 @@ import 'package:Fern/features/recognition/presentation/blocs/models_events.dart'
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -134,6 +136,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   ];
 
   String? _selectedImagePath;
+
+  /// La etiqueta nace marcada como NSFW.
+  bool _isNsfw = false;
   TagEntity? _parentTag;
 
   /// Direcciones vinculadas a la etiqueta que se está creando.
@@ -238,6 +243,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
               picturePath: _selectedImagePath,
               children: const [],
               sourceUrls: _sourceUrls,
+              isNsfw: _isNsfw,
             ),
             parent: _parentTag,
           ),
@@ -338,8 +344,18 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       onClose: () => context.pop(),
       // Sólo las etiquetas se vinculan con direcciones: un creador se relaciona
       // con el contenido de otra manera.
+      // Las dos acciones que no son el formulario, juntas arriba: vincular
+      // direcciones y marcar la etiqueta. Estaba al lado del campo de la madre
+      // y ahí parecía parte de él, cuando no tiene nada que ver con de quién
+      // cuelga la etiqueta.
       trailingAction: widget.type == CreateDialogType.tag
-          ? _assignUrlsButton(texts)
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _nsfwToggle(texts),
+                _assignUrlsButton(texts),
+              ],
+            )
           : null,
       leftContent: FernDialogSidePanel(
         // Mientras no haya nombre se enseña el título de la variante, en tono
@@ -453,6 +469,31 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   }
 
   /// Buscador de la etiqueta padre, para armar la jerarquía de etiquetas.
+  /// Marcar la etiqueta como NSFW ya al crearla.
+  ///
+  /// Un icono más arriba, junto al de las direcciones: las dos son cosas que se
+  /// le hacen a la etiqueta y que no forman parte de rellenar su ficha. Lo que
+  /// hace lo cuenta su tooltip; un bloque con explicación empujaría el diálogo
+  /// entero por algo que la mayoría no va a tocar.
+  ///
+  /// Sólo con contraseña puesta: sin ella, marcar no escondería nada.
+  Widget _nsfwToggle(AppLocalizations texts) {
+    if (!getIt<NsfwModeService>().isConfigured) {
+      return const SizedBox.shrink();
+    }
+
+    return Tooltip(
+      message: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
+      child: IconButton(
+        icon: Icon(
+          _isNsfw ? Icons.visibility_off : Icons.visibility_off_outlined,
+          color: _isNsfw ? context.colors.terciary : null,
+        ),
+        onPressed: () => setState(() => _isNsfw = !_isNsfw),
+      ),
+    );
+  }
+
   Widget _parentTagField() {
     final texts = AppLocalizations.of(context);
 
@@ -461,6 +502,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       hintText: texts.searchEllipsisHint,
       search: _searchParentTags,
       labelOf: (tag) => tag.name,
+      // Las marcadas se distinguen al autocompletar: elegir una sin
+      // saberlo es esconder contenido sin querer.
+      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
       onSelected: (tag) => setState(() => _parentTag = tag),
       debounce: searchDebounceDuration,
     );

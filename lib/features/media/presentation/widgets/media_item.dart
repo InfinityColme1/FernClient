@@ -3,12 +3,18 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/media_preview_service.dart';
+import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_unlock_dialog.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -105,6 +111,24 @@ class _MediaItemState extends State<MediaItem> {
 
   /// Qué fotograma del tramo toca pintar.
   int _frameIndex = 0;
+
+  /// Quién decide si esta celda va tapada.
+  ///
+  /// Si no hay nadie registrado —una prueba que pinta una celda suelta, sin la
+  /// aplicación montada detrás— vale la neutral, que no tapa nada. Lo que de
+  /// verdad esconde el contenido bloqueado es el filtro del repositorio; esto
+  /// es cómo se pinta lo que ya ha pasado por él.
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
+
+  /// Esta celda se enseña tapada: es contenido marcado como no apto, el
+  /// bloqueo está cerrado y el usuario ha pedido verlo tapado en lugar de que
+  /// desaparezca.
+  ///
+  /// Se pregunta en cada pintado y no se guarda: abrir el bloqueo tiene que
+  /// destaparlo sin que nadie tenga que acordarse de avisar a cada celda.
+  bool get _isCovered => _visibility.blursMedia(widget.media.id);
 
   /// El pase de fotogramas de un tramo de vídeo.
   Timer? _flipbook;
@@ -301,7 +325,26 @@ class _MediaItemState extends State<MediaItem> {
   /// mayúsculas para estirar la selección.
   void _onTap() {
     if (_extendSelection()) return;
+
+    // Tapado, tocarlo no abre nada: pide la contraseña. Si se acierta, el modo
+    // queda abierto y la rejilla entera se destapa sola; el contenido se abre
+    // con el toque siguiente, que es lo que espera quien acaba de encontrarse
+    // un candado.
+    if (_isCovered) {
+      unawaited(_askForPassword());
+      return;
+    }
+
     widget.onTap?.call();
+  }
+
+  Future<void> _askForPassword() async {
+    await showFernDialog<bool, Never>(
+      context: context,
+      builder: (_) => const NsfwUnlockDialog(),
+    );
+
+    if (mounted) setState(() {});
   }
 
   void _onSelectionPressed() {
@@ -319,8 +362,9 @@ class _MediaItemState extends State<MediaItem> {
 
     // Una celda que es un recorte no reproduce nada al pasar por encima: lo que
     // se reproduciría es el vídeo entero, y aquí lo que se está enseñando es un
-    // trozo de un fotograma suyo.
-    if (!_isVideo || _crops.isNotEmpty) return;
+    // trozo de un fotograma suyo. Y una tapada, menos: sería reproducir un
+    // vídeo detrás de una tapa que existe justamente para no verlo.
+    if (!_isVideo || _crops.isNotEmpty || _isCovered) return;
     isHovered ? _startPreview() : _stopPreview();
   }
 
@@ -446,12 +490,55 @@ class _MediaItemState extends State<MediaItem> {
                   _buildTopShade(),
                   _buildTopLeftBadges(),
                   _buildSelectionButton(),
+                  // La última de la pila: lo que tapa tiene que quedar por
+                  // encima de todo lo demás, insignias incluidas.
+                  if (_isCovered) _buildCover(context),
                 ],
               ),
             ),
           ),
         ),
       ),
+      ),
+    );
+  }
+
+  /// La tapa del contenido marcado: desenfoque, un velo y el candado.
+  ///
+  /// Desenfoque **y** velo, no sólo desenfoque: un desenfoque fuerte todavía
+  /// deja ver la forma y los colores, y con eso basta para reconocer lo que hay
+  /// debajo en una miniatura. Y el texto, porque una celda borrosa sin
+  /// explicación parece contenido roto.
+  Widget _buildCover(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
+    return Positioned.fill(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.55),
+            padding: const EdgeInsets.all(AppSpacing.s),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock_outline, color: Colors.white),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  texts.nsfwCoveredLabel,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

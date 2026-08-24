@@ -2497,6 +2497,299 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsDuplicates => 'Contenu répété';
 
   @override
+  String get settingsNsfw => 'Contenu NSFW';
+
+  @override
+  String get nsfwCoveredLabel => 'Contenu NSFW';
+
+  @override
+  String get nsfwViewsTitle => 'Comment il se comporte';
+
+  @override
+  String get nsfwViewsNote =>
+      'Ce que vous voyez avec le filtre actif et ce que vous voyez sans lui. Les deux s’appliquent à ce qui sera affiché ensuite, sans rien redémarrer.';
+
+  @override
+  String get nsfwUnlockedViewLabel => 'Sans filtre NSFW';
+
+  @override
+  String get nsfwUnlockedViewMixed => 'Tout ensemble';
+
+  @override
+  String get nsfwUnlockedViewOnly => 'Seulement ce qui est marqué';
+
+  @override
+  String get nsfwUnlockedViewNote =>
+      '« Seulement le marqué » en fait une bibliothèque à part : tant que le filtre est retiré, le reste de votre contenu n’apparaît pas.';
+
+  @override
+  String get nsfwLockedViewLabel => 'Avec filtre NSFW';
+
+  @override
+  String get nsfwLockedViewHidden => 'Il n’apparaît pas';
+
+  @override
+  String get nsfwLockedViewBlurred => 'Il apparaît couvert';
+
+  @override
+  String get nsfwChildTagsLabel =>
+      'Marquer une étiquette marque aussi celles qui en dépendent';
+
+  @override
+  String get nsfwChildTagsDescription =>
+      'Une étiquette qui dépend d\'une étiquette marquée cache aussi son contenu, sans avoir à la marquer séparément. Désactivé, chaque étiquette ne répond que du sien. Rien n\'est réécrit dans un cas comme dans l\'autre : activez-le et désactivez-le autant que vous voulez.';
+
+  @override
+  String get nsfwLockedViewNote =>
+      'Couvert, le contenu marqué garde sa place dans la grille, flouté et avec un cadenas ; le toucher demande le mot de passe. C’est plus pratique, mais cela laisse voir qu’il y a quelque chose : combien, et de quelle forme.';
+
+  @override
+  String get nsfwSectionTitle => 'Filtre de contenu NSFW';
+
+  @override
+  String get nsfwSectionNote =>
+      'Ce que vous marquez comme NSFW est caché : avec le filtre actif, cela n’apparaît nulle part, ni dans la corbeille ni dans les recherches.';
+
+  @override
+  String get nsfwSectionWarning =>
+      'Cela cache, cela ne chiffre pas : les fichiers restent dans leur dossier sous leur nom, et quiconque ouvre l’explorateur les voit.';
+
+  @override
+  String get nsfwNotConfiguredNote =>
+      'Il n’y a pas encore de mot de passe. Sans lui rien ne peut être marqué, et ce que vous avez se voit comme toujours.';
+
+  @override
+  String get nsfwConfigureAction => 'Définir un mot de passe';
+
+  @override
+  String get nsfwStateLocked =>
+      'Filtre NSFW actif : le contenu marqué ne se voit pas';
+
+  @override
+  String get nsfwStateUnlocked => 'Filtre NSFW retiré : tout se voit';
+
+  @override
+  String get nsfwOpenAction => 'Retirer le filtre NSFW';
+
+  @override
+  String get nsfwCloseAction => 'Remettre le filtre';
+
+  @override
+  String get nsfwRememberLabel => 'Rester sans filtre à la réouverture de Fern';
+
+  @override
+  String get nsfwRememberDescription =>
+      'Désactivé, fermer Fern remet le filtre. Activé, il reste comme vous l’avez laissé, et la première chose que vous verrez en ouvrant est ce que vous avez marqué.';
+
+  @override
+  String get nsfwChangePasswordAction => 'Changer le mot de passe';
+
+  @override
+  String get nsfwChangeDone =>
+      'Mot de passe changé. Le code de récupération reste le même.';
+
+  @override
+  String get nsfwDisableNote =>
+      'Désactiver le filtre démarque toutes les étiquettes et cesse de cacher quoi que ce soit. Votre contenu n’est pas touché : il était marqué, pas chiffré.';
+
+  @override
+  String get nsfwDisableAction => 'Désactiver le filtre';
+
+  @override
+  String nsfwDisableDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Filtre désactivé et $count étiquettes démarquées.',
+      one: 'Filtre désactivé et 1 étiquette démarquée.',
+      zero: 'Filtre désactivé. Aucune étiquette n’était marquée.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nsfwSetupTitle => 'Définir le mot de passe';
+
+  @override
+  String get nsfwPasswordLabel => 'Mot de passe';
+
+  @override
+  String get nsfwPasswordRepeatLabel => 'Répétez-le';
+
+  @override
+  String get nsfwHintLabel => 'Phrase indice (facultative)';
+
+  @override
+  String get nsfwHintNote =>
+      'Elle vous est montrée après trois essais ratés, donc elle se lit sans connaître le mot de passe : qu’elle soit un indice pour vous, pas le mot de passe écrit autrement.';
+
+  @override
+  String get nsfwSetupAction => 'Enregistrer';
+
+  @override
+  String get nsfwPasswordEmpty => 'Écrivez un mot de passe.';
+
+  @override
+  String get nsfwPasswordMismatch =>
+      'Les deux mots de passe ne sont pas identiques.';
+
+  @override
+  String get nsfwCodeTitle => 'Votre code de récupération';
+
+  @override
+  String get nsfwCodeIntro =>
+      'C’est la seule chose qui retire le filtre si vous perdez le mot de passe, et il n’est montré que maintenant : Fern ne le garde pas, il en garde une empreinte. Copiez-le ou enregistrez-le dans un fichier avant de fermer.';
+
+  @override
+  String get nsfwCodeCopy => 'Copier';
+
+  @override
+  String get nsfwCodeCopied => 'Copié dans le presse-papiers.';
+
+  @override
+  String get nsfwCodeSave => 'Enregistrer dans un fichier';
+
+  @override
+  String nsfwCodeSaved(String path) {
+    return 'Enregistré dans $path';
+  }
+
+  @override
+  String get nsfwCodeSaveFailed =>
+      'Le fichier n’a pas pu être enregistré. Copiez le code avant de fermer.';
+
+  @override
+  String get nsfwCodeDone => 'Je l’ai enregistré';
+
+  @override
+  String get nsfwCodeFileHeader =>
+      'Code de récupération du filtre de contenu NSFW de Fern. Gardez-le où vous pourrez le retrouver : c’est la seule chose qui retire le filtre si vous perdez le mot de passe.';
+
+  @override
+  String get nsfwUnlockTitle => 'Retirer le filtre NSFW';
+
+  @override
+  String get nsfwUnlockAction => 'Le retirer';
+
+  @override
+  String get nsfwUnlockWrong => 'Ce n’est pas le mot de passe.';
+
+  @override
+  String nsfwUnlockHint(String hint) {
+    return 'Votre phrase indice : $hint';
+  }
+
+  @override
+  String get nsfwUnlockNoHint =>
+      'Vous n’avez pas mis de phrase indice. Si le mot de passe vous échappe, il vous reste le code de récupération.';
+
+  @override
+  String get nsfwUnlockRecover => 'Utiliser le code de récupération';
+
+  @override
+  String get nsfwRecoverTitle => 'Récupérer l’accès';
+
+  @override
+  String get nsfwRecoverIntro =>
+      'Écrivez le code que vous avez gardé et choisissez un nouveau mot de passe. Le code est consommé à l’usage : nous vous en donnerons un autre, et c’est celui-là qui vaudra désormais.';
+
+  @override
+  String get nsfwRecoverCodeLabel => 'Code de récupération';
+
+  @override
+  String get nsfwRecoverAction => 'Récupérer';
+
+  @override
+  String get nsfwRecoverWrong =>
+      'Ce code n’est pas le bon. Regardez encore : les tirets et les majuscules n’ont pas d’importance.';
+
+  @override
+  String get nsfwChangeTitle => 'Changer le mot de passe';
+
+  @override
+  String get nsfwChangeCurrentLabel => 'Mot de passe actuel';
+
+  @override
+  String get nsfwChangeNewLabel => 'Nouveau mot de passe';
+
+  @override
+  String get nsfwChangeAction => 'Le changer';
+
+  @override
+  String get nsfwChangeWrong => 'Ce n’est pas le mot de passe actuel.';
+
+  @override
+  String get nsfwDisableTitle => 'Désactiver le filtre';
+
+  @override
+  String get nsfwDisableWarning =>
+      'Le mot de passe est supprimé, toutes les étiquettes sont démarquées et leur contenu réapparaît. Rien n’est retiré de votre bibliothèque. Pour avoir de nouveau le filtre, il faudra le remettre de zéro et marquer les étiquettes à nouveau.';
+
+  @override
+  String get nsfwDisableSecretLabel => 'Mot de passe ou code de récupération';
+
+  @override
+  String get nsfwDisableWrong => 'Ni le mot de passe ni le code.';
+
+  @override
+  String get nsfwDisableFailed =>
+      'Les marques n\'ont pas pu être retirées, le mot de passe est donc resté tel quel. Réessayez.';
+
+  @override
+  String tagNsfwAffected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Cache $count contenus.',
+      one: 'Cache 1 contenu.',
+      zero: 'Il n’y a aucun contenu avec cette étiquette pour l’instant.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagNsfwOnTooltip => 'Marquée NSFW · cliquez pour la démarquer';
+
+  @override
+  String get tagNsfwOffTooltip => 'Marquer comme NSFW';
+
+  @override
+  String get tagNsfwBadge => 'Étiquette NSFW';
+
+  @override
+  String get mediaNsfwMark => 'Marquer comme NSFW';
+
+  @override
+  String get mediaNsfwUnmark => 'Retirer la marque NSFW';
+
+  @override
+  String mediaNsfwMarked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenus marqués NSFW.',
+      one: '1 contenu marqué NSFW.',
+      zero: 'Rien n\'a changé.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mediaNsfwUnmarked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenus démarqués.',
+      one: '1 contenu démarqué.',
+      zero: 'Rien n\'a changé.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get mediaNsfwByTag => 'Marqué par l\'une de ses étiquettes';
+
+  @override
   String get duplicatesScanSectionTitle => 'Recherche automatique';
 
   @override

@@ -10,6 +10,7 @@ import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dar
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/theme_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
+import 'package:Fern/core/services/secret_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Ajustes guardados en las preferencias del sistema.
@@ -27,11 +28,59 @@ class SettingsRepositoryImpl implements SettingsRepository {
   /// que sólo se sabe de forma asíncrona.
   final String defaultRecognitionPath;
 
+  /// Dónde van las credenciales, cifradas.
+  ///
+  /// Va por parámetro y no se monta aquí para poder probar el repositorio sin
+  /// tocar la API de Windows: sin él, lo de siempre —el fichero de
+  /// preferencias, en claro—, que es lo que había antes de esto.
+  final SecretStorage? _secrets;
+
   SettingsRepositoryImpl({
     required SharedPreferences preferences,
     required this.defaultAvatarsPath,
     required this.defaultRecognitionPath,
-  }) : _preferences = preferences;
+    SecretStorage? secrets,
+  })  : _preferences = preferences,
+        _secrets = secrets;
+
+  /// Un secreto guardado, o cadena vacía si no hay ninguno.
+  ///
+  /// Las credenciales llegan a la interfaz como cadenas y vacío significa «no
+  /// hay»: un `null` aquí sería otro caso que tratar en cada campo de cada
+  /// fuente, y todos harían lo mismo.
+  String _secret(String key) {
+    final storage = _secrets;
+    if (storage == null) return _preferences.getString(key) ?? '';
+
+    return storage.read(key) ?? '';
+  }
+
+  Future<void> _saveSecret(String key, String value) async {
+    final storage = _secrets;
+
+    if (storage == null) {
+      await _preferences.setString(key, value);
+      return;
+    }
+
+    await storage.write(key, value);
+  }
+
+  /// Las claves que llevan un secreto dentro.
+  ///
+  /// Están juntas porque hay dos sitios que las necesitan todas: la migración de
+  /// lo que se guardó en claro y esta lista misma, que es donde se mira al
+  /// añadir una fuente nueva. Lo que no esté aquí se guarda en claro y nadie se
+  /// entera.
+  static const secretKeys = [
+    redditClientSecretPreferenceKey,
+    redditPasswordPreferenceKey,
+    pixivSessionIdPreferenceKey,
+    danbooruApiKeyPreferenceKey,
+    gelbooruApiKeyPreferenceKey,
+    pinterestSessionIdPreferenceKey,
+    pawchiveSessionIdPreferenceKey,
+  ];
 
   String _customColorKey(CustomThemeColor slot) =>
       '$customColorPreferenceKeyPrefix${slot.id}';
@@ -140,6 +189,14 @@ class SettingsRepositoryImpl implements SettingsRepository {
           _preferences.getBool(automaticDuplicateScanPreferenceKey) ?? true,
       duplicateScanIncludesMoving:
           _preferences.getBool(duplicateScanMovingPreferenceKey) ?? true,
+      nsfwMarksChildTags:
+          _preferences.getBool(nsfwChildTagsPreferenceKey) ?? true,
+      nsfwUnlockedView: NsfwUnlockedView.fromId(
+        _preferences.getString(nsfwUnlockedViewPreferenceKey),
+      ),
+      nsfwLockedView: NsfwLockedView.fromId(
+        _preferences.getString(nsfwLockedViewPreferenceKey),
+      ),
       duplicateScanPeriod: DuplicateScanPeriod.fromId(
         _preferences.getString(duplicateScanPeriodPreferenceKey),
       ),
@@ -174,34 +231,31 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ),
       reddit: RedditSettingsEntity(
         clientId: _preferences.getString(redditClientIdPreferenceKey) ?? '',
-        clientSecret:
-            _preferences.getString(redditClientSecretPreferenceKey) ?? '',
+        clientSecret: _secret(redditClientSecretPreferenceKey),
         username: _preferences.getString(redditUsernamePreferenceKey) ?? '',
-        password: _preferences.getString(redditPasswordPreferenceKey) ?? '',
+        password: _secret(redditPasswordPreferenceKey),
       ),
       browserHome: _preferences.getString(browserHomePreferenceKey) ??
           browserHomeUrl,
       pawchive: PawchiveSettingsEntity(
-        sessionId:
-            _preferences.getString(pawchiveSessionIdPreferenceKey) ?? '',
+        sessionId: _secret(pawchiveSessionIdPreferenceKey),
         byFavoriteCreators:
             _preferences.getBool(pawchiveByCreatorsPreferenceKey) ?? false,
       ),
       pinterest: PinterestSettingsEntity(
         username: _preferences.getString(pinterestUsernamePreferenceKey) ?? '',
-        sessionId:
-            _preferences.getString(pinterestSessionIdPreferenceKey) ?? '',
+        sessionId: _secret(pinterestSessionIdPreferenceKey),
       ),
       gelbooru: GelbooruSettingsEntity(
         userId: _preferences.getString(gelbooruUserIdPreferenceKey) ?? '',
-        apiKey: _preferences.getString(gelbooruApiKeyPreferenceKey) ?? '',
+        apiKey: _secret(gelbooruApiKeyPreferenceKey),
       ),
       danbooru: DanbooruSettingsEntity(
         username: _preferences.getString(danbooruUsernamePreferenceKey) ?? '',
-        apiKey: _preferences.getString(danbooruApiKeyPreferenceKey) ?? '',
+        apiKey: _secret(danbooruApiKeyPreferenceKey),
       ),
       pixiv: PixivSettingsEntity(
-        sessionId: _preferences.getString(pixivSessionIdPreferenceKey) ?? '',
+        sessionId: _secret(pixivSessionIdPreferenceKey),
       ),
       notifications: _notifications(),
     );
@@ -254,6 +308,18 @@ class SettingsRepositoryImpl implements SettingsRepository {
       duplicateScanMovingPreferenceKey,
       settings.duplicateScanIncludesMoving,
     );
+    await _preferences.setBool(
+      nsfwChildTagsPreferenceKey,
+      settings.nsfwMarksChildTags,
+    );
+    await _preferences.setString(
+      nsfwUnlockedViewPreferenceKey,
+      settings.nsfwUnlockedView.id,
+    );
+    await _preferences.setString(
+      nsfwLockedViewPreferenceKey,
+      settings.nsfwLockedView.id,
+    );
     await _preferences.setInt(
       frameSamplesPreferenceKey,
       settings.frameSamples.clamp(minFrameSamples, maxFrameSamples),
@@ -297,40 +363,31 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
     final reddit = settings.reddit;
     await _preferences.setString(redditClientIdPreferenceKey, reddit.clientId);
-    await _preferences.setString(
-      redditClientSecretPreferenceKey,
-      reddit.clientSecret,
-    );
+    await _saveSecret(redditClientSecretPreferenceKey, reddit.clientSecret);
     await _preferences.setString(redditUsernamePreferenceKey, reddit.username);
-    await _preferences.setString(redditPasswordPreferenceKey, reddit.password);
+    await _saveSecret(redditPasswordPreferenceKey, reddit.password);
 
-    await _preferences.setString(
-      pixivSessionIdPreferenceKey,
-      settings.pixiv.sessionId,
-    );
+    await _saveSecret(pixivSessionIdPreferenceKey, settings.pixiv.sessionId);
 
     final danbooru = settings.danbooru;
     await _preferences.setString(
       danbooruUsernamePreferenceKey,
       danbooru.username,
     );
-    await _preferences.setString(danbooruApiKeyPreferenceKey, danbooru.apiKey);
+    await _saveSecret(danbooruApiKeyPreferenceKey, danbooru.apiKey);
 
     final gelbooru = settings.gelbooru;
     await _preferences.setString(gelbooruUserIdPreferenceKey, gelbooru.userId);
-    await _preferences.setString(gelbooruApiKeyPreferenceKey, gelbooru.apiKey);
+    await _saveSecret(gelbooruApiKeyPreferenceKey, gelbooru.apiKey);
 
     final pinterest = settings.pinterest;
     await _preferences.setString(
       pinterestUsernamePreferenceKey,
       pinterest.username,
     );
-    await _preferences.setString(
-      pinterestSessionIdPreferenceKey,
-      pinterest.sessionId,
-    );
+    await _saveSecret(pinterestSessionIdPreferenceKey, pinterest.sessionId);
 
-    await _preferences.setString(
+    await _saveSecret(
       pawchiveSessionIdPreferenceKey,
       settings.pawchive.sessionId,
     );

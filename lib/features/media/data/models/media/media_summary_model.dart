@@ -41,6 +41,19 @@ class MediaSummaryModel {
   @Index()
   bool hasPendingSuggestions = false;
 
+  /// El usuario ha marcado **este contenido** como NSFW, uno a uno o en tanda.
+  ///
+  /// Es una marca propia y no la que hereda de sus etiquetas: las dos existen y
+  /// se suman. Separarlas es lo que permite que desmarcar una etiqueta no se
+  /// lleve por delante lo que alguien marcó a mano, y que el contenido nuevo que
+  /// entre en una etiqueta marcada quede escondido sin tener que reescribir
+  /// nada.
+  ///
+  /// Indexado: la lista de lo marcado se pregunta al arrancar y cada vez que
+  /// cambia algo, y sin índice sería recorrer la biblioteca entera.
+  @Index()
+  bool isNsfw = false;
+
   /// Cuándo se reconoció por última vez.
   ///
   /// Evita repasar lo ya hecho al pedir «reconocer toda la biblioteca», que con

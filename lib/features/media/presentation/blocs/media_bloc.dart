@@ -29,6 +29,7 @@ import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_u
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
 import 'dart:math' as math;
 
@@ -68,6 +69,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final RemoveCreatorFromMediaUseCase _removeCreatorFromMediaUseCase;
   final SetMediaFavoriteUseCase _setMediaFavoriteUseCase;
   final SetMediaListFavoriteUseCase _setMediaListFavoriteUseCase;
+  final SetMediaNsfwUseCase _setMediaNsfwUseCase;
   final SearchMediaUseCase _searchMediaUseCase;
   final SearchMediaBySuggestionUseCase _searchMediaBySuggestionUseCase;
 
@@ -116,6 +118,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required RemoveCreatorFromMediaUseCase removeCreatorFromMediaUseCase,
     required SetMediaFavoriteUseCase setMediaFavoriteUseCase,
     required SetMediaListFavoriteUseCase setMediaListFavoriteUseCase,
+    required SetMediaNsfwUseCase setMediaNsfwUseCase,
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
     required PreferencesService preferences,
@@ -144,6 +147,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _removeCreatorFromMediaUseCase = removeCreatorFromMediaUseCase,
         _setMediaFavoriteUseCase = setMediaFavoriteUseCase,
         _setMediaListFavoriteUseCase = setMediaListFavoriteUseCase,
+        _setMediaNsfwUseCase = setMediaNsfwUseCase,
         _searchMediaUseCase = searchMediaUseCase,
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
         _preferences = preferences,
@@ -153,6 +157,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         super(const MediaLoading()) {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
+    on<ReloadCurrentMediaEvent>(onReloadCurrent);
     on<LoadDeletedMediaEvent>(onLoadDeletedMedia);
     on<LoadFavoriteMediaEvent>(onLoadFavoriteMedia);
     on<LoadMediaByTagEvent>(onLoadMediaByTag);
@@ -184,6 +189,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<MediaLoadFailedEvent>(onMediaLoadFailed);
     on<DeleteSelectedMediaEvent>(onDeleteSelectedMedia);
     on<FavoriteSelectedMediaEvent>(onFavoriteSelectedMedia);
+    on<SetSelectedMediaNsfwEvent>(onSetSelectedMediaNsfw);
+    on<SetMediaNsfwEvent>(onSetMediaNsfw);
     on<RestoreSelectedMediaEvent>(onRestoreSelectedMedia);
     on<PurgeDeletedMediaEvent>(onPurgeDeletedMedia);
     on<ConfirmSelectedMediaEvent>(onConfirmSelectedMedia);
@@ -198,6 +205,36 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// y el indicador de espera desaparece, que es lo que no puede olvidarse en
   /// ninguna salida.
   MediaStates get _idle => state.copyWith(isBusy: false);
+
+  /// El último listado que se pidió, para poder repetirlo.
+  ///
+  /// Se anota en un solo sitio y no en cada manejador para que no haya que
+  /// acordarse: un listado nuevo que se olvidara de apuntarse no daría ningún
+  /// error, sólo dejaría la pantalla sin refrescar al abrir o cerrar el modo
+  /// NSFW, que es la forma más silenciosa de que falle un bloqueo.
+  MediaEvents? _lastListing;
+
+  @override
+  void onEvent(MediaEvents event) {
+    super.onEvent(event);
+
+    if (event is LoadScannedMediaEvent ||
+        event is LoadMediaLibraryEvent ||
+        event is LoadDeletedMediaEvent ||
+        event is LoadFavoriteMediaEvent ||
+        event is LoadMediaByTagEvent ||
+        event is LoadMediaByCreatorEvent) {
+      _lastListing = event;
+    }
+  }
+
+  /// Repite el último listado. Si no ha habido ninguno, la biblioteca.
+  Future<void> onReloadCurrent(
+    ReloadCurrentMediaEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    add(_lastListing ?? const LoadMediaLibraryEvent());
+  }
 
   void onLoadScannedMedia(LoadScannedMediaEvent event, Emitter<MediaStates> emit) async {
     await _loadScanned(state.importSource, emit);
@@ -932,6 +969,51 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     }
 
     emit(state.copyWith(selectedIds: const {}, isBusy: false));
+  }
+
+  /// Marca o desmarca como NSFW la selección de la rejilla.
+  ///
+  /// Al marcar, lo marcado desaparece de la pantalla si el filtro está puesto, y
+  /// por eso se recarga el listado en vez de quitar las celdas a mano: quién
+  /// desaparece no lo decide esto, lo decide el filtro, y adivinarlo aquí sería
+  /// escribir la misma regla dos veces.
+  void onSetSelectedMediaNsfw(
+    SetSelectedMediaNsfwEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final selectedIds = state.selectedIds;
+    if (selectedIds.isEmpty) return;
+
+    emit(state.copyWith(isBusy: true));
+
+    final result = await _setMediaNsfwUseCase(
+      params: SetMediaNsfwParams(
+        mediaIds: selectedIds.toList(),
+        isNsfw: event.isNsfw,
+      ),
+    );
+
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
+
+    emit(state.copyWith(selectedIds: const {}, isBusy: false));
+    add(const ReloadCurrentMediaEvent());
+  }
+
+  /// Marca o desmarca como NSFW un contenido suelto.
+  void onSetMediaNsfw(
+    SetMediaNsfwEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final result = await _setMediaNsfwUseCase(
+      params: SetMediaNsfwParams.one(event.mediaId, isNsfw: event.isNsfw),
+    );
+
+    if (result is! DataSuccess) return;
+
+    add(const ReloadCurrentMediaEvent());
   }
 
   /// Restablecimiento de la selección en la pantalla de eliminados: el contenido

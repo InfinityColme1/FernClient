@@ -21,6 +21,7 @@ import 'package:Fern/features/media/domain/entities/search/search_suggestion_ent
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
@@ -36,17 +37,77 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   final MediaRegistry _registry;
   final TagHierarchy _tagHierarchy;
 
+  /// Qué se puede enseñar ahora mismo. De fábrica, todo.
+  final ContentVisibility _visibility;
+
+  /// A quién avisar de que lo bloqueado puede haber cambiado.
+  ///
+  /// Lo que decide qué está bloqueado es un índice en memoria, y quien lo
+  /// invalida es cualquier cosa que toque etiquetas: marcarlas, moverlas de
+  /// rama, borrarlas o ponérselas a un contenido. Va por parámetro para que el
+  /// repositorio no tenga que saber de ese índice; lo que sabe es que acaba de
+  /// cambiar algo que le importa a alguien.
+  final Future<void> Function()? _onNsfwChanged;
+
   LocalMediaRepositoryImpl({
     required Isar appDatabase,
     required MediaFileOrganizer fileOrganizer,
     required AvatarStorageService avatarStorage,
     required MediaRegistry registry,
     required TagHierarchy tagHierarchy,
+    ContentVisibility visibility = const ContentVisibility(),
+    Future<void> Function()? onNsfwChanged,
   })  : _appDatabase = appDatabase,
         _fileOrganizer = fileOrganizer,
         _avatarStorage = avatarStorage,
         _registry = registry,
-        _tagHierarchy = tagHierarchy;
+        _tagHierarchy = tagHierarchy,
+        _visibility = visibility,
+        _onNsfwChanged = onNsfwChanged;
+
+  /// Los sumarios que se pueden enseñar.
+  ///
+  /// **Por aquí pasa todo lo que devuelve contenido.** Es la única garantía de
+  /// que no se escape nada: un método nuevo que consulte la base de datos por
+  /// su cuenta y devuelva sumarios directamente enseña lo bloqueado, y no lo
+  /// dirá ningún error.
+  List<MediaSummaryModel> _visible(Iterable<MediaSummaryModel> summaries) => [
+        for (final summary in summaries)
+          if (!_visibility.hidesMedia(summary.id)) summary,
+      ];
+
+  /// Las etiquetas que se pueden enseñar.
+  ///
+  /// Esconder una etiqueta es esconder su nombre: con el modo apagado, una
+  /// etiqueta bloqueada que aparece en el listado lateral o que autocompleta en
+  /// la barra de búsqueda ya cuenta lo que hay, aunque su contenido no se vea.
+  List<TagModel> _visibleTags(Iterable<TagModel> tags) => [
+        for (final tag in tags)
+          if (!_visibility.hidesTag(tag.id)) tag,
+      ];
+
+  /// Una etiqueta como entidad, con lo que el filtro sabe de ella.
+  ///
+  /// **Por aquí pasa toda etiqueta que sale del repositorio.** El modelo no
+  /// puede rellenar `isUnderNsfw` por su cuenta —no conoce el índice, y la marca
+  /// de una madre no está escrita en sus hijas— así que se pone aquí, en el
+  /// único sitio donde se sabe.
+  TagEntity _asEntity(TagModel model) => model.toEntity().copyWith(
+        isUnderNsfw: _visibility.marksTag(model.id),
+        children: [for (final child in model.children) _asEntity(child)],
+      );
+
+  /// Avisa de que lo que el filtro NSFW esconde puede haber cambiado.
+  ///
+  /// Lo llama tanto quien toca etiquetas —marcarlas, moverlas, borrarlas, o
+  /// cambiar las de un contenido— como quien marca contenido a mano: las dos
+  /// cosas mueven lo mismo, y el índice se rehace igual.
+  Future<void> _nsfwChanged() async {
+    final notify = _onNsfwChanged;
+    if (notify == null) return;
+
+    await notify();
+  }
 
 
   Future<void> _saveBatch(List<MediaModel> models) async {
@@ -117,7 +178,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .isDeletedEqualTo(false)
           .findAll();
 
-      return DataSuccess(query.map((e) => e.toEntity()).toList());
+      return DataSuccess(_visible(query).map((e) => e.toEntity()).toList());
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -147,7 +208,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
               : filter.importSourceEqualTo(source.id))
           .findAll();
 
-      return DataSuccess(query.map((e) => e.toEntity()).toList());
+      // También aquí: lo que acaba de importarse puede venir con una etiqueta
+      // bloqueada puesta por el etiquetado automático, y la pantalla de
+      // importación no es menos pantalla que las demás.
+      return DataSuccess(_visible(query).map((e) => e.toEntity()).toList());
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -163,7 +227,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .isDeletedEqualTo(true)
           .findAll();
 
-      return DataSuccess(query.map((e) => e.toEntity()).toList());
+      // La papelera tampoco: tirar algo a la papelera no es una forma de
+      // sacarlo del bloqueo.
+      return DataSuccess(_visible(query).map((e) => e.toEntity()).toList());
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -246,6 +312,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<MediaEntity>> getMediaDetails(int id) async {
     try {
+      // Antes de leer nada: quien pida por identificador un contenido
+      // bloqueado —un enlace guardado, una pantalla que no se refrescó— tiene
+      // que encontrarse lo mismo que si no existiera.
+      if (_visibility.hidesDetails(id)) {
+        return DataException(Exception("Media not found"));
+      }
+
       final media = await _loadedDetails(id);
       if (media == null) {
         return DataException(Exception("Media not found"));
@@ -376,6 +449,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           await model.source.save();
         }
       });
+
+      // Las etiquetas que se acaban de poner pueden bloquearlo o desbloquearlo:
+      // quien revisa contenido en importación le pone las suyas a mano, y una
+      // de ellas puede ser la que lo esconde.
+      await _nsfwChanged();
 
       // El contenido acaba de pasar a definitivo: si la aplicación gestiona los
       // ficheros, este es el momento de llevarlo a su carpeta. La ruta nueva se
@@ -766,7 +844,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         await parentModel.children.save();
       });
 
-      return DataSuccess(model.toEntity());
+      await _nsfwChanged();
+
+      return DataSuccess(_asEntity(model));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -820,9 +900,15 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         await parentModel.children.save();
       });
 
+      // Mover una etiqueta de rama cambia el bloqueo de todo lo que cuelga de
+      // ella: colgarla de una marcada bloquea la rama entera, y sacarla de ahí
+      // la devuelve. Es justo lo que la marca propagada al leer permite hacer
+      // sin reescribir nada, y lo único que hace falta es volver a mirarlo.
+      await _nsfwChanged();
+
       await model.children.load();
 
-      return DataSuccess(model.toEntity());
+      return DataSuccess(_asEntity(model));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -912,7 +998,131 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       await model.children.load();
 
-      return DataSuccess(model.toEntity());
+      return DataSuccess(_asEntity(model));
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Marca o desmarca una etiqueta como contenido no apto.
+  ///
+  /// La marca se guarda sólo aquí: la rama de debajo queda bloqueada porque el
+  /// índice la resuelve al leer, no porque se le haya escrito nada.
+  @override
+  Future<DataState<int>> setTagNsfw(int tagId, {required bool isNsfw}) async {
+    try {
+      final model = await _appDatabase.tagModels.get(tagId);
+      if (model == null) return DataException(Exception("Tag not found"));
+
+      await _appDatabase.writeTxn(() async {
+        model.isNsfw = isNsfw;
+        await _appDatabase.tagModels.put(model);
+      });
+
+      await _nsfwChanged();
+
+      // Cuántos contenidos hay debajo de la decisión, ya con la rama resuelta:
+      // es lo que la pantalla enseña al marcarla, y decirlo antes de que
+      // desaparezcan es la diferencia entre una marca y un susto.
+      final branch = await _tagHierarchy.descendantsOf([tagId]);
+      final affected = <int>{};
+
+      for (final tag in [model, ...branch]) {
+        await tag.media.load();
+
+        for (final media in tag.media) {
+          final id = media.id;
+          if (id != null) affected.add(id);
+        }
+      }
+
+      return DataSuccess(affected.length);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Marca o desmarca contenido como NSFW.
+  ///
+  /// De una sola escritura: esto se llama con una selección entera, y una
+  /// transacción por elemento serían doscientas para marcar doscientas fotos.
+  @override
+  Future<DataState<int>> setMediaNsfw(
+    List<int> mediaIds, {
+    required bool isNsfw,
+  }) async {
+    try {
+      if (mediaIds.isEmpty) return const DataSuccess(0);
+
+      final rows = await _appDatabase.mediaSummaryModels.getAll(mediaIds);
+
+      // Sólo los que cambian de verdad: lo que ya estaba como se pide no se
+      // reescribe, y así el número que se devuelve es el que se puede enseñar.
+      final changed = [
+        for (final row in rows)
+          if (row != null && row.isNsfw != isNsfw) row,
+      ];
+
+      if (changed.isEmpty) return const DataSuccess(0);
+
+      await _appDatabase.writeTxn(() async {
+        for (final row in changed) {
+          row.isNsfw = isNsfw;
+        }
+
+        await _appDatabase.mediaSummaryModels.putAll(changed);
+      });
+
+      // El índice manda sobre lo que se pinta, así que se rehace antes de
+      // contestar: si no, la rejilla seguiría enseñando lo que se acaba de
+      // marcar hasta que algo más lo moviera.
+      await _nsfwChanged();
+
+      return DataSuccess(changed.length);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Quita la marca de todas las etiquetas.
+  ///
+  /// Es la salida de quien ha perdido la contraseña y el código: se pierde el
+  /// marcado, **nunca el contenido**. Devuelve cuántas se desmarcaron, para
+  /// poder decirlo.
+  @override
+  Future<DataState<int>> clearNsfwMarks() async {
+    try {
+      final tags =
+          await _appDatabase.tagModels.filter().isNsfwEqualTo(true).findAll();
+
+      final media = await _appDatabase.mediaSummaryModels
+          .filter()
+          .isNsfwEqualTo(true)
+          .findAll();
+
+      if (tags.isEmpty && media.isEmpty) return const DataSuccess(0);
+
+      // Las dos en la misma escritura: si sólo entrara una, quedaría media
+      // biblioteca marcada y media no, y desde fuera parecería que se ha
+      // limpiado todo.
+      await _appDatabase.writeTxn(() async {
+        for (final tag in tags) {
+          tag.isNsfw = false;
+        }
+
+        for (final one in media) {
+          one.isNsfw = false;
+        }
+
+        await _appDatabase.tagModels.putAll(tags);
+        await _appDatabase.mediaSummaryModels.putAll(media);
+      });
+
+      await _nsfwChanged();
+
+      // Se cuentan las etiquetas: es lo que dice el aviso, y es lo que el
+      // usuario reconoce como «lo que había marcado».
+      return DataSuccess(tags.length);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -929,12 +1139,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           await _tagHierarchy.ancestorsOf(tags.map((tag) => tag.id));
 
       return DataSuccess([
-        for (final model in ancestors)
+        for (final model in _visibleTags(ancestors))
           TagEntity(
             id: model.id,
             name: model.name,
             picturePath: model.picturePath,
             sourceUrls: model.sourceUrls,
+            isNsfw: model.isNsfw,
             children: const [],
           ),
       ]);
@@ -974,6 +1185,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
         await _appDatabase.tagModels.delete(tagId);
       });
+
+      await _nsfwChanged();
 
       // Después de la baja: si el disco falla, la etiqueta ya no está y lo peor
       // que queda es una imagen suelta.
@@ -1024,6 +1237,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           await model.tags.update(unlink: [tagModel]);
         }
       });
+
+      // Y al revés: quitarle la etiqueta que lo bloqueaba lo devuelve a la
+      // vista sin salir de la pantalla.
+      await _nsfwChanged();
 
       return DataSuccess(null);
     } on Exception catch (e) {
@@ -1257,7 +1474,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   Future<DataState<List<TagEntity>>> getTags() async {
     try {
       final query = await _appDatabase.tagModels.where().findAll();
-      return DataSuccess(query.map((e) => e.toEntity()).toList());
+
+      return DataSuccess(
+        _visibleTags(query).map((e) => _asEntity(e)).toList(),
+      );
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1288,6 +1508,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         // aceptar una sugerencia borraría las etiquetas puestas a mano.
         await media.tags.update(link: tags);
       });
+
+      // Puede acabar de heredar una etiqueta bloqueada: el contenido que estaba
+      // a la vista deja de estarlo aquí mismo.
+      await _nsfwChanged();
 
       return DataSuccess(tags.length);
     } on Exception catch (e) {
@@ -1322,7 +1546,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final summaries = await _appDatabase.mediaSummaryModels.where().findAll();
 
       return DataSuccess([
-        for (final summary in summaries)
+        for (final summary in _visible(summaries))
           // Lo marcado para borrar se queda fuera: reconocerlo sería gastar
           // horas en contenido que sale solo de la base de datos en una semana.
           if (!summary.isDeleted &&
@@ -1338,8 +1562,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   Future<DataState<TagEntity?>> getTag(int id) async {
     try {
       final model = await _appDatabase.tagModels.get(id);
+      if (model == null || _visibility.hidesTag(model.id)) {
+        return const DataSuccess(null);
+      }
 
-      return DataSuccess(model?.toEntity());
+      return DataSuccess(_asEntity(model));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1364,7 +1591,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<List<TagEntity>>> getTagTree() async {
     try {
-      final models = await _appDatabase.tagModels.where().findAll();
+      final models = _visibleTags(await _appDatabase.tagModels.where().findAll());
 
       final childIds = <int>{};
       for (final model in models) {
@@ -1406,6 +1633,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       name: model.name,
       picturePath: model.picturePath,
       children: children,
+      // El árbol se armaba a mano y se dejaba la marca por el camino, así que
+      // el menú lateral —que se pinta con esto— no podía distinguir una
+      // etiqueta NSFW de las demás.
+      isNsfw: model.isNsfw,
+      isUnderNsfw: _visibility.marksTag(model.id),
     );
   }
 
@@ -1442,13 +1674,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final term = query.trim();
       if (term.isEmpty) return const DataSuccess([]);
 
-      final results = await _appDatabase.tagModels
-          .filter()
-          .nameContains(term, caseSensitive: false)
-          .limit(limit)
-          .findAll();
+      final results = await _tagsByName(term, limit: limit);
 
-      return DataSuccess(results.map((e) => e.toEntity()).toList());
+      return DataSuccess(results.map(_asEntity).toList());
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1507,6 +1735,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
               type: SearchResultType.tag,
               label: tag.name,
               imagePath: tag.picturePath,
+              // El efecto, no sólo la marca propia: una hija de una
+              // marcada esconde contenido igual que su madre.
+              isNsfw: _visibility.marksTag(tag.id),
             ),
         ],
         [
@@ -1651,6 +1882,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   ) async {
     final summary = await _appDatabase.mediaSummaryModels.get(suggestion.id);
     if (summary == null || !summary.isImported || summary.isDeleted) return null;
+    if (_visibility.hidesMedia(summary.id)) return null;
 
     return MediaSearchSectionEntity(
       type: SearchResultType.media,
@@ -1666,10 +1898,18 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// sobre la consulta: si no, el corte podría llevarse por delante justo los
   /// que se iban a mostrar.
   Future<List<MediaModel>> _mediaByDescription(String term, {int? limit}) async {
-    final results = await _appDatabase.mediaModels
+    final found = await _appDatabase.mediaModels
         .filter()
         .descriptionContains(term, caseSensitive: false)
         .findAll();
+
+    // Lo bloqueado se cae aquí, antes de cualquier recorte: si se filtrara
+    // después, la descripción de un contenido bloqueado seguiría saliendo en la
+    // barra de búsqueda, que es donde más se nota.
+    final results = [
+      for (final media in found)
+        if (media.id != null && !_visibility.hidesMedia(media.id!)) media,
+    ];
 
     if (limit == null) return results;
 
@@ -1684,11 +1924,23 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     return imported;
   }
 
-  Future<List<TagModel>> _tagsByName(String term, {int? limit}) {
-    final query =
-        _appDatabase.tagModels.filter().nameContains(term, caseSensitive: false);
+  /// Las etiquetas cuyo nombre encaja, sin las bloqueadas.
+  ///
+  /// El recorte a [limit] va **después** de quitar las bloqueadas: recortando
+  /// antes, una etiqueta bloqueada dentro de las cinco primeras se llevaría por
+  /// delante el hueco de una que sí se puede enseñar, y el usuario vería menos
+  /// resultados sin saber por qué.
+  Future<List<TagModel>> _tagsByName(String term, {int? limit}) async {
+    final found = await _appDatabase.tagModels
+        .filter()
+        .nameContains(term, caseSensitive: false)
+        .findAll();
 
-    return limit == null ? query.findAll() : query.limit(limit).findAll();
+    final visible = _visibleTags(found);
+
+    return limit == null || visible.length <= limit
+        ? visible
+        : visible.sublist(0, limit);
   }
 
   Future<List<CreatorModel>> _creatorsByName(String term, {int? limit}) {
@@ -1710,9 +1962,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     final summaries = await _appDatabase.mediaSummaryModels
         .getAll(media.map((e) => e.id!).toList());
 
-    return summaries.nonNulls
-        .where((summary) => summary.isImported && !summary.isDeleted)
-        .map((summary) => summary.toEntity())
-        .toList();
+    return _visible(
+      summaries.nonNulls
+          .where((summary) => summary.isImported && !summary.isDeleted),
+    ).map((summary) => summary.toEntity()).toList();
   }
 }

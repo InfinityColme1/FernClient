@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/widgets/duplicates_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/nsfw_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/appearance_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/browser_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
@@ -26,6 +27,7 @@ enum SettingsSection {
   remoteSources(icon: Icons.cloud_download_outlined),
   recognition(icon: Icons.center_focus_strong_outlined),
   duplicates(icon: Icons.copy_all_outlined),
+  nsfw(icon: Icons.lock_outline),
   notifications(icon: Icons.notifications_none),
 
   /// Experimental: los ajustes del navegador de dentro de la aplicación.
@@ -43,6 +45,7 @@ enum SettingsSection {
         SettingsSection.remoteSources => texts.settingsRemoteSources,
         SettingsSection.recognition => texts.settingsRecognition,
         SettingsSection.duplicates => texts.settingsDuplicates,
+        SettingsSection.nsfw => texts.settingsNsfw,
         SettingsSection.notifications => texts.settingsNotifications,
         SettingsSection.browser => texts.settingsBrowser,
       };
@@ -227,6 +230,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 const RecognitionSettingsSection(),
               SettingsSection.duplicates =>
                 const DuplicatesSettingsSection(),
+              SettingsSection.nsfw => const NsfwSettingsSection(),
               SettingsSection.notifications =>
                 const NotificationSettingsSection(),
               SettingsSection.browser => const BrowserSettingsSection(),

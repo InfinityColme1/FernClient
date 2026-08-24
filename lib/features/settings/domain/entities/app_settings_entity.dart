@@ -82,6 +82,56 @@ enum ViewerSaveBehavior {
   }
 }
 
+/// Qué se ve con el modo NSFW **abierto**.
+///
+/// Abrirlo puede querer decir dos cosas distintas según para qué se use la
+/// biblioteca: «enséñamelo todo junto» o «ahora estoy mirando sólo esto». La
+/// segunda convierte el modo en una biblioteca aparte, y es lo que quiere quien
+/// abre el bloqueo para una sesión concreta y no para trabajar.
+enum NsfwUnlockedView {
+  /// Lo marcado aparece mezclado con el resto, como si no lo estuviera.
+  mixed(id: 'mixed'),
+
+  /// Sólo lo marcado. El resto de la biblioteca desaparece mientras dure.
+  onlyNsfw(id: 'only');
+
+  const NsfwUnlockedView({required this.id});
+
+  final String id;
+
+  static NsfwUnlockedView fromId(String? id) {
+    return NsfwUnlockedView.values.firstWhere(
+      (view) => view.id == id,
+      orElse: () => NsfwUnlockedView.mixed,
+    );
+  }
+}
+
+/// Qué se ve con el modo NSFW **cerrado**.
+///
+/// Esconderlo del todo es lo más discreto: nada delata que ahí falte algo. Pero
+/// también hace que la biblioteca mienta sobre lo que tiene —los huecos no se
+/// ven, los contadores no cuadran con lo que uno recuerda—, y quien la usa solo
+/// en su equipo puede preferir ver que ahí hay algo y que está tapado.
+enum NsfwLockedView {
+  /// No aparece en ninguna parte. Como si no existiera.
+  hidden(id: 'hidden'),
+
+  /// Aparece tapado, y al tocarlo se pide la contraseña.
+  blurred(id: 'blurred');
+
+  const NsfwLockedView({required this.id});
+
+  final String id;
+
+  static NsfwLockedView fromId(String? id) {
+    return NsfwLockedView.values.firstWhere(
+      (view) => view.id == id,
+      orElse: () => NsfwLockedView.hidden,
+    );
+  }
+}
+
 /// Cada cuánto busca la aplicación contenido repetido por su cuenta.
 ///
 /// El mínimo es un mes (D17) y no es una cifra caprichosa: un escaneo completo
@@ -187,6 +237,32 @@ class AppSettingsEntity extends Equatable {
   ///
   /// Apagarlo no quita nada: buscar repetidos sigue estando en su pantalla.
   final bool automaticDuplicateScan;
+
+  /// Qué se ve con el modo NSFW abierto: todo junto o sólo lo marcado.
+  /// Marcar una etiqueta arrastra a las que cuelgan de ella.
+  ///
+  /// Encendido de fábrica, que es lo que se espera de una jerarquía: quien marca
+  /// una etiqueta madre está pensando en todo lo que hay debajo, y tener que
+  /// repetir la marca rama por rama es donde se olvida una y se queda contenido
+  /// a la vista.
+  ///
+  /// Apagarlo hace que cada etiqueta responda sólo por lo suyo. Sirve para una
+  /// madre que agrupa sin ser en sí misma delicada —«personajes», con una rama
+  /// que sí lo es— aunque para ese caso suele ser más simple marcar la hija.
+  ///
+  /// No reescribe nada al cambiar: la rama se resuelve al leerla, así que
+  /// encenderlo y apagarlo es reversible y no toca una sola etiqueta.
+  final bool nsfwMarksChildTags;
+
+  final NsfwUnlockedView nsfwUnlockedView;
+
+  /// Qué se ve con el modo NSFW cerrado: nada o el contenido tapado.
+  ///
+  /// De fábrica, nada. Es lo único que cumple lo que promete la función: un
+  /// contenido tapado sigue diciendo que existe, cuántos hay y de qué forma
+  /// son, y quien pone un bloqueo casi siempre quiere lo otro. Tapar es una
+  /// elección, y por eso hay que hacerla.
+  final NsfwLockedView nsfwLockedView;
 
   /// Cada cuánto lo hace, cuando [automaticDuplicateScan] está encendido.
   final DuplicateScanPeriod duplicateScanPeriod;
@@ -294,6 +370,9 @@ class AppSettingsEntity extends Equatable {
     this.automaticDuplicateScan = true,
     this.duplicateScanPeriod = DuplicateScanPeriod.quarterly,
     this.duplicateScanIncludesMoving = true,
+    this.nsfwMarksChildTags = true,
+    this.nsfwUnlockedView = NsfwUnlockedView.mixed,
+    this.nsfwLockedView = NsfwLockedView.hidden,
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
@@ -329,6 +408,9 @@ class AppSettingsEntity extends Equatable {
     bool? automaticDuplicateScan,
     DuplicateScanPeriod? duplicateScanPeriod,
     bool? duplicateScanIncludesMoving,
+    bool? nsfwMarksChildTags,
+    NsfwUnlockedView? nsfwUnlockedView,
+    NsfwLockedView? nsfwLockedView,
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
@@ -362,6 +444,9 @@ class AppSettingsEntity extends Equatable {
       duplicateScanPeriod: duplicateScanPeriod ?? this.duplicateScanPeriod,
       duplicateScanIncludesMoving:
           duplicateScanIncludesMoving ?? this.duplicateScanIncludesMoving,
+      nsfwMarksChildTags: nsfwMarksChildTags ?? this.nsfwMarksChildTags,
+      nsfwUnlockedView: nsfwUnlockedView ?? this.nsfwUnlockedView,
+      nsfwLockedView: nsfwLockedView ?? this.nsfwLockedView,
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
@@ -395,6 +480,9 @@ class AppSettingsEntity extends Equatable {
         automaticDuplicateScan,
         duplicateScanPeriod,
         duplicateScanIncludesMoving,
+        nsfwMarksChildTags,
+        nsfwUnlockedView,
+        nsfwLockedView,
         organization,
         autoTagRemoteSource,
         showListAvatars,

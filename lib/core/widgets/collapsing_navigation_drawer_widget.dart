@@ -163,6 +163,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             isExpanded: _isExpanded,
             title: item.title,
             icon: item.icon,
+            isNsfw: item.isNsfw,
             iconAsset: item.iconAsset,
             avatarPath: item.avatarPath,
             depth: item.depth,

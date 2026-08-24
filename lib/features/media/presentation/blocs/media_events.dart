@@ -142,6 +142,16 @@ class LoadDeletedMediaEvent extends MediaEvents {
   const LoadDeletedMediaEvent();
 }
 
+/// Vuelve a pedir el listado que se esté enseñando, sea el que sea.
+///
+/// Lo dispara lo que cambia **qué se puede ver** sin cambiar el contenido: hoy,
+/// abrir y cerrar el modo NSFW. Sin esto, la rejilla ya pintada se queda
+/// enseñando lo que acaba de bloquearse hasta que el usuario cambie de pantalla,
+/// que es la peor forma posible de que falle un bloqueo.
+class ReloadCurrentMediaEvent extends MediaEvents {
+  const ReloadCurrentMediaEvent();
+}
+
 /// Carga el contenido marcado como favorito: el de la pantalla de favoritos.
 class LoadFavoriteMediaEvent extends MediaEvents {
   const LoadFavoriteMediaEvent();
@@ -207,6 +217,25 @@ class DeleteSelectedMediaEvent extends MediaEvents {
 /// quitarlo está el corazón del visor, que sí sabe cómo está cada contenido.
 class FavoriteSelectedMediaEvent extends MediaEvents {
   const FavoriteSelectedMediaEvent();
+}
+
+/// Marca o desmarca como NSFW todo lo que esté seleccionado en la rejilla.
+///
+/// Interruptor y no acción, al revés que el de favoritos: aquí las dos
+/// direcciones se piden desde el mismo sitio —la barra de selección— y esconder
+/// doscientas fotos sin poder deshacerlo desde donde se hizo sería una trampa.
+class SetSelectedMediaNsfwEvent extends MediaEvents {
+  final bool isNsfw;
+
+  const SetSelectedMediaNsfwEvent({required this.isNsfw});
+}
+
+/// Marca o desmarca como NSFW un contenido suelto, el que se está mirando.
+class SetMediaNsfwEvent extends MediaEvents {
+  final int mediaId;
+  final bool isNsfw;
+
+  const SetMediaNsfwEvent({required this.mediaId, required this.isNsfw});
 }
 
 /// Quita la marca de borrado de la selección de la rejilla, que vuelve a la

@@ -21,6 +21,16 @@ class TagModel {
   /// normalizadas. Es lo que mira el etiquetado automático al importar.
   List<String> sourceUrls = const [];
 
+  /// Contenido no apto: lo que lleve esta etiqueta no se ve con el modo NSFW
+  /// apagado.
+  ///
+  /// La marca se guarda **sólo donde el usuario la puso**, y se propaga a la
+  /// rama de hijas al leerla (ver `NsfwIndex`). Guardarla propagada obligaría a
+  /// reescribir media biblioteca cada vez que se mueve una etiqueta de sitio, y
+  /// a acertar siempre: una rama que se mueve y se queda con la marca vieja es
+  /// contenido bloqueado que nadie sabe por qué lo está.
+  bool isNsfw = false;
+
   final children = IsarLinks<TagModel>();
   
   @Backlink(to: 'tags')
@@ -35,6 +45,7 @@ class TagModel {
     required this.name,
     this.picturePath,
     this.sourceUrls = const [],
+    this.isNsfw = false,
   });
 
   TagEntity toEntity() {
@@ -43,6 +54,7 @@ class TagModel {
       name: name,
       picturePath: picturePath,
       sourceUrls: sourceUrls,
+      isNsfw: isNsfw,
       children: children.map((tag) {return tag.toEntity();}).toList(),
     );
   }
@@ -56,6 +68,7 @@ class TagModel {
       picturePath: entity.picturePath,
       name: entity.name,
       sourceUrls: entity.sourceUrls,
+      isNsfw: entity.isNsfw,
     );
   }
 }

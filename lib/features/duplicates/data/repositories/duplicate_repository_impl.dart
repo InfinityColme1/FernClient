@@ -7,6 +7,7 @@ import 'package:Fern/features/duplicates/domain/repositories/duplicate_repositor
 import 'package:Fern/features/duplicates/domain/services/duplicate_grouping.dart';
 import 'package:Fern/features/duplicates/domain/services/group_reconciliation.dart';
 import 'package:Fern/features/duplicates/domain/services/hashing_plan.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:isar/isar.dart';
 
@@ -20,11 +21,24 @@ class DuplicateRepositoryImpl implements DuplicateRepository {
   /// disco.
   final DateTime? Function(String path) _modifiedAt;
 
+  /// Qué se puede enseñar ahora mismo.
+  ///
+  /// Lo pregunta la lista de grupos. Comparar dos copias es abrirlas, así que un
+  /// grupo formado por contenido que el filtro esconde no es una decisión que se
+  /// pueda tomar: se enseñaría «2 copias, distancia 4» sobre algo que no se
+  /// puede ver, que además de inútil cuenta que ese contenido existe.
+  ///
+  /// De fábrica no esconde nada, como en el repositorio de contenido: quien lo
+  /// monte sin decir nada obtiene el comportamiento de siempre.
+  final ContentVisibility _visibility;
+
   DuplicateRepositoryImpl({
     required Isar database,
     DateTime? Function(String path)? modifiedAt,
+    ContentVisibility visibility = const ContentVisibility(),
   })  : _database = database,
-        _modifiedAt = modifiedAt ?? _lastModified;
+        _modifiedAt = modifiedAt ?? _lastModified,
+        _visibility = visibility;
 
   @override
   Future<DataState<List<HashableMedia>>> getHashable() async {
@@ -152,6 +166,10 @@ class DuplicateRepositoryImpl implements DuplicateRepository {
 
         // Cuáles de estas copias siguen vivas: es lo que dice si una decisión
         // ya tomada sigue describiendo lo que hay.
+        //
+        // Vivas y no «comparables»: que el filtro NSFW las esconda ahora mismo
+        // no cambia si el grupo sigue teniendo sentido. Mirarlo aquí haría que
+        // quitar el filtro reabriera grupos ya resueltos.
         final alive = await _aliveAmong({
           for (final one in groups) ...one.group.mediaIds,
         });
@@ -235,15 +253,15 @@ class DuplicateRepositoryImpl implements DuplicateRepository {
           .isDismissedEqualTo(false)
           .findAll();
 
-      // Un grupo cuyas copias ya no están vivas no es una decisión que se pueda
-      // tomar: enseñarlo con el botón de conservar debajo lleva a mandar a la
-      // papelera la única que quedaba.
-      final alive = await _aliveAmong({
+      // Un grupo cuyas copias ya no se pueden comparar no es una decisión que se
+      // pueda tomar: enseñarlo con el botón de conservar debajo lleva a mandar a
+      // la papelera la única que quedaba.
+      final comparable = await _comparableAmong({
         for (final row in rows) ...row.mediaIds,
       });
 
       rows.removeWhere(
-        (row) => row.mediaIds.where(alive.contains).length < 2,
+        (row) => row.mediaIds.where(comparable.contains).length < 2,
       );
 
       // Lo idéntico primero, que es lo que se decide sin pensar; y a igual
@@ -295,7 +313,7 @@ class DuplicateRepositoryImpl implements DuplicateRepository {
     return mediaIds.where(alive.contains).length > 1;
   }
 
-  /// Cuáles de estos contenidos siguen vivos, en una sola consulta.
+  /// Cuáles de estos contenidos siguen en la biblioteca, en una sola consulta.
   Future<Set<int>> _aliveAmong(Set<int> mediaIds) async {
     if (mediaIds.isEmpty) return const {};
 
@@ -306,6 +324,27 @@ class DuplicateRepositoryImpl implements DuplicateRepository {
         .findAll();
 
     return {for (final row in rows) row.id};
+  }
+
+  /// Cuáles de estos contenidos se pueden comparar, en una sola consulta.
+  ///
+  /// Vivos y visibles. Lo segundo se pregunta por `hidesDetails` y no por
+  /// `hidesMedia`: con el filtro puesto y el contenido **tapado**, la celda
+  /// aparece en la rejilla pero abrirla sigue pidiendo la contraseña, y comparar
+  /// dos copias es abrirlas.
+  Future<Set<int>> _comparableAmong(Set<int> mediaIds) async {
+    if (mediaIds.isEmpty) return const {};
+
+    final rows = await _database.mediaSummaryModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .anyOf(mediaIds, (query, id) => query.idEqualTo(id))
+        .findAll();
+
+    return {
+      for (final row in rows)
+        if (!_visibility.hidesDetails(row.id)) row.id,
+    };
   }
 
   @override

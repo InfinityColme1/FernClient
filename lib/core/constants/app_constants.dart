@@ -1136,6 +1136,15 @@ const automaticDuplicateScanPreferenceKey = 'duplicates_auto_scan';
 /// Con qué clave se guarda cada cuánto lo hace.
 const duplicateScanPeriodPreferenceKey = 'duplicates_scan_period';
 
+/// Qué se ve con el modo NSFW abierto.
+const nsfwUnlockedViewPreferenceKey = 'nsfw_unlocked_view';
+
+/// Qué se ve con el modo NSFW cerrado.
+const nsfwLockedViewPreferenceKey = 'nsfw_locked_view';
+
+/// Si marcar una etiqueta arrastra a las que cuelgan de ella.
+const nsfwChildTagsPreferenceKey = 'nsfw_marks_child_tags';
+
 /// Si el escaneo mira también vídeos y GIF.
 const duplicateScanMovingPreferenceKey = 'duplicates_scan_moving';
 

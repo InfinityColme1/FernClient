@@ -191,6 +191,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                       label: suggestion.label,
                       imagePath: suggestion.imagePath,
                       type: suggestion.type,
+                      isNsfw: suggestion.isNsfw,
                       onTap: () => _onSuggestionSelected(suggestion),
                     ),
                 ],
