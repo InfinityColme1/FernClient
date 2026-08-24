@@ -133,6 +133,18 @@ class _DuplicatesSettingsSectionState extends State<DuplicatesSettingsSection> {
             ),
             const SizedBox(height: AppSpacing.m),
             _note(context, _lastScanLabel(texts)),
+            const SizedBox(height: AppSpacing.l),
+            // Debajo del periodo y no arriba del todo: esto no decide si se
+            // busca, decide qué se mira cuando se busque. Y vale para los dos
+            // escaneos, el automático y el del botón.
+            FernCheckboxTile(
+              label: texts.duplicatesMovingLabel,
+              description: texts.duplicatesMovingDescription,
+              value: settings.duplicateScanIncludesMoving,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(DuplicateScanMovingToggledEvent(value)),
+            ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
               child: Divider(),

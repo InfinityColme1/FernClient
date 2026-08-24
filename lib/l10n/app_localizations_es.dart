@@ -2510,6 +2510,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get duplicatesScanPeriodLabel => 'Cada cuánto';
 
   @override
+  String get duplicatesMovingLabel => 'Mirar también vídeos y GIF';
+
+  @override
+  String get duplicatesMovingDescription =>
+      'De un vídeo se compara el fotograma del 10 % de su duración, no el primero: los vídeos empiezan en negro o con una carátula, y por ahí saldrían agrupados tres que no tienen nada que ver. Cuesta bastante más que una imagen, así que con una biblioteca llena de vídeos el primer escaneo se alarga. Lo que ya se haya calculado se sigue comparando aunque lo apagues.';
+
+  @override
   String get duplicatesPeriodMonthly => 'Cada mes';
 
   @override

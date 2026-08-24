@@ -3990,6 +3990,18 @@ abstract class AppLocalizations {
   /// **'How often'**
   String get duplicatesScanPeriodLabel;
 
+  /// No description provided for @duplicatesMovingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Look at videos and GIFs too'**
+  String get duplicatesMovingLabel;
+
+  /// No description provided for @duplicatesMovingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'From a video it compares the frame at 10% of its length, not the first one: videos start on black or on a title card, and that alone would group three that have nothing to do with each other. It costs far more than an image, so a library full of videos makes the first scan much longer. Whatever has already been worked out keeps being compared even if you turn this off.'**
+  String get duplicatesMovingDescription;
+
   /// No description provided for @duplicatesPeriodMonthly.
   ///
   /// In en, this message translates to:

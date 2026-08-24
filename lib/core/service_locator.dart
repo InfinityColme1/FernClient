@@ -32,6 +32,7 @@ import 'package:Fern/features/duplicates/domain/usecases/rehash_library_usecase.
 import 'package:Fern/features/duplicates/data/services/duplicate_details_loader.dart';
 import 'package:Fern/features/duplicates/domain/usecases/apply_duplicate_group_usecase.dart';
 import 'package:Fern/features/duplicates/data/services/duplicate_scanner.dart';
+import 'package:Fern/features/duplicates/data/services/video_frame_reader.dart';
 import 'package:Fern/features/duplicates/domain/repositories/duplicate_repository.dart';
 import 'package:Fern/features/recognition/data/services/gif_frame_extractor.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
@@ -824,7 +825,18 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<DuplicateScanner>(
     () => DuplicateScanner(
-      read: imageBytesOf,
+      // De las imágenes y los GIF, sus propios bytes. De los vídeos, el
+      // fotograma del 10 %, que lo saca el servicio de previsualización: es el
+      // mismo que llena la rejilla, así que un vídeo que ya se ha visto tiene
+      // su fotograma en la caché del disco y no hay que volver a abrirlo.
+      read: hashableBytesReader(
+        VideoFrameReader(
+          duration: (path) async =>
+              (await MediaPreviewService.instance.load(path))?.duration,
+          frameAt: (path, moment) async =>
+              (await MediaPreviewService.instance.loadFrames(path, [moment]))[moment],
+        ),
+      ),
       write: (mediaId, hashes) =>
           getIt<DuplicateRepository>().saveHashes(mediaId, hashes),
     ),
@@ -837,6 +849,10 @@ Future<void> initializeDependencies() async {
       // Se lee en cada escaneo: entre uno y otro el usuario puede haber movido
       // el listón desde los ajustes.
       threshold: () => getIt<SettingsRepository>().getSettings().duplicateThreshold,
+      // Igual que el listón: se lee al empezar cada escaneo, no al arrancar la
+      // aplicación.
+      includesMoving: () =>
+          getIt<SettingsRepository>().getSettings().duplicateScanIncludesMoving,
       notify: (count) => getIt<NotificationService>().notify(
         NotificationKind.duplicatesFound,
         count: count,

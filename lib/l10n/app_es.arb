@@ -876,6 +876,8 @@
   "duplicatesAutoScanLabel": "Que Fern busque repetidos sola",
   "duplicatesAutoScanDescription": "Al abrir Fern, si ha pasado el tiempo que elijas aquí abajo, repasa la biblioteca entera sin que se lo pidas: corre por detrás con la prioridad más baja, así que no estorba a lo que estés haciendo, y sólo te avisa si encuentra algo. Apagado, los repetidos sólo se buscan cuando pulses «Buscar ahora» en Contenido repetido.",
   "duplicatesScanPeriodLabel": "Cada cuánto",
+  "duplicatesMovingLabel": "Mirar también vídeos y GIF",
+  "duplicatesMovingDescription": "De un vídeo se compara el fotograma del 10 % de su duración, no el primero: los vídeos empiezan en negro o con una carátula, y por ahí saldrían agrupados tres que no tienen nada que ver. Cuesta bastante más que una imagen, así que con una biblioteca llena de vídeos el primer escaneo se alarga. Lo que ya se haya calculado se sigue comparando aunque lo apagues.",
   "duplicatesPeriodMonthly": "Cada mes",
   "duplicatesPeriodQuarterly": "Cada tres meses",
   "duplicatesPeriodBiannual": "Cada seis meses",

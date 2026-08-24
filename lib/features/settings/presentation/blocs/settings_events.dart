@@ -208,6 +208,16 @@ class AutomaticDuplicateScanToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Enciende o apaga el mirar vídeos y GIF al buscar repetidos.
+class DuplicateScanMovingToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const DuplicateScanMovingToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 /// Cambia cada cuánto se busca contenido repetido por cuenta propia.
 class DuplicateScanPeriodChangedEvent extends SettingsEvents {
   final DuplicateScanPeriod period;

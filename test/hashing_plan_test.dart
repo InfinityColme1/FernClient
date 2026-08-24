@@ -95,4 +95,35 @@ void main() {
       expect(pendingToHash(const []), isEmpty);
     });
   });
+
+  group('lo que se mueve', () {
+    test('se puede dejar fuera', () {
+      final rest = withoutMoving(const [
+        HashableMedia(mediaId: 1, path: 'C:/una.jpg'),
+        HashableMedia(mediaId: 2, path: 'C:/otra.mp4'),
+        HashableMedia(mediaId: 3, path: 'C:/tercera.gif'),
+        HashableMedia(mediaId: 4, path: 'C:/cuarta.png'),
+      ]);
+
+      expect([for (final one in rest) one.mediaId], [1, 4]);
+    });
+
+    test('las extensiones de vídeo cuentan todas', () {
+      final rest = withoutMoving(const [
+        HashableMedia(mediaId: 1, path: 'C:/una.mov'),
+        HashableMedia(mediaId: 2, path: 'C:/otra.webm'),
+        HashableMedia(mediaId: 3, path: 'C:/tercera.MKV'),
+      ]);
+
+      expect(rest, isEmpty);
+    });
+
+    test('sin nada que quitar devuelve lo mismo', () {
+      final rest = withoutMoving(const [
+        HashableMedia(mediaId: 1, path: 'C:/una.jpg'),
+      ]);
+
+      expect(rest, hasLength(1));
+    });
+  });
 }

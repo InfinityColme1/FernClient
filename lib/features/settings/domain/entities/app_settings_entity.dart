@@ -191,6 +191,19 @@ class AppSettingsEntity extends Equatable {
   /// Cada cuánto lo hace, cuando [automaticDuplicateScan] está encendido.
   final DuplicateScanPeriod duplicateScanPeriod;
 
+  /// El escaneo mira también lo que se mueve: vídeos y GIF.
+  ///
+  /// Encendido de fábrica: una biblioteca con vídeos repetidos los tiene
+  /// repetidos igual, y son los ficheros que más ocupan de todos. Se puede
+  /// apagar porque el precio no es el mismo: un GIF se lee como cualquier
+  /// imagen, pero de cada vídeo hay que abrir el fichero, saltar al 10 % de su
+  /// duración y capturar el fotograma, y eso convierte una biblioteca con miles
+  /// de vídeos en un escaneo de horas.
+  ///
+  /// Apagarlo no borra lo ya calculado: lo que tenga huella se sigue
+  /// comparando. Para tirarlo está «Recalcular todas las huellas».
+  final bool duplicateScanIncludesMoving;
+
   final FileOrganizationCriteria organization;
 
   /// Al contenido que llega de una plataforma se le pone además una etiqueta con
@@ -280,6 +293,7 @@ class AppSettingsEntity extends Equatable {
     this.duplicateThreshold = defaultDuplicateThreshold,
     this.automaticDuplicateScan = true,
     this.duplicateScanPeriod = DuplicateScanPeriod.quarterly,
+    this.duplicateScanIncludesMoving = true,
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
@@ -314,6 +328,7 @@ class AppSettingsEntity extends Equatable {
     int? duplicateThreshold,
     bool? automaticDuplicateScan,
     DuplicateScanPeriod? duplicateScanPeriod,
+    bool? duplicateScanIncludesMoving,
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
@@ -345,6 +360,8 @@ class AppSettingsEntity extends Equatable {
       automaticDuplicateScan:
           automaticDuplicateScan ?? this.automaticDuplicateScan,
       duplicateScanPeriod: duplicateScanPeriod ?? this.duplicateScanPeriod,
+      duplicateScanIncludesMoving:
+          duplicateScanIncludesMoving ?? this.duplicateScanIncludesMoving,
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
@@ -377,6 +394,7 @@ class AppSettingsEntity extends Equatable {
         duplicateThreshold,
         automaticDuplicateScan,
         duplicateScanPeriod,
+        duplicateScanIncludesMoving,
         organization,
         autoTagRemoteSource,
         showListAvatars,

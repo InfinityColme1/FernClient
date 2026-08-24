@@ -46,6 +46,19 @@ void main() {
       expect(settings.automaticDuplicateScan, isTrue);
       expect(settings.duplicateScanPeriod, DuplicateScanPeriod.quarterly);
       expect(settings.duplicateThreshold, defaultDuplicateThreshold);
+      expect(settings.duplicateScanIncludesMoving, isTrue);
+    });
+
+    // Encendido de fábrica: los vídeos repetidos son los ficheros que más
+    // ocupan de todos, y dejarlos fuera por defecto sería no encontrar justo lo
+    // que más pesa.
+    test('vídeos y GIF se miran de fábrica', () {
+      const settings = AppSettingsEntity(
+        avatarsPath: 'avatares',
+        recognitionPath: 'reconocimiento',
+      );
+
+      expect(settings.duplicateScanIncludesMoving, isTrue);
     });
   });
 
@@ -58,6 +71,16 @@ void main() {
       );
 
       expect(repository.getSettings().automaticDuplicateScan, isFalse);
+    });
+
+    test('lo que se mueve, apagado', () async {
+      final repository = await _repository();
+
+      await repository.saveSettings(
+        repository.getSettings().copyWith(duplicateScanIncludesMoving: false),
+      );
+
+      expect(repository.getSettings().duplicateScanIncludesMoving, isFalse);
     });
 
     test('el periodo elegido', () async {

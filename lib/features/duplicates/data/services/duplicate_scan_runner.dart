@@ -5,10 +5,14 @@ import 'package:Fern/features/duplicates/data/services/duplicate_scanner.dart';
 import 'package:Fern/features/duplicates/domain/repositories/duplicate_repository.dart';
 import 'package:Fern/features/duplicates/domain/services/duplicate_grouping.dart';
 import 'package:Fern/features/duplicates/domain/services/group_reconciliation.dart';
+import 'package:Fern/features/duplicates/domain/services/hashing_plan.dart';
 import 'package:flutter/foundation.dart';
 
 /// Con qué listón se agrupa, leído en el momento de escanear.
 typedef ThresholdSetting = int Function();
+
+/// Si hay que mirar también lo que se mueve: vídeos y GIF.
+typedef MovingSetting = bool Function();
 
 /// A quién avisar de que han aparecido grupos nuevos.
 typedef DuplicatesNotifier = Future<void> Function(int freshGroups);
@@ -30,6 +34,7 @@ class DuplicateScanRunner {
   final DuplicateRepository _repository;
   final DuplicateScanner _scanner;
   final ThresholdSetting _threshold;
+  final MovingSetting _includesMoving;
   final DuplicatesNotifier? _notify;
   final ScanStamp? _stamp;
   final Grouper _groupOffThread;
@@ -38,17 +43,21 @@ class DuplicateScanRunner {
     required DuplicateRepository repository,
     required DuplicateScanner scanner,
     ThresholdSetting? threshold,
+    MovingSetting? includesMoving,
     DuplicatesNotifier? notify,
     ScanStamp? stamp,
     Grouper? grouper,
   })  : _repository = repository,
         _scanner = scanner,
         _threshold = threshold ?? _defaultThreshold,
+        _includesMoving = includesMoving ?? _alwaysIncludesMoving,
         _notify = notify,
         _stamp = stamp,
         _groupOffThread = grouper ?? groupInIsolate;
 
   static int _defaultThreshold() => defaultDuplicateThreshold;
+
+  static bool _alwaysIncludesMoving() => true;
 
   /// Lo que la cola llama.
   Future<void> call(JobContext context) => run(context);
@@ -64,8 +73,15 @@ class DuplicateScanRunner {
       return;
     }
 
+    // Y lo mismo con lo que se mueve: se decide al empezar. Lo que ya tenga
+    // huella la conserva y se sigue comparando; esto sólo dice qué se mira
+    // ahora.
+    final wanted = _includesMoving()
+        ? hashable.data!
+        : withoutMoving(hashable.data!);
+
     await _scanner.hashPending(
-      hashable.data!,
+      wanted,
       token: context.token,
       onProgress: (done, total) => context.report(done, total: total),
     );

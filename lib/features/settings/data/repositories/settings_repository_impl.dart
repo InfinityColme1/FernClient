@@ -138,6 +138,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
               .clamp(0, maxDuplicateThreshold),
       automaticDuplicateScan:
           _preferences.getBool(automaticDuplicateScanPreferenceKey) ?? true,
+      duplicateScanIncludesMoving:
+          _preferences.getBool(duplicateScanMovingPreferenceKey) ?? true,
       duplicateScanPeriod: DuplicateScanPeriod.fromId(
         _preferences.getString(duplicateScanPeriodPreferenceKey),
       ),
@@ -247,6 +249,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setString(
       duplicateScanPeriodPreferenceKey,
       settings.duplicateScanPeriod.id,
+    );
+    await _preferences.setBool(
+      duplicateScanMovingPreferenceKey,
+      settings.duplicateScanIncludesMoving,
     );
     await _preferences.setInt(
       frameSamplesPreferenceKey,

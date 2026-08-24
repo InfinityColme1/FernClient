@@ -876,6 +876,8 @@
   "duplicatesAutoScanLabel": "Laisser Fern chercher les doublons tout seul",
   "duplicatesAutoScanDescription": "À l'ouverture de Fern, si le délai choisi ci-dessous est écoulé, il parcourt toute la bibliothèque sans que vous le demandiez : il s'exécute en arrière-plan avec la priorité la plus basse, sans jamais gêner ce que vous faites, et il ne vous prévient que s'il trouve quelque chose. Désactivé, les doublons ne sont cherchés que lorsque vous appuyez sur « Chercher maintenant » dans Contenu en double.",
   "duplicatesScanPeriodLabel": "À quelle fréquence",
+  "duplicatesMovingLabel": "Regarder aussi les vidéos et les GIF",
+  "duplicatesMovingDescription": "D'une vidéo, c'est l'image à 10 % de sa durée qui est comparée, pas la première : les vidéos commencent sur du noir ou sur un générique, et cela seul en regrouperait trois qui n'ont rien à voir. Cela coûte bien plus qu'une image, donc une bibliothèque pleine de vidéos allonge beaucoup la première analyse. Ce qui a déjà été calculé continue d'être comparé même si vous désactivez ceci.",
   "duplicatesPeriodMonthly": "Tous les mois",
   "duplicatesPeriodQuarterly": "Tous les trois mois",
   "duplicatesPeriodBiannual": "Tous les six mois",

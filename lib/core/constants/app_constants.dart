@@ -1136,6 +1136,9 @@ const automaticDuplicateScanPreferenceKey = 'duplicates_auto_scan';
 /// Con qué clave se guarda cada cuánto lo hace.
 const duplicateScanPeriodPreferenceKey = 'duplicates_scan_period';
 
+/// Si el escaneo mira también vídeos y GIF.
+const duplicateScanMovingPreferenceKey = 'duplicates_scan_moving';
+
 /// Con qué clave se guarda cuándo terminó el último escaneo, en ISO 8601.
 ///
 /// La escribe el escaneo al acabar bien, venga de donde venga: si el usuario

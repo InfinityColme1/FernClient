@@ -2493,6 +2493,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get duplicatesScanPeriodLabel => 'How often';
 
   @override
+  String get duplicatesMovingLabel => 'Look at videos and GIFs too';
+
+  @override
+  String get duplicatesMovingDescription =>
+      'From a video it compares the frame at 10% of its length, not the first one: videos start on black or on a title card, and that alone would group three that have nothing to do with each other. It costs far more than an image, so a library full of videos makes the first scan much longer. Whatever has already been worked out keeps being compared even if you turn this off.';
+
+  @override
   String get duplicatesPeriodMonthly => 'Every month';
 
   @override

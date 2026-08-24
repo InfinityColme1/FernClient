@@ -53,6 +53,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
     on<AutomaticDuplicateScanToggledEvent>(onAutomaticDuplicateScanToggled);
     on<DuplicateScanPeriodChangedEvent>(onDuplicateScanPeriodChanged);
+    on<DuplicateScanMovingToggledEvent>(onDuplicateScanMovingToggled);
     on<DuplicateThresholdChangedEvent>(onDuplicateThresholdChanged);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<DanbooruSettingsChangedEvent>(onDanbooruSettingsChanged);
@@ -289,6 +290,19 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(automaticDuplicateScan: event.enabled),
+      emit,
+    );
+  }
+
+  /// Encenderlo no lanza ningún escaneo: lo que decide es qué se mira en el
+  /// siguiente. Ponerse a abrir vídeos porque alguien acaba de tocar un
+  /// interruptor de los ajustes es justo lo que no espera quien lo toca.
+  Future<void> onDuplicateScanMovingToggled(
+    DuplicateScanMovingToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(duplicateScanIncludesMoving: event.enabled),
       emit,
     );
   }

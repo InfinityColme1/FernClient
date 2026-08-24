@@ -2515,6 +2515,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get duplicatesScanPeriodLabel => 'À quelle fréquence';
 
   @override
+  String get duplicatesMovingLabel => 'Regarder aussi les vidéos et les GIF';
+
+  @override
+  String get duplicatesMovingDescription =>
+      'D\'une vidéo, c\'est l\'image à 10 % de sa durée qui est comparée, pas la première : les vidéos commencent sur du noir ou sur un générique, et cela seul en regrouperait trois qui n\'ont rien à voir. Cela coûte bien plus qu\'une image, donc une bibliothèque pleine de vidéos allonge beaucoup la première analyse. Ce qui a déjà été calculé continue d\'être comparé même si vous désactivez ceci.';
+
+  @override
   String get duplicatesPeriodMonthly => 'Tous les mois';
 
   @override

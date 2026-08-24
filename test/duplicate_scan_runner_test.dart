@@ -34,10 +34,11 @@ void main() {
     progress = [];
   });
 
-  DuplicateScanRunner runner({int threshold = 8}) {
+  DuplicateScanRunner runner({int threshold = 8, bool includesMoving = true}) {
     return DuplicateScanRunner(
       repository: repository,
       threshold: () => threshold,
+      includesMoving: () => includesMoving,
       notify: (count) async => notified.add(count),
       stamp: () async => stamped.add(DateTime(2026, 8, 24)),
       // Aquí mismo y no en otro hilo: levantar un isolate por prueba es lento y
@@ -137,6 +138,60 @@ void main() {
 
       await runner(threshold: 10).run(context());
       expect(repository.saved, hasLength(1));
+    });
+  });
+
+  // Un GIF se lee como cualquier imagen, pero de cada vídeo hay que abrir el
+  // fichero y sacarle un fotograma. Con miles de vídeos eso es la diferencia
+  // entre un escaneo largo y uno de toda la noche, y por eso se puede apagar.
+  group('lo que se mueve', () {
+    setUp(() {
+      repository.hashable = [
+        const HashableMedia(mediaId: 1, path: 'C:/una.jpg'),
+        const HashableMedia(mediaId: 2, path: 'C:/otro.mp4'),
+        const HashableMedia(mediaId: 3, path: 'C:/tercero.gif'),
+      ];
+    });
+
+    test('de fábrica se mira todo', () async {
+      await runner().run(context());
+
+      expect(hashed, ['C:/una.jpg', 'C:/otro.mp4', 'C:/tercero.gif']);
+    });
+
+    test('apagado, ni vídeos ni GIF', () async {
+      await runner(includesMoving: false).run(context());
+
+      expect(hashed, ['C:/una.jpg']);
+    });
+
+    // Se lee al empezar cada escaneo, no al arrancar la aplicación: entre uno y
+    // otro el usuario puede haberlo tocado.
+    test('se lee en cada escaneo', () async {
+      var includes = false;
+      final subject = DuplicateScanRunner(
+        repository: repository,
+        threshold: () => 8,
+        includesMoving: () => includes,
+        grouper: (request) async => groupRequest(request),
+        scanner: DuplicateScanner(
+          read: (path) async {
+            hashed.add(path);
+
+            return null;
+          },
+          write: (_, __) async {},
+        ),
+      );
+
+      await subject.run(context());
+      expect(hashed, ['C:/una.jpg']);
+
+      includes = true;
+      hashed.clear();
+      await subject.run(context());
+
+      expect(hashed, ['C:/una.jpg', 'C:/otro.mp4', 'C:/tercero.gif']);
     });
   });
 

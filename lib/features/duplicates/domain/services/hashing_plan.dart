@@ -1,3 +1,4 @@
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:flutter/foundation.dart';
 
 /// Lo que se sabe de un contenido a la hora de decidir si hay que mirarlo.
@@ -63,3 +64,20 @@ List<HashableMedia> pendingToHash(Iterable<HashableMedia> media) {
 
   return [...never, ...changed];
 }
+
+/// Lo que queda cuando el usuario no quiere que se mire lo que se mueve.
+///
+/// Vídeos y GIF fuera. Van juntos en el mismo ajuste porque para quien lo apaga
+/// son la misma cosa —«lo que se mueve»—, aunque por dentro cuesten muy
+/// distinto: un GIF se lee como cualquier imagen, y de un vídeo hay que abrir el
+/// fichero con libmpv y sacarle un fotograma, que es lo que convierte una
+/// biblioteca con miles de vídeos en un escaneo de horas.
+///
+/// Lo ya calculado no se toca: sigue guardado y sigue comparándose. Este ajuste
+/// dice qué se mira de aquí en adelante, y para tirar lo de antes está
+/// «Recalcular todas las huellas».
+List<HashableMedia> withoutMoving(Iterable<HashableMedia> media) => [
+      for (final one in media)
+        if (!one.path.isVideoPath && !one.path.isGifPath) one,
+    ];
+

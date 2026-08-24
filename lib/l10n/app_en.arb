@@ -995,6 +995,8 @@
   "duplicatesAutoScanLabel": "Let Fern look for repeats on its own",
   "duplicatesAutoScanDescription": "When you open Fern, if the time you pick below has gone by, it goes through the whole library without you asking: it runs in the background at the lowest priority, so it never gets in the way of what you are doing, and it only tells you if it finds something. Turned off, repeats are only looked for when you press “Scan now” in Repeated media.",
   "duplicatesScanPeriodLabel": "How often",
+  "duplicatesMovingLabel": "Look at videos and GIFs too",
+  "duplicatesMovingDescription": "From a video it compares the frame at 10% of its length, not the first one: videos start on black or on a title card, and that alone would group three that have nothing to do with each other. It costs far more than an image, so a library full of videos makes the first scan much longer. Whatever has already been worked out keeps being compared even if you turn this off.",
   "duplicatesPeriodMonthly": "Every month",
   "duplicatesPeriodQuarterly": "Every three months",
   "duplicatesPeriodBiannual": "Every six months",
