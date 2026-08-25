@@ -23,12 +23,12 @@ import 'package:Fern/features/recognition/presentation/widgets/metrics_panel.dar
 import 'package:Fern/features/recognition/presentation/widgets/recognition_panel.dart';
 import 'package:Fern/features/recognition/presentation/widgets/run_images_dialog.dart';
 import 'package:Fern/features/recognition/presentation/widgets/training_panel.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -63,7 +63,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
   final _bloc = getIt<ModelsBloc>();
   final _saveModel = getIt<SaveModelUseCase>();
   final _searchFernies = getIt<SearchFerniesUseCase>();
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
   final _jobs = getIt<JobQueue>();
   final _engine = getIt<RecognitionEngine>();
   final _importWeights = getIt<ImportModelWeightsUseCase>();
@@ -199,7 +199,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
     final path = result?.files.single.path;
     if (path == null || !mounted) return;
 
-    final stored = await _avatarStorage.store(path);
+    final stored = await _storeAvatar(params: path);
     if (!mounted) return;
 
     setState(() => _picturePath = stored);

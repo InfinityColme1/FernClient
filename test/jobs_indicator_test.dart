@@ -166,4 +166,127 @@ void main() {
     expect(canOpen(tester), isTrue);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
   });
+
+  // El panel rehecho con la forma de un gestor de descargas: se distingue una
+  // fila de otra de un vistazo, el estado va pegado a su nombre y cada tarea se
+  // para o se quita por su cuenta, sin arrastrar a las demás.
+  group('el panel como gestor de descargas', () {
+    /// Abre el panel.
+    Future<void> openPanel(WidgetTester tester) async {
+      await tester.tap(find.byType(IconButton).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    testWidgets('cada fila lleva el icono de su clase', (tester) async {
+      final queue = newQueue();
+      final gate = Completer<void>();
+
+      for (final type in [JobType.training, JobType.hashing]) {
+        queue.register(type, (context) async {
+          await Future.any([gate.future, context.token.whenCancelled]);
+          context.token.throwIfCancelled();
+        });
+      }
+
+      await pumpIndicator(tester);
+
+      queue.enqueue(type: JobType.training, total: 4);
+      queue.enqueue(type: JobType.hashing, total: 4);
+      await settleQueue(tester);
+      await openPanel(tester);
+
+      // Sin esto son dos líneas de texto parecidas y hay que leerlas enteras
+      // para saber cuál se está parando.
+      expect(find.byIcon(JobType.training.icon), findsOneWidget);
+      expect(find.byIcon(JobType.hashing.icon), findsOneWidget);
+
+      gate.complete();
+      await settleQueue(tester);
+      await settleQueue(tester);
+    });
+
+    testWidgets('el estado va pegado a su nombre, no descolgado abajo',
+        (tester) async {
+      final queue = newQueue();
+
+      queue.register(JobType.duplicateScan, (context) async {
+        throw StateError('se ha roto');
+      });
+
+      await pumpIndicator(tester);
+
+      queue.enqueue(type: JobType.duplicateScan);
+      await settleQueue(tester);
+      await settleQueue(tester);
+      await openPanel(tester);
+
+      final texts = await AppLocalizations.delegate.load(const Locale('en'));
+
+      final title = tester.getTopLeft(find.text(texts.jobDuplicateScan));
+      final status = tester.getTopLeft(find.text(texts.jobFailed));
+
+      // Debajo, y a un renglón: el «terminada» caía tan abajo que parecía de la
+      // fila siguiente.
+      expect(status.dy, greaterThan(title.dy));
+      expect(status.dy - title.dy, lessThan(24));
+      // Y alineado con él, no centrado ni sangrado.
+      expect(status.dx, title.dx);
+    });
+
+    testWidgets('una tarea terminada se quita sola, sin llevarse las demás',
+        (tester) async {
+      final queue = newQueue();
+
+      queue.register(JobType.duplicateScan, (context) async {
+        throw StateError('se ha roto');
+      });
+      queue.register(JobType.hashing, (context) async {
+        throw StateError('esta también');
+      });
+
+      await pumpIndicator(tester);
+
+      final first = queue.enqueue(type: JobType.duplicateScan);
+      final second = queue.enqueue(type: JobType.hashing);
+      await settleQueue(tester);
+      await settleQueue(tester);
+      await openPanel(tester);
+
+      expect(find.byIcon(Icons.clear), findsNWidgets(2));
+
+      await tester.tap(find.byIcon(Icons.clear).first);
+      await settleQueue(tester);
+
+      // Antes sólo estaba «vaciar terminadas»: para hacer desaparecer un fallo
+      // ya visto había que borrar también los que no se habían mirado.
+      expect(queue.jobs.any((job) => job.id == first), isFalse);
+      expect(queue.jobs.any((job) => job.id == second), isTrue);
+    });
+
+    testWidgets('la que sigue viva se para, no se quita', (tester) async {
+      final queue = newQueue();
+      final gate = Completer<void>();
+
+      queue.register(JobType.training, (context) async {
+        await Future.any([gate.future, context.token.whenCancelled]);
+        context.token.throwIfCancelled();
+      });
+
+      await pumpIndicator(tester);
+
+      queue.enqueue(type: JobType.training, total: 4);
+      await settleQueue(tester);
+      await openPanel(tester);
+
+      // Quitar de la lista algo que sigue corriendo lo dejaría trabajando sin
+      // que nadie pudiera pararlo ya.
+      expect(find.byIcon(Icons.clear), findsNothing);
+      expect(find.widgetWithIcon(IconButton, Icons.close), findsOneWidget);
+
+      gate.complete();
+      await settleQueue(tester);
+      await settleQueue(tester);
+    });
+  });
 }

@@ -320,6 +320,15 @@ class AppSettingsEntity extends Equatable {
   /// puesta sobre un instante que ya ha pasado.
   final bool pauseWhenSeeking;
 
+  /// Al salir del visor, la rejilla se coloca donde está lo que se acaba de
+  /// mirar.
+  ///
+  /// Activado de fábrica: con unos cientos de miniaturas, volver y encontrarse
+  /// la rejilla donde se dejó es perder el sitio. Se puede apagar porque el
+  /// salto también desconcierta a quien iba mirando de arriba abajo y quiere
+  /// seguir por donde estaba.
+  final bool returnToViewedMedia;
+
   /// Credenciales de la fuente remota de Reddit. Vienen vacías mientras el
   /// usuario no las haya rellenado, que es como la aplicación sabe que esa
   /// fuente todavía no se puede usar.
@@ -380,6 +389,7 @@ class AppSettingsEntity extends Equatable {
     this.customTheme = const CustomThemeEntity(),
     this.viewerSaveBehavior = ViewerSaveBehavior.goToNext,
     this.pauseWhenSeeking = false,
+    this.returnToViewedMedia = true,
     this.browserHome = browserHomeUrl,
     this.reddit = const RedditSettingsEntity(),
     this.pixiv = const PixivSettingsEntity(),
@@ -418,6 +428,7 @@ class AppSettingsEntity extends Equatable {
     CustomThemeEntity? customTheme,
     ViewerSaveBehavior? viewerSaveBehavior,
     bool? pauseWhenSeeking,
+    bool? returnToViewedMedia,
     String? browserHome,
     RedditSettingsEntity? reddit,
     PixivSettingsEntity? pixiv,
@@ -454,6 +465,7 @@ class AppSettingsEntity extends Equatable {
       customTheme: customTheme ?? this.customTheme,
       viewerSaveBehavior: viewerSaveBehavior ?? this.viewerSaveBehavior,
       pauseWhenSeeking: pauseWhenSeeking ?? this.pauseWhenSeeking,
+      returnToViewedMedia: returnToViewedMedia ?? this.returnToViewedMedia,
       browserHome: browserHome ?? this.browserHome,
       reddit: reddit ?? this.reddit,
       pixiv: pixiv ?? this.pixiv,
@@ -490,6 +502,7 @@ class AppSettingsEntity extends Equatable {
         customTheme,
         viewerSaveBehavior,
         pauseWhenSeeking,
+        returnToViewedMedia,
         browserHome,
         reddit,
         pixiv,

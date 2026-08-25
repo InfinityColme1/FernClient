@@ -21,6 +21,35 @@ class TagHierarchy {
     return [...tags, ...ancestors];
   }
 
+  /// [tags] con sus hermanas y con todo lo que hay por encima de unas y otras.
+  ///
+  /// Es lo que se le pone de verdad a un contenido al etiquetarlo: la etiqueta
+  /// elegida, lo que va con ella y la rama entera de las dos.
+  ///
+  /// **Las hermanas son de un salto.** Si A es hermana de B y B de C, poner A
+  /// pone B pero no C: encadenarlas convertiría una etiqueta en media
+  /// biblioteca, y nadie sabría por qué un contenido acabó con veinte.
+  Future<List<TagModel>> withRelatives(Iterable<TagModel> tags) async {
+    final byId = {for (final tag in tags) tag.id: tag};
+
+    for (final tag in tags) {
+      await tag.siblings.load();
+
+      for (final sibling in tag.siblings) {
+        byId.putIfAbsent(sibling.id, () => sibling);
+      }
+    }
+
+    // Los ancestros van de todas, hermanas incluidas: una hermana arrastra su
+    // rama igual que la elegida arrastra la suya.
+    final ancestors = await ancestorsOf(byId.keys.toList());
+    for (final ancestor in ancestors) {
+      byId.putIfAbsent(ancestor.id, () => ancestor);
+    }
+
+    return byId.values.toList();
+  }
+
   /// Las etiquetas que están por encima de [tagIds], sin ellas.
   Future<List<TagModel>> ancestorsOf(Iterable<int> tagIds) async {
     final found = <int, TagModel>{};

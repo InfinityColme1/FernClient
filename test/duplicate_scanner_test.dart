@@ -7,7 +7,6 @@
 import 'dart:typed_data';
 
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
-import 'package:Fern/core/services/jobs/job_runner.dart';
 import 'package:Fern/features/duplicates/data/services/duplicate_scanner.dart';
 import 'package:Fern/features/duplicates/data/services/perceptual_hash.dart';
 import 'package:Fern/features/duplicates/domain/services/hashing_plan.dart';

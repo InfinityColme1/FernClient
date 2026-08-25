@@ -6,7 +6,6 @@
 // cuenta sin nada no se confunda con un fallo.
 
 import 'package:Fern/core/services/preferences_service.dart';
-import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/data/datasources/pawchive_api_client.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';

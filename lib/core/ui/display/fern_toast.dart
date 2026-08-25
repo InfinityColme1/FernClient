@@ -64,9 +64,12 @@ class _FernToast extends StatefulWidget {
   ///
   /// Sin esto el aviso no atiende a las pulsaciones —lo que hay debajo es la
   /// pantalla, y un mensaje que se va solo no puede quedarse con los clics que
-  /// van a ella—. Con esto sí, y además se queda hasta que se pulsa o se cierra:
-  /// un aviso que lleva a un sitio y se desvanece en tres segundos es una puerta
-  /// que se cierra en las narices.
+  /// van a ella—. Con esto sí, y además dura más: un aviso que lleva a un sitio
+  /// y se desvanece en tres segundos es una puerta que se cierra en las narices.
+  ///
+  /// Más, pero no para siempre. Antes se quedaba hasta que alguien lo pulsara y
+  /// no había forma de cerrarlo, así que a quien no le interesaba se le quedaba
+  /// clavado en la pantalla. Ahora se va solo y además lleva un aspa.
   final VoidCallback? onTap;
 
   const _FernToast({
@@ -94,11 +97,12 @@ class _FernToastState extends State<_FernToast>
     super.initState();
     _controller.forward();
 
-    // El que lleva a algún sitio no se va solo: darle tres segundos a alguien
-    // para que lea el mensaje **y** decida pulsarlo es no dárselos.
-    if (widget.onTap == null) {
-      _dismissTimer = Timer(toastDuration, _dismiss);
-    }
+    // Siempre, también el que lleva a algún sitio: ése dura más, porque hay que
+    // leerlo y decidir, pero se va igual.
+    _dismissTimer = Timer(
+      widget.onTap == null ? toastDuration : toastActionDuration,
+      _dismiss,
+    );
   }
 
   @override
@@ -158,12 +162,12 @@ class _FernToastState extends State<_FernToast>
           widget.onTap?.call();
           _dismiss();
         },
-        child: _buildBubble(context),
+        child: _buildBubble(context, canClose: true),
       ),
     );
   }
 
-  Widget _buildBubble(BuildContext context) {
+  Widget _buildBubble(BuildContext context, {bool canClose = false}) {
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -193,7 +197,40 @@ class _FernToastState extends State<_FernToast>
                   .bodyMedium
                   ?.copyWith(color: Colors.white),
             ),
+            // Sólo el que lleva a algún sitio: el resto se va en tres segundos y
+            // un aspa ahí sería un botón para adelantar lo que ya iba a pasar.
+            if (canClose) ...[
+              const SizedBox(width: AppSpacing.s),
+              _CloseButton(onPressed: _dismiss),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// El aspa del aviso.
+///
+/// A mano y no un `IconButton`: el hueco que ése reserva alrededor deformaría la
+/// burbuja, que es una píldora ajustada a su texto.
+class _CloseButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _CloseButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        // Se traga la pulsación para que no llegue a la burbuja: pulsar el aspa
+        // es cerrar, no ir a donde el aviso lleva.
+        onTap: onPressed,
+        child: const Icon(
+          Icons.close,
+          color: Colors.white,
+          size: AppSizes.iconSmall,
         ),
       ),
     );

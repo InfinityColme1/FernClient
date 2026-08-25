@@ -164,7 +164,7 @@ void main() {
 
   group('los botones de la run', () {
     testWidgets('con carpeta se ofrecen los tres', (tester) async {
-      await _pump(tester, onOpenFolder: (_) {}, onShowImages: (_, __) {});
+      await _pump(tester, onOpenFolder: (_) {}, onShowImages: (_, _) {});
 
       expect(find.text('Matriz de confusión'), findsOneWidget);
       expect(find.text('Curvas'), findsOneWidget);

@@ -37,7 +37,7 @@ class NotificationSoundService {
         NotificationKind.trainingFinished => successNotificationSound,
         NotificationKind.duplicatesFound => alertNotificationSound,
         NotificationKind.recognitionFinished => defaultNotificationSound,
-        NotificationKind.remoteImportFinished => defaultNotificationSound,
+        NotificationKind.importFinished => defaultNotificationSound,
       };
 
   /// Lo que suena para [kind]: lo que haya elegido el usuario o, si no, el de

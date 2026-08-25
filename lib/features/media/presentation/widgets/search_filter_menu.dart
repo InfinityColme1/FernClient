@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
@@ -30,8 +31,17 @@ extension _ImportSourceFilterLabel on ImportSource {
       };
 }
 
+/// Cómo se nombra cada clase de contenido en el filtro.
+extension _MediaKindFilterLabel on MediaKind {
+  String filterLabel(AppLocalizations texts) => switch (this) {
+        MediaKind.image => texts.filterImages,
+        MediaKind.gif => texts.filterGifs,
+        MediaKind.video => texts.filterVideos,
+      };
+}
+
 /// Botón "Filters" de la cabecera de la pantalla de media con su panel de
-/// casillas, en dos grupos:
+/// casillas, en tres grupos:
 ///
 /// - **de dónde salen los resultados**: una casilla por tipo (contenidos,
 ///   etiquetas y creadores). Recorta lo que ya se ha buscado, así que sin
@@ -51,6 +61,9 @@ class SearchFilterMenu extends StatelessWidget {
   /// Fuentes de las que se está viendo contenido.
   final Set<ImportSource> sourceFilters;
 
+  /// Clases de contenido que se están viendo.
+  final Set<MediaKind> typeFilters;
+
   /// Si hay una búsqueda en marcha, que es lo único que el filtro de tipos puede
   /// recortar.
   final bool hasSearch;
@@ -59,6 +72,7 @@ class SearchFilterMenu extends StatelessWidget {
     super.key,
     required this.filters,
     required this.sourceFilters,
+    required this.typeFilters,
     required this.hasSearch,
   });
 
@@ -93,6 +107,16 @@ class SearchFilterMenu extends StatelessWidget {
                   label: source.filterLabel(texts),
                   value: sourceFilters.contains(source),
                   onChanged: (_) => bloc.add(ToggleSourceFilterEvent(source)),
+                ),
+              const SizedBox(height: AppSpacing.m),
+              // De qué tipo es un fichero es un dato suyo, así que esto vale
+              // con búsqueda y sin ella, igual que la fuente.
+              _groupTitle(context, texts.filtersType),
+              for (final kind in MediaKind.values)
+                FernCheckboxTile(
+                  label: kind.filterLabel(texts),
+                  value: typeFilters.contains(kind),
+                  onChanged: (_) => bloc.add(ToggleTypeFilterEvent(kind)),
                 ),
             ],
           ),

@@ -94,8 +94,9 @@ class _FavoritesView extends StatelessWidget {
               Expanded(
                 child: MediaGrid(
                   mediaList: mediaList,
-                  columns: 4,
+                  columns: mediaGridColumns,
                   isLoading: state.isBusy,
+                  returnsToViewed: true,
                 ),
               ),
             ],

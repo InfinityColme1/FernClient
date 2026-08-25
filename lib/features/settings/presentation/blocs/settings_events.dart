@@ -138,6 +138,16 @@ class ReturnRecognizedToggledEvent extends SettingsEvents {
 ///
 /// Sólo en el modo de mirar: marcando regiones se para siempre, porque una
 /// región se marca sobre un fotograma quieto.
+/// Al salir del visor, ¿la rejilla va a buscar lo que se acaba de mirar?
+class ReturnToViewedMediaToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ReturnToViewedMediaToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 class PauseWhenSeekingToggledEvent extends SettingsEvents {
   final bool enabled;
 

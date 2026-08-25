@@ -23,7 +23,7 @@ extension NotificationKindLabels on NotificationKind {
         NotificationKind.duplicatesFound => texts.notifyDuplicates,
         NotificationKind.trainingFinished => texts.notifyTraining,
         NotificationKind.recognitionFinished => texts.notifyRecognition,
-        NotificationKind.remoteImportFinished => texts.notifyRemoteImport,
+        NotificationKind.importFinished => texts.notifyImport,
       };
 }
 

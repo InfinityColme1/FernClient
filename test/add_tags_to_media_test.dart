@@ -93,11 +93,11 @@ void main() {
     return 1;
   }
 
-  var _nextTag = 1;
+  var nextTag = 1;
 
   /// Una etiqueta, colgando de [parent] si se dice.
   Future<TagModel> addTag(String name, {TagModel? parent}) async {
-    final tag = TagModel(id: _nextTag++, name: name);
+    final tag = TagModel(id: nextTag++, name: name);
 
     await isar.writeTxn(() async {
       await isar.tagModels.put(tag);

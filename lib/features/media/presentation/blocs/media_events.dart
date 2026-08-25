@@ -1,5 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
@@ -140,6 +142,56 @@ class ClearMediaSelectionEvent extends MediaEvents {
 /// Carga el contenido marcado para borrar: el de la pantalla de eliminados.
 class LoadDeletedMediaEvent extends MediaEvents {
   const LoadDeletedMediaEvent();
+}
+
+/// Pone una etiqueta a unos cuantos contenidos de una vez.
+///
+/// Los identificadores llegan de fuera y no se sacan de la selección: quien
+/// arrastra una celda sin nada marcado está pidiendo etiquetar **esa**, y quien
+/// la arrastra con veinte marcadas está pidiendo etiquetar las veinte. Esa regla
+/// la aplica quien lo dispara, que es el único que sabe cuál de los dos casos es.
+class AddTagToMediaEvent extends MediaEvents {
+  final int tagId;
+  final List<int> mediaIds;
+
+  const AddTagToMediaEvent({required this.tagId, required this.mediaIds});
+
+  @override
+  List<Object?> get props => [tagId, mediaIds];
+}
+
+/// Enciende o apaga una clase de contenido en el filtro de la cabecera.
+class ToggleTypeFilterEvent extends MediaEvents {
+  final MediaKind kind;
+
+  const ToggleTypeFilterEvent(this.kind);
+
+  @override
+  List<Object?> get props => [kind];
+}
+
+/// Cambia en qué orden se pinta la biblioteca.
+class MediaSortOrderChangedEvent extends MediaEvents {
+  final MediaSortOrder order;
+
+  const MediaSortOrderChangedEvent(this.order);
+
+  @override
+  List<Object?> get props => [order];
+}
+
+/// Marca de golpe todo lo que hay a la vista.
+///
+/// Llegan los identificadores desde la rejilla y no se calculan aquí: lo que se
+/// marca es **lo que se está viendo**, y quién sabe eso es quien lo está
+/// pintando —con sus filtros aplicados y sus grupos de búsqueda—.
+class SelectAllMediaEvent extends MediaEvents {
+  final List<int> ids;
+
+  const SelectAllMediaEvent(this.ids);
+
+  @override
+  List<Object?> get props => [ids];
 }
 
 /// Vuelve a pedir el listado que se esté enseñando, sea el que sea.

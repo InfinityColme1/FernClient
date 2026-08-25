@@ -41,6 +41,13 @@ class SidebarItem {
   /// quitársela para avisar de algo cuesta más de lo que aporta.
   final bool isNsfw;
 
+  /// Qué hacer con el contenido que se suelte encima de esta fila.
+  ///
+  /// Con esto puesto, la fila acepta que se le arrastren contenidos desde la
+  /// rejilla. Sin ello se comporta como siempre: no todas las filas del menú
+  /// significan algo que se le pueda poner a un contenido.
+  final void Function(List<int> mediaIds)? onMediaDropped;
+
   SidebarItem({
     required this.id,
     required this.title,
@@ -51,6 +58,7 @@ class SidebarItem {
     this.depth = 0,
     this.badgeCount = 0,
     this.isNsfw = false,
+    this.onMediaDropped,
   });
 }
 

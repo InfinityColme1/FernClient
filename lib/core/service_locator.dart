@@ -93,6 +93,12 @@ import 'package:Fern/features/media/data/repositories/remote_media_repository_im
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
+import 'package:Fern/features/settings/data/services/database_maintenance_service.dart';
+import 'package:Fern/features/settings/domain/usecases/wipe_database_usecase.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/data/services/import_feed.dart';
+import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
+import 'package:Fern/features/media/data/services/import_job_runner.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:Fern/core/services/secret_storage.dart';
@@ -123,6 +129,8 @@ import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.da
 import 'package:Fern/features/media/domain/usecases/delete_missing_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/add_tag_to_media_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
@@ -225,6 +233,25 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<AvatarStorageService>(() =>
       AvatarStorageService(settingsRepository: getIt())
+  );
+
+  // Y por donde lo piden las pantallas: elegir una imagen es cosa suya, copiarla
+  // a la carpeta de avatares no.
+  getIt.registerLazySingleton<StoreAvatarUseCase>(
+    () => StoreAvatarUseCase(storage: getIt()),
+  );
+
+  // Vaciar la base de datos entera. Es lo único de la aplicación que destruye
+  // sin posibilidad de deshacer, y por eso la pantalla lo pide dos veces.
+  getIt.registerLazySingleton<DatabaseMaintenanceService>(
+    () => DatabaseMaintenanceService(
+      database: getIt<Isar>(),
+      preferences: getIt(),
+    ),
+  );
+
+  getIt.registerLazySingleton<WipeDatabaseUseCase>(
+    () => WipeDatabaseUseCase(maintenance: getIt()),
   );
 
   // Los avisos. El sonido va aparte del contador porque son dos cosas que se
@@ -526,6 +553,14 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<SetTagNsfwUseCase>(
     SetTagNsfwUseCase(getIt())
+  );
+
+  getIt.registerSingleton<AddTagToMediaUseCase>(
+    AddTagToMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SaveTagSiblingsUseCase>(
+    SaveTagSiblingsUseCase(getIt())
   );
 
   getIt.registerSingleton<GetMediaByTagUseCase>(
@@ -894,6 +929,9 @@ Future<void> initializeDependencies() async {
   // Qué contenidos señalar al llegar a la pantalla del último aviso.
   getIt.registerSingleton<RecognitionHighlight>(RecognitionHighlight());
 
+  // Y a dónde volver al salir del visor.
+  getIt.registerSingleton<ViewedMedia>(ViewedMedia());
+
   getIt.registerLazySingleton<RecognitionJobRunner>(
     () => RecognitionJobRunner(
       tree: getIt(),
@@ -910,6 +948,24 @@ Future<void> initializeDependencies() async {
   getIt<JobQueue>().register(
     JobType.recognition,
     (context) => getIt<RecognitionJobRunner>().run(context),
+  );
+
+  // Traerse contenido también es un trabajo de fondo: tarda lo que tarde la
+  // cuenta que se recorra, y hasta ahora sólo existía mientras se estuviera
+  // mirando la pantalla de importación.
+  getIt.registerSingleton<ImportFeed>(ImportFeed());
+
+  getIt.registerLazySingleton<ImportJobRunner>(
+    () => ImportJobRunner(
+      scan: getIt(),
+      cancellation: getIt(),
+      feed: getIt(),
+    ),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.mediaImport,
+    (context) => getIt<ImportJobRunner>().run(context),
   );
 
   getIt.registerLazySingleton<DuplicateRepository>(
@@ -1026,7 +1082,8 @@ Future<void> initializeDependencies() async {
         decisions: getIt(),
         getScannedMediaUseCase: getIt(),
         getLastImportUseCase: getIt(),
-        scanSourceUseCase: getIt(),
+        jobs: getIt(),
+        importFeed: getIt(),
         selectAndScanDirectoryUsecase: getIt(),
         getMediaDetailsUsecase: getIt(),
         saveMediaUseCase: getIt(),
@@ -1047,6 +1104,10 @@ Future<void> initializeDependencies() async {
         setMediaFavoriteUseCase: getIt(),
         setMediaListFavoriteUseCase: getIt(),
     setMediaNsfwUseCase: getIt(),
+    rememberedSource: () => getIt<PreferencesService>().getLastImportSource(),
+    rememberSource: (source) =>
+        getIt<PreferencesService>().setLastImportSource(source),
+        addTagToMediaUseCase: getIt(),
         searchMediaUseCase: getIt(),
         searchMediaBySuggestionUseCase: getIt(),
         preferences: getIt(),

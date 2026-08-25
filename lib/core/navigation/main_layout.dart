@@ -1,10 +1,9 @@
-import 'dart:math' as math;
 
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
-import 'package:Fern/core/widgets/sidebar.dart';
+import 'package:Fern/core/navigation/sidebar.dart';
 import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
 import 'package:Fern/features/jobs/presentation/widgets/jobs_indicator.dart';
 import 'package:Fern/core/service_locator.dart';
@@ -19,10 +18,16 @@ import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:Fern/core/navigation/sidebar_collapse.dart';
 import 'package:go_router/go_router.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
-enum _CreateOption { creator, tag, fernie, model, collection }
+///
+/// Las colecciones estaban aquí sin existir: la opción se enseñaba y al
+/// pulsarla salía un aviso de que todavía no. Se han retirado de la interfaz y
+/// quedan apuntadas para la 3.0; una promesa que no se cumple cuesta más que la
+/// función que falta.
+enum _CreateOption { creator, tag, fernie, model }
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -59,16 +64,10 @@ class _MainLayoutState extends State<MainLayout> {
         label: texts.menuNewModel,
         icon: Icons.hub_outlined,
       ),
-      FernMenuOption(
-        value: _CreateOption.collection,
-        label: texts.menuNewCollection,
-        icon: Icons.collections_outlined,
-      ),
     ];
   }
 
-  /// Abre el diálogo de la opción elegida. Las colecciones todavía no existen,
-  /// así que se avisa y punto.
+  /// Abre el diálogo de la opción elegida.
   void _onCreateSelected(_CreateOption option) {
     showFernDialog(
       context: context,
@@ -77,10 +76,6 @@ class _MainLayoutState extends State<MainLayout> {
         _CreateOption.tag => const FernCreateDialog.tag(),
         _CreateOption.fernie => const FernCreateDialog.fernie(),
         _CreateOption.model => const FernCreateDialog.model(),
-        _CreateOption.collection => FernMessageDialog(
-            imageAsset: fernEmptyImage,
-            message: AppLocalizations.of(context).collectionsWip,
-          ),
       },
     );
   }
@@ -116,9 +111,10 @@ class _MainLayoutState extends State<MainLayout> {
 
   /// Si el menú va plegado, y el veredicto del ancho con el que se decidió.
   ///
-  /// El menú arranca siempre desplegado: el ancho sólo lo pliega al cruzar el
-  /// umbral, así que abrir la aplicación en una ventana estrecha lo deja abierto
-  /// y es el botón del menú quien manda hasta que la ventana cambie de lado.
+  /// El menú arranca **desplegado**, y el ancho sólo lo pliega al cruzar el
+  /// umbral: la regla de media pantalla no dice nada de una ventana que acaba
+  /// de abrirse. Que ahí quepa desplegado es cosa del tamaño con el que nace la
+  /// ventana. Entre umbral y umbral manda el botón del menú.
   bool _isSidebarCollapsed = false;
   bool? _lastWidthVerdict;
 
@@ -181,32 +177,26 @@ class _MainLayoutState extends State<MainLayout> {
           0,
     );
 
+    // Una sola forma de la aplicación, se estreche lo que se estreche. Lo
+    // único que cambia con el ancho es que el menú lateral se pliega solo, y
+    // por debajo de [AppSizes.largeScreenMinWidth] la ventana no puede llegar:
+    // el propio ejecutable lo impide (`windows/runner/win32_window.cpp`).
     return LayoutBuilder(builder: (context, constraints) {
-      final isLargeScreen = constraints.maxWidth > AppSizes.largeScreenMinWidth;
+      final collapse = sidebarCollapse(
+        width: constraints.maxWidth,
+        halfScreenWidth: _halfScreenWidth(context),
+        wasCollapsed: _isSidebarCollapsed,
+        lastVerdict: _lastWidthVerdict,
+      );
 
-      if (isLargeScreen) {
-        // El menú se pliega a media pantalla, pero si esa mitad todavía es muy
-        // ancha se espera al ancho al que las cabeceras dejan de caber: lo que
-        // no puede pasar es que desborden con el menú desplegado.
-        final collapseWidth = math.max(
-          _halfScreenWidth(context),
-          AppSizes.sidebarAutoCollapseMinWidth,
-        );
+      _isSidebarCollapsed = collapse.isCollapsed;
+      _lastWidthVerdict = collapse.verdict;
 
-        final verdict = constraints.maxWidth <= collapseWidth;
-        if (_lastWidthVerdict != null && verdict != _lastWidthVerdict) {
-          _isSidebarCollapsed = verdict;
-        }
-        _lastWidthVerdict = verdict;
-
-        return _buildLargeScreenLayout(
-          context,
-          widget.child,
-          isSidebarCollapsed: _isSidebarCollapsed,
-        );
-      }
-
-      return _buildSmallScreenLayout(context, widget.child);
+      return _buildLargeScreenLayout(
+        context,
+        widget.child,
+        isSidebarCollapsed: _isSidebarCollapsed,
+      );
     });
   }
 
@@ -285,19 +275,4 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildSmallScreenLayout(BuildContext context, Widget child) {
-    // TODO: diseñar el layout móvil. Por ahora se muestra un estado vacío.
-    return Scaffold(
-      body: Center(
-        child: FernSurface(
-          radius: AppSizes.radiusSmall,
-          padding: AppSpacing.pagePadding,
-          child: FernEmptyState(
-            imageAsset: fernEmptyImage,
-            message: AppLocalizations.of(context).mobileLayoutWip,
-          ),
-        ),
-      ),
-    );
-  }
 }

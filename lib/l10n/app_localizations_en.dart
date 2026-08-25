@@ -51,15 +51,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuNewTag => 'New tag';
 
   @override
-  String get menuNewCollection => 'New collection';
-
-  @override
-  String get collectionsWip => 'Collections are still a work in progress';
-
-  @override
-  String get mobileLayoutWip => 'Mobile layout coming soon';
-
-  @override
   String mediaCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -315,6 +306,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get viewerPlaybackSectionNote =>
       'What the viewer does to a video while you move along its timeline.';
+
+  @override
+  String get viewerReturnToMedia => 'Go back to what you were looking at';
+
+  @override
+  String get viewerReturnToMediaDescription =>
+      'On leaving the viewer, the grid scrolls to the media you have just seen instead of staying where you left it.';
 
   @override
   String get viewerPauseWhenSeeking => 'Pause when you take hold of the bar';
@@ -749,6 +747,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewerCopyFailed => 'This content could not be copied';
 
   @override
+  String get actionRevealInExplorer => 'Show the file in the explorer';
+
+  @override
+  String get revealInExplorerFailed => 'The file is no longer where it was.';
+
+  @override
   String get mediaInfoTitle => 'Media Info';
 
   @override
@@ -756,6 +760,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createdBy => 'Created by:';
+
+  @override
+  String tagDropped(int count, String tag) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items tagged with $tag',
+      one: 'Tagged with $tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contextMenuTarget(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'On the $count selected',
+      one: 'On this item',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get tagsTitle => 'Tags';
@@ -810,6 +836,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagNameLabel => 'Tag Name';
+
+  @override
+  String get parentTagNotFound =>
+      'There is no tag with that name. Pick one from the list or create it.';
+
+  @override
+  String get parentTagCreate => 'Create it';
+
+  @override
+  String get tagRelationsTitle => 'Where this tag sits';
+
+  @override
+  String get tagRelationsNote =>
+      'Above, the tag it hangs from. To the sides, the ones it goes with. Those are two different things: a tag hanging from another inherits its content in searches, while ones that go together are just related.';
+
+  @override
+  String get tagRelationsAddParent => 'Set the parent';
+
+  @override
+  String get tagRelationsChangeParent => 'Change the parent';
+
+  @override
+  String get tagRelationsAddSibling => 'Add a related tag';
+
+  @override
+  String get tagRelationsCreate => 'Create a new tag';
+
+  @override
+  String get tagRelationsTooltip => 'Parent and related tags';
+
+  @override
+  String get tagRelationsNoParent => 'Top-level tag';
+
+  @override
+  String tagRelationsParentIs(String name) {
+    return 'Hangs from $name';
+  }
+
+  @override
+  String tagRelationsSiblingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count related tags',
+      one: '1 related tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get siblingTagsLabel => 'Related tags';
+
+  @override
+  String get siblingTagsNote =>
+      'Setting this tag also sets these. They do not hang from it nor it from them, and the relation goes both ways. They are saved as you touch them, with no need to press save.';
+
+  @override
+  String get addSiblingTag => 'Add a related tag';
+
+  @override
+  String get actionRemove => 'Remove';
 
   @override
   String get parentTagLabel => 'Parent tag (Optional)';
@@ -1127,6 +1214,60 @@ class AppLocalizationsEn extends AppLocalizations {
       'The credentials stay on this computer and are only used to talk to Reddit.';
 
   @override
+  String get settingsDatabase => 'Database';
+
+  @override
+  String get databaseSectionTitle => 'Database';
+
+  @override
+  String get databaseSectionNote =>
+      'Everything Fern knows about your library lives in one database on this computer: the media entries, tags, creators, fernies, models and marked regions.';
+
+  @override
+  String get databaseWipeTitle => 'Erase the database';
+
+  @override
+  String get databaseWipeSectionNote =>
+      'Leaves Fern as freshly installed. There is no undo and no backup to fall back on.';
+
+  @override
+  String get databaseWipeWarning =>
+      'This cannot be undone. Fern keeps no backup of the database.';
+
+  @override
+  String get databaseWipeLoses =>
+      'You will lose: every media entry with its description and favourites, every tag and creator, the fernies and every region marked on them, the trained models and their tree, the recognition suggestions and the duplicate groups.';
+
+  @override
+  String get databaseWipeKeeps =>
+      'Your files stay where they are: nothing is deleted from disk, and scanning your library folder registers them again. Your settings, passwords and remote credentials also stay.';
+
+  @override
+  String get databaseWipeContinue => 'I understand, continue';
+
+  @override
+  String get databaseWipeConfirmTitle => 'Type the phrase to confirm';
+
+  @override
+  String get databaseWipeConfirmNote =>
+      'To make sure this is not an accident, write the following phrase exactly as it reads:';
+
+  @override
+  String get databaseWipePhrase => 'Erase Database';
+
+  @override
+  String get databaseWipeFieldLabel => 'Confirmation phrase';
+
+  @override
+  String get databaseWipeAction => 'Erase database';
+
+  @override
+  String get databaseWipeFailed => 'The database could not be erased.';
+
+  @override
+  String get databaseWipeDone => 'The database is empty.';
+
+  @override
   String get settingsBrowser => 'Browser';
 
   @override
@@ -1337,6 +1478,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Instead of the posts you have favourited, Fern goes through everything published by the creators you have favourited. It brings in a great deal more, and each creator is followed on its own.';
 
   @override
+  String get remoteImportAllWarning =>
+      'With no cap, Fern goes through the whole account. On a large one that is hours of downloading and several gigabytes of disk. You can stop it whenever you want from the import screen, and whatever has already arrived stays.';
+
+  @override
   String get remoteImportHeavyWarning =>
       'This may take a long while: with no cap, Fern goes through the whole account and brings in everything, files inside posts included. You can stop it at any time from the import screen, and what has already arrived stays.';
 
@@ -1357,6 +1502,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserForward => 'Forward';
+
+  @override
+  String browserLoadFailed(String reason) {
+    return 'This page could not be loaded ($reason)';
+  }
+
+  @override
+  String browserLoadFailedHome(String reason) {
+    return 'This page could not be loaded ($reason); back to the home page';
+  }
 
   @override
   String get browserReload => 'Reload';
@@ -1504,13 +1659,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assignUrlsCreatorTooltip => 'Link addresses to this creator';
 
   @override
+  String get sourceUrlsNote =>
+      'Any platform works: everything hanging from the address is picked up. On the ones that identify a gallery with what comes after the “?” —Danbooru, Gelbooru— copy the whole address, parameters included.';
+
+  @override
   String get sourceUrlsLabel => 'Addresses';
 
   @override
-  String get sourceUrlHint => 'reddit.com/r/example';
+  String get sourceUrlHint => 'reddit.com/r/example, pixiv.net/users/123…';
 
   @override
   String get addSourceUrl => 'Add address';
+
+  @override
+  String get filtersType => 'Content type';
+
+  @override
+  String get filterImages => 'Images';
+
+  @override
+  String get filterGifs => 'GIFs';
+
+  @override
+  String get filterVideos => 'Videos';
+
+  @override
+  String get selectAllTooltip => 'Select everything on screen';
+
+  @override
+  String get selectNoneTooltip => 'Clear the selection';
+
+  @override
+  String get sortNewestFirst => 'Newest first';
+
+  @override
+  String get sortOldestFirst => 'Oldest first';
+
+  @override
+  String get sortFileName => 'By file name';
+
+  @override
+  String get sortDescription => 'By description';
+
+  @override
+  String get sortKind => 'By type';
+
+  @override
+  String get sortRandom => 'At random';
 
   @override
   String get filtersSource => 'Show media from';
@@ -1575,6 +1770,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jobsEmpty => 'Nothing running right now';
 
   @override
+  String get jobRunning => 'Working…';
+
+  @override
+  String get jobCancelled => 'Stopped';
+
+  @override
+  String get jobDismissTooltip => 'Remove from the list';
+
+  @override
   String get jobCancelTooltip => 'Cancel this task';
 
   @override
@@ -1599,6 +1803,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jobHashing => 'Reading content';
+
+  @override
+  String get jobImport => 'Importing';
 
   @override
   String get settingsNotifications => 'Notifications';
@@ -1682,7 +1889,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifyRecognition => 'Batch recognition finished';
 
   @override
-  String get notifyRemoteImport => 'Remote import finished';
+  String get notifyImport => 'Import finished';
 
   @override
   String get sidecarTitle => 'Recognition engine';

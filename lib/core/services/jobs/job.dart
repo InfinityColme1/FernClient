@@ -16,6 +16,12 @@ enum JobType {
 
   /// Calcular las huellas con las que se compara el contenido.
   hashing,
+
+  /// Traerse contenido de una fuente.
+  ///
+  /// Se llama así y no `import` porque en Dart eso es una palabra con oficio
+  /// propio.
+  mediaImport,
 }
 
 /// Por dónde va un trabajo.

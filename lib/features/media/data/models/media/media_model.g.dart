@@ -43,7 +43,21 @@ const MediaModelSchema = CollectionSchema(
   deserialize: _mediaModelDeserialize,
   deserializeProp: _mediaModelDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'downloaded': IndexSchema(
+      id: -2573774225040300307,
+      name: r'downloaded',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'downloaded',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    )
+  },
   links: {
     r'creator': LinkSchema(
       id: 3809086262122494404,
@@ -158,6 +172,14 @@ extension MediaModelQueryWhereSort
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterWhere> anyDownloaded() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'downloaded'),
+      );
+    });
+  }
 }
 
 extension MediaModelQueryWhere
@@ -222,6 +244,96 @@ extension MediaModelQueryWhere
         lower: lowerId,
         includeLower: includeLower,
         upper: upperId,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterWhereClause> downloadedEqualTo(
+      DateTime downloaded) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'downloaded',
+        value: [downloaded],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterWhereClause> downloadedNotEqualTo(
+      DateTime downloaded) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'downloaded',
+              lower: [],
+              upper: [downloaded],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'downloaded',
+              lower: [downloaded],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'downloaded',
+              lower: [downloaded],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'downloaded',
+              lower: [],
+              upper: [downloaded],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterWhereClause> downloadedGreaterThan(
+    DateTime downloaded, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'downloaded',
+        lower: [downloaded],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterWhereClause> downloadedLessThan(
+    DateTime downloaded, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'downloaded',
+        lower: [],
+        upper: [downloaded],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaModel, MediaModel, QAfterWhereClause> downloadedBetween(
+    DateTime lowerDownloaded,
+    DateTime upperDownloaded, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'downloaded',
+        lower: [lowerDownloaded],
+        includeLower: includeLower,
+        upper: [upperDownloaded],
         includeUpper: includeUpper,
       ));
     });

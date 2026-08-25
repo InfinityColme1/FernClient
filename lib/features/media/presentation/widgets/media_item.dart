@@ -26,6 +26,43 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../domain/entities/media/media_summary_entity.dart';
 
+/// Lo que se ve pegado al cursor al arrastrar contenido.
+///
+/// La miniatura de lo que se arrastró y, si van varios, cuántos: sin el número,
+/// arrastrar una celda con treinta seleccionadas parece que mueve una sola, y la
+/// sorpresa llega al soltar.
+class _DragFeedback extends StatelessWidget {
+  final String? path;
+  final int count;
+
+  const _DragFeedback({required this.path, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: dragFeedbackSize,
+      height: dragFeedbackSize,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+            child: path == null
+                ? ColoredBox(color: context.colors.secondary)
+                : Image.file(File(path!), fit: BoxFit.cover),
+          ),
+          if (count > 1)
+            Positioned(
+              right: -AppSpacing.xs,
+              top: -AppSpacing.xs,
+              child: FernBadge(count: count),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Celda de la rejilla multimedia.
 ///
 /// Se encarga de tres cosas: pintar el contenido a máxima calidad (recortando
@@ -85,6 +122,20 @@ class MediaItem extends StatefulWidget {
   /// el ratón. `null` cuando no hay nada que advertir.
   final String? warning;
 
+  /// Se invoca al pulsar con el botón derecho, con dónde se ha pulsado.
+  ///
+  /// La celda no monta el menú: sólo dice que se lo han pedido y dónde. Quien
+  /// lo pinta es la rejilla, que es la que tiene el `Stack` en el que cabe y la
+  /// que sabe a qué contenidos se va a aplicar.
+  final void Function(Offset globalPosition)? onContextMenu;
+
+  /// Los contenidos que viajan si se arrastra esta celda.
+  ///
+  /// Los decide quien monta la rejilla y no la celda: la regla es «si hay
+  /// selección, la selección; si no, ésta», y quién está seleccionado lo sabe la
+  /// rejilla. Vacío o nulo, la celda no se arrastra.
+  final List<int>? dragIds;
+
   const MediaItem({
     super.key,
     required this.media,
@@ -98,6 +149,8 @@ class MediaItem extends StatefulWidget {
     this.crop,
     this.frames = const [],
     this.warning,
+    this.dragIds,
+    this.onContextMenu,
   });
 
   @override
@@ -139,6 +192,18 @@ class _MediaItemState extends State<MediaItem> {
   VideoController? _videoController;
   StreamSubscription<Duration>? _positionSubscription;
   bool _isPreviewReady = false;
+
+  /// La espera entre que el ratón llega y que el vídeo empieza.
+  Timer? _hoverDelay;
+
+  /// La celda que está reproduciendo ahora mismo, en toda la aplicación.
+  ///
+  /// Una y sólo una. Cada reproductor de `media_kit` reserva memoria nativa que
+  /// no se recupera hasta que se cierra, y aunque cada celda cierre el suyo al
+  /// salir el ratón, con el desplazamiento rápido se solapan: la celda se
+  /// desmonta antes de que el `onExit` llegue. Con esta referencia, abrir uno
+  /// cierra el anterior pase lo que pase.
+  static _MediaItemState? _playing;
 
   /// Evita repetir el aviso de fallo de carga: la celda se reconstruye muchas
   /// veces (scroll, hover, selección) y el fichero sigue siendo el mismo.
@@ -221,6 +286,7 @@ class _MediaItemState extends State<MediaItem> {
 
   @override
   void dispose() {
+    _cancelHoverDelay();
     _stopPreview();
     _stopFlipbook();
     super.dispose();
@@ -365,11 +431,31 @@ class _MediaItemState extends State<MediaItem> {
     // trozo de un fotograma suyo. Y una tapada, menos: sería reproducir un
     // vídeo detrás de una tapa que existe justamente para no verlo.
     if (!_isVideo || _crops.isNotEmpty || _isCovered) return;
-    isHovered ? _startPreview() : _stopPreview();
+    if (!isHovered) {
+      _cancelHoverDelay();
+      _stopPreview();
+
+      return;
+    }
+
+    // No se abre nada todavía: se espera a ver si el ratón se queda.
+    _hoverDelay?.cancel();
+    _hoverDelay = Timer(mediaVideoPreviewDelay, () {
+      if (mounted && _isHovered) _startPreview();
+    });
+  }
+
+  void _cancelHoverDelay() {
+    _hoverDelay?.cancel();
+    _hoverDelay = null;
   }
 
   Future<void> _startPreview() async {
     if (_player != null) return;
+
+    // Fuera el de antes, sea de la celda que sea.
+    _playing?._stopPreview();
+    _playing = this;
 
     final player = Player(
       configuration: const PlayerConfiguration(
@@ -405,6 +491,8 @@ class _MediaItemState extends State<MediaItem> {
   }
 
   void _stopPreview() {
+    if (_playing == this) _playing = null;
+
     _positionSubscription?.cancel();
     _positionSubscription = null;
 
@@ -467,14 +555,30 @@ class _MediaItemState extends State<MediaItem> {
   Widget build(BuildContext context) {
     final aspectRatio = _aspectRatio;
 
+    final dragIds = widget.dragIds;
+
     return _highlighted(
       context,
-      MouseRegion(
+      FernDraggableCard<List<int>>(
+        // Tapado no se arrastra: sería mover contenido que no se está viendo, y
+        // soltarlo sobre una etiqueta lo etiquetaría a ciegas.
+        isEnabled: dragIds != null && dragIds.isNotEmpty && !_isCovered,
+        data: dragIds ?? const [],
+        feedback: _DragFeedback(
+          path: _isVideo ? _preview?.thumbnailPath : widget.media.path,
+          count: dragIds?.length ?? 0,
+        ),
+        child: MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => _onHoverChanged(true),
       onExit: (_) => _onHoverChanged(false),
       child: GestureDetector(
         onTap: _onTap,
+        // Tapada no ofrece nada: lo que hay debajo no se está viendo, y todo lo
+        // que el menú hace es sobre contenido que se supone mirado.
+        onSecondaryTapDown: widget.onContextMenu == null || _isCovered
+            ? null
+            : (details) => widget.onContextMenu!(details.globalPosition),
         child: AnimatedScale(
           scale: _isHovered ? mediaHoverScale : 1.0,
           duration: hoverAnimationDuration,
@@ -498,6 +602,7 @@ class _MediaItemState extends State<MediaItem> {
             ),
           ),
         ),
+      ),
       ),
       ),
     );

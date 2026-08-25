@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -22,6 +23,31 @@ class PreferencesService {
 
   Future<bool> clearRootPath() async {
     return await _prefs.remove(rootPathPreferenceKey);
+  }
+
+
+  /// En qué orden se pinta la biblioteca.
+  MediaSortOrder getMediaSortOrder() =>
+      MediaSortOrder.fromId(_prefs.getString(mediaSortOrderPreferenceKey));
+
+  Future<bool> setMediaSortOrder(MediaSortOrder order) async {
+    return await _prefs.setString(mediaSortOrderPreferenceKey, order.id);
+  }
+
+
+  /// Con cuánto se importa: el último tope que se eligió.
+  ///
+  /// Lo que no esté entre las opciones se ignora y vale el de fábrica: es una
+  /// preferencia que se lee para poner un desplegable, y un valor que no está
+  /// en la lista lo dejaría sin nada seleccionado.
+  int getImportLimit() {
+    final saved = _prefs.getInt(importLimitPreferenceKey);
+
+    return importLimitOptions.contains(saved) ? saved! : defaultImportLimit;
+  }
+
+  Future<bool> setImportLimit(int limit) async {
+    return await _prefs.setInt(importLimitPreferenceKey, limit);
   }
 
 
@@ -55,6 +81,32 @@ class PreferencesService {
   /// pantalla diciendo que se escaneó hace un momento.
   Future<bool> clearLastDuplicateScan() async {
     return await _prefs.remove(lastDuplicateScanPreferenceKey);
+  }
+
+
+  /// Anota de qué fuente se está importando.
+  ///
+  /// La pantalla de importación arranca por aquí. Sin esto volvía siempre a la
+  /// del equipo local: quien acababa de traerse cien cosas de Reddit y pasaba un
+  /// momento por la biblioteca, al volver se encontraba otra pantalla y tenía
+  /// que buscar su fuente otra vez.
+  Future<bool> setLastImportSource(ImportSource source) async {
+    return await _prefs.setString(lastImportSourcePreferenceKey, source.id);
+  }
+
+
+  /// De qué fuente se estuvo importando, o `null` si nunca.
+  ///
+  /// Se comprueba antes de traducir: `fromId` cae en el equipo local ante
+  /// cualquier cosa que no reconozca, y aquí hace falta distinguir «no se ha
+  /// importado nunca» de «se importó del equipo».
+  ImportSource? getLastImportSource() {
+    final value = _prefs.getString(lastImportSourcePreferenceKey);
+    if (value == null) return null;
+
+    final known = ImportSource.values.any((source) => source.id == value);
+
+    return known ? ImportSource.fromId(value) : null;
   }
 
 
@@ -135,6 +187,30 @@ class PreferencesService {
   /// fuente no se ha llegado a importar nada todavía.
   String? getLastImportMarker(ImportSource source, {String? collection}) {
     return _prefs.getString(_lastImportMarkerKey(source, collection));
+  }
+
+
+  /// Olvida por dónde iban las importaciones: cuándo se miró cada fuente y por
+  /// dónde se quedó cada listado.
+  ///
+  /// Lo llama quien vacía la base de datos. Estas marcas no dicen nada por sí
+  /// solas: dicen «de aquí para atrás ya está traído», y con la base de datos
+  /// vacía eso es mentira. Dejarlas puestas haría que la siguiente importación
+  /// «desde la última vez» no trajera nada y pareciera que la fuente está rota.
+  ///
+  /// Lo demás no se toca: la carpeta de la biblioteca, el tema o las
+  /// credenciales no son la base de datos.
+  Future<void> forgetImportProgress() async {
+    final stale = [
+      for (final key in _prefs.getKeys())
+        if (key.startsWith(lastImportPreferenceKeyPrefix) ||
+            key.startsWith(lastImportMarkerPreferenceKeyPrefix))
+          key,
+    ];
+
+    for (final key in stale) {
+      await _prefs.remove(key);
+    }
   }
 
 

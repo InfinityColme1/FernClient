@@ -35,6 +35,14 @@ class TagEntity extends Equatable{
   /// dejaría a las hijas escondiendo cosas sin avisar.
   final bool isUnderNsfw;
 
+  /// Etiquetas relacionadas que no son ni madres ni hijas.
+  ///
+  /// «Cuando pongas ésta, pon también éstas». Llegan planas —sin hijas ni
+  /// hermanas suyas— porque lo único que hace falta de ellas es el nombre y el
+  /// identificador: quien las mira las está listando para quitar una o añadir
+  /// otra, no recorriendo un árbol.
+  final List<TagEntity> siblings;
+
   const TagEntity({
     required this.id,
     required this.name,
@@ -42,6 +50,7 @@ class TagEntity extends Equatable{
     this.picturePath,
     this.sourceUrls = const [],
     this.isNsfw = false,
+    this.siblings = const [],
     bool? isUnderNsfw,
   }) : isUnderNsfw = isUnderNsfw ?? isNsfw;
 
@@ -52,6 +61,7 @@ class TagEntity extends Equatable{
     List<String>? sourceUrls,
     bool? isNsfw,
     bool? isUnderNsfw,
+    List<TagEntity>? siblings,
   }) {
     return TagEntity(
       id: id,
@@ -61,6 +71,7 @@ class TagEntity extends Equatable{
       sourceUrls: sourceUrls ?? this.sourceUrls,
       isNsfw: isNsfw ?? this.isNsfw,
       isUnderNsfw: isUnderNsfw ?? this.isUnderNsfw,
+      siblings: siblings ?? this.siblings,
     );
   }
 
@@ -73,6 +84,7 @@ class TagEntity extends Equatable{
     sourceUrls,
     isNsfw,
     isUnderNsfw,
+    siblings,
   ];
 
 }

@@ -164,10 +164,10 @@ void main() {
       // `recognition-viejo` empieza por `recognition`: comparar por texto se la
       // llevaria por delante.
       final other =
-          await touch(p.join('${root}-viejo', 'runs', 'algo', 'best.pt'));
+          await touch(p.join('$root-viejo', 'runs', 'algo', 'best.pt'));
 
       await files.discard(
-        model(curvesDirectory: p.join('${root}-viejo', 'runs', 'algo')),
+        model(curvesDirectory: p.join('$root-viejo', 'runs', 'algo')),
       );
 
       expect(File(other).existsSync(), isTrue);

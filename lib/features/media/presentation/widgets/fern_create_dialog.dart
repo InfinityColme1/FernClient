@@ -24,11 +24,11 @@ import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
-import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -102,14 +102,28 @@ enum CreateDialogType {
 class FernCreateDialog extends StatefulWidget {
   final CreateDialogType type;
 
-  const FernCreateDialog.tag({super.key}) : type = CreateDialogType.tag;
+  /// Con qué nombre llega el campo relleno.
+  ///
+  /// Lo usa quien abre el diálogo desde un sitio donde el nombre ya está
+  /// escrito: la ficha de etiqueta, cuando el padre que se ha tecleado no
+  /// existe y se ofrece crearlo. Volver a escribirlo sería pedir dos veces lo
+  /// mismo.
+  final String initialName;
+
+  const FernCreateDialog.tag({super.key, this.initialName = ''})
+      : type = CreateDialogType.tag;
 
   const FernCreateDialog.creator({super.key})
-      : type = CreateDialogType.creator;
+      : type = CreateDialogType.creator,
+        initialName = '';
 
-  const FernCreateDialog.fernie({super.key}) : type = CreateDialogType.fernie;
+  const FernCreateDialog.fernie({super.key})
+      : type = CreateDialogType.fernie,
+        initialName = '';
 
-  const FernCreateDialog.model({super.key}) : type = CreateDialogType.model;
+  const FernCreateDialog.model({super.key})
+      : type = CreateDialogType.model,
+        initialName = '';
 
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
@@ -126,9 +140,10 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// son detección, y quien no sepa cuál quiere casi siempre quiere saber si
   /// algo está o no está.
   ModelFunction _function = ModelFunction.boolean;
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
-  final TextEditingController _nameController = TextEditingController();
+  late final TextEditingController _nameController =
+      TextEditingController(text: widget.initialName);
 
   /// Un campo por enlace de red social. Siempre hay al menos uno.
   final List<TextEditingController> _socialControllers = [
@@ -178,7 +193,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     // diálogo en espera. El explorador de ficheros no: allí el tiempo lo pone el
     // usuario.
     await _run(() async {
-      final storedPath = await _avatarStorage.store(path);
+      final storedPath = await _storeAvatar(params: path);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);

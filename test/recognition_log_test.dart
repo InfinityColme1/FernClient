@@ -21,7 +21,6 @@ import 'package:Fern/features/recognition/domain/entities/recognition_log_entity
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/features/recognition/domain/repositories/model_repository.dart';
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
-import 'package:Fern/core/services/jobs/job_runner.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ModelTreeNodeEntity _node(

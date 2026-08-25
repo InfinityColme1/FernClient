@@ -70,6 +70,14 @@ class ViewerSettingsSection extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.l),
             FernCheckboxTile(
+              label: texts.viewerReturnToMedia,
+              description: texts.viewerReturnToMediaDescription,
+              value: state.settings.returnToViewedMedia,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(ReturnToViewedMediaToggledEvent(value)),
+            ),
+            FernCheckboxTile(
               label: texts.viewerPauseWhenSeeking,
               description: texts.viewerPauseWhenSeekingDescription,
               value: state.settings.pauseWhenSeeking,

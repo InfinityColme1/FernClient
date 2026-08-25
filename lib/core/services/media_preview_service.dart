@@ -57,6 +57,11 @@ class MediaPreviewService {
 
   static final MediaPreviewService instance = MediaPreviewService._();
 
+  /// Las previsualizaciones ya resueltas, de la más vieja a la más reciente.
+  ///
+  /// El orden de un `Map` de Dart es el de inserción, y eso es lo que permite
+  /// tirar la más vieja sin llevar la cuenta aparte: al pasar del techo, la
+  /// primera clave es la que lleva más tiempo sin renovarse.
   final Map<String, MediaPreview> _cache = {};
   final Map<String, Future<MediaPreview?>> _pending = {};
   final List<Completer<void>> _waiting = [];
@@ -93,7 +98,7 @@ class MediaPreviewService {
         final preview = path.isVideoPath
             ? await _loadVideo(path, frame: frame)
             : await _loadImage(path);
-        if (preview != null) _cache[key] = preview;
+        if (preview != null) _remember(key, preview);
         return preview;
       } catch (e) {
         debugPrint('MediaPreviewService: no se pudo procesar "$path": $e');
@@ -102,6 +107,19 @@ class MediaPreviewService {
         _pending.remove(key);
       }
     });
+  }
+
+  /// Guarda una previsualización sin dejar que la caché crezca sin fin.
+  ///
+  /// Lo que se tira es lo más viejo. Volver a pedirlo no abre ningún vídeo: el
+  /// fotograma sigue escrito en el disco y lo que se rehace es la entrada.
+  void _remember(String key, MediaPreview preview) {
+    _cache.remove(key);
+    _cache[key] = preview;
+
+    while (_cache.length > mediaPreviewCacheLimit) {
+      _cache.remove(_cache.keys.first);
+    }
   }
 
   /// Los fotogramas de [moments] de un mismo fichero, en **una sola apertura**.

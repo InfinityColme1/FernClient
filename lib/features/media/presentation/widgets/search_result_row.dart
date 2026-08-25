@@ -5,7 +5,7 @@ import 'package:Fern/core/services/media_preview_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
-import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 

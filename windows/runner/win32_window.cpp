@@ -207,6 +207,26 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
     }
 
+    // El ancho minimo de la ventana.
+    //
+    // La aplicacion no tiene layout de movil: se dibuja siempre igual y lo
+    // unico que hace al estrecharse es plegar el menu lateral. Por debajo de
+    // este ancho las cabeceras dejan de caber, asi que se impide llegar ahi en
+    // vez de dejar que desborden.
+    //
+    // Va en pixeles logicos y se escala con el DPI del monitor, igual que el
+    // tamano inicial: en una pantalla al 150% la misma ventana ocupa la mitad
+    // mas de pixeles reales.
+    case WM_GETMINMAXINFO: {
+      auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
+      double scale_factor = GetDpiForWindow(hwnd) / 96.0;
+
+      info->ptMinTrackSize.x = Scale(kMinimumWindowWidth, scale_factor);
+      info->ptMinTrackSize.y = Scale(kMinimumWindowHeight, scale_factor);
+
+      return 0;
+    }
+
     case WM_ACTIVATE:
       if (child_content_ != nullptr) {
         SetFocus(child_content_);

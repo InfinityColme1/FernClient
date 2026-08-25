@@ -14,7 +14,6 @@ import 'package:Fern/features/media/data/services/download_pool.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
-import 'package:Fern/features/media/data/datasources/remote_post.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/post_link.dart';

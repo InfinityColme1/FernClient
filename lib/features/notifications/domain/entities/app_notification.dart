@@ -15,8 +15,11 @@ enum NotificationKind {
   /// Se ha terminado de reconocer un lote y queda contenido por validar.
   recognitionFinished(id: 'recognition', route: importRoute),
 
-  /// Se ha terminado de importar de una fuente remota.
-  remoteImportFinished(id: 'remote_import', route: importRoute);
+  /// Se ha terminado de importar, venga de donde venga.
+  ///
+  /// El identificador sigue diciendo «remoto» porque antes sólo avisaba de eso
+  /// y cambiarlo dejaría huérfanos el contador y el sonido ya elegidos.
+  importFinished(id: 'remote_import', route: importRoute);
 
   const NotificationKind({required this.id, required this.route});
 

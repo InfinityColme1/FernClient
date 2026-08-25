@@ -391,7 +391,7 @@ void main() {
       );
     });
 
-    testWidgets('con el menú plegado, hasta que se cambia de layout',
+    testWidgets('con el menú plegado, hasta el ancho mínimo de la ventana',
         (tester) async {
       await _expectNoOverflow(
         tester,
@@ -401,9 +401,52 @@ void main() {
       );
     });
 
-    test('el menú se pliega antes de que se cambie de layout', () {
+    test('el menú se pliega antes de llegar al ancho mínimo', () {
       expect(AppSizes.sidebarAutoCollapseMinWidth,
           greaterThan(AppSizes.largeScreenMinWidth));
+    });
+  });
+
+  // Ya no hay un layout de móvil al que caer: la aplicación se dibuja siempre
+  // igual y lo único que cambia con el ancho es que el menú se pliega. Lo que
+  // sostiene eso son dos números del ejecutable: el ancho por debajo del cual la
+  // ventana no se deja estrechar, y el ancho con el que nace. Ninguno de los dos
+  // se puede comprobar desde Dart montando nada, así que se leen del código.
+  group('los anchos que impone el ejecutable', () {
+    /// Un `constexpr int` del runner de Windows.
+    int _declared(String file, String name) {
+      final source = File('windows/runner/$file').readAsStringSync();
+      final match =
+          RegExp('$name = ([0-9]+);').firstMatch(source);
+
+      expect(
+        match,
+        isNotNull,
+        reason: '$name ha desaparecido de $file',
+      );
+
+      return int.parse(match!.group(1)!);
+    }
+
+    test('no se puede estrechar más de lo que miden las cabeceras', () {
+      expect(
+        _declared('win32_window.h', 'kMinimumWindowWidth'),
+        AppSizes.largeScreenMinWidth,
+        reason: 'el tope del ejecutable y el ancho que miden las cabeceras se '
+            'han separado',
+      );
+    });
+
+    test('y nace lo bastante ancha para el menú desplegado', () {
+      // El menú arranca desplegado, así que la ventana tiene que nacer con
+      // sitio para él: por debajo de esto, la cabecera de importación desborda
+      // desde el primer fotograma.
+      expect(
+        _declared('main.cpp', 'kInitialWindowWidth'),
+        greaterThanOrEqualTo(AppSizes.sidebarAutoCollapseMinWidth),
+        reason: 'la ventana nace más estrecha de lo que necesita el menú '
+            'desplegado',
+      );
     });
   });
 

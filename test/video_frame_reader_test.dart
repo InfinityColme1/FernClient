@@ -108,7 +108,7 @@ void main() {
 
               return const Duration(seconds: 10);
             },
-            frameAt: (_, __) async => 'C:/cache/frame.jpg',
+            frameAt: (_, _) async => 'C:/cache/frame.jpg',
             read: (_) async => bytes,
           ),
           image: (path) async {

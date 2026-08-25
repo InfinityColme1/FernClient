@@ -1,6 +1,7 @@
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
@@ -22,7 +23,10 @@ abstract class LocalMediaRepository {
   /// que cambie de carpeta, y `null` si se ha quedado donde estaba.
   Future<DataState> saveMedia(MediaEntity media);
 
-  Future<DataState<List<MediaSummaryEntity>>> getMediaList();
+  /// El contenido definitivo de la biblioteca, en el orden pedido.
+  Future<DataState<List<MediaSummaryEntity>>> getMediaList({
+    MediaSortOrder order,
+  });
 
   /// Los identificadores del contenido que se puede mandar a reconocer.
   ///
@@ -183,6 +187,12 @@ abstract class LocalMediaRepository {
   /// etiqueta, y siguen con las demás. Las etiquetas que colgaban de ella se
   /// quedan como raíces.
   Future<DataState> deleteTag(int tagId);
+
+  /// Deja en la etiqueta [tagId] las hermanas indicadas.
+  ///
+  /// La relación es **simétrica**: las que entran reciben a [tagId] entre las
+  /// suyas y las que salen la sueltan. Lo fuerza el repositorio, no la pantalla.
+  Future<DataState<TagEntity>> saveTagSiblings(int tagId, List<int> siblingIds);
 
   /// Marca o desmarca una etiqueta como contenido no apto, y devuelve a cuántos
   /// contenidos afecta la decisión —los suyos y los de toda su rama de hijas—.

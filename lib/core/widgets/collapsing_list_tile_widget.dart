@@ -4,7 +4,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:Fern/core/ui/display/fern_badge.dart';
-import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 

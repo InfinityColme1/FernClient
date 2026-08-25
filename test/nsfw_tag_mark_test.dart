@@ -17,7 +17,6 @@ import 'package:Fern/core/widgets/collapsing_list_tile_widget.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
-import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

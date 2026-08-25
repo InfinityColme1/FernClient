@@ -32,6 +32,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
+  // El techo de la caché de imágenes, antes de que se pinte nada. De fábrica son
+  // 100 MB, que con las imágenes de veinte megapíxeles de una biblioteca de
+  // verdad se agotan en una pantalla de rejilla: a partir de ahí la aplicación
+  // se pasa el rato decodificando y tirando lo que acaba de decodificar, y eso
+  // es lo que se nota al desplazarse deprisa.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = imageCacheMaxBytes;
+
   // Poner la base de datos al día es lo primero que se hace y lo único que puede
   // impedir que la aplicación abra: con las filas a medio convertir, cualquier
   // pantalla que las leyera las estropearía un poco más.

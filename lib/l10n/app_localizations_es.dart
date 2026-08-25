@@ -51,15 +51,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get menuNewTag => 'Nueva etiqueta';
 
   @override
-  String get menuNewCollection => 'Nueva colección';
-
-  @override
-  String get collectionsWip => 'Las colecciones todavía están en construcción';
-
-  @override
-  String get mobileLayoutWip => 'La versión móvil llegará pronto';
-
-  @override
   String mediaCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -316,6 +307,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get viewerPlaybackSectionNote =>
       'Qué le hace el visor a un vídeo mientras se recorre su línea de tiempo.';
+
+  @override
+  String get viewerReturnToMedia => 'Volver a donde estabas mirando';
+
+  @override
+  String get viewerReturnToMediaDescription =>
+      'Al salir del visor, la rejilla se coloca donde está el contenido que acabas de ver en vez de quedarse donde la dejaste.';
 
   @override
   String get viewerPauseWhenSeeking => 'Parar al coger la barra';
@@ -750,6 +748,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewerCopyFailed => 'No se ha podido copiar el contenido';
 
   @override
+  String get actionRevealInExplorer => 'Ver el fichero en el explorador';
+
+  @override
+  String get revealInExplorerFailed => 'El fichero ya no está donde estaba.';
+
+  @override
   String get mediaInfoTitle => 'Información';
 
   @override
@@ -757,6 +761,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get createdBy => 'Creado por:';
+
+  @override
+  String tagDropped(int count, String tag) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contenidos etiquetados con $tag',
+      one: 'Etiquetado con $tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contextMenuTarget(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sobre los $count seleccionados',
+      one: 'Sobre este contenido',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get tagsTitle => 'Etiquetas';
@@ -811,6 +837,67 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tagNameLabel => 'Nombre de la etiqueta';
+
+  @override
+  String get parentTagNotFound =>
+      'No existe ninguna etiqueta con ese nombre. Elige una de la lista o créala.';
+
+  @override
+  String get parentTagCreate => 'Crearla';
+
+  @override
+  String get tagRelationsTitle => 'Dónde está esta etiqueta';
+
+  @override
+  String get tagRelationsNote =>
+      'Arriba, la etiqueta de la que cuelga. A los lados, con las que va. Son dos cosas distintas: una etiqueta que cuelga de otra hereda su contenido en las búsquedas, y las que van juntas sólo están relacionadas.';
+
+  @override
+  String get tagRelationsAddParent => 'Poner etiqueta madre';
+
+  @override
+  String get tagRelationsChangeParent => 'Cambiar la madre';
+
+  @override
+  String get tagRelationsAddSibling => 'Añadir relacionada';
+
+  @override
+  String get tagRelationsCreate => 'Crear una etiqueta nueva';
+
+  @override
+  String get tagRelationsTooltip => 'Etiqueta madre y relacionadas';
+
+  @override
+  String get tagRelationsNoParent => 'Etiqueta raíz';
+
+  @override
+  String tagRelationsParentIs(String name) {
+    return 'Cuelga de $name';
+  }
+
+  @override
+  String tagRelationsSiblingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count relacionadas',
+      one: '1 relacionada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get siblingTagsLabel => 'Etiquetas relacionadas';
+
+  @override
+  String get siblingTagsNote =>
+      'Al poner esta etiqueta se ponen también éstas. No cuelgan de ella ni ella de ellas, y la relación va en los dos sentidos. Se guardan al tocarlas, sin pulsar guardar.';
+
+  @override
+  String get addSiblingTag => 'Añadir relacionada';
+
+  @override
+  String get actionRemove => 'Quitar';
 
   @override
   String get parentTagLabel => 'Etiqueta padre (opcional)';
@@ -1129,6 +1216,60 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las credenciales se quedan en este equipo y sólo se usan para hablar con Reddit.';
 
   @override
+  String get settingsDatabase => 'Base de datos';
+
+  @override
+  String get databaseSectionTitle => 'Base de datos';
+
+  @override
+  String get databaseSectionNote =>
+      'Todo lo que Fern sabe de tu biblioteca vive en una base de datos de este equipo: las fichas de los contenidos, las etiquetas, los creadores, los fernies, los modelos y las regiones marcadas.';
+
+  @override
+  String get databaseWipeTitle => 'Eliminar la base de datos';
+
+  @override
+  String get databaseWipeSectionNote =>
+      'Deja Fern como recién instalado. No se puede deshacer y no hay copia de seguridad de la que tirar.';
+
+  @override
+  String get databaseWipeWarning =>
+      'Esto no se puede deshacer. Fern no guarda ninguna copia de la base de datos.';
+
+  @override
+  String get databaseWipeLoses =>
+      'Se pierden: todas las fichas de contenido con su descripción y sus favoritos, todas las etiquetas y creadores, los fernies y todas las regiones marcadas sobre ellos, los modelos entrenados y su árbol, las sugerencias del reconocimiento y los grupos de repetidos.';
+
+  @override
+  String get databaseWipeKeeps =>
+      'Tus ficheros se quedan donde están: no se borra nada del disco, y escanear la carpeta de la biblioteca los vuelve a dar de alta. Los ajustes, las contraseñas y las credenciales de las fuentes también se quedan.';
+
+  @override
+  String get databaseWipeContinue => 'Lo entiendo, continuar';
+
+  @override
+  String get databaseWipeConfirmTitle => 'Escribe la frase para confirmar';
+
+  @override
+  String get databaseWipeConfirmNote =>
+      'Para asegurar que no es un accidente, escribe la siguiente frase tal y como está:';
+
+  @override
+  String get databaseWipePhrase => 'Eliminar Base de Datos';
+
+  @override
+  String get databaseWipeFieldLabel => 'Frase de confirmación';
+
+  @override
+  String get databaseWipeAction => 'Eliminar base de datos';
+
+  @override
+  String get databaseWipeFailed => 'No se ha podido eliminar la base de datos.';
+
+  @override
+  String get databaseWipeDone => 'La base de datos está vacía.';
+
+  @override
   String get settingsBrowser => 'Navegador';
 
   @override
@@ -1339,6 +1480,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'En lugar de las publicaciones que hayas marcado, Fern recorre todo lo que publiquen los creadores que tengas en favoritos. Trae bastante más, y cada creador se sigue por su cuenta.';
 
   @override
+  String get remoteImportAllWarning =>
+      'Sin tope, Fern recorre la cuenta entera. Con una cuenta grande son horas de descarga y varios gigas de disco. Puedes pararlo cuando quieras desde la pantalla de importación, y lo que ya haya llegado se queda.';
+
+  @override
   String get remoteImportHeavyWarning =>
       'Esto puede tardar bastante: sin tope, Fern recorre la cuenta entera y se trae todo, incluidos los ficheros que haya dentro de las publicaciones. Puedes pararlo cuando quieras desde la pantalla de importación, y lo que ya haya llegado se queda.';
 
@@ -1359,6 +1504,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get browserForward => 'Adelante';
+
+  @override
+  String browserLoadFailed(String reason) {
+    return 'No se ha podido cargar la página ($reason)';
+  }
+
+  @override
+  String browserLoadFailedHome(String reason) {
+    return 'No se ha podido cargar la página ($reason); se vuelve a la de inicio';
+  }
 
   @override
   String get browserReload => 'Recargar';
@@ -1508,13 +1663,53 @@ class AppLocalizationsEs extends AppLocalizations {
       'Vincular direcciones con este creador';
 
   @override
+  String get sourceUrlsNote =>
+      'Vale cualquier plataforma: se recoge todo lo que cuelgue de la dirección. En las que identifican la galería con lo que va detrás del «?» —Danbooru, Gelbooru— hay que copiar la dirección entera, parámetros incluidos.';
+
+  @override
   String get sourceUrlsLabel => 'Direcciones';
 
   @override
-  String get sourceUrlHint => 'reddit.com/r/ejemplo';
+  String get sourceUrlHint => 'reddit.com/r/ejemplo, pixiv.net/users/123…';
 
   @override
   String get addSourceUrl => 'Añadir dirección';
+
+  @override
+  String get filtersType => 'Tipo de contenido';
+
+  @override
+  String get filterImages => 'Imágenes';
+
+  @override
+  String get filterGifs => 'GIF';
+
+  @override
+  String get filterVideos => 'Vídeos';
+
+  @override
+  String get selectAllTooltip => 'Seleccionar todo lo que se ve';
+
+  @override
+  String get selectNoneTooltip => 'Quitar la selección';
+
+  @override
+  String get sortNewestFirst => 'Lo último que llegó';
+
+  @override
+  String get sortOldestFirst => 'Lo primero que llegó';
+
+  @override
+  String get sortFileName => 'Por nombre de fichero';
+
+  @override
+  String get sortDescription => 'Por descripción';
+
+  @override
+  String get sortKind => 'Por tipo';
+
+  @override
+  String get sortRandom => 'Al azar';
 
   @override
   String get filtersSource => 'Mostrar contenido de';
@@ -1579,6 +1774,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get jobsEmpty => 'Ahora mismo no hay nada en marcha';
 
   @override
+  String get jobRunning => 'En marcha…';
+
+  @override
+  String get jobCancelled => 'Parada';
+
+  @override
+  String get jobDismissTooltip => 'Quitar de la lista';
+
+  @override
   String get jobCancelTooltip => 'Cancelar esta tarea';
 
   @override
@@ -1603,6 +1807,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get jobHashing => 'Leyendo contenido';
+
+  @override
+  String get jobImport => 'Importando';
 
   @override
   String get settingsNotifications => 'Avisos';
@@ -1687,7 +1894,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notifyRecognition => 'Reconocimiento en lote terminado';
 
   @override
-  String get notifyRemoteImport => 'Importación remota terminada';
+  String get notifyImport => 'Importación terminada';
 
   @override
   String get sidecarTitle => 'Motor de reconocimiento';

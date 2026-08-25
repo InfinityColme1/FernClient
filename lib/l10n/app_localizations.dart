@@ -186,24 +186,6 @@ abstract class AppLocalizations {
   /// **'New tag'**
   String get menuNewTag;
 
-  /// No description provided for @menuNewCollection.
-  ///
-  /// In en, this message translates to:
-  /// **'New collection'**
-  String get menuNewCollection;
-
-  /// No description provided for @collectionsWip.
-  ///
-  /// In en, this message translates to:
-  /// **'Collections are still a work in progress'**
-  String get collectionsWip;
-
-  /// No description provided for @mobileLayoutWip.
-  ///
-  /// In en, this message translates to:
-  /// **'Mobile layout coming soon'**
-  String get mobileLayoutWip;
-
   /// No description provided for @mediaCount.
   ///
   /// In en, this message translates to:
@@ -551,6 +533,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What the viewer does to a video while you move along its timeline.'**
   String get viewerPlaybackSectionNote;
+
+  /// No description provided for @viewerReturnToMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to what you were looking at'**
+  String get viewerReturnToMedia;
+
+  /// No description provided for @viewerReturnToMediaDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'On leaving the viewer, the grid scrolls to the media you have just seen instead of staying where you left it.'**
+  String get viewerReturnToMediaDescription;
 
   /// No description provided for @viewerPauseWhenSeeking.
   ///
@@ -1248,6 +1242,18 @@ abstract class AppLocalizations {
   /// **'This content could not be copied'**
   String get viewerCopyFailed;
 
+  /// No description provided for @actionRevealInExplorer.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the file in the explorer'**
+  String get actionRevealInExplorer;
+
+  /// No description provided for @revealInExplorerFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is no longer where it was.'**
+  String get revealInExplorerFailed;
+
   /// No description provided for @mediaInfoTitle.
   ///
   /// In en, this message translates to:
@@ -1265,6 +1271,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Created by:'**
   String get createdBy;
+
+  /// No description provided for @tagDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Tagged with {tag}} other{{count} items tagged with {tag}}}'**
+  String tagDropped(int count, String tag);
+
+  /// No description provided for @contextMenuTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{On this item} other{On the {count} selected}}'**
+  String contextMenuTarget(int count);
 
   /// No description provided for @tagsTitle.
   ///
@@ -1373,6 +1391,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tag Name'**
   String get tagNameLabel;
+
+  /// No description provided for @parentTagNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no tag with that name. Pick one from the list or create it.'**
+  String get parentTagNotFound;
+
+  /// No description provided for @parentTagCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create it'**
+  String get parentTagCreate;
+
+  /// No description provided for @tagRelationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this tag sits'**
+  String get tagRelationsTitle;
+
+  /// No description provided for @tagRelationsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Above, the tag it hangs from. To the sides, the ones it goes with. Those are two different things: a tag hanging from another inherits its content in searches, while ones that go together are just related.'**
+  String get tagRelationsNote;
+
+  /// No description provided for @tagRelationsAddParent.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the parent'**
+  String get tagRelationsAddParent;
+
+  /// No description provided for @tagRelationsChangeParent.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the parent'**
+  String get tagRelationsChangeParent;
+
+  /// No description provided for @tagRelationsAddSibling.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a related tag'**
+  String get tagRelationsAddSibling;
+
+  /// No description provided for @tagRelationsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new tag'**
+  String get tagRelationsCreate;
+
+  /// No description provided for @tagRelationsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent and related tags'**
+  String get tagRelationsTooltip;
+
+  /// No description provided for @tagRelationsNoParent.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-level tag'**
+  String get tagRelationsNoParent;
+
+  /// No description provided for @tagRelationsParentIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Hangs from {name}'**
+  String tagRelationsParentIs(String name);
+
+  /// No description provided for @tagRelationsSiblingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 related tag} other{{count} related tags}}'**
+  String tagRelationsSiblingCount(int count);
+
+  /// No description provided for @siblingTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Related tags'**
+  String get siblingTagsLabel;
+
+  /// No description provided for @siblingTagsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting this tag also sets these. They do not hang from it nor it from them, and the relation goes both ways. They are saved as you touch them, with no need to press save.'**
+  String get siblingTagsNote;
+
+  /// No description provided for @addSiblingTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a related tag'**
+  String get addSiblingTag;
+
+  /// No description provided for @actionRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get actionRemove;
 
   /// No description provided for @parentTagLabel.
   ///
@@ -1926,6 +2040,102 @@ abstract class AppLocalizations {
   /// **'The credentials stay on this computer and are only used to talk to Reddit.'**
   String get redditCredentialsNote;
 
+  /// No description provided for @settingsDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Database'**
+  String get settingsDatabase;
+
+  /// No description provided for @databaseSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Database'**
+  String get databaseSectionTitle;
+
+  /// No description provided for @databaseSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything Fern knows about your library lives in one database on this computer: the media entries, tags, creators, fernies, models and marked regions.'**
+  String get databaseSectionNote;
+
+  /// No description provided for @databaseWipeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase the database'**
+  String get databaseWipeTitle;
+
+  /// No description provided for @databaseWipeSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaves Fern as freshly installed. There is no undo and no backup to fall back on.'**
+  String get databaseWipeSectionNote;
+
+  /// No description provided for @databaseWipeWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone. Fern keeps no backup of the database.'**
+  String get databaseWipeWarning;
+
+  /// No description provided for @databaseWipeLoses.
+  ///
+  /// In en, this message translates to:
+  /// **'You will lose: every media entry with its description and favourites, every tag and creator, the fernies and every region marked on them, the trained models and their tree, the recognition suggestions and the duplicate groups.'**
+  String get databaseWipeLoses;
+
+  /// No description provided for @databaseWipeKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'Your files stay where they are: nothing is deleted from disk, and scanning your library folder registers them again. Your settings, passwords and remote credentials also stay.'**
+  String get databaseWipeKeeps;
+
+  /// No description provided for @databaseWipeContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand, continue'**
+  String get databaseWipeContinue;
+
+  /// No description provided for @databaseWipeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the phrase to confirm'**
+  String get databaseWipeConfirmTitle;
+
+  /// No description provided for @databaseWipeConfirmNote.
+  ///
+  /// In en, this message translates to:
+  /// **'To make sure this is not an accident, write the following phrase exactly as it reads:'**
+  String get databaseWipeConfirmNote;
+
+  /// No description provided for @databaseWipePhrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase Database'**
+  String get databaseWipePhrase;
+
+  /// No description provided for @databaseWipeFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation phrase'**
+  String get databaseWipeFieldLabel;
+
+  /// No description provided for @databaseWipeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase database'**
+  String get databaseWipeAction;
+
+  /// No description provided for @databaseWipeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The database could not be erased.'**
+  String get databaseWipeFailed;
+
+  /// No description provided for @databaseWipeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'The database is empty.'**
+  String get databaseWipeDone;
+
   /// No description provided for @settingsBrowser.
   ///
   /// In en, this message translates to:
@@ -2214,6 +2424,12 @@ abstract class AppLocalizations {
   /// **'Instead of the posts you have favourited, Fern goes through everything published by the creators you have favourited. It brings in a great deal more, and each creator is followed on its own.'**
   String get pawchiveByCreatorsDescription;
 
+  /// No description provided for @remoteImportAllWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'With no cap, Fern goes through the whole account. On a large one that is hours of downloading and several gigabytes of disk. You can stop it whenever you want from the import screen, and whatever has already arrived stays.'**
+  String get remoteImportAllWarning;
+
   /// No description provided for @remoteImportHeavyWarning.
   ///
   /// In en, this message translates to:
@@ -2249,6 +2465,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Forward'**
   String get browserForward;
+
+  /// No description provided for @browserLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This page could not be loaded ({reason})'**
+  String browserLoadFailed(String reason);
+
+  /// No description provided for @browserLoadFailedHome.
+  ///
+  /// In en, this message translates to:
+  /// **'This page could not be loaded ({reason}); back to the home page'**
+  String browserLoadFailedHome(String reason);
 
   /// No description provided for @browserReload.
   ///
@@ -2424,6 +2652,12 @@ abstract class AppLocalizations {
   /// **'Link addresses to this creator'**
   String get assignUrlsCreatorTooltip;
 
+  /// No description provided for @sourceUrlsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Any platform works: everything hanging from the address is picked up. On the ones that identify a gallery with what comes after the “?” —Danbooru, Gelbooru— copy the whole address, parameters included.'**
+  String get sourceUrlsNote;
+
   /// No description provided for @sourceUrlsLabel.
   ///
   /// In en, this message translates to:
@@ -2433,7 +2667,7 @@ abstract class AppLocalizations {
   /// No description provided for @sourceUrlHint.
   ///
   /// In en, this message translates to:
-  /// **'reddit.com/r/example'**
+  /// **'reddit.com/r/example, pixiv.net/users/123…'**
   String get sourceUrlHint;
 
   /// No description provided for @addSourceUrl.
@@ -2441,6 +2675,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add address'**
   String get addSourceUrl;
+
+  /// No description provided for @filtersType.
+  ///
+  /// In en, this message translates to:
+  /// **'Content type'**
+  String get filtersType;
+
+  /// No description provided for @filterImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get filterImages;
+
+  /// No description provided for @filterGifs.
+  ///
+  /// In en, this message translates to:
+  /// **'GIFs'**
+  String get filterGifs;
+
+  /// No description provided for @filterVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get filterVideos;
+
+  /// No description provided for @selectAllTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Select everything on screen'**
+  String get selectAllTooltip;
+
+  /// No description provided for @selectNoneTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the selection'**
+  String get selectNoneTooltip;
+
+  /// No description provided for @sortNewestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get sortNewestFirst;
+
+  /// No description provided for @sortOldestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get sortOldestFirst;
+
+  /// No description provided for @sortFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'By file name'**
+  String get sortFileName;
+
+  /// No description provided for @sortDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'By description'**
+  String get sortDescription;
+
+  /// No description provided for @sortKind.
+  ///
+  /// In en, this message translates to:
+  /// **'By type'**
+  String get sortKind;
+
+  /// No description provided for @sortRandom.
+  ///
+  /// In en, this message translates to:
+  /// **'At random'**
+  String get sortRandom;
 
   /// No description provided for @filtersSource.
   ///
@@ -2538,6 +2844,24 @@ abstract class AppLocalizations {
   /// **'Nothing running right now'**
   String get jobsEmpty;
 
+  /// No description provided for @jobRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get jobRunning;
+
+  /// No description provided for @jobCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get jobCancelled;
+
+  /// No description provided for @jobDismissTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from the list'**
+  String get jobDismissTooltip;
+
   /// No description provided for @jobCancelTooltip.
   ///
   /// In en, this message translates to:
@@ -2585,6 +2909,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reading content'**
   String get jobHashing;
+
+  /// No description provided for @jobImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing'**
+  String get jobImport;
 
   /// No description provided for @settingsNotifications.
   ///
@@ -2724,11 +3054,11 @@ abstract class AppLocalizations {
   /// **'Batch recognition finished'**
   String get notifyRecognition;
 
-  /// No description provided for @notifyRemoteImport.
+  /// No description provided for @notifyImport.
   ///
   /// In en, this message translates to:
-  /// **'Remote import finished'**
-  String get notifyRemoteImport;
+  /// **'Import finished'**
+  String get notifyImport;
 
   /// No description provided for @sidecarTitle.
   ///

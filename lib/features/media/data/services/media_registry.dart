@@ -115,8 +115,8 @@ class MediaRegistry {
     // Con las etiquetas van las que están por encima de ellas: lo que nace con
     // la etiqueta de una comunidad nace también con la de la serie de la que
     // cuelga.
-    final automaticTags =
-        await _tagHierarchy.withAncestors(await tagsForSourceUrls(sourceUrls));
+    final automaticTags = await _tagHierarchy
+        .withRelatives(await tagsForSourceUrls(sourceUrls));
 
     await _database.writeTxn(() async {
       await _database.mediaSummaryModels.put(summary);

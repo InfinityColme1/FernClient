@@ -373,7 +373,7 @@ class _FakeLibrary implements LocalMediaRepository {
 
   @override
   Future<DataState> saveMedia(media) async {
-    confirmed.add(media.id as int);
+    confirmed.add(media.id);
 
     return const DataSuccess(null);
   }

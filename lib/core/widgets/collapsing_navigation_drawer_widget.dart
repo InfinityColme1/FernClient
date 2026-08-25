@@ -1,6 +1,8 @@
+import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
+import 'package:Fern/core/navigation/sidebar_selection.dart';
 import 'package:flutter/material.dart';
 import 'collapsing_list_tile_widget.dart';
 
@@ -31,6 +33,13 @@ class CollapsingNavigationDrawer extends StatefulWidget {
   /// cabecera y quien lo pliega solo al estrecharse la ventana.
   final bool isCollapsed;
 
+  /// En qué pantalla se está.
+  ///
+  /// Es lo que decide qué botón se ve marcado. Llega por parámetro y no se
+  /// pregunta aquí al enrutador para que el menú se pueda montar y comprobar sin
+  /// uno: lo que tiene que hacer con la dirección no depende de quién se la dé.
+  final String currentLocation;
+
   const CollapsingNavigationDrawer({
     super.key,
     required this.sections,
@@ -46,6 +55,7 @@ class CollapsingNavigationDrawer extends StatefulWidget {
     required this.textUnselectedColor,
 
     this.isCollapsed = false,
+    this.currentLocation = '',
   });
 
   @override
@@ -58,9 +68,13 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
   late AnimationController _animationController;
   late Animation<double> widthAnimation;
 
-  /// El botón que se ve marcado. Mientras no se pulse nada lo está el primero,
-  /// que es la pantalla con la que arranca la aplicación.
-  String? _selectedId;
+  /// El último botón que se pulsó, y la pantalla en la que se estaba al
+  /// pulsarlo.
+  ///
+  /// Hace falta por las etiquetas: filtrar por una no cambia de pantalla, así
+  /// que la dirección no puede contarlo. Para todo lo demás manda la dirección.
+  String? _tappedId;
+  String? _tappedLocation;
 
   @override
   void initState() {
@@ -133,7 +147,16 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
   /// Una sección sin botones sólo ocupa sitio si tiene algo que decir (y hay
   /// ancho para leerlo); si no, desaparece con su separador.
   List<Widget> _sectionsContent(BuildContext context) {
-    final selectedId = _selectedId ?? _defaultSelectedId;
+    final selectedId = sidebarSelectedId(
+          location: widget.currentLocation,
+          ids: [
+            for (final section in widget.sections)
+              for (final item in section.items) item.id,
+          ],
+          tapped: _tappedId,
+          tappedLocation: _tappedLocation,
+        ) ??
+        _defaultSelectedId;
 
     final content = <Widget>[];
     for (final section in widget.sections) {
@@ -154,9 +177,16 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         continue;
       }
 
-      content.addAll(section.items.map((item) => CollapsingListTile(
+      content.addAll(section.items.map((item) => _dropTarget(
+            item,
+            CollapsingListTile(
             onTap: () {
-              setState(() => _selectedId = item.id);
+              // La pantalla de **antes** de navegar: mientras se siga en ella,
+              // lo pulsado manda; en cuanto se cambie, manda la dirección.
+              setState(() {
+                _tappedId = item.id;
+                _tappedLocation = widget.currentLocation;
+              });
               item.onTap.call();
             },
             isSelected: selectedId == item.id,
@@ -175,10 +205,37 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             unselectedColor: widget.unselectedColor,
             textUnselectedColor: widget.textUnselectedColor,
             iconSize: widget.iconSize,
+          ),
           )));
     }
 
     return content;
+  }
+
+  /// La fila, envuelta en un destino de arrastre si acepta contenido.
+  ///
+  /// Sin destino se devuelve tal cual: montar un `DragTarget` por cada fila del
+  /// menú sería pagar por nada en las que no significan algo que se le pueda
+  /// poner a un contenido.
+  Widget _dropTarget(SidebarItem item, Widget tile) {
+    final onDropped = item.onMediaDropped;
+    if (onDropped == null) return tile;
+
+    return DragTarget<List<int>>(
+      onWillAcceptWithDetails: (details) => details.data.isNotEmpty,
+      onAcceptWithDetails: (details) => onDropped(details.data),
+      builder: (context, candidate, _) => DecoratedBox(
+        // Encendida sólo mientras algo está encima: es lo que dice dónde se va
+        // a soltar, que con veinte etiquetas en fila no se adivina.
+        decoration: BoxDecoration(
+          color: candidate.isEmpty
+              ? Colors.transparent
+              : widget.selectedColor.withValues(alpha: dropTargetHighlight),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        ),
+        child: tile,
+      ),
+    );
   }
 
   Widget _sectionTitle(BuildContext context, String title) {

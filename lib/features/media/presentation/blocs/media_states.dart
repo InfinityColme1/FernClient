@@ -1,3 +1,4 @@
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
@@ -45,6 +46,14 @@ abstract class MediaStates extends Equatable {
   /// Es la forma de ver sólo lo de una plataforma sin necesidad de que exista
   /// una etiqueta por plataforma.
   final Set<ImportSource> sourceFilters;
+
+  /// Clases de contenido que el filtro de la cabecera deja ver. De partida las
+  /// tres, que es la biblioteca entera.
+  ///
+  /// Va con [sourceFilters] y no con [searchFilters] porque es de la misma
+  /// clase: de qué tipo es un fichero es un dato suyo, no de un resultado de
+  /// búsqueda, así que recorta la rejilla haya búsqueda o no.
+  final Set<MediaKind> typeFilters;
 
   /// Sugerencia elegida en el buscador, cuando la búsqueda viene de pulsar una
   /// y no de escribir. `null` en las búsquedas por texto.
@@ -111,6 +120,7 @@ abstract class MediaStates extends Equatable {
     this.searchSections,
     this.searchFilters = allSearchResultTypes,
     this.sourceFilters = ImportSource.allSources,
+    this.typeFilters = allMediaKinds,
     this.searchSuggestion,
     this.favoritesOnly = false,
     this.isBusy = false,
@@ -125,6 +135,18 @@ abstract class MediaStates extends Equatable {
   /// Si el filtro de fuentes deja ver [summary].
   bool showsSource(MediaSummaryEntity summary) =>
       sourceFilters.contains(summary.importSource);
+
+  /// Si el filtro de tipos deja ver [summary].
+  bool showsType(MediaSummaryEntity summary) =>
+      typeFilters.contains(MediaKind.of(summary.path));
+
+  /// Si los dos filtros de contenido lo dejan ver.
+  ///
+  /// Los dos juntos y en un solo sitio: son la misma pregunta —«¿esto se pinta
+  /// en la rejilla?»— y separarlos es la forma de que alguien aplique uno y se
+  /// olvide del otro.
+  bool shows(MediaSummaryEntity summary) =>
+      showsSource(summary) && showsType(summary);
 
   /// Los grupos que la rejilla pinta: los de la búsqueda que el filtro de tipos
   /// deja pasar, con su contenido recortado por el de fuentes. `null` cuando no
@@ -159,7 +181,7 @@ abstract class MediaStates extends Equatable {
     for (final section in sections) {
       if (!searchFilters.contains(section.type)) continue;
 
-      final media = section.media.where(showsSource).toList();
+      final media = section.media.where(shows).toList();
       if (media.isEmpty) continue;
 
       visible.add(MediaSearchSectionEntity(
@@ -184,6 +206,7 @@ abstract class MediaStates extends Equatable {
     List<MediaSearchSectionEntity> ? searchSections,
     Set<SearchResultType> ? searchFilters,
     Set<ImportSource> ? sourceFilters,
+    Set<MediaKind> ? typeFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
@@ -204,6 +227,7 @@ abstract class MediaStates extends Equatable {
     searchSections,
     searchFilters,
     sourceFilters,
+    typeFilters,
     searchSuggestion,
     favoritesOnly,
     isBusy,
@@ -231,6 +255,7 @@ class MediaLoading extends MediaStates {
     super.searchSections,
     super.searchFilters,
     super.sourceFilters,
+    super.typeFilters,
     super.searchSuggestion,
     super.favoritesOnly,
     super.isBusy,
@@ -251,6 +276,7 @@ class MediaLoading extends MediaStates {
     List<MediaSearchSectionEntity> ? searchSections,
     Set<SearchResultType> ? searchFilters,
     Set<ImportSource> ? sourceFilters,
+    Set<MediaKind> ? typeFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
@@ -267,6 +293,7 @@ class MediaLoading extends MediaStates {
       searchSections: searchSections ?? this.searchSections,
       searchFilters: searchFilters ?? this.searchFilters,
       sourceFilters: sourceFilters ?? this.sourceFilters,
+      typeFilters: typeFilters ?? this.typeFilters,
       searchSuggestion: searchSuggestion ?? this.searchSuggestion,
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,
       isBusy: isBusy ?? this.isBusy,
@@ -294,6 +321,7 @@ class DetailedMedia extends MediaStates {
     super.searchSections,
     super.searchFilters,
     super.sourceFilters,
+    super.typeFilters,
     super.searchSuggestion,
     super.favoritesOnly,
     super.isBusy,
@@ -314,6 +342,7 @@ class DetailedMedia extends MediaStates {
     List<MediaSearchSectionEntity> ? searchSections,
     Set<SearchResultType> ? searchFilters,
     Set<ImportSource> ? sourceFilters,
+    Set<MediaKind> ? typeFilters,
     SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
@@ -332,6 +361,7 @@ class DetailedMedia extends MediaStates {
         searchSections: searchSections ?? this.searchSections,
         searchFilters: searchFilters ?? this.searchFilters,
         sourceFilters: sourceFilters ?? this.sourceFilters,
+        typeFilters: typeFilters ?? this.typeFilters,
         searchSuggestion: searchSuggestion ?? this.searchSuggestion,
         favoritesOnly: favoritesOnly ?? this.favoritesOnly,
         isBusy: isBusy ?? this.isBusy,

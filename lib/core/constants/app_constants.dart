@@ -330,6 +330,24 @@ const sidecarActivitySlide = 0.25;
 /// lugar de la cuenta entera.
 const unlimitedImportLimit = 0;
 const untilLastImportLimit = -1;
+
+/// Con cuánto se llega a la pantalla de importación la primera vez.
+///
+/// Diez, y no «todo». Traerse una cuenta entera es una descarga de horas y
+/// gigas, y era lo que pasaba con sólo pulsar el botón sin haber mirado el
+/// desplegable. Diez es una muestra: se ve qué llega de esa fuente y se decide
+/// con eso delante.
+const defaultImportLimit = 10;
+
+/// Dónde se recuerda el último tope elegido.
+///
+/// Se recuerda porque quien importa de una fuente suele querer lo mismo cada
+/// vez, y tener que cambiarlo en cada visita convierte el valor de fábrica en
+/// una molestia diaria en vez de en una red de seguridad.
+const importLimitPreferenceKey = 'import_limit';
+
+/// En qué orden se pinta la biblioteca.
+const mediaSortOrderPreferenceKey = 'media_sort_order';
 const importLimitOptions = [
   unlimitedImportLimit,
   untilLastImportLimit,
@@ -1127,6 +1145,9 @@ const treeArrowSize = 10.0;
 
 /// Con qué clave se guarda si lo reconocido vuelve a importación.
 const returnRecognizedPreferenceKey = 'recognition_return_to_import';
+
+/// Si al salir del visor la rejilla se coloca donde está lo que se ha mirado.
+const returnToViewedMediaPreferenceKey = 'viewer_return_to_media';
 const recognizeOnImportPreferenceKey = 'recognition_on_import';
 const duplicateThresholdPreferenceKey = 'duplicates_threshold';
 
@@ -1144,6 +1165,9 @@ const nsfwLockedViewPreferenceKey = 'nsfw_locked_view';
 
 /// Si marcar una etiqueta arrastra a las que cuelgan de ella.
 const nsfwChildTagsPreferenceKey = 'nsfw_marks_child_tags';
+
+/// Con qué clave se guarda de qué fuente se estuvo importando la última vez.
+const lastImportSourcePreferenceKey = 'import_last_source';
 
 /// Si el escaneo mira también vídeos y GIF.
 const duplicateScanMovingPreferenceKey = 'duplicates_scan_moving';
@@ -1247,6 +1271,14 @@ const creatorProfileRowHeight = 32.0;
 /// Lo que se queda a la vista un aviso breve, y lo que tarda en aparecer y en
 /// irse. Lo justo para leer una línea sin que estorbe.
 const toastDuration = Duration(seconds: 3);
+
+/// Cuánto dura el aviso que **lleva a algún sitio**.
+///
+/// Más que los otros porque hay que leerlo y además decidir si se pulsa, y tres
+/// segundos no dan para las dos cosas. Pero se va igual: antes se quedaba hasta
+/// que alguien lo pulsara, y como no tenía forma de cerrarse, quien no quería ir
+/// se lo encontraba clavado en la pantalla para siempre.
+const toastActionDuration = Duration(seconds: 12);
 const toastFadeDuration = Duration(milliseconds: 200);
 
 /// Desde dónde entra, en alturas suyas, y cuánto tapa lo que hay detrás.
@@ -1294,6 +1326,59 @@ const mediaFallbackAspectRatio = 1.0;
 /// reescalar la ventana, y más resolución de sobra se guarda de más.
 const mediaDecodeWidthStep = 64;
 const mediaVideoPreviewLength = Duration(seconds: 10);
+
+/// Cuánto tiene que quedarse el ratón encima de un vídeo antes de que empiece a
+/// reproducirse.
+///
+/// Sacar la previsualización cuesta abrir un reproductor de verdad, con su
+/// memoria nativa. Sin esta espera, cruzar la rejilla de lado a lado abría uno
+/// por cada celda que tocaba el cursor —decenas en un segundo— y ésa es la
+/// causa principal del atasco al desplazarse deprisa.
+///
+/// Tres décimas: lo bastante para que pasar de largo no cuente y lo bastante
+/// poco para que pararse encima se sienta inmediato.
+const mediaVideoPreviewDelay = Duration(milliseconds: 300);
+
+/// Cuántas previsualizaciones de fichero se recuerdan en memoria.
+///
+/// Son objetos pequeños —cuatro campos— pero una biblioteca de decenas de miles
+/// los acumula todos, y el fotograma de cada vídeo sigue en el disco de todas
+/// formas: volver a pedir uno olvidado es leer una entrada de caché, no abrir
+/// el vídeo otra vez.
+const mediaPreviewCacheLimit = 2000;
+
+/// Techo de la caché de imágenes decodificadas de Flutter.
+///
+/// De fábrica son 100 MB, que con imágenes de veinte megapíxeles se agotan en
+/// una pantalla de rejilla. Lo que pasa al agotarse no es un error: es que la
+/// aplicación empieza a decodificar y tirar sin parar, y ahí se va el
+/// rendimiento del desplazamiento.
+const imageCacheMaxBytes = 200 << 20;
+
+/// Cuánto se construye por delante y por detrás de lo que se ve en la rejilla.
+///
+/// Un poco más de una pantalla: bastante para que desplazarse no vaya a
+/// tirones, y no tanto como para tener cientos de celdas montadas fuera de la
+/// vista pidiendo cada una su miniatura.
+const mediaGridCacheExtent = 600.0;
+
+/// Cuántas columnas tiene la rejilla de contenido.
+///
+/// Una sola cuenta para las cinco rejillas que hay (biblioteca, importación,
+/// favoritos, papelera y los resultados de una búsqueda): estaba repetida en
+/// cada pantalla, y con el número suelto en cinco sitios cualquier cambio se
+/// deja alguno por el camino y las pantallas dejan de parecerse entre sí.
+const mediaGridColumns = 4;
+
+/// Lo que mide la miniatura que va pegada al cursor al arrastrar contenido.
+///
+/// Pequeña a propósito: lo que hace falta es reconocer qué se está arrastrando
+/// y ver cuántos van, no mirar la imagen.
+const dragFeedbackSize = 96.0;
+
+/// Cuánto se enciende una fila del menú cuando hay algo a punto de soltarse
+/// encima. Lo justo para que se vea cuál es sin taparla.
+const dropTargetHighlight = 0.35;
 const mediaEmptyDurationLabel = '--:--';
 
 // Video preview extraction

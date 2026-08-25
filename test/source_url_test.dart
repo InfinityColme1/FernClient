@@ -89,4 +89,137 @@ void main() {
       expect(covers('pixiv.net/users/123', 'pixiv.net/users/1234'), isFalse);
     });
   });
+
+  // El fallo que dejaba el etiquetado automático inservible en las plataformas
+  // que identifican una galería con lo que va detrás del `?`: se tiraba todo,
+  // así que **todas** las publicaciones de Danbooru se guardaban como
+  // `danbooru.donmai.us/posts`. No es que una regla por artista no encontrara
+  // nada: es que se los llevaba a todos.
+  group('las galerías que viven detrás del interrogante', () {
+    test('dos artistas de Danbooru no son la misma dirección', () {
+      expect(
+        normalizedSourceUrl('https://danbooru.donmai.us/posts?tags=uno'),
+        isNot(normalizedSourceUrl('https://danbooru.donmai.us/posts?tags=otro')),
+      );
+    });
+
+    test('la regla de un artista recoge lo suyo', () {
+      expect(
+        covers(
+          'danbooru.donmai.us/posts?tags=uno',
+          'https://danbooru.donmai.us/posts?tags=uno',
+        ),
+        isTrue,
+      );
+    });
+
+    test('y no lo del otro', () {
+      expect(
+        covers(
+          'danbooru.donmai.us/posts?tags=uno',
+          'https://danbooru.donmai.us/posts?tags=otro',
+        ),
+        isFalse,
+      );
+    });
+
+    test('dos publicaciones de Gelbooru tampoco', () {
+      expect(
+        normalizedSourceUrl(
+          'https://gelbooru.com/index.php?page=post&s=view&id=1',
+        ),
+        isNot(normalizedSourceUrl(
+          'https://gelbooru.com/index.php?page=post&s=view&id=2',
+        )),
+      );
+    });
+
+    // Escritos en distinto orden son el mismo enlace, y hay que compararlos
+    // igual: los ordena la normalización.
+    test('el orden de los parámetros no cambia la dirección', () {
+      expect(
+        normalizedSourceUrl('gelbooru.com/index.php?s=view&page=post&id=7'),
+        normalizedSourceUrl('gelbooru.com/index.php?page=post&id=7&s=view'),
+      );
+    });
+
+    test('lo de seguimiento se sigue tirando', () {
+      expect(
+        normalizedSourceUrl(
+          'https://danbooru.donmai.us/posts?tags=uno&utm_campaign=x&fbclid=y',
+        ),
+        'danbooru.donmai.us/posts?tags=uno',
+      );
+    });
+
+    // Una regla sin parámetros manda por ruta, lleve la dirección los que
+    // lleve: es lo que recoge un sitio entero.
+    test('una regla sin parámetros recoge lo que cuelgue de ella', () {
+      expect(
+        covers('danbooru.donmai.us', 'https://danbooru.donmai.us/posts?tags=x'),
+        isTrue,
+      );
+      expect(
+        covers(
+          'danbooru.donmai.us/posts',
+          'https://danbooru.donmai.us/posts?tags=x',
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  // Lo que genera cada cliente al importar, tal cual, contra lo que el usuario
+  // escribiría a mano. Es la comprobación que pedía la ficha del item 14.
+  group('las seis fuentes', () {
+    test('Reddit: la comunidad recoge su publicación', () {
+      expect(
+        covers(
+          'reddit.com/r/gifs',
+          'https://www.reddit.com/r/gifs/comments/abc123/un_titulo/',
+        ),
+        isTrue,
+      );
+    });
+
+    test('Pixiv: el autor recoge su ilustración', () {
+      expect(
+        covers('pixiv.net/users/123', 'https://www.pixiv.net/users/123/artworks'),
+        isTrue,
+      );
+    });
+
+    test('Pinterest: el tablero recoge su pin', () {
+      expect(
+        covers('pinterest.com/alguien/tablero',
+            'https://www.pinterest.com/alguien/tablero/'),
+        isTrue,
+      );
+    });
+
+    test('Pawchive: el creador recoge su publicación', () {
+      expect(
+        covers('pawchive.com/creadora', 'https://pawchive.com/creadora/post/9'),
+        isTrue,
+      );
+    });
+
+    test('Danbooru: la publicación cae bajo el sitio', () {
+      expect(
+        covers('danbooru.donmai.us', 'https://danbooru.donmai.us/posts/12345'),
+        isTrue,
+      );
+    });
+
+    test('Gelbooru: una publicación no recoge a otra', () {
+      expect(
+        covers(
+          'gelbooru.com/index.php?id=1&page=post&s=view',
+          'https://gelbooru.com/index.php?page=post&s=view&id=2',
+        ),
+        isFalse,
+      );
+    });
+  });
 }
+

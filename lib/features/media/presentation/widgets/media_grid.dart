@@ -1,14 +1,18 @@
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/presentation/widgets/media_context_menu.dart';
 import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
+import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/features/media/presentation/widgets/highlight_scroll_marks.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_item.dart';
+import 'package:Fern/features/media/presentation/widgets/returning_masonry_grid.dart';
+import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -122,6 +126,7 @@ class MediaGrid extends StatelessWidget {
     this.hasSurface = true,
     this.isLoading = false,
     this.onStop,
+    this.returnsToViewed = false,
   })  : sections = null,
         crops = null,
         selectedCropIds = const {},
@@ -137,6 +142,13 @@ class MediaGrid extends StatelessWidget {
   ///
   /// Es la rejilla de la pantalla de fernies. No necesita un `MediaBloc` por
   /// encima: la selección y lo que pasa al pulsar vienen de fuera.
+  /// Si al volver del visor esta rejilla va a buscar lo que se acaba de mirar.
+  ///
+  /// Lo dice la pantalla y no esta clase: la de contenido y la de importación
+  /// enseñan listas distintas, y volver a «esa» posición en la lista que no es
+  /// sería saltar a un sitio cualquiera.
+  final bool returnsToViewed;
+
   const MediaGrid.crops({
     super.key,
     required List<MediaCrop> this.crops,
@@ -152,7 +164,8 @@ class MediaGrid extends StatelessWidget {
     this.emptyMessage,
   })  : mediaList = const [],
         sections = null,
-        onStop = null;
+        onStop = null,
+        returnsToViewed = false;
 
   /// Rejilla de resultados de búsqueda: el contenido va separado en grupos
   /// (descripciones, etiquetas y creadores) con una cabecera delante de cada
@@ -165,6 +178,7 @@ class MediaGrid extends StatelessWidget {
     this.isLoading = false,
     this.onStop,
   })  : mediaList = const [],
+        returnsToViewed = false,
         crops = null,
         selectedCropIds = const {},
         onCropTap = null,
@@ -228,11 +242,14 @@ class MediaGrid extends StatelessWidget {
     }
 
     final orderedIds = _orderedIds;
-    final content = switch ((sections, crops)) {
-      (final sections?, _) when sections.isNotEmpty => _buildSections(orderedIds),
-      (_, final crops?) => _buildCropGrid(crops),
-      _ => _buildGrid(orderedIds),
-    };
+    final content = _MediaContextMenuLayer(
+      builder: (context, requestMenu) => switch ((sections, crops)) {
+        (final sections?, _) when sections.isNotEmpty =>
+          _buildSections(orderedIds, requestMenu),
+        (_, final crops?) => _buildCropGrid(crops),
+        _ => _buildGrid(orderedIds, requestMenu),
+      },
+    );
 
     final highlight = getIt<RecognitionHighlight>();
 
@@ -283,22 +300,53 @@ class MediaGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildGrid(List<int> orderedIds) {
-    return MasonryGridView.count(
-      padding: const EdgeInsets.all(AppSpacing.s),
-      crossAxisCount: columns,
-      mainAxisSpacing: AppSpacing.s,
-      crossAxisSpacing: AppSpacing.s,
+  /// Cuánto se separa la rejilla de su borde.
+  ///
+  /// Dentro de una superficie hace falta más: su curva muerde las celdas de las
+  /// esquinas. Fuera de ella no, y ponerlo igual sería un margen de más en las
+  /// pantallas de gestión, donde la rejilla llega hasta el borde a propósito.
+  double get _inset => hasSurface ? AppSpacing.gridInset : AppSpacing.s;
+
+  Widget _buildGrid(List<int> orderedIds, RequestMediaMenu requestMenu) {
+    return ReturningMasonryGrid(
+      padding: EdgeInsets.all(_inset),
+      // Lo justo para que desplazarse no vaya construyendo a tirones, y no
+      // tanto como para tener cientos de celdas montadas fuera de la pantalla:
+      // cada una pide su miniatura y decodifica su imagen.
+      cacheExtent: mediaGridCacheExtent,
+      columns: columns,
+      spacing: AppSpacing.s,
       itemCount: mediaList.length,
-      itemBuilder: (context, index) =>
-          _buildItem(mediaList[index], orderedIds),
+      focusIndex: _returnIndex,
+      itemBuilder: (context, index, key) =>
+          _buildItem(mediaList[index], orderedIds, requestMenu, key),
     );
+  }
+
+  /// A qué celda hay que volver, si es que hay que volver a alguna.
+  int? get _returnIndex {
+    if (!returnsToViewed) return null;
+
+    // Se pregunta cada vez y no se guarda: el ajuste se puede apagar mientras
+    // se está mirando la rejilla, y lo que vale es lo que esté puesto ahora.
+    if (!getIt<SettingsRepository>().getSettings().returnToViewedMedia) {
+      return null;
+    }
+
+    final viewed = getIt<ViewedMedia>().mediaId;
+    if (viewed == null) return null;
+
+    final index = mediaList.indexWhere((media) => media.id == viewed);
+
+    // Lo que se miró puede no estar en esta lista: se ha borrado, o se ha
+    // filtrado desde que se abrió.
+    return index < 0 ? null : index;
   }
 
   /// Un bloque por grupo: la cabecera que lo identifica y su rejilla. Todo va en
   /// el mismo scroll, así que los grupos se recorren de arriba abajo como una
   /// sola lista.
-  Widget _buildSections(List<int> orderedIds) {
+  Widget _buildSections(List<int> orderedIds, RequestMediaMenu requestMenu) {
     return CustomScrollView(
       slivers: [
         for (final section in sections!) ...[
@@ -318,14 +366,14 @@ class MediaGrid extends StatelessWidget {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+            padding: EdgeInsets.symmetric(horizontal: _inset),
             sliver: SliverMasonryGrid.count(
               crossAxisCount: columns,
               mainAxisSpacing: AppSpacing.s,
               crossAxisSpacing: AppSpacing.s,
               childCount: section.media.length,
               itemBuilder: (context, index) =>
-                  _buildItem(section.media[index], orderedIds),
+                  _buildItem(section.media[index], orderedIds, requestMenu),
             ),
           ),
         ],
@@ -338,7 +386,8 @@ class MediaGrid extends StatelessWidget {
   /// cambia es que cada celda lleva su región y su propia selección.
   Widget _buildCropGrid(List<MediaCrop> crops) {
     return MasonryGridView.count(
-      padding: const EdgeInsets.all(AppSpacing.s),
+      padding: EdgeInsets.all(_inset),
+      cacheExtent: mediaGridCacheExtent,
       crossAxisCount: columns,
       mainAxisSpacing: AppSpacing.s,
       crossAxisSpacing: AppSpacing.s,
@@ -371,38 +420,144 @@ class MediaGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(MediaSummaryEntity media, List<int> orderedIds) {
+  Widget _buildItem(
+    MediaSummaryEntity media,
+    List<int> orderedIds,
+    RequestMediaMenu requestMenu, [
+    Key? key,
+  ]) {
     final highlight = getIt<RecognitionHighlight>();
 
-    return BlocSelector<MediaBloc, MediaStates, bool>(
-      selector: (state) => state.selectedIds.contains(media.id),
-      builder: (context, isSelected) => ListenableBuilder(
+    return BlocSelector<MediaBloc, MediaStates, Set<int>>(
+      key: key,
+      selector: (state) => state.selectedIds,
+      builder: (context, selectedIds) {
+        final isSelected = selectedIds.contains(media.id);
+
+        return ListenableBuilder(
         // Se escucha aquí y no arriba para que apagar el destacado no rehaga la
         // rejilla entera: son trescientas celdas, y cada una sabe si le toca.
         listenable: highlight,
-        builder: (context, _) => MediaItem(
-          media: media,
-          isSelected: isSelected,
-          isHighlighted: highlight.contains(media.id),
-          // Pasar el ratón por encima es una de las tres formas de dar el aviso
-          // por visto; las otras dos son salir de la pantalla y abrir algo.
-          onHighlightSeen: highlight.clear,
-          onTap: () =>
-              context.read<MediaBloc>().add(MediaClickedEvent(media: media)),
-          onSelectionToggled: () => context
-              .read<MediaBloc>()
-              .add(ToggleMediaSelectionEvent(media: media)),
-          // Mayúsculas + clic: la selección se estira hasta aquí desde el último
-          // elemento marcado, siguiendo el orden de la rejilla.
-          onRangeSelectionRequested: () => context.read<MediaBloc>().add(
-                SelectMediaRangeEvent(media: media, orderedIds: orderedIds),
+          builder: (context, _) => MediaItem(
+            media: media,
+            isSelected: isSelected,
+            isHighlighted: highlight.contains(media.id),
+            // La regla del arrastre: con selección, la selección entera; sin
+            // ella, sólo ésta. Arrastrar una celda que no está marcada teniendo
+            // otras marcadas mueve las marcadas, que es lo acordado, y por eso
+            // el retrato del arrastre lleva el número delante.
+            dragIds: selectedIds.isEmpty ? [media.id] : selectedIds.toList(),
+            // Y la misma regla para el menú del botón derecho.
+            onContextMenu: (position) => requestMenu(
+              media,
+              position,
+              selectedIds.isEmpty ? [media.id] : selectedIds.toList(),
+            ),
+            // Pasar el ratón por encima es una de las tres formas de dar el
+            // aviso por visto; las otras dos son salir de la pantalla y abrir
+            // algo.
+            onHighlightSeen: highlight.clear,
+            onTap: () =>
+                context.read<MediaBloc>().add(MediaClickedEvent(media: media)),
+            onSelectionToggled: () => context
+                .read<MediaBloc>()
+                .add(ToggleMediaSelectionEvent(media: media)),
+            // Mayúsculas + clic: la selección se estira hasta aquí desde el
+            // último elemento marcado, siguiendo el orden de la rejilla.
+            onRangeSelectionRequested: () => context.read<MediaBloc>().add(
+                  SelectMediaRangeEvent(media: media, orderedIds: orderedIds),
+                ),
+            // Si el contenido no se pinta porque su fichero ya no está, la fila
+            // de la base de datos sobra y el elemento desaparece de la rejilla.
+            onLoadFailed: () =>
+                context.read<MediaBloc>().add(MediaLoadFailedEvent(media.id)),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Cómo se pide el menú contextual: sobre qué contenido, dónde se ha pulsado y
+/// a qué contenidos se va a aplicar.
+typedef RequestMediaMenu = void Function(
+  MediaSummaryEntity media,
+  Offset globalPosition,
+  List<int> targetIds,
+);
+
+/// La capa que sabe abrir el menú del botón derecho encima de la rejilla.
+///
+/// Va aparte y no en `MediaGrid` para no convertir la rejilla entera en un
+/// widget con estado: lo único que cambia al abrir el menú es el menú, y
+/// rehacer por eso las trescientas celdas que hay debajo sería pagar el
+/// repintado más caro de la aplicación por enseñar un panel de seis filas.
+class _MediaContextMenuLayer extends StatefulWidget {
+  final Widget Function(BuildContext context, RequestMediaMenu requestMenu)
+      builder;
+
+  const _MediaContextMenuLayer({required this.builder});
+
+  @override
+  State<_MediaContextMenuLayer> createState() => _MediaContextMenuLayerState();
+}
+
+class _MediaContextMenuLayerState extends State<_MediaContextMenuLayer> {
+  /// Con qué se sitúa el menú: las coordenadas del `Stack` que lo contiene.
+  final GlobalKey _stackKey = GlobalKey();
+
+  MediaSummaryEntity? _media;
+  Offset? _position;
+  List<int> _targetIds = const [];
+
+  void _open(
+    MediaSummaryEntity media,
+    Offset globalPosition,
+    List<int> targetIds,
+  ) {
+    final box = _stackKey.currentContext?.findRenderObject();
+
+    setState(() {
+      _media = media;
+      _targetIds = targetIds;
+      _position = box is RenderBox
+          ? box.globalToLocal(globalPosition)
+          : globalPosition;
+    });
+  }
+
+  void _close() {
+    if (!mounted || _position == null) return;
+
+    setState(() {
+      _media = null;
+      _position = null;
+      _targetIds = const [];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = _media;
+    final position = _position;
+
+    return Stack(
+      key: _stackKey,
+      children: [
+        widget.builder(context, _open),
+        if (media != null && position != null)
+          Positioned.fill(
+            child: FernContextMenu(
+              position: position,
+              onDismiss: _close,
+              child: MediaContextMenu(
+                media: media,
+                targetIds: _targetIds,
+                onDone: _close,
               ),
-          // Si el contenido no se pinta porque su fichero ya no está, la fila de
-          // la base de datos sobra y el elemento desaparece de la rejilla.
-          onLoadFailed: () =>
-              context.read<MediaBloc>().add(MediaLoadFailedEvent(media.id)),
-        ),
-      ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:Fern/features/browser/data/services/browser_import_service.dart'
 import 'package:Fern/features/browser/data/services/browser_page_scanner.dart';
 import 'package:Fern/features/browser/data/services/browser_session_service.dart';
 import 'package:Fern/features/browser/domain/entities/browser_media.dart';
+import 'package:Fern/features/browser/domain/services/browser_start_url.dart';
 import 'package:Fern/features/browser/presentation/widgets/browser_media_panel.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
@@ -71,8 +72,11 @@ class _BrowserPageState extends State<BrowserPage> {
   ///
   /// Volver a la pantalla no devuelve al principio: el navegador se deja como
   /// se dejó, igual que cualquier otra pantalla de la aplicación.
-  late String _start =
-      widget.initialUrl ?? _preferences.getLastBrowserUrl() ?? _homePage;
+  late String _start = browserStartUrl(
+    requested: widget.initialUrl,
+    lastVisited: _preferences.getLastBrowserUrl(),
+    home: _homePage,
+  );
 
   late final _address = TextEditingController(text: _start);
 
@@ -85,6 +89,18 @@ class _BrowserPageState extends State<BrowserPage> {
   bool _canGoBack = false;
   bool _canGoForward = false;
   bool _isLoading = false;
+
+  /// El navegador ha llegado a enseñar una página en esta visita.
+  ///
+  /// Con algo delante, una carga que se cae es una página que no ha ido; con la
+  /// pantalla en blanco, es el fallo que se está persiguiendo.
+  bool _hasPageShown = false;
+
+  /// Ya se ha vuelto a la página de inicio una vez por un fallo de carga.
+  ///
+  /// Sin esto, una página de inicio que no cargue deja la pantalla dando
+  /// vueltas, que es peor que quedarse en blanco.
+  bool _hasRecovered = false;
 
   /// Lo encontrado en la página que se está viendo. Mientras haya algo, el
   /// catálogo está abierto. Se vacía al cambiar de página: es de esa página y de
@@ -289,6 +305,35 @@ class _BrowserPageState extends State<BrowserPage> {
     _webView?.loadUrl(urlRequest: URLRequest(url: WebUri(_homePage)));
   }
 
+  /// Una carga se ha caído.
+  ///
+  /// Se dice siempre —es una pantalla en la que todo pasa por debajo y sin esto
+  /// no se ve nada— y, si no había ninguna página delante, se vuelve a la de
+  /// inicio en vez de dejar el vacío.
+  void _onLoadFailed({
+    required String description,
+    required bool isMainFrame,
+  }) {
+    if (!mounted) return;
+
+    final texts = AppLocalizations.of(context);
+    final recovery = browserRecoveryFor(
+      hasPageShown: _hasPageShown,
+      alreadyRecovered: _hasRecovered,
+      isMainFrame: isMainFrame,
+    );
+
+    setState(() {
+      _isLoading = false;
+      _status = recovery == BrowserRecovery.goHome
+          ? texts.browserLoadFailedHome(description)
+          : texts.browserLoadFailed(description);
+      if (recovery == BrowserRecovery.goHome) _hasRecovered = true;
+    });
+
+    if (recovery == BrowserRecovery.goHome) _goHome();
+  }
+
   /// Apunta dónde ha acabado el navegador y cierra el catálogo de la página
   /// anterior, que ya no habla de lo que se está viendo.
   Future<void> _onNavigated(WebUri? url) async {
@@ -297,8 +342,12 @@ class _BrowserPageState extends State<BrowserPage> {
     if (!mounted) return;
 
     // Aquí se ha quedado: es lo que se abrirá la próxima vez que se entre en la
-    // pantalla.
-    if (url != null) await _preferences.setLastBrowserUrl(url.toString());
+    // pantalla. Sólo si es una página: por en medio de una navegación pasan
+    // `about:blank` y cosas así, y guardar una de ésas es arrancar en blanco la
+    // próxima vez.
+    if (url != null && isBrowsableUrl(url.toString())) {
+      await _preferences.setLastBrowserUrl(url.toString());
+    }
     if (!mounted) return;
 
     setState(() {
@@ -389,7 +438,12 @@ class _BrowserPageState extends State<BrowserPage> {
             if (mounted) setState(() => _isLoading = true);
           },
           onLoadStop: (controller, url) async {
-            if (mounted) setState(() => _isLoading = false);
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _hasPageShown = true;
+              });
+            }
             // Cada página nueva vuelve a nacer a tamaño completo.
             await _scanner.setZoom(controller, browserZoom);
             await _onNavigated(url);
@@ -398,6 +452,17 @@ class _BrowserPageState extends State<BrowserPage> {
           // de obra sin recargar), y ahí lo que se estuviera viendo ya es otra
           // cosa.
           onUpdateVisitedHistory: (_, url, __) => _onNavigated(url),
+          // El fallo de «se queda en blanco» no estaba identificado porque no se
+          // escuchaba nada de lo que la vista puede contar. Ahora se cuenta, y
+          // si además no había nada delante se vuelve a un sitio conocido.
+          onReceivedError: (_, request, error) => _onLoadFailed(
+            description: error.description,
+            isMainFrame: request.isForMainFrame ?? true,
+          ),
+          onReceivedHttpError: (_, request, response) => _onLoadFailed(
+            description: 'HTTP ${response.statusCode ?? 0}',
+            isMainFrame: request.isForMainFrame ?? true,
+          ),
         ),
       ),
     );

@@ -17,6 +17,7 @@ export 'display/fern_avatar.dart';
 export 'display/fern_fading_controls.dart';
 export 'display/fern_surface_color.dart';
 export 'display/fern_badge.dart';
+export 'display/nsfw_tag_mark.dart';
 export 'display/fern_avatar_tile.dart';
 export 'display/fern_chip.dart';
 export 'display/fern_editable_avatar.dart';

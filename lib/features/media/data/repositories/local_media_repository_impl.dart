@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/utils/file_utils.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/core/utils/source_url.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
@@ -20,6 +22,7 @@ import 'package:Fern/features/media/domain/entities/search/search_result_type.da
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
@@ -169,7 +172,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
 
   @override
-  Future<DataState<List<MediaSummaryEntity>>> getMediaList() async {
+  Future<DataState<List<MediaSummaryEntity>>> getMediaList({
+    MediaSortOrder order = MediaSortOrder.newestFirst,
+  }) async {
     try {
       // Devolvemos solo el contenido DEFINITIVO que no esté marcado para borrar
       final query = await _appDatabase.mediaSummaryModels
@@ -178,11 +183,119 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .isDeletedEqualTo(false)
           .findAll();
 
-      return DataSuccess(_visible(query).map((e) => e.toEntity()).toList());
+      final visible = _visible(query);
+
+      return DataSuccess([
+        for (final summary in await _sorted(visible, order))
+          summary.toEntity(),
+      ]);
     } on Exception catch (e) {
       return DataException(e);
     }
   }
+
+  /// La semilla con la que se baraja, una por sesión.
+  ///
+  /// Una y no una por consulta: si cambiara en cada lectura, la rejilla se
+  /// recolocaría al desplazarse y al volver del visor, y se acabaría viendo
+  /// contenido dos veces y contenido ninguna.
+  late final int _shuffleSeed = DateTime.now().millisecondsSinceEpoch;
+
+  /// Pone [summaries] en el orden pedido.
+  ///
+  /// Los dos órdenes que miran a los **detalles** —cuándo llegó y qué dice su
+  /// descripción— se resuelven pidiéndole a Isar sólo los identificadores en
+  /// ese orden, no las filas enteras: lo que hace falta es la posición, y traer
+  /// veinte mil objetos con sus enlaces para acabar tirándolos es justo lo que
+  /// no puede costar abrir una pantalla.
+  Future<List<MediaSummaryModel>> _sorted(
+    List<MediaSummaryModel> summaries,
+    MediaSortOrder order,
+  ) async {
+    switch (order) {
+      case MediaSortOrder.newestFirst:
+      case MediaSortOrder.oldestFirst:
+        final ids = await _appDatabase.mediaModels
+            .where()
+            .anyDownloaded()
+            .idProperty()
+            .findAll();
+
+        return _byPosition(
+          summaries,
+          order == MediaSortOrder.newestFirst ? ids.reversed.toList() : ids,
+        );
+
+      case MediaSortOrder.description:
+        // Lo que tiene descripción, por ella; lo que no, detrás. Se pregunta
+        // por separado en vez de ordenar con los vacíos dentro porque Isar los
+        // pone delante, y un bloque de contenido sin describir abriendo la
+        // rejilla es lo mismo que no haber ordenado nada.
+        final described = await _appDatabase.mediaModels
+            .filter()
+            .descriptionIsNotEmpty()
+            .sortByDescription()
+            .idProperty()
+            .findAll();
+
+        return _byPosition(summaries, described);
+
+      case MediaSortOrder.fileName:
+        return [...summaries]..sort(
+            (one, other) => _fileNameOf(one).compareTo(_fileNameOf(other)),
+          );
+
+      case MediaSortOrder.kind:
+        // Y dentro de cada tipo, por nombre: sin el segundo criterio, el orden
+        // dentro del grupo sería el de la base de datos, que no es ninguno.
+        return [...summaries]..sort((one, other) {
+            final byKind = MediaKind.of(one.path)
+                .index
+                .compareTo(MediaKind.of(other.path).index);
+
+            return byKind != 0
+                ? byKind
+                : _fileNameOf(one).compareTo(_fileNameOf(other));
+          });
+
+      case MediaSortOrder.random:
+        return [...summaries]..shuffle(Random(_shuffleSeed));
+    }
+  }
+
+  /// [summaries] en el orden en el que aparecen sus identificadores en [ids].
+  ///
+  /// Lo que no esté en [ids] va al final y en el orden en el que venía: son los
+  /// que no tienen ese dato —contenido sin descripción, o sin detalles
+  /// guardados—, y dejarlos fuera sería esconder contenido por ordenar.
+  List<MediaSummaryModel> _byPosition(
+    List<MediaSummaryModel> summaries,
+    List<int?> ids,
+  ) {
+    final position = <int, int>{};
+    for (var index = 0; index < ids.length; index++) {
+      final id = ids[index];
+      if (id != null) position.putIfAbsent(id, () => index);
+    }
+
+    final ordered = [...summaries];
+    ordered.sort((one, other) {
+      final onePosition = position[one.id] ?? position.length;
+      final otherPosition = position[other.id] ?? position.length;
+
+      return onePosition.compareTo(otherPosition);
+    });
+
+    return ordered;
+  }
+
+  /// El nombre del fichero, sin la carpeta y sin mayúsculas.
+  ///
+  /// Sin la carpeta a propósito: con la biblioteca organizada por la
+  /// aplicación todas las rutas empiezan igual, y ordenar por la ruta entera
+  /// sería ordenar por subcarpeta.
+  String _fileNameOf(MediaSummaryModel summary) =>
+      p.basename(summary.path).toLowerCase();
 
   /// Contenido pendiente de revisar, el de la pantalla de importación.
   ///
@@ -1004,6 +1117,58 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
+  /// Deja en [tagId] las hermanas indicadas, y a [tagId] en las suyas.
+  ///
+  /// **La simetría se fuerza aquí y no en la pantalla.** Una relación a medias
+  /// no se ve: la etiqueta que no sabe que es hermana de la otra sencillamente
+  /// no la pone, y el usuario descubre que a veces funciona y a veces no sin
+  /// ninguna pista de por qué.
+  ///
+  /// Todo en la misma escritura: quedarse a medias dejaría justo la relación
+  /// coja que esto existe para evitar.
+  @override
+  Future<DataState<TagEntity>> saveTagSiblings(
+    int tagId,
+    List<int> siblingIds,
+  ) async {
+    try {
+      final tag = await _appDatabase.tagModels.get(tagId);
+      if (tag == null) return DataException(Exception("Tag not found"));
+
+      // Ni a sí misma ni repetidas: una etiqueta hermana de sí misma se pondría
+      // dos veces y no significaría nada.
+      final wanted = {...siblingIds}..remove(tagId);
+
+      final siblings =
+          (await _appDatabase.tagModels.getAll(wanted.toList())).nonNulls
+              .toList(growable: false);
+
+      await _appDatabase.writeTxn(() async {
+        await tag.siblings.load();
+
+        // Las que se quitan tienen que soltar a ésta por su lado.
+        final kept = {for (final sibling in siblings) sibling.id};
+        for (final previous in tag.siblings.toList()) {
+          if (kept.contains(previous.id)) continue;
+
+          await previous.siblings.update(unlink: [tag]);
+        }
+
+        await tag.siblings.update(link: siblings, reset: true);
+
+        for (final sibling in siblings) {
+          await sibling.siblings.update(link: [tag]);
+        }
+      });
+
+      await tag.siblings.load();
+
+      return DataSuccess(tag.toEntity());
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   /// Marca o desmarca una etiqueta como contenido no apto.
   ///
   /// La marca se guarda sólo aquí: la rama de debajo queda bloqueada porque el
@@ -1326,6 +1491,14 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         model.name = name;
         model.picturePath = creator.picturePath;
         model.socialProfiles = creator.socialProfiles;
+        // Y sus direcciones, como hace `updateTag` con las de la etiqueta.
+        //
+        // No las guardaba, y era una trampa esperando: quien las cambiara desde
+        // la ficha del creador las veía puestas en pantalla y no se guardaba
+        // ninguna, sin un solo error por medio. Hoy la ficha manda las que ya
+        // tenía, así que esto no cambia nada de lo que hay; lo que quita es el
+        // día que alguien las cambie desde ahí.
+        model.sourceUrls = normalizedSourceUrls(creator.sourceUrls);
         await _appDatabase.creatorModels.put(model);
       });
 
@@ -1496,12 +1669,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (asked.isEmpty) return const DataSuccess(0);
 
-      // Con las etiquetas van las que están por encima de ellas, igual que al
-      // ponerlas a mano desde el diálogo. Sin esto, aceptar «Rombo simple» no
-      // pone «Rombo» y el contenido no aparece al buscar por la etiqueta padre:
-      // la misma acción daría dos resultados distintos según por dónde se haga.
-      final withAncestors = await _tagHierarchy.withAncestors(asked);
-      final tags = withAncestors.isEmpty ? asked : withAncestors;
+      // Con las etiquetas van sus hermanas y las que están por encima de unas
+      // y otras, igual que al ponerlas a mano desde el diálogo. Sin esto,
+      // aceptar «Rombo simple» no pone «Rombo» y el contenido no aparece al
+      // buscar por la etiqueta padre: la misma acción daría dos resultados
+      // distintos según por dónde se haga.
+      final expanded = await _tagHierarchy.withRelatives(asked);
+      final tags = expanded.isEmpty ? asked : expanded;
 
       await _appDatabase.writeTxn(() async {
         // Sin `reset`: esto suma a lo que el contenido ya tuviera. Con `reset`

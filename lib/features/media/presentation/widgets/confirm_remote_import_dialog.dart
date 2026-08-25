@@ -43,14 +43,20 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
         _ => texts.remoteImportAmountLimited(limit),
       };
 
-  /// Esto va a traer mucho y va a tardar.
+  /// Se ha pedido la fuente entera, sin tope.
   ///
-  /// Pasa cuando se pide una fuente entera sin tope y esa fuente devuelve
-  /// publicaciones con todo lo que llevan dentro (Pawchive es el caso: puede ser
-  /// la obra completa de varios autores). Con un tope puesto no hace falta
-  /// avisar de nada, que el usuario ya ha dicho hasta dónde.
-  bool get _isHeavy =>
-      limit == unlimitedImportLimit && sources.contains(ImportSource.pawchive);
+  /// Avisa **sea cual sea la plataforma**. Antes sólo avisaba de Pawchive, y el
+  /// resto se traían la cuenta completa —horas de descarga y gigas de disco—
+  /// sin decir nada. Con un tope puesto no hace falta avisar de nada: el usuario
+  /// ya ha dicho hasta dónde.
+  bool get _isHeavy => limit == unlimitedImportLimit;
+
+  /// Y de esta además hay que decir que trae todavía más.
+  ///
+  /// Pawchive devuelve publicaciones con todo lo que llevan dentro, así que sin
+  /// tope puede ser la obra completa de varios autores. Es otra magnitud, y
+  /// merece su propia frase.
+  bool get _isVeryHeavy => _isHeavy && sources.contains(ImportSource.pawchive);
 
   @override
   Widget build(BuildContext context) {
@@ -60,46 +66,53 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
     return FernDialog(
       onClose: () => Navigator.of(context).pop(),
       maxWidth: AppSizes.dialogMaxWidth / 2,
-      leftContent: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            texts.remoteImportWarning(
-              // Las plataformas se llaman igual en todos los idiomas, así que
-              // sus nombres van tal cual.
-              [for (final source in sources) source.label ?? source.id]
-                  .join(', '),
+      // Desplazable: con el aviso de «todo» puesto —que ahora sale con
+      // cualquier plataforma, no sólo con una— el contenido ya no cabe en una
+      // ventana baja, y lo que no cabe se desbordaba por abajo.
+      leftContent: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              texts.remoteImportWarning(
+                // Las plataformas se llaman igual en todos los idiomas, así que
+                // sus nombres van tal cual.
+                [for (final source in sources) source.label ?? source.id]
+                    .join(', '),
+              ),
+              style: theme.textTheme.titleMedium,
             ),
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.m),
-          Text(
-            _amount(texts),
-            style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
-          ),
-          if (_isHeavy) ...[
             const SizedBox(height: AppSpacing.m),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.schedule,
-                  size: AppSizes.iconCompact,
-                  color: context.colors.terciary,
-                ),
-                const SizedBox(width: AppSpacing.s),
-                Expanded(
-                  child: Text(
-                    texts.remoteImportHeavyWarning,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: context.colors.terciary),
-                  ),
-                ),
-              ],
+            Text(
+              _amount(texts),
+              style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
             ),
+            if (_isHeavy) ...[
+              const SizedBox(height: AppSpacing.m),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.schedule,
+                    size: AppSizes.iconCompact,
+                    color: context.colors.terciary,
+                  ),
+                  const SizedBox(width: AppSpacing.s),
+                  Expanded(
+                    child: Text(
+                      _isVeryHeavy
+                          ? texts.remoteImportHeavyWarning
+                          : texts.remoteImportAllWarning,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: context.colors.terciary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
       actionButton: FernPillButton(
         label: texts.actionImport,

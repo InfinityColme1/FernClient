@@ -51,6 +51,12 @@ const TagModelSchema = CollectionSchema(
       target: r'Tags',
       single: false,
     ),
+    r'siblings': LinkSchema(
+      id: -67223515436627192,
+      name: r'siblings',
+      target: r'Tags',
+      single: false,
+    ),
     r'personas': LinkSchema(
       id: -1060093785552034191,
       name: r'personas',
@@ -149,12 +155,13 @@ Id _tagModelGetId(TagModel object) {
 }
 
 List<IsarLinkBase<dynamic>> _tagModelGetLinks(TagModel object) {
-  return [object.children, object.personas, object.media];
+  return [object.children, object.siblings, object.personas, object.media];
 }
 
 void _tagModelAttach(IsarCollection<dynamic> col, Id id, TagModel object) {
   object.id = id;
   object.children.attach(col, col.isar.collection<TagModel>(), r'children', id);
+  object.siblings.attach(col, col.isar.collection<TagModel>(), r'siblings', id);
   object.personas
       .attach(col, col.isar.collection<PersonaModel>(), r'personas', id);
   object.media.attach(col, col.isar.collection<MediaModel>(), r'media', id);
@@ -863,6 +870,64 @@ extension TagModelQueryLinks
     return QueryBuilder.apply(this, (query) {
       return query.linkLength(
           r'children', lower, includeLower, upper, includeUpper);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition> siblings(
+      FilterQuery<TagModel> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'siblings');
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition> siblingsLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'siblings', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition> siblingsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'siblings', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition> siblingsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'siblings', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      siblingsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'siblings', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      siblingsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'siblings', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition> siblingsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(
+          r'siblings', lower, includeLower, upper, includeUpper);
     });
   }
 

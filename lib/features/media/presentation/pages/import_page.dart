@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 // Experimental: de aquí sale a dónde se manda al usuario a iniciar sesión.
 import 'package:Fern/features/browser/domain/entities/browser_session_source.dart';
@@ -21,7 +22,10 @@ import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
+import 'package:Fern/features/settings/presentation/widgets/settings_section.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
+import 'package:Fern/features/media/presentation/widgets/select_all_button.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -122,7 +126,8 @@ class _ImportViewState extends State<_ImportView> {
   /// Es de la pantalla y no del bloc: no cambia lo que se está viendo, sólo
   /// cuánto se pide la próxima vez. De partida no hay tope, que es traerse todo
   /// lo que haya.
-  int _limit = unlimitedImportLimit;
+  /// Hasta dónde llega el escaneo. Se arranca con lo último que se eligió.
+  late int _limit = getIt<PreferencesService>().getImportLimit();
 
   /// Con qué parte de lo pendiente se está trabajando.
   ///
@@ -492,6 +497,18 @@ class _ImportViewState extends State<_ImportView> {
                         onAcceptAbove: () => _acceptAbove(context, state),
                         onDelete: () =>
                             _discardSelection(context, selectedCount),
+                        onRecognize: () => requestRecognition(
+                          context,
+                          state.selectedIds.toList(),
+                          name: texts.recognizeJobSelection,
+                        ),
+                        selectAll: SelectAllButton(
+                          visible: visible,
+                          selectedIds: state.selectedIds,
+                          onSelectAll: (ids) => context
+                              .read<MediaBloc>()
+                              .add(SelectAllMediaEvent(ids)),
+                        ),
                       );
                     }
 
@@ -583,7 +600,10 @@ class _ImportViewState extends State<_ImportView> {
                                     importLimitLabel(limit, texts),
                                 onChanged: (limit) {
                                   if (limit == null) return;
+
                                   setState(() => _limit = limit);
+                                  getIt<PreferencesService>()
+                                      .setImportLimit(limit);
                                 },
                               ),
                             ),
@@ -606,6 +626,13 @@ class _ImportViewState extends State<_ImportView> {
                             hasMedia ? Icons.refresh : Icons.download_outlined,
                           ),
                         ),
+                        SelectAllButton(
+                          visible: visible,
+                          selectedIds: state.selectedIds,
+                          onSelectAll: (ids) => context
+                              .read<MediaBloc>()
+                              .add(SelectAllMediaEvent(ids)),
+                        ),
                         IconButton(
                           tooltip: texts.actionSelectFolder,
                           onPressed: canPickFolder
@@ -625,8 +652,9 @@ class _ImportViewState extends State<_ImportView> {
               Expanded(
                 child: MediaGrid(
                   mediaList: visible,
-                  columns: 4,
+                  columns: mediaGridColumns,
                   isLoading: state.isBusy,
+                  returnsToViewed: true,
                   // Una importación puede durar mucho, así que se puede parar
                   // desde donde se está mirando cómo va. Lo ya traído se queda.
                   onStop: () =>
@@ -653,11 +681,23 @@ class _SelectionBar extends StatelessWidget {
   final VoidCallback onAcceptAbove;
   final VoidCallback onDelete;
 
+  /// El botón de marcarlo todo, que la pantalla arma con lo que hay a la vista.
+  final Widget selectAll;
+
+  /// Mandar la selección a los modelos.
+  ///
+  /// Es el sitio donde más falta hace y donde no estaba: aquí es donde se
+  /// revisa lo que acaba de llegar, y lo primero que se quiere de una tanda
+  /// recién importada es que los modelos la miren.
+  final VoidCallback onRecognize;
+
   const _SelectionBar({
     required this.selected,
     required this.total,
     required this.onAcceptAbove,
     required this.onDelete,
+    required this.selectAll,
+    required this.onRecognize,
   });
 
   @override
@@ -676,6 +716,7 @@ class _SelectionBar extends StatelessWidget {
               context.read<MediaBloc>().add(const ClearMediaSelectionEvent()),
           icon: const Icon(Icons.close),
         ),
+        selectAll,
         const SizedBox(width: AppSpacing.s),
         Flexible(
           child: Text(
@@ -689,6 +730,16 @@ class _SelectionBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
+        // Antes que «aceptar los seguros»: para que haya sugerencias que aceptar
+        // primero tiene que haber pasado esto.
+        FernPillButton(
+          label: texts.recognizeSelectedTooltip,
+          icon: Icons.auto_awesome_outlined,
+          backgroundColor: context.colors.secondary,
+          foregroundColor: context.colors.black,
+          onPressed: onRecognize,
+        ),
+        const SizedBox(width: AppSpacing.s),
         // Despachar de golpe lo que los modelos ven con más seguridad. Es lo que
         // hace usable revisar trescientos: decir que sí trescientas veces a lo
         // evidente es lo que hace que nadie revise nada.

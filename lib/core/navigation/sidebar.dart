@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
@@ -18,7 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'collapsing_navigation_drawer_widget.dart';
+import 'package:Fern/core/widgets/collapsing_navigation_drawer_widget.dart';
 
 
 /// Menú lateral de la aplicación: las pantallas de la galería y, debajo, las
@@ -58,6 +59,23 @@ class _SidebarState extends State<Sidebar> {
     // la primera vez y el bloc (que es único) se las queda. Quien las cambia
     // avisa por su cuenta.
     if (!_tagsBloc.state.isLoaded) _tagsBloc.add(const LoadTagsEvent());
+  }
+
+  /// Pone [tag] a los contenidos que se han soltado encima.
+  ///
+  /// Y lo dice: al soltar, el contenido puede desaparecer de la rejilla —si la
+  /// etiqueta esconde, o si se está mirando otra— y sin aviso el gesto parecería
+  /// no haber hecho nada.
+  void _tagDropped(TagEntity tag, List<int> mediaIds) {
+    getIt<MediaBloc>().add(
+      AddTagToMediaEvent(tagId: tag.id, mediaIds: mediaIds),
+    );
+
+    showFernToast(
+      context,
+      AppLocalizations.of(context).tagDropped(mediaIds.length, tag.name),
+      icon: Icons.sell_outlined,
+    );
   }
 
   /// Filtra el contenido por la etiqueta pulsada.
@@ -221,6 +239,10 @@ class _SidebarState extends State<Sidebar> {
           avatarPath: showAvatars ? tag.picturePath : null,
           depth: depth,
           onTap: () => _filterByTag(tag),
+          // Arrastrar contenido hasta aquí se lo etiqueta. Es la forma rápida
+          // de poner la misma etiqueta a treinta contenidos, que antes obligaba
+          // a abrirlos uno a uno.
+          onMediaDropped: (mediaIds) => _tagDropped(tag, mediaIds),
         ),
         ..._tagItems(
           tag.children,
@@ -253,6 +275,10 @@ class _SidebarState extends State<Sidebar> {
             BlocBuilder<NotificationsBloc, NotificationsState>(
           bloc: _notificationsBloc,
           builder: (context, notifications) => CollapsingNavigationDrawer(
+            // Qué botón se ve marcado lo dice la pantalla en la que se está, no
+            // el último clic: se llega a las pantallas también desde los avisos
+            // y desde dentro de la aplicación.
+            currentLocation: GoRouterState.of(context).matchedLocation,
             textStyle: Theme.of(context)
                 .textTheme
                 .bodyMedium!

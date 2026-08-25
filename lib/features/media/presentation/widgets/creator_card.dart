@@ -18,9 +18,9 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,7 +52,7 @@ class _CreatorCardState extends State<CreatorCard> {
   final _updateCreator = getIt<UpdateCreatorUseCase>();
   final _deleteCreator = getIt<DeleteCreatorUseCase>();
   final _saveCreatorSourceUrls = getIt<SaveCreatorSourceUrlsUseCase>();
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.creator.name);
@@ -152,7 +152,7 @@ class _CreatorCardState extends State<CreatorCard> {
     // ficha en espera. El explorador de ficheros no: allí el tiempo lo pone el
     // usuario.
     await _run(() async {
-      final storedPath = await _avatarStorage.store(path);
+      final storedPath = await _storeAvatar(params: path);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);

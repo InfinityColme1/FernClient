@@ -32,6 +32,16 @@ class CancelJobEvent extends JobsEvents {
 }
 
 /// El usuario da por vistos los trabajos terminados.
+/// Quita de la lista un trabajo terminado, sólo ése.
+class DismissJobEvent extends JobsEvents {
+  final String id;
+
+  const DismissJobEvent(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
 class ClearFinishedJobsEvent extends JobsEvents {
   const ClearFinishedJobsEvent();
 }
@@ -77,6 +87,7 @@ class JobsBloc extends Bloc<JobsEvents, JobsState> {
         super(JobsState(jobs: queue.jobs)) {
     on<JobsUpdatedEvent>((event, emit) => emit(JobsState(jobs: event.jobs)));
     on<CancelJobEvent>((event, emit) => _queue.cancel(event.id));
+    on<DismissJobEvent>((event, emit) => _queue.dismiss(event.id));
     on<ClearFinishedJobsEvent>((event, emit) => _queue.clearFinished());
 
     _subscription = _queue.changes.listen((jobs) => add(JobsUpdatedEvent(jobs)));

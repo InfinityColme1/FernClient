@@ -176,6 +176,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
       // la biblioteca reconociéndose durante horas.
       returnRecognizedToImport:
           _preferences.getBool(returnRecognizedPreferenceKey) ?? true,
+      returnToViewedMedia:
+          _preferences.getBool(returnToViewedMediaPreferenceKey) ?? true,
       recognizeOnImport:
           _preferences.getBool(recognizeOnImportPreferenceKey) ?? true,
       // Acotado al leer y no sólo al escribir: una preferencia guardada por una
@@ -287,6 +289,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setBool(
       returnRecognizedPreferenceKey,
       settings.returnRecognizedToImport,
+    );
+    await _preferences.setBool(
+      returnToViewedMediaPreferenceKey,
+      settings.returnToViewedMedia,
     );
     await _preferences.setBool(
       recognizeOnImportPreferenceKey,

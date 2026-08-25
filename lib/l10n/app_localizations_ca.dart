@@ -51,15 +51,6 @@ class AppLocalizationsCa extends AppLocalizations {
   String get menuNewTag => 'Nova etiqueta';
 
   @override
-  String get menuNewCollection => 'Nova col·lecció';
-
-  @override
-  String get collectionsWip => 'Les col·leccions encara estan en construcció';
-
-  @override
-  String get mobileLayoutWip => 'La versió mòbil arribarà aviat';
-
-  @override
   String mediaCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -316,6 +307,13 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get viewerPlaybackSectionNote =>
       'Què li fa el visor a un vídeo mentre se’n recorre la línia de temps.';
+
+  @override
+  String get viewerReturnToMedia => 'Tornar on estaves mirant';
+
+  @override
+  String get viewerReturnToMediaDescription =>
+      'En sortir del visor, la graella es col·loca on és el contingut que acabes de veure en comptes de quedar-se on la vas deixar.';
 
   @override
   String get viewerPauseWhenSeeking => 'Aturar en agafar la barra';
@@ -749,6 +747,12 @@ class AppLocalizationsCa extends AppLocalizations {
   String get viewerCopyFailed => 'No s\'ha pogut copiar el contingut';
 
   @override
+  String get actionRevealInExplorer => 'Veure el fitxer a l’explorador';
+
+  @override
+  String get revealInExplorerFailed => 'El fitxer ja no és on era.';
+
+  @override
   String get mediaInfoTitle => 'Informació';
 
   @override
@@ -756,6 +760,28 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get createdBy => 'Creat per:';
+
+  @override
+  String tagDropped(int count, String tag) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts etiquetats amb $tag',
+      one: 'Etiquetat amb $tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contextMenuTarget(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sobre els $count seleccionats',
+      one: 'Sobre aquest contingut',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get tagsTitle => 'Etiquetes';
@@ -810,6 +836,67 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get tagNameLabel => 'Nom de l\'etiqueta';
+
+  @override
+  String get parentTagNotFound =>
+      'No hi ha cap etiqueta amb aquest nom. Tria’n una de la llista o crea-la.';
+
+  @override
+  String get parentTagCreate => 'Crear-la';
+
+  @override
+  String get tagRelationsTitle => 'On és aquesta etiqueta';
+
+  @override
+  String get tagRelationsNote =>
+      'A dalt, l\'etiqueta de la qual penja. Als costats, amb les quals va. Són dues coses diferents: una etiqueta que penja d\'una altra hereta el seu contingut a les cerques, i les que van juntes només estan relacionades.';
+
+  @override
+  String get tagRelationsAddParent => 'Posar etiqueta mare';
+
+  @override
+  String get tagRelationsChangeParent => 'Canviar la mare';
+
+  @override
+  String get tagRelationsAddSibling => 'Afegir relacionada';
+
+  @override
+  String get tagRelationsCreate => 'Crear una etiqueta nova';
+
+  @override
+  String get tagRelationsTooltip => 'Etiqueta mare i relacionades';
+
+  @override
+  String get tagRelationsNoParent => 'Etiqueta arrel';
+
+  @override
+  String tagRelationsParentIs(String name) {
+    return 'Penja de $name';
+  }
+
+  @override
+  String tagRelationsSiblingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count relacionades',
+      one: '1 relacionada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get siblingTagsLabel => 'Etiquetes relacionades';
+
+  @override
+  String get siblingTagsNote =>
+      'En posar aquesta etiqueta es posen també aquestes. No pengen d’ella ni ella d’elles, i la relació va en tots dos sentits. Es desen en tocar-les, sense prémer desar.';
+
+  @override
+  String get addSiblingTag => 'Afegir relacionada';
+
+  @override
+  String get actionRemove => 'Treure';
 
   @override
   String get parentTagLabel => 'Etiqueta pare (opcional)';
@@ -1128,6 +1215,60 @@ class AppLocalizationsCa extends AppLocalizations {
       'Les credencials es queden en aquest equip i només s\'usen per parlar amb Reddit.';
 
   @override
+  String get settingsDatabase => 'Base de dades';
+
+  @override
+  String get databaseSectionTitle => 'Base de dades';
+
+  @override
+  String get databaseSectionNote =>
+      'Tot el que Fern sap de la teva biblioteca viu en una base de dades d\'aquest equip: les fitxes dels continguts, les etiquetes, els creadors, els fernies, els models i les regions marcades.';
+
+  @override
+  String get databaseWipeTitle => 'Eliminar la base de dades';
+
+  @override
+  String get databaseWipeSectionNote =>
+      'Deixa Fern com acabat d\'instal·lar. No es pot desfer i no hi ha cap còpia de seguretat.';
+
+  @override
+  String get databaseWipeWarning =>
+      'Això no es pot desfer. Fern no guarda cap còpia de la base de dades.';
+
+  @override
+  String get databaseWipeLoses =>
+      'Es perden: totes les fitxes de contingut amb la seva descripció i els seus preferits, totes les etiquetes i creadors, els fernies i totes les regions marcades, els models entrenats i el seu arbre, els suggeriments del reconeixement i els grups de repetits.';
+
+  @override
+  String get databaseWipeKeeps =>
+      'Els teus fitxers es queden on són: no s\'esborra res del disc, i escanejar la carpeta de la biblioteca els torna a donar d\'alta. Els ajustos, les contrasenyes i les credencials de les fonts també es queden.';
+
+  @override
+  String get databaseWipeContinue => 'Ho entenc, continuar';
+
+  @override
+  String get databaseWipeConfirmTitle => 'Escriu la frase per confirmar';
+
+  @override
+  String get databaseWipeConfirmNote =>
+      'Per assegurar que no és un accident, escriu la frase següent tal com és:';
+
+  @override
+  String get databaseWipePhrase => 'Eliminar Base de Dades';
+
+  @override
+  String get databaseWipeFieldLabel => 'Frase de confirmació';
+
+  @override
+  String get databaseWipeAction => 'Eliminar base de dades';
+
+  @override
+  String get databaseWipeFailed => 'No s\'ha pogut eliminar la base de dades.';
+
+  @override
+  String get databaseWipeDone => 'La base de dades és buida.';
+
+  @override
   String get settingsBrowser => 'Navegador';
 
   @override
@@ -1338,6 +1479,10 @@ class AppLocalizationsCa extends AppLocalizations {
       'En comptes de les publicacions que hagis marcat, el Fern recorre tot el que publiquin els creadors que tinguis als preferits. Porta força més, i cada creador se segueix pel seu compte.';
 
   @override
+  String get remoteImportAllWarning =>
+      'Sense límit, el Fern recorre el compte sencer. Amb un compte gran són hores de descàrrega i uns quants gigues de disc. Pots aturar-ho quan vulguis des de la pantalla d’importació, i el que ja hagi arribat es queda.';
+
+  @override
   String get remoteImportHeavyWarning =>
       'Això pot trigar força: sense límit, el Fern recorre el compte sencer i s\'ho porta tot, inclosos els fitxers que hi hagi dins de les publicacions. El pots aturar quan vulguis des de la pantalla d\'importació, i el que ja hagi arribat es queda.';
 
@@ -1358,6 +1503,16 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get browserForward => 'Endavant';
+
+  @override
+  String browserLoadFailed(String reason) {
+    return 'No s\'ha pogut carregar la pàgina ($reason)';
+  }
+
+  @override
+  String browserLoadFailedHome(String reason) {
+    return 'No s\'ha pogut carregar la pàgina ($reason); es torna a la d\'inici';
+  }
 
   @override
   String get browserReload => 'Torna a carregar';
@@ -1506,13 +1661,53 @@ class AppLocalizationsCa extends AppLocalizations {
   String get assignUrlsCreatorTooltip => 'Vincular adreces amb aquest creador';
 
   @override
+  String get sourceUrlsNote =>
+      'Val qualsevol plataforma: es recull tot el que pengi de l’adreça. A les que identifiquen la galeria amb el que va darrere del «?» —Danbooru, Gelbooru— cal copiar l’adreça sencera, paràmetres inclosos.';
+
+  @override
   String get sourceUrlsLabel => 'Adreces';
 
   @override
-  String get sourceUrlHint => 'reddit.com/r/exemple';
+  String get sourceUrlHint => 'reddit.com/r/exemple, pixiv.net/users/123…';
 
   @override
   String get addSourceUrl => 'Afegir adreça';
+
+  @override
+  String get filtersType => 'Tipus de contingut';
+
+  @override
+  String get filterImages => 'Imatges';
+
+  @override
+  String get filterGifs => 'GIF';
+
+  @override
+  String get filterVideos => 'Vídeos';
+
+  @override
+  String get selectAllTooltip => 'Seleccionar tot el que es veu';
+
+  @override
+  String get selectNoneTooltip => 'Treure la selecció';
+
+  @override
+  String get sortNewestFirst => 'L’últim que va arribar';
+
+  @override
+  String get sortOldestFirst => 'El primer que va arribar';
+
+  @override
+  String get sortFileName => 'Per nom de fitxer';
+
+  @override
+  String get sortDescription => 'Per descripció';
+
+  @override
+  String get sortKind => 'Per tipus';
+
+  @override
+  String get sortRandom => 'A l’atzar';
 
   @override
   String get filtersSource => 'Mostrar contingut de';
@@ -1577,6 +1772,15 @@ class AppLocalizationsCa extends AppLocalizations {
   String get jobsEmpty => 'Ara mateix no hi ha res en marxa';
 
   @override
+  String get jobRunning => 'En marxa…';
+
+  @override
+  String get jobCancelled => 'Aturada';
+
+  @override
+  String get jobDismissTooltip => 'Treure de la llista';
+
+  @override
   String get jobCancelTooltip => 'Cancel·la aquesta tasca';
 
   @override
@@ -1601,6 +1805,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get jobHashing => 'Llegint contingut';
+
+  @override
+  String get jobImport => 'Important';
 
   @override
   String get settingsNotifications => 'Avisos';
@@ -1685,7 +1892,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get notifyRecognition => 'Reconeixement en lot acabat';
 
   @override
-  String get notifyRemoteImport => 'Importació remota acabada';
+  String get notifyImport => 'Importació acabada';
 
   @override
   String get sidecarTitle => 'Motor de reconeixement';

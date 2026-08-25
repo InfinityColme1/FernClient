@@ -50,7 +50,7 @@ void main() {
 
           return null;
         },
-        write: (_, __) async {},
+        write: (_, _) async {},
       ),
     );
   }
@@ -116,7 +116,7 @@ void main() {
         },
         scanner: DuplicateScanner(
           read: (_) async => null,
-          write: (_, __) async {},
+          write: (_, _) async {},
         ),
       );
 
@@ -180,7 +180,7 @@ void main() {
 
             return null;
           },
-          write: (_, __) async {},
+          write: (_, _) async {},
         ),
       );
 
@@ -253,7 +253,7 @@ void main() {
 
             return null;
           },
-          write: (_, __) async {},
+          write: (_, _) async {},
         ),
       );
 
@@ -278,7 +278,7 @@ void main() {
         grouper: (request) async => groupRequest(request),
         scanner: DuplicateScanner(
           read: (_) async => null,
-          write: (_, __) async {},
+          write: (_, _) async {},
         ),
         stamp: () async => throw StateError('sin preferencias'),
       );
@@ -323,7 +323,7 @@ void main() {
         grouper: (request) async => groupRequest(request),
         scanner: DuplicateScanner(
           read: (_) async => null,
-          write: (_, __) async {},
+          write: (_, _) async {},
         ),
         notify: (_) async => throw StateError('sin sonido'),
       );
@@ -389,7 +389,7 @@ void main() {
 
             return null;
           },
-          write: (_, __) async {},
+          write: (_, _) async {},
         ),
       );
 

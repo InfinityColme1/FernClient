@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/services/file_explorer_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
@@ -27,7 +28,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
 import 'package:Fern/features/recognition/domain/usecases/turn_detection_into_region_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
-import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -167,6 +168,23 @@ class _InfoContent extends StatelessWidget {
     required this.suggestions,
   });
 
+  /// Enseña el fichero en el explorador, y avisa si ya no está.
+  ///
+  /// Que no esté es un caso real: la biblioteca guarda rutas, y un fichero
+  /// movido o borrado desde fuera deja la fila apuntando a un sitio vacío.
+  Future<void> _reveal(BuildContext context, String path) async {
+    final texts = AppLocalizations.of(context);
+    final revealed = await const FileExplorerService().reveal(path);
+
+    if (revealed || !context.mounted) return;
+
+    showFernToast(
+      context,
+      texts.revealInExplorerFailed,
+      icon: Icons.error_outline,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -179,7 +197,25 @@ class _InfoContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(texts.mediaInfoTitle, style: theme.textTheme.titleMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      texts.mediaInfoTitle,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                  // Llegar al fichero de verdad. Sólo donde la aplicación sabe
+                  // hacerlo: un botón que no hace nada es peor que no tenerlo.
+                  if (const FileExplorerService().isSupported)
+                    IconButton(
+                      tooltip: texts.actionRevealInExplorer,
+                      iconSize: AppSizes.iconMedium,
+                      onPressed: () => _reveal(context, media.path),
+                      icon: const Icon(Icons.folder_open_outlined),
+                    ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.m),
               _DescriptionField(
                 mediaId: media.id,

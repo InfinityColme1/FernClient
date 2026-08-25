@@ -15,10 +15,10 @@ import 'package:Fern/features/recognition/domain/usecases/update_fernie_usecase.
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_states.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
-import 'package:Fern/features/nsfw/presentation/widgets/nsfw_tag_mark.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -46,7 +46,7 @@ class _FernieCardState extends State<FernieCard> {
   final _searchCreators = getIt<SearchCreatorsUseCase>();
   final _updateFernie = getIt<UpdateFernieUseCase>();
   final _deleteFernie = getIt<DeleteFernieUseCase>();
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.fernie.name);
@@ -103,7 +103,7 @@ class _FernieCardState extends State<FernieCard> {
     if (path == null) return;
 
     await _run(() async {
-      final storedPath = await _avatarStorage.store(path);
+      final storedPath = await _storeAvatar(params: path);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);

@@ -100,10 +100,10 @@ void main() {
     test('dos avisos de la misma clase se suman', () async {
       final service = await serviceWith(_Settings(), _Sounds());
 
-      await service.notify(NotificationKind.remoteImportFinished, count: 3);
-      await service.notify(NotificationKind.remoteImportFinished, count: 4);
+      await service.notify(NotificationKind.importFinished, count: 3);
+      await service.notify(NotificationKind.importFinished, count: 4);
 
-      expect(service.counts.of(NotificationKind.remoteImportFinished), 7);
+      expect(service.counts.of(NotificationKind.importFinished), 7);
     });
 
     test('una pantalla suma todo lo que lleva a ella', () async {
@@ -111,7 +111,7 @@ void main() {
 
       // Reconocer e importar acaban los dos en la pantalla de importación.
       await service.notify(NotificationKind.recognitionFinished, count: 2);
-      await service.notify(NotificationKind.remoteImportFinished, count: 5);
+      await service.notify(NotificationKind.importFinished, count: 5);
 
       expect(service.counts.forRoute(importRoute), 7);
       expect(service.counts.forRoute(modelsRoute), 0);
@@ -120,7 +120,7 @@ void main() {
     test('ir a la pantalla da por vistos sus avisos y deja los demás', () async {
       final service = await serviceWith(_Settings(), _Sounds());
 
-      await service.notify(NotificationKind.remoteImportFinished);
+      await service.notify(NotificationKind.importFinished);
       await service.notify(NotificationKind.trainingFinished);
 
       await service.markRouteSeen(importRoute);

@@ -23,7 +23,6 @@ import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/data/repositories/local_media_repository_impl.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
-import 'package:Fern/features/duplicates/data/services/duplicate_details_loader.dart';
 import 'package:Fern/features/media/data/services/nsfw_index.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';

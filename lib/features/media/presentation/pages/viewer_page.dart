@@ -29,6 +29,7 @@ import 'package:Fern/features/recognition/presentation/blocs/suggestions_states.
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/features/recognition/data/services/recognition_log_store.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_log_entity.dart';
+import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
 import 'package:Fern/features/recognition/presentation/widgets/recognition_log_dialog.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
@@ -295,6 +296,10 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// el fichero. Lo segundo es asíncrono, así que hasta que llegue no se puede
   /// marcar nada, que es justo lo que se quiere.
   void _onMediaChanged(MediaEntity media) {
+    // Para volver a ella al salir: la rejilla se coloca donde está lo último
+    // que se miró.
+    getIt<ViewedMedia>().see(media.id);
+
     if (_fernieMode.state.mediaId != media.id) {
       _fernieMode.add(LoadMediaRegionsEvent(media.id));
 
@@ -1768,6 +1773,16 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     final l10n = AppLocalizations.of(context);
     final isFavorite = media?.isFavorite ?? false;
 
+    // Lo que todavía no se ha confirmado no se puede marcar como favorito.
+    //
+    // Se mira si el contenido es definitivo y no de dónde se ha llegado: un
+    // parámetro de navegación se olvida en cuanto alguien abra el visor desde
+    // otro sitio, y esto es verdad venga de donde venga. Marcar favorito algo
+    // que a lo mejor se descarta en el paso siguiente no lleva a ninguna parte:
+    // la pantalla de favoritos sólo enseña lo definitivo, así que la marca se
+    // haría y no se vería.
+    final isPending = media != null && !media.isImported;
+
     // Marcar va sobre cualquier contenido: en lo que se mueve, la línea de
     // tiempo es la que deja elegir el fotograma.
     final canMark = media != null;
@@ -1827,18 +1842,19 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             ? null
             : () => _delete(context, media, isMarked: isMarked),
       ),
-      _buildAction(
-        // El corazón se rellena al marcar como favorito: relleno o vacío se
-        // distingue de un vistazo, que es más de lo que decía el color por sí
-        // solo.
-        tooltip: isFavorite ? l10n.viewerUnfavorite : l10n.viewerFavorite,
-        icon: Symbols.favorite,
-        fill: isFavorite ? 1 : 0,
-        color: isFavorite ? context.colors.terciary : Colors.white,
-        onPressed: media == null
-            ? null
-            : () => context.read<MediaBloc>().add(const ToggleFavoriteEvent()),
-      ),
+      if (!isPending)
+        _buildAction(
+          // El corazón se rellena al marcar como favorito: relleno o vacío se
+          // distingue de un vistazo, que es más de lo que decía el color por sí
+          // solo.
+          tooltip: isFavorite ? l10n.viewerUnfavorite : l10n.viewerFavorite,
+          icon: Symbols.favorite,
+          fill: isFavorite ? 1 : 0,
+          color: isFavorite ? context.colors.terciary : Colors.white,
+          onPressed: media == null
+              ? null
+              : () => context.read<MediaBloc>().add(const ToggleFavoriteEvent()),
+        ),
       // Esconder esto detrás del filtro NSFW, o sacarlo. Es el único sitio donde
       // se puede quitar la marca de uno solo: la barra de la rejilla marca en
       // tanda pero no sabe cómo está cada contenido, y aquí sí se sabe.

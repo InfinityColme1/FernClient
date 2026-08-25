@@ -125,6 +125,15 @@ class _AssignUrlDialogState extends State<AssignUrlDialog> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: AppSpacing.xs),
+          // Qué forma tiene una regla que funciona. Hace falta decirlo: en las
+          // plataformas que identifican la galería con lo que va detrás del
+          // «?», copiar sólo la parte bonita de la dirección no recoge nada.
+          Text(
+            texts.sourceUrlsNote,
+            style: theme.textTheme.labelSmall
+                ?.copyWith(color: context.colors.unremarked),
+          ),
           const SizedBox(height: AppSpacing.s),
           ConstrainedBox(
             constraints: const BoxConstraints(

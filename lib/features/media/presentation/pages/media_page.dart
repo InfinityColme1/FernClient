@@ -2,6 +2,9 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
@@ -11,8 +14,10 @@ import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
 import 'package:Fern/features/media/presentation/widgets/search_filter_menu.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/media/presentation/widgets/select_all_button.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,6 +33,7 @@ class MediaPage extends StatefulWidget {
 
 class _MediaPageState extends State<MediaPage> {
   late final RecognitionHighlight _highlight = getIt<RecognitionHighlight>();
+
 
   /// Con qué evento se vuelve a leer lo que se está viendo.
   ///
@@ -96,15 +102,77 @@ class _MediaPageState extends State<MediaPage> {
   }
 }
 
-class _MediaView extends StatelessWidget {
+class _MediaView extends StatefulWidget {
   const _MediaView();
+
+  @override
+  State<_MediaView> createState() => _MediaViewState();
+}
+
+class _MediaViewState extends State<_MediaView> {
+  /// Nodo que recibe el foco de la pantalla para poder atender el teclado.
+  ///
+  /// El mismo patrón que el visor: un `Focus` con `autofocus` alrededor de todo
+  /// y una función que mira las teclas. No hace falta un mapa de `Shortcuts`
+  /// para un solo atajo, y meterlo aquí obligaría a montar `Actions` en una
+  /// pantalla que no tiene ninguna otra acción de teclado.
+  final FocusNode _keyboardFocus = FocusNode(debugLabel: 'MediaPageKeyboard');
+
+  @override
+  void dispose() {
+    _keyboardFocus.dispose();
+    super.dispose();
+  }
+
+  /// Ctrl+A marca todo lo que hay a la vista, y lo desmarca si ya estaba todo.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey != LogicalKeyboardKey.keyA) {
+      return KeyEventResult.ignored;
+    }
+    if (!HardwareKeyboard.instance.isControlPressed) {
+      return KeyEventResult.ignored;
+    }
+
+    final media = getIt<MediaBloc>().state.mediaList;
+    if (media == null || media.isEmpty) return KeyEventResult.ignored;
+
+    getIt<MediaBloc>()
+        .add(SelectAllMediaEvent([for (final one in media) one.id]));
+
+    return KeyEventResult.handled;
+  }
+
+  /// En qué orden se está pintando la biblioteca.
+  ///
+  /// Vive aquí para que el desplegable enseñe lo elegido sin esperar a que
+  /// vuelva la consulta; lo que manda de verdad es lo guardado en
+  /// preferencias, que es lo que lee quien pide el contenido.
+  late MediaSortOrder _sortOrder =
+      getIt<PreferencesService>().getMediaSortOrder();
+
+  /// Cómo se llama cada orden en el desplegable.
+  String _sortLabel(MediaSortOrder order, AppLocalizations texts) =>
+      switch (order) {
+        MediaSortOrder.newestFirst => texts.sortNewestFirst,
+        MediaSortOrder.oldestFirst => texts.sortOldestFirst,
+        MediaSortOrder.fileName => texts.sortFileName,
+        MediaSortOrder.description => texts.sortDescription,
+        MediaSortOrder.kind => texts.sortKind,
+        MediaSortOrder.random => texts.sortRandom,
+      };
+
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final texts = AppLocalizations.of(context);
 
-    return BlocConsumer<MediaBloc, MediaStates>(
+    return Focus(
+      focusNode: _keyboardFocus,
+      autofocus: true,
+      onKeyEvent: _onKey,
+      child: BlocConsumer<MediaBloc, MediaStates>(
       listenWhen: (previous, current) =>
           previous is! DetailedMedia && current is DetailedMedia,
       listener: (context, state) {
@@ -206,10 +274,37 @@ class _MediaView extends StatelessWidget {
                           : null,
                       icon: const Icon(Icons.delete_outline),
                     ),
+                    SelectAllButton(
+                      visible: state.mediaList ?? const [],
+                      selectedIds: state.selectedIds,
+                      onSelectAll: (ids) => context
+                          .read<MediaBloc>()
+                          .add(SelectAllMediaEvent(ids)),
+                    ),
                     const SizedBox(width: AppSpacing.s),
+                    // El orden sólo manda sobre la biblioteca: en una búsqueda
+                    // el contenido va agrupado por etiqueta y creador, y ahí el
+                    // orden lo pone el grupo.
+                    if (state.searchSections == null) ...[
+                      FernDropdownPill<MediaSortOrder>(
+                        value: _sortOrder,
+                        items: MediaSortOrder.values,
+                        labelBuilder: (order) => _sortLabel(order, texts),
+                        onChanged: (order) {
+                          if (order == null) return;
+
+                          setState(() => _sortOrder = order);
+                          context
+                              .read<MediaBloc>()
+                              .add(MediaSortOrderChangedEvent(order));
+                        },
+                      ),
+                      const SizedBox(width: AppSpacing.s),
+                    ],
                     SearchFilterMenu(
                       filters: state.searchFilters,
                       sourceFilters: state.sourceFilters,
+                      typeFilters: state.typeFilters,
                       hasSearch: state.searchSections != null,
                     ),
                   ],
@@ -219,19 +314,21 @@ class _MediaView extends StatelessWidget {
                 child: sections == null
                     ? MediaGrid(
                         mediaList: mediaList,
-                        columns: 4,
+                        columns: mediaGridColumns,
                         isLoading: state.isBusy,
+                        returnsToViewed: true,
                       )
                     : MediaGrid.sections(
                         sections: sections,
-                        columns: 4,
+                        columns: mediaGridColumns,
                         isLoading: state.isBusy,
                       ),
-              ),
-            ],
-          ),
-        );
-      },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

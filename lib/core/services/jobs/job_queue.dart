@@ -127,6 +127,23 @@ class JobQueue {
     }
   }
 
+  /// Quita de la lista un trabajo **ya terminado**.
+  ///
+  /// Uno, no todos: la lista es lo que pasó y hay quien la usa como parte de
+  /// trabajo, tachando lo que ya ha mirado. Con sólo «limpiar todo», revisar el
+  /// que interesa obligaba a tirar también los otros cinco.
+  ///
+  /// Lo que sigue vivo no se toca: para eso está cancelar, que es otra cosa y
+  /// tiene su propio botón.
+  void dismiss(String id) {
+    final index = _indexOf(id);
+    if (index < 0) return;
+    if (_jobs[index].status.isActive) return;
+
+    _jobs.removeAt(index);
+    _notify();
+  }
+
   /// Quita de la lista lo que ya ha terminado. Lo pide la interfaz cuando el
   /// usuario da por vistos los avisos.
   void clearFinished() {

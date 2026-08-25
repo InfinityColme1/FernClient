@@ -15,6 +15,20 @@ extension JobTypeLabels on JobType {
         JobType.recognition => texts.jobRecognition,
         JobType.duplicateScan => texts.jobDuplicateScan,
         JobType.hashing => texts.jobHashing,
+        JobType.mediaImport => texts.jobImport,
+      };
+
+  /// Con qué se reconoce cada clase de trabajo en la lista.
+  ///
+  /// Hace falta porque con tres o cuatro en marcha las filas eran cuatro líneas
+  /// de texto parecidas y había que leerlas enteras para saber cuál era cuál.
+  /// El icono se ve antes de leer.
+  IconData get icon => switch (this) {
+        JobType.training => Icons.model_training,
+        JobType.recognition => Icons.auto_awesome_outlined,
+        JobType.duplicateScan => Icons.travel_explore_outlined,
+        JobType.hashing => Icons.fingerprint,
+        JobType.mediaImport => Icons.move_to_inbox_outlined,
       };
 }
 
@@ -145,7 +159,12 @@ class JobsIndicator extends StatelessWidget {
   }
 }
 
-/// Una fila del panel: qué es, por dónde va y el botón de pararlo.
+/// Una fila del panel, con la forma de un gestor de descargas.
+///
+/// Icono a la izquierda, nombre arriba y estado debajo en pequeño, acciones a la
+/// derecha. Antes era todo texto apilado: con tres trabajos en marcha había que
+/// leer cuatro líneas parecidas para saber cuál era cuál, y el «terminada» caía
+/// tan abajo que parecía de la fila siguiente.
 class _JobRow extends StatelessWidget {
   final Job job;
 
@@ -169,6 +188,27 @@ class _JobRow extends StatelessWidget {
     };
   }
 
+  /// La línea de debajo del nombre: en qué punto está.
+  ///
+  /// Una sola línea siempre, terminado o no. Antes el estado y el avance eran
+  /// bloques distintos de alto distinto, y la lista se movía sola al cambiar
+  /// cualquiera de ellos.
+  String _status(AppLocalizations texts) => switch (job.status) {
+        JobStatus.failed => texts.jobFailed,
+        JobStatus.completed => texts.jobDone,
+        JobStatus.cancelled => texts.jobCancelled,
+        JobStatus.queued => texts.jobQueued,
+        JobStatus.running => job.total > 0
+            ? texts.jobProgress(job.done, job.total)
+            : job.stage ?? texts.jobRunning,
+      };
+
+  Color _statusColor(BuildContext context) => switch (job.status) {
+        JobStatus.failed => context.colors.error,
+        JobStatus.completed => context.colors.terciary,
+        _ => context.colors.unremarked,
+      };
+
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
@@ -176,86 +216,74 @@ class _JobRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.m),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
+          Icon(
+            job.type.icon,
+            size: AppSizes.iconMedium,
+            color: job.status == JobStatus.failed
+                ? context.colors.error
+                : context.colors.gray,
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
                   _title(texts),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
-              ),
-              // El detalle se ofrece esté vivo o terminado: mientras corre ya
-              // hay algo que mirar de lo que lleva hecho.
-              if (onDetail != null)
-                IconButton(
-                  tooltip: texts.jobDetailTooltip,
-                  iconSize: AppSizes.iconMedium,
-                  onPressed: onDetail,
-                  icon: const Icon(Icons.receipt_long_outlined),
-                ),
-              if (job.status.isActive)
-                IconButton(
-                  tooltip: texts.jobCancelTooltip,
-                  iconSize: AppSizes.iconMedium,
-                  onPressed: () => context
-                      .read<JobsBloc>()
-                      .add(CancelJobEvent(job.id)),
-                  icon: const Icon(Icons.close),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          if (job.status == JobStatus.failed)
-            Text(
-              texts.jobFailed,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.colors.error),
-            )
-          else if (job.status == JobStatus.completed)
-            Text(
-              texts.jobDone,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.colors.unremarked),
-            )
-          else if (job.status == JobStatus.queued)
-            Text(
-              texts.jobQueued,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.colors.gray),
-            )
-          else ...[
-            // Sin total no se sabe cuánto queda, así que la barra da vueltas en
-            // lugar de mentir con un porcentaje.
-            LinearProgressIndicator(value: job.progress),
-            // En qué se está yendo el tiempo ahora mismo: con un árbol de tres
-            // modelos, saber cuál está mirando es la diferencia entre una barra
-            // que avanza y una que parece colgada.
-            if (job.stage case final stage?)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xs),
-                child: Text(
-                  stage,
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  _status(texts),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall
-                      ?.copyWith(color: context.colors.unremarked),
+                      ?.copyWith(color: _statusColor(context)),
                 ),
-              ),
-            if (job.total > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xs),
-                child: Text(
-                  texts.jobProgress(job.done, job.total),
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: context.colors.gray),
-                ),
-              ),
-          ],
+                // La barra sólo mientras corre, y pegada a su texto. Sin total
+                // da vueltas en vez de mentir con un porcentaje.
+                if (job.status == JobStatus.running) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  LinearProgressIndicator(value: job.progress),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s),
+          // El detalle se ofrece esté vivo o terminado: mientras corre ya hay
+          // algo que mirar de lo que lleva hecho.
+          if (onDetail != null)
+            IconButton(
+              tooltip: texts.jobDetailTooltip,
+              iconSize: AppSizes.iconMedium,
+              onPressed: onDetail,
+              icon: const Icon(Icons.receipt_long_outlined),
+            ),
+          // Vivo se para; terminado se quita de la lista. Nunca las dos, porque
+          // son la misma aspa y significan cosas distintas.
+          if (job.status.isActive)
+            IconButton(
+              tooltip: texts.jobCancelTooltip,
+              iconSize: AppSizes.iconMedium,
+              onPressed: () =>
+                  context.read<JobsBloc>().add(CancelJobEvent(job.id)),
+              icon: const Icon(Icons.close),
+            )
+          else
+            IconButton(
+              tooltip: texts.jobDismissTooltip,
+              iconSize: AppSizes.iconMedium,
+              onPressed: () =>
+                  context.read<JobsBloc>().add(DismissJobEvent(job.id)),
+              icon: const Icon(Icons.clear),
+            ),
         ],
       ),
     );
