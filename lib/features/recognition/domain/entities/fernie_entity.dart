@@ -37,8 +37,24 @@ class FernieEntity extends Equatable {
   /// Los dos números viven aquí porque los dos hacen falta a la vez para saber
   /// si el fernie da para entrenar: cien regiones de un único contenido enseñan
   /// el fondo, no el objeto.
+  ///
+  /// Es lo **marcado**, que es lo que el usuario ha hecho. Lo que de eso llega a
+  /// entrenar es [usableRegionCount].
   final int regionCount;
   final int mediaCount;
+
+  /// Lo mismo, pero contando sólo lo que de verdad entrena.
+  ///
+  /// Una región sobre contenido todavía sin confirmar se guarda igual —está
+  /// lista por si el contenido se confirma— pero **no entra en el conjunto de
+  /// datos** (D29). Contarla junto a las demás dejaba los avisos de calidad
+  /// mintiendo por lo alto: un fernie con cien regiones sin confirmar decía que
+  /// estaba listo para entrenar y entrenaba con cero.
+  ///
+  /// Son dos números y no uno porque el usuario necesita ver los dos: el que ha
+  /// marcado explica el trabajo hecho, y el que entrena explica el resultado.
+  final int usableRegionCount;
+  final int usableMediaCount;
 
   FernieEntity({
     required this.id,
@@ -50,7 +66,14 @@ class FernieEntity extends Equatable {
     DateTime? createdAt,
     this.regionCount = 0,
     this.mediaCount = 0,
-  }) : createdAt = createdAt ?? DateTime.now();
+    int? usableRegionCount,
+    int? usableMediaCount,
+  })  : createdAt = createdAt ?? DateTime.now(),
+        // Sin decir nada se asume que todo lo marcado entrena. Es lo que vale
+        // para quien construye un fernie sin mirar la biblioteca —las pruebas y
+        // los formularios— y deja el filtrado donde sí se sabe: el repositorio.
+        usableRegionCount = usableRegionCount ?? regionCount,
+        usableMediaCount = usableMediaCount ?? mediaCount;
 
   FernieLinkKind get linkKind {
     if (linkedTagId != null) return FernieLinkKind.tag;
@@ -72,6 +95,8 @@ class FernieEntity extends Equatable {
     String? linkedName,
     int? regionCount,
     int? mediaCount,
+    int? usableRegionCount,
+    int? usableMediaCount,
   }) {
     return FernieEntity(
       id: id ?? this.id,
@@ -83,6 +108,8 @@ class FernieEntity extends Equatable {
       createdAt: createdAt,
       regionCount: regionCount ?? this.regionCount,
       mediaCount: mediaCount ?? this.mediaCount,
+      usableRegionCount: usableRegionCount ?? this.usableRegionCount,
+      usableMediaCount: usableMediaCount ?? this.usableMediaCount,
     );
   }
 
@@ -96,5 +123,7 @@ class FernieEntity extends Equatable {
         linkedName,
         regionCount,
         mediaCount,
+        usableRegionCount,
+        usableMediaCount,
       ];
 }

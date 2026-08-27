@@ -43,11 +43,16 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
 
   /// Abre el enlace en el navegador de la aplicación para verlo.
   ///
-  /// Cierra el diálogo con la respuesta más prudente: la importación no puede
-  /// quedarse esperando mientras el usuario mira una página, y de esta
-  /// publicación siempre se puede tirar después desde el navegador.
+  /// **Sin contestar nada.** Ir a mirar un enlace es parte de decidir, no la
+  /// decisión: el diálogo se cierra porque hay que cambiar de pantalla, pero la
+  /// tarea se queda en la lista y se vuelve a ella cuando se haya visto lo que
+  /// había que ver.
+  ///
+  /// Antes se cerraba contestando «de ésta, nada», y eso daba la pregunta por
+  /// resuelta: se iba al navegador a mirar un enlace y al volver ya no quedaba
+  /// ni la tarea ni los demás enlaces de esa publicación.
   void _open(PostLink link) {
-    Navigator.of(context).pop(const LinkChoice.ignore());
+    Navigator.of(context).pop();
     GoRouter.of(context).go(browserRouteWithUrl(link.url));
   }
 
@@ -57,7 +62,9 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
     final theme = Theme.of(context);
 
     return FernDialog(
-      onClose: () => _answer(const LinkChoice.ignore()),
+      // Cerrar tampoco es contestar: la pregunta se queda en la lista de
+      // tareas, que es de donde se quita cuando de verdad no interesa.
+      onClose: () => Navigator.of(context).pop(),
       maxWidth: AppSizes.dialogMaxWidth,
       leftContent: Column(
         mainAxisSize: MainAxisSize.min,

@@ -174,7 +174,12 @@ class JobQueue {
     if (_isDisposed) return;
 
     while (_running < concurrency) {
-      final queued = _jobs.where((job) => job.status == JobStatus.queued).toList()
+      // Los que esperan al usuario no cuentan como cola: no hay nada que
+      // ejecutar y darles turno dejaría la aplicación parada delante de una
+      // pregunta que nadie ha abierto todavía.
+      final queued = _jobs
+          .where((job) => job.status == JobStatus.queued && !job.type.isPassive)
+          .toList()
         ..sort(_byPriorityThenArrival);
 
       if (queued.isEmpty) return;

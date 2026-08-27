@@ -22,6 +22,8 @@ ModelFernieEntity _fernie({
   String name = 'Marinette',
   int regionCount = 200,
   int mediaCount = 20,
+  int? usableRegionCount,
+  int? usableMediaCount,
   DatasetSplit split = DatasetSplit.balanced,
 }) {
   final id = _nextId++;
@@ -34,6 +36,8 @@ ModelFernieEntity _fernie({
       name: name,
       regionCount: regionCount,
       mediaCount: mediaCount,
+      usableRegionCount: usableRegionCount,
+      usableMediaCount: usableMediaCount,
     ),
     split: split,
     classIndex: id,
@@ -112,6 +116,58 @@ void main() {
 
       expect(_kinds(issues), contains(TrainingIssueKind.engineNotReady));
       expect(canTrain(issues), isFalse);
+    });
+  });
+
+  group('lo marcado frente a lo que entrena', () {
+    // Una region sobre contenido sin confirmar se guarda igual pero no entra en
+    // el conjunto de datos (D29). Contarla aqui dejaba entrenar con cero
+    // muestras a un fernie que decia tener doscientas.
+    test('doscientas marcadas y ocho utilizables impiden entrenar', () {
+      final issues = _check([
+        _fernie(),
+        _fernie(
+          name: 'Alya',
+          regionCount: 200,
+          mediaCount: 20,
+          usableRegionCount: 8,
+          usableMediaCount: 2,
+        ),
+      ]);
+
+      final tooFew = issues
+          .where((i) => i.kind == TrainingIssueKind.tooFewRegions)
+          .single;
+
+      expect(tooFew.fernieName, 'Alya');
+      expect(canTrain(issues), isFalse);
+    });
+
+    test('la variedad tambien se mide sobre lo que entrena', () {
+      final issues = _check([
+        _fernie(
+          regionCount: 200,
+          mediaCount: 20,
+          usableRegionCount: 200,
+          usableMediaCount: 1,
+        ),
+      ]);
+
+      expect(_kinds(issues), contains(TrainingIssueKind.tooFewMedia));
+    });
+
+    test('el desequilibrio se mide sobre lo que entrena', () {
+      // Marcado estan igualados; lo que entrena, diez a uno.
+      final issues = _check([
+        _fernie(regionCount: 200, usableRegionCount: 200),
+        _fernie(name: 'Adrien', regionCount: 200, usableRegionCount: 20),
+      ]);
+
+      expect(_kinds(issues), contains(TrainingIssueKind.imbalanced));
+    });
+
+    test('sin nada pendiente los dos recuentos son el mismo', () {
+      expect(_check([_fernie(), _fernie(name: 'Adrien')]), isEmpty);
     });
   });
 

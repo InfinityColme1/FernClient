@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_client.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_paths.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_process.dart';
@@ -258,15 +259,21 @@ class RecognitionEngine {
   }
 
   /// Reconoce una lista de imágenes con un modelo.
+  ///
+  /// Con [token] se puede parar a media tanda: el sidecar mira la señal entre
+  /// imagen e imagen, así que una petición de sesenta no obliga a esperar a las
+  /// sesenta para que «parar» haga algo.
   Future<Map<String, dynamic>> predict(
     Map<String, dynamic> params, {
     void Function(Map<String, dynamic> data)? onProgress,
+    CancellationToken? token,
   }) {
     return _withClient((client) => client.call(
           'predict',
           params: params,
           onProgress: onProgress,
           timeout: Duration.zero,
+          token: token,
         ));
   }
 

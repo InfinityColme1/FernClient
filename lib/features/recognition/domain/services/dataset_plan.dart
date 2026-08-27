@@ -36,6 +36,14 @@ class DatasetRegion {
 
   final int classIndex;
 
+  /// Si el contenido sobre el que está marcada ya es definitivo.
+  ///
+  /// Una región sobre contenido pendiente de revisar se guarda igual —está lista
+  /// por si el contenido se confirma— pero **no entrena** (D29). Viaja como un
+  /// dato de la región y no se filtra fuera para que la regla viva donde se
+  /// puede comprobar: aquí, sin base de datos por medio.
+  final bool isDefinitive;
+
   const DatasetRegion({
     required this.regionId,
     required this.mediaId,
@@ -46,11 +54,15 @@ class DatasetRegion {
     required this.w,
     required this.h,
     required this.classIndex,
+    this.isDefinitive = true,
   });
 
-  /// Si tiene tamaño. Una región degenerada no enseña nada y rompería la
-  /// etiqueta.
-  bool get isUsable => w > 0 && h > 0;
+  /// Si tiene tamaño y su contenido ya está confirmado.
+  ///
+  /// Una región degenerada no enseña nada y rompería la etiqueta; una sobre
+  /// contenido sin confirmar enseñaría algo que el usuario todavía no ha dado
+  /// por bueno.
+  bool get isUsable => w > 0 && h > 0 && isDefinitive;
 }
 
 /// Una línea del fichero de etiquetas.

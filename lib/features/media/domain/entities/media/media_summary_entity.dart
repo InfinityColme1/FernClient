@@ -37,6 +37,22 @@ class MediaSummaryEntity extends Equatable {
   /// distintas, y la segunda no se puede sacar de la primera.
   final DateTime? recognizedAt;
 
+  /// Lo que mide el contenido, en píxeles. `null` mientras no se sepa.
+  ///
+  /// Está aquí y no se pregunta al fichero porque **la rejilla lo necesita para
+  /// colocar cada celda**, y averiguarlo obliga a cargar el fichero entero en
+  /// memoria para leerle la cabecera. Con mil trescientos contenidos eso son mil
+  /// trescientas lecturas completas de disco cada vez que se abre la pantalla, y
+  /// es lo que hacía que desplazarse deprisa fuera a tirones.
+  ///
+  /// Se rellena al dar de alta el contenido. Lo que entró antes de que esto
+  /// existiera lo va rellenando la propia rejilla, la primera vez que lo pinta.
+  final int? width;
+  final int? height;
+
+  /// Si ya se sabe lo que mide, que es lo que decide si hay que ir al fichero.
+  bool get hasSize => width != null && height != null && width! > 0 && height! > 0;
+
   const MediaSummaryEntity({
     required this.id,
     required this.path,
@@ -46,6 +62,8 @@ class MediaSummaryEntity extends Equatable {
     this.importSource = ImportSource.local,
     this.hasPendingSuggestions = false,
     this.recognizedAt,
+    this.width,
+    this.height,
   });
 
   @override
@@ -58,5 +76,7 @@ class MediaSummaryEntity extends Equatable {
         importSource,
         hasPendingSuggestions,
         recognizedAt,
+        width,
+        height,
       ];
 }

@@ -12,7 +12,6 @@
 import 'dart:async';
 
 import 'package:Fern/core/resources/data_state.dart';
-import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/jobs/job.dart';
 import 'package:Fern/core/services/jobs/job_queue.dart';
 import 'package:Fern/core/services/preferences_service.dart';
@@ -20,6 +19,7 @@ import 'package:Fern/features/media/data/services/import_feed.dart';
 import 'package:Fern/features/media/data/services/import_job_runner.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/remote_creator.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
@@ -39,9 +39,18 @@ class _Remote implements RemoteMediaRepository {
   _Remote({this.count = 3, this.failsWith});
 
   @override
+  Future<DataState<List<RemoteCreator>>> remoteCreators(ImportSource source) async =>
+      const DataSuccess([]);
+
+  @override
+  Future<int?> countNewPosts(ImportSource source, RemoteCreator creator) async =>
+      null;
+
+  @override
   Stream<DataState<MediaSummaryEntity>> scanRemoteSource(
     ImportSource source, {
     bool untilLastImport = false,
+    Set<String> creators = const {},
   }) async* {
     if (failsWith != null) {
       yield DataException(failsWith!);
@@ -71,7 +80,6 @@ class _UnusedLocal implements LocalMediaRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late ImportCancellation cancellation;
   late ImportFeed feed;
   late JobQueue queue;
 
@@ -82,7 +90,6 @@ void main() {
     final remote = _Remote(count: count, failsWith: failsWith);
     final preferences = PreferencesService(await SharedPreferences.getInstance());
 
-    cancellation = ImportCancellation();
     feed = ImportFeed();
     queue = JobQueue();
 
@@ -91,9 +98,7 @@ void main() {
         localMediaRepository: _UnusedLocal(),
         remoteMediaRepository: remote,
         preferencesService: preferences,
-        cancellation: cancellation,
       ),
-      cancellation: cancellation,
       feed: feed,
     );
 
@@ -176,9 +181,10 @@ void main() {
         if (arrived.length == 3) queue.cancel(id);
       }
 
-      expect(cancellation.isCancelled, isTrue);
       // Lo que cuenta: la fuente ha dejado de producir. Sin esto se seguiría
       // descargando la cuenta entera con la pantalla diciendo que se ha parado.
+      // Y lo hace por la señal del propio trabajo, que es la única que hay: con
+      // la global de antes, parar ésta paraba también la de al lado.
       expect(remote.produced, lessThan(100));
     });
 

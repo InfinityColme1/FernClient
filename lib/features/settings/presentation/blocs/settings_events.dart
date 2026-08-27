@@ -338,6 +338,16 @@ class PawchiveSettingsChangedEvent extends SettingsEvents {
 
 /// Página de inicio del navegador de la aplicación, tal y como ha quedado tras
 /// tocar su campo.
+/// Cuándo hay que apartar el navegador mientras se importa.
+class BrowserAsideChangedEvent extends SettingsEvents {
+  final BrowserAsidePolicy policy;
+
+  const BrowserAsideChangedEvent(this.policy);
+
+  @override
+  List<Object?> get props => [policy];
+}
+
 class BrowserHomeChangedEvent extends SettingsEvents {
   final String url;
 

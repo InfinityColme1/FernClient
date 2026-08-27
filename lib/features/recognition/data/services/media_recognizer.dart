@@ -11,6 +11,7 @@ import 'package:Fern/features/recognition/domain/entities/recognition_result_ent
 import 'package:Fern/features/recognition/domain/repositories/model_repository.dart';
 import 'package:Fern/features/recognition/domain/services/frame_sampling.dart';
 import 'package:Fern/features/recognition/domain/services/model_tree_traversal.dart';
+import 'package:flutter/foundation.dart';
 
 /// Una detección tal y como sale del motor, todavía sin traducir.
 ///
@@ -61,6 +62,29 @@ typedef ImagePredictor = Future<List<RawDetection>> Function(
   double confidence,
 );
 
+/// Lo mismo, pero preguntando por **varias imágenes de una vez**.
+///
+/// Contesta una lista por imagen, en el mismo orden en que se pidieron. Es lo
+/// que hace que reconocer una biblioteca entera no sean tres peticiones por
+/// contenido: el motor carga los pesos una vez y contesta por todo el lote.
+///
+/// Es opcional: sin él, el reconocedor pregunta de una en una con
+/// [ImagePredictor], que es lo que hace que esto se pueda probar sin motor.
+typedef ImagesPredictor = Future<List<List<RawDetection>>> Function(
+  RecognitionModelEntity model,
+  List<String> imagePaths,
+  double confidence,
+  CancellationToken? token,
+);
+
+/// Un contenido al que hay que pasarle el árbol.
+class RecognitionTarget {
+  final int mediaId;
+  final String path;
+
+  const RecognitionTarget({required this.mediaId, required this.path});
+}
+
 /// De dónde salen los fotogramas de un contenido que se mueve.
 ///
 /// También por parámetro: sacarlos abre un reproductor, y eso no puede ser
@@ -105,6 +129,10 @@ class MediaRecognition {
 class MediaRecognizer {
   final ModelRepository _models;
   final ImagePredictor _predict;
+
+  /// Con qué se preguntan varias imágenes de una vez, si hay con qué.
+  final ImagesPredictor? _predictMany;
+
   final FrameExtractor _extractFrames;
   final DurationReader _durationOf;
 
@@ -114,11 +142,13 @@ class MediaRecognizer {
   MediaRecognizer({
     required ModelRepository models,
     required ImagePredictor predict,
+    ImagesPredictor? predictMany,
     required FrameExtractor extractFrames,
     required DurationReader durationOf,
     int Function()? frameSamples,
   })  : _models = models,
         _predict = predict,
+        _predictMany = predictMany,
         _extractFrames = extractFrames,
         _durationOf = durationOf,
         _frameSamples = frameSamples ?? _defaultSamples;
@@ -137,118 +167,219 @@ class MediaRecognizer {
     CancellationToken? token,
     ModelProgress? onModel,
   }) async {
+    final many = await recognizeMany(
+      targets: [RecognitionTarget(mediaId: mediaId, path: path)],
+      tree: tree,
+      token: token,
+      onModel: onModel,
+    );
+
+    if (many is! DataSuccess || many.data == null) {
+      return DataException(many.exception ?? Exception('No se pudo reconocer'));
+    }
+
+    final mine = many.data![mediaId];
+    if (mine == null) {
+      return DataException(Exception('No se pudo reconocer $mediaId'));
+    }
+
+    return DataSuccess(mine);
+  }
+
+  /// Pasa [tree] por **varios contenidos a la vez**.
+  ///
+  /// Es el mismo recorrido que uno a uno —mismos niveles, misma poda, mismas
+  /// reglas para abrir una rama— pero pidiendo las predicciones de todo un nivel
+  /// juntas. La diferencia es de coste, no de resultado: reconocer veinticinco
+  /// contenidos con un árbol de tres modelos pasa de setenta y cinco peticiones
+  /// al motor a tres, y el motor deja de ir y volver entre unos pesos y otros.
+  ///
+  /// **La poda sigue siendo por contenido**: al segundo nivel sólo bajan los
+  /// contenidos cuyo padre abrió esa rama, no todos los del lote. Que el
+  /// resultado sea idéntico al de recorrerlos de uno en uno está comprobado en
+  /// `test/model_tree_traversal_test.dart`.
+  Future<DataState<Map<int, MediaRecognition>>> recognizeMany({
+    required List<RecognitionTarget> targets,
+    required ModelTreeEntity tree,
+    CancellationToken? token,
+    ModelProgress? onModel,
+  }) async {
     try {
-      final frames = await _framesOf(path);
-      token?.throwIfCancelled();
+      if (targets.isEmpty) return const DataSuccess({});
 
-      final found = <RecognitionResultEntity>[];
-      final entries = <RecognitionLogEntry>[];
-      final executed = <int>{};
+      // Los fotogramas se sacan **una vez por contenido**, antes de empezar: el
+      // mismo contenido pasa por varios modelos y abrir el fichero es lo caro.
+      final framesOf = <int, List<SampledFrame>>{};
+      final pathOf = <int, String>{};
 
-      await runModelTree(
+      for (final target in targets) {
+        token?.throwIfCancelled();
+
+        pathOf[target.mediaId] = target.path;
+
+        try {
+          framesOf[target.mediaId] = await _framesOf(target.path);
+        } on JobCancelledException {
+          rethrow;
+        } on Object catch (error) {
+          // Un fichero movido, corrupto o de un formato raro **no tumba el
+          // lote**: en una biblioteca de miles hay unos cuantos, y que uno de
+          // ellos deje sin reconocer a los otros veinticuatro es lo peor que
+          // podria hacer esto. Se queda sin recorrido y los demas siguen.
+          debugPrint('Sin fotogramas de ${target.path}: $error');
+        }
+      }
+
+      final mediaIds = [
+        for (final target in targets)
+          if (framesOf.containsKey(target.mediaId)) target.mediaId,
+      ];
+
+      final found = {for (final id in mediaIds) id: <RecognitionResultEntity>[]};
+      final entries = {for (final id in mediaIds) id: <RecognitionLogEntry>[]};
+      final executed = {for (final id in mediaIds) id: <int>{}};
+
+      await runModelTreeBatched(
         tree: tree,
-        predict: (node) async {
+        mediaIds: mediaIds,
+        predict: (node, ofThisLevel) async {
           token?.throwIfCancelled();
 
-          executed.add(node.id);
           onModel?.call(node.model.name);
 
           final byClass = await _classesOf(node);
+          final raw = await _lookAtMany(node.model, ofThisLevel, framesOf, token);
 
-          // Se pregunta muy por debajo del listón del modelo y se filtra aquí.
-          // Lo que se queda fuera no se tira: es la única forma de poder decir
-          // después «lo vio, pero no lo suficiente».
-          final raw = await _lookAt(node.model, frames, token);
-          final threshold = node.model.confidenceThreshold;
+          final detections = <int, List<TreeDetection>>{};
 
-          final sightings = <RecognitionSighting>[];
-          final detections = <TreeDetection>[];
+          for (final mediaId in ofThisLevel) {
+            executed[mediaId]!.add(node.id);
 
-          for (final one in raw) {
-            final fernie = byClass[one.detection.classIndex];
-            if (fernie == null) continue;
-
-            sightings.add(RecognitionSighting(
-              fernieId: fernie.id,
-              fernieName: fernie.name,
-              confidence: one.detection.confidence,
-            ));
-
-            if (one.detection.confidence < threshold) continue;
-
-            found.add(RecognitionResultEntity(
+            final reading = _read(
+              node: node,
               mediaId: mediaId,
-              modelId: node.model.id,
-              fernieId: fernie.id,
-              confidence: one.detection.confidence,
-              x: one.detection.x,
-              y: one.detection.y,
-              w: one.detection.w,
-              h: one.detection.h,
-              frameMs: one.frameMs,
-              createdAt: DateTime.now(),
-            ));
+              byClass: byClass,
+              raw: raw[mediaId] ?? const [],
+            );
 
-            detections.add(TreeDetection(
-              fernieId: fernie.id,
-              confidence: one.detection.confidence,
-            ));
+            found[mediaId]!.addAll(reading.suggestions);
+            entries[mediaId]!.add(reading.entry);
+            detections[mediaId] = reading.detections;
           }
-
-          sightings.sort((a, b) => b.confidence.compareTo(a.confidence));
-
-          entries.add(RecognitionLogEntry(
-            modelId: node.model.id,
-            modelName: node.model.name,
-            picturePath: node.model.picturePath,
-            verdict: detections.isNotEmpty
-                ? RecognitionVerdict.proposed
-                : sightings.isEmpty
-                    ? RecognitionVerdict.sawNothing
-                    : RecognitionVerdict.belowThreshold,
-            threshold: threshold,
-            sightings: sightings,
-          ));
 
           return detections;
         },
       );
 
-      // Los que no llegaron a ejecutarse también van al parte. Que un modelo no
-      // se ejecute es el árbol haciendo su trabajo, pero desde fuera es idéntico
-      // a que haya fallado.
-      for (final node in tree.nodes) {
-        if (executed.contains(node.id)) continue;
+      final result = <int, MediaRecognition>{};
 
-        entries.add(RecognitionLogEntry(
-          modelId: node.model.id,
-          modelName: node.model.name,
-          picturePath: node.model.picturePath,
-          verdict: node.isRunnable
-              ? RecognitionVerdict.notReached
-              : RecognitionVerdict.untrained,
-          threshold: node.model.confidenceThreshold,
-        ));
+      for (final mediaId in mediaIds) {
+        // Los que no llegaron a ejecutarse también van al parte. Que un modelo
+        // no se ejecute es el árbol haciendo su trabajo, pero desde fuera es
+        // idéntico a que haya fallado.
+        for (final node in tree.nodes) {
+          if (executed[mediaId]!.contains(node.id)) continue;
+
+          entries[mediaId]!.add(RecognitionLogEntry(
+            modelId: node.model.id,
+            modelName: node.model.name,
+            picturePath: node.model.picturePath,
+            verdict: node.isRunnable
+                ? RecognitionVerdict.notReached
+                : RecognitionVerdict.untrained,
+            threshold: node.model.confidenceThreshold,
+          ));
+        }
+
+        // Un mismo fernie puede salir de dos modelos distintos del árbol. Se
+        // deja uno por fernie y modelo: dos propuestas del mismo modelo sobre el
+        // mismo fernie son la misma sugerencia vista dos veces, y obligarían al
+        // usuario a decir dos veces que sí.
+        result[mediaId] = MediaRecognition(
+          suggestions: _bestPerModelAndFernie(found[mediaId]!),
+          log: MediaRecognitionLog(
+            mediaId: mediaId,
+            name: p.basename(pathOf[mediaId] ?? ''),
+            models: entries[mediaId]!,
+            at: DateTime.now(),
+          ),
+        );
       }
 
-      // Un mismo fernie puede salir de dos modelos distintos del árbol. Se deja
-      // uno por fernie y modelo: dos propuestas del mismo modelo sobre el mismo
-      // fernie son la misma sugerencia vista dos veces, y obligarían al usuario
-      // a decir dos veces que sí.
-      return DataSuccess(MediaRecognition(
-        suggestions: _bestPerModelAndFernie(found),
-        log: MediaRecognitionLog(
-          mediaId: mediaId,
-          name: p.basename(path),
-          models: entries,
-          at: DateTime.now(),
-        ),
-      ));
+      return DataSuccess(result);
     } on JobCancelledException {
       rethrow;
     } on Exception catch (e) {
       return DataException(e);
     }
+  }
+
+  /// Lo que un modelo dice de **un** contenido, ya traducido.
+  ///
+  /// Se pregunta muy por debajo del listón del modelo y se filtra aquí. Lo que
+  /// se queda fuera no se tira: es la única forma de poder decir después «lo
+  /// vio, pero no lo suficiente».
+  _Reading _read({
+    required ModelTreeNodeEntity node,
+    required int mediaId,
+    required Map<int, FernieEntity> byClass,
+    required List<_Located> raw,
+  }) {
+    final threshold = node.model.confidenceThreshold;
+
+    final suggestions = <RecognitionResultEntity>[];
+    final sightings = <RecognitionSighting>[];
+    final detections = <TreeDetection>[];
+
+    for (final one in raw) {
+      final fernie = byClass[one.detection.classIndex];
+      if (fernie == null) continue;
+
+      sightings.add(RecognitionSighting(
+        fernieId: fernie.id,
+        fernieName: fernie.name,
+        confidence: one.detection.confidence,
+      ));
+
+      if (one.detection.confidence < threshold) continue;
+
+      suggestions.add(RecognitionResultEntity(
+        mediaId: mediaId,
+        modelId: node.model.id,
+        fernieId: fernie.id,
+        confidence: one.detection.confidence,
+        x: one.detection.x,
+        y: one.detection.y,
+        w: one.detection.w,
+        h: one.detection.h,
+        frameMs: one.frameMs,
+        createdAt: DateTime.now(),
+      ));
+
+      detections.add(TreeDetection(
+        fernieId: fernie.id,
+        confidence: one.detection.confidence,
+      ));
+    }
+
+    sightings.sort((a, b) => b.confidence.compareTo(a.confidence));
+
+    return _Reading(
+      suggestions: suggestions,
+      detections: detections,
+      entry: RecognitionLogEntry(
+        modelId: node.model.id,
+        modelName: node.model.name,
+        picturePath: node.model.picturePath,
+        verdict: detections.isNotEmpty
+            ? RecognitionVerdict.proposed
+            : sightings.isEmpty
+                ? RecognitionVerdict.sawNothing
+                : RecognitionVerdict.belowThreshold,
+        threshold: threshold,
+        sightings: sightings,
+      ),
+    );
   }
 
   /// Qué fernie es cada número de clase de un modelo.
@@ -308,32 +439,97 @@ class MediaRecognizer {
     return frames.isEmpty ? [SampledFrame(path: path)] : frames;
   }
 
-  /// Lo que ve un modelo en todos los fotogramas, con lo mejor de cada fernie.
-  Future<List<_Located>> _lookAt(
+  /// Lo que ve un modelo en los fotogramas de **varios contenidos**.
+  ///
+  /// Se juntan todas las imágenes del nivel en una sola tanda y se reparten
+  /// después: el motor carga los pesos una vez y contesta por todas. Se pregunta
+  /// en tandas de [recognitionImagesPerCall] y no de una sola vez porque una
+  /// petición sin límite es una petición que no se puede parar hasta que acabe.
+  ///
+  /// Devuelve, por contenido, lo mejor de cada clase entre todos sus fotogramas.
+  Future<Map<int, List<_Located>>> _lookAtMany(
+    RecognitionModelEntity model,
+    List<int> mediaIds,
+    Map<int, List<SampledFrame>> framesOf,
+    CancellationToken? token,
+  ) async {
+    // Qué imagen es de quién. Va en dos listas paralelas y no en un mapa porque
+    // dos contenidos pueden compartir fichero —el mismo GIF importado dos veces—
+    // y ahí la ruta deja de identificar a nadie.
+    final owners = <int>[];
+    final frames = <SampledFrame>[];
+
+    for (final mediaId in mediaIds) {
+      for (final frame in framesOf[mediaId] ?? const <SampledFrame>[]) {
+        owners.add(mediaId);
+        frames.add(frame);
+      }
+    }
+
+    final all = {for (final mediaId in mediaIds) mediaId: <_Located>[]};
+
+    for (var from = 0; from < frames.length; from += recognitionImagesPerCall) {
+      // Entre tanda y tanda: un lote de veinticinco vídeos son quinientas
+      // predicciones seguidas, y sin esto parar tarda las quinientas.
+      token?.throwIfCancelled();
+
+      final to = (from + recognitionImagesPerCall).clamp(0, frames.length);
+      final chunk = frames.sublist(from, to);
+
+      final answers = await _askFor(model, chunk, token);
+
+      for (var index = 0; index < chunk.length; index++) {
+        final detections = index < answers.length ? answers[index] : const [];
+
+        for (final detection in detections) {
+          all[owners[from + index]]!.add(_Located(
+            detection: detection,
+            frameMs: chunk[index].frameMs,
+          ));
+        }
+      }
+    }
+
+    return {
+      for (final entry in all.entries)
+        entry.key: bestPerFernie(
+          entry.value,
+          // Todavía por número de clase: la traducción a fernie viene después, y
+          // dos clases distintas no se pueden juntar aunque acaben en el mismo.
+          fernieOf: (one) => one.detection.classIndex,
+          confidenceOf: (one) => one.detection.confidence,
+        ),
+    };
+  }
+
+  /// Lo que contesta el motor sobre estas imágenes, en el mismo orden.
+  ///
+  /// Con un predictor de lote es una petición; sin él, una por imagen. Lo
+  /// segundo es lo que permite probar todo esto sin levantar Python.
+  Future<List<List<RawDetection>>> _askFor(
     RecognitionModelEntity model,
     List<SampledFrame> frames,
     CancellationToken? token,
   ) async {
-    final all = <_Located>[];
+    final paths = [for (final frame in frames) frame.path];
 
-    for (final frame in frames) {
-      // Entre fotograma y fotograma, no sólo entre modelos: un vídeo son veinte
-      // predicciones seguidas, y sin esto parar tarda las veinte.
+    // La señal viaja con la petición: una tanda de sesenta imágenes no se puede
+    // cortar desde aquí una vez mandada, pero el motor la mira entre imagen e
+    // imagen y contesta que se paró.
+    final many = _predictMany;
+    if (many != null) return many(model, paths, recognitionFloor, token);
+
+    final byImage = <List<RawDetection>>[];
+
+    for (final path in paths) {
+      // Sin motor de lote esto es una petición por fotograma, y parar no puede
+      // tardar las que queden: un vídeo son veinte seguidas.
       token?.throwIfCancelled();
 
-      for (final detection
-          in await _predict(model, frame.path, recognitionFloor)) {
-        all.add(_Located(detection: detection, frameMs: frame.frameMs));
-      }
+      byImage.add(await _predict(model, path, recognitionFloor));
     }
 
-    return bestPerFernie(
-      all,
-      // Todavía por número de clase: la traducción a fernie viene después, y
-      // dos clases distintas no se pueden juntar aunque acaben en el mismo.
-      fernieOf: (one) => one.detection.classIndex,
-      confidenceOf: (one) => one.detection.confidence,
-    );
+    return byImage;
   }
 
   List<RecognitionResultEntity> _bestPerModelAndFernie(
@@ -352,6 +548,24 @@ class MediaRecognizer {
 
     return best.values.toList();
   }
+}
+
+/// Lo que un modelo dice de un contenido: qué se propone, qué abre rama y qué
+/// se cuenta en el parte.
+///
+/// Las tres cosas salen de la misma pasada y se devuelven juntas: separarlas
+/// obligaría a recorrer tres veces lo mismo o a que el que llama las recompusiera
+/// por su cuenta, que es justo donde se descuadran.
+class _Reading {
+  final List<RecognitionResultEntity> suggestions;
+  final List<TreeDetection> detections;
+  final RecognitionLogEntry entry;
+
+  const _Reading({
+    required this.suggestions,
+    required this.detections,
+    required this.entry,
+  });
 }
 
 /// Una detección con el fotograma del que salió.

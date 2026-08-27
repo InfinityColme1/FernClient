@@ -16,6 +16,8 @@ extension JobTypeLabels on JobType {
         JobType.duplicateScan => texts.jobDuplicateScan,
         JobType.hashing => texts.jobHashing,
         JobType.mediaImport => texts.jobImport,
+        JobType.linkReview => texts.jobLinkReview,
+        JobType.linkImport => texts.jobLinkImport,
       };
 
   /// Con qué se reconoce cada clase de trabajo en la lista.
@@ -29,6 +31,8 @@ extension JobTypeLabels on JobType {
         JobType.duplicateScan => Icons.travel_explore_outlined,
         JobType.hashing => Icons.fingerprint,
         JobType.mediaImport => Icons.move_to_inbox_outlined,
+        JobType.linkReview => Icons.help_outline,
+        JobType.linkImport => Icons.link,
       };
 }
 
@@ -261,10 +265,20 @@ class _JobRow extends StatelessWidget {
           // algo que mirar de lo que lleva hecho.
           if (onDetail != null)
             IconButton(
-              tooltip: texts.jobDetailTooltip,
+              // El icono y lo que dice cambian con lo que hay detrás: un parte
+              // de lo que hicieron los modelos y una pregunta sin contestar no
+              // son lo mismo, y con el mismo icono la segunda parecía lo
+              // primero.
+              tooltip: job.type == JobType.linkReview
+                  ? texts.jobReviewTooltip
+                  : texts.jobDetailTooltip,
               iconSize: AppSizes.iconMedium,
               onPressed: onDetail,
-              icon: const Icon(Icons.receipt_long_outlined),
+              icon: Icon(
+                job.type == JobType.linkReview
+                    ? Icons.rule
+                    : Icons.receipt_long_outlined,
+              ),
             ),
           // Vivo se para; terminado se quita de la lista. Nunca las dos, porque
           // son la misma aspa y significan cosas distintas.

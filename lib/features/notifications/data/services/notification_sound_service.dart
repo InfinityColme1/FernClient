@@ -38,6 +38,9 @@ class NotificationSoundService {
         NotificationKind.duplicatesFound => alertNotificationSound,
         NotificationKind.recognitionFinished => defaultNotificationSound,
         NotificationKind.importFinished => defaultNotificationSound,
+        // Es una pregunta, no un final: el mismo toque que avisa de algo que
+        // hay que mirar.
+        NotificationKind.linkReview => alertNotificationSound,
       };
 
   /// Lo que suena para [kind]: lo que haya elegido el usuario o, si no, el de

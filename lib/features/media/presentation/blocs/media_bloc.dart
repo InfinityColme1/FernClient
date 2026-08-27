@@ -1,4 +1,3 @@
-import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/usecases/add_tag_to_media_usecase.dart';
@@ -31,7 +30,7 @@ import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_nsfw_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/select_import_directory_usecase.dart';
 import 'dart:math' as math;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,7 +52,7 @@ import 'media_events.dart';
 import 'media_states.dart';
 
 class MediaBloc extends Bloc<MediaEvents, MediaStates> {
-  final SelectAndScanDirectoryUsecase _selectAndScanDirectoryUsecase;
+  final SelectImportDirectoryUsecase _selectImportDirectoryUsecase;
   /// La cola de trabajos de fondo.
   ///
   /// La importación va por ella: sale en la lista de tareas como todo lo demás
@@ -107,7 +106,6 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
   /// La señal con la que se para una importación en marcha. La levanta el botón
   /// de la rejilla y la miran los recorridos de las fuentes.
-  final ImportCancellation _cancellation;
 
   /// Por donde la importación pregunta al usuario qué hacer con lo que no puede
   /// decidir sola.
@@ -119,7 +117,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   int? _selectionAnchorId;
 
   MediaBloc({
-    required SelectAndScanDirectoryUsecase selectAndScanDirectoryUsecase,
+    required SelectImportDirectoryUsecase selectImportDirectoryUsecase,
     required JobQueue jobs,
     required ImportFeed importFeed,
     required GetMediaDetailsUsecase getMediaDetailsUsecase,
@@ -150,9 +148,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
     required PreferencesService preferences,
     required NotificationService notifications,
-    required ImportCancellation cancellation,
     required ImportDecisions decisions,
-  })  : _selectAndScanDirectoryUsecase = selectAndScanDirectoryUsecase,
+  })  : _selectImportDirectoryUsecase = selectImportDirectoryUsecase,
         _jobs = jobs,
         _importFeed = importFeed,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
@@ -183,7 +180,6 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
         _preferences = preferences,
         _notifications = notifications,
-        _cancellation = cancellation,
         _decisions = decisions,
         super(const MediaLoading()) {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
@@ -207,6 +203,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<ClearMediaSearchEvent>(onClearMediaSearch);
     on<ImportSourceChangedEvent>(onImportSourceChanged);
     on<ScanSourceEvent>(onScanSource);
+    on<ScanCreatorsEvent>(onScanCreators);
     on<StopImportEvent>(onStopImport);
     on<SelectAndScanDirectoryEvent>(onSelectAndScanDirectoryEvent);
     on<SetMediaListEvent>(onSetMediaList);
@@ -309,7 +306,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       isBusy: true,
     ));
 
-    final result = await _getScannedMediaUseCase(params: source);
+    // El orden se lee aquí y no se guarda en el estado, igual que en la
+    // biblioteca: es un ajuste, y manda lo que haya puesto ahora.
+    final result = await _getScannedMediaUseCase(params: (
+      source: source,
+      order: _preferences.getImportSortOrder(),
+    ));
     final mediaList = (result is DataSuccess && result.data != null)
         ? result.data!
         : const <MediaSummaryEntity>[];
@@ -361,14 +363,50 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// marca la lista como la de favoritos: es lo que hace que quitar el corazón
   /// desde el visor saque el contenido de esta rejilla y no de las otras.
   void onLoadFavoriteMedia(LoadFavoriteMediaEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading(favoritesOnly: true, isBusy: true));
+    await _loadFavorites(emit);
+  }
+
+  /// Los favoritos, con los filtros de la cabecera puestos.
+  ///
+  /// Es la biblioteca con un recorte más, así que los filtros valen igual y se
+  /// arrastran de una pantalla a otra: de dónde llegó el contenido y de qué
+  /// clase es son datos suyos, no de la lista en la que se está mirando.
+  Future<void> _loadFavorites(Emitter<MediaStates> emit) async {
+    final sourceFilters = state.sourceFilters;
+    final typeFilters = state.typeFilters;
+
+    emit(MediaLoading(
+      favoritesOnly: true,
+      sourceFilters: sourceFilters,
+      typeFilters: typeFilters,
+      isBusy: true,
+    ));
 
     final result = await _getFavoriteMediaUseCase();
     final mediaList = (result is DataSuccess && result.data != null)
-        ? result.data!
+        ? [
+            for (final summary in result.data!)
+              if (state.shows(summary)) summary,
+          ]
         : const <MediaSummaryEntity>[];
 
-    emit(MediaLoading(mediaList: mediaList, favoritesOnly: true));
+    emit(MediaLoading(
+      mediaList: mediaList,
+      favoritesOnly: true,
+      sourceFilters: sourceFilters,
+      typeFilters: typeFilters,
+    ));
+  }
+
+  /// Vuelve a leer la rejilla que se esté enseñando, con los filtros puestos.
+  ///
+  /// La biblioteca y los favoritos son la misma rejilla con distinta
+  /// procedencia, y un filtro tiene que poder tocarse en las dos. Antes
+  /// cualquier filtro llamaba a la biblioteca sin mirar, y por eso la pantalla
+  /// de favoritos llevaba el botón de filtros puesto sin nada detrás: encenderlo
+  /// habría cambiado los favoritos por la biblioteca entera.
+  Future<void> _reloadFiltered(Emitter<MediaStates> emit) {
+    return state.favoritesOnly ? _loadFavorites(emit) : _loadLibrary(emit);
   }
 
   /// Contenido de una etiqueta, el de la rejilla de la pantalla de gestión de
@@ -525,9 +563,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final mediaList = (result is DataSuccess && result.data != null)
         ? [
             for (final summary in result.data!)
-              if (sourceFilters.contains(summary.importSource) &&
-                  typeFilters.contains(MediaKind.of(summary.path)))
-                summary,
+              if (state.shows(summary)) summary,
           ]
         : const <MediaSummaryEntity>[];
 
@@ -553,7 +589,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final sections = state.searchSections;
     if (sections == null) {
       emit(state.copyWith(typeFilters: filters));
-      await _loadLibrary(emit);
+      await _reloadFiltered(emit);
 
       return;
     }
@@ -574,11 +610,22 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     MediaSortOrderChangedEvent event,
     Emitter<MediaStates> emit,
   ) async {
+    // Dos ajustes distintos y no uno: lo pendiente de revisar y la biblioteca
+    // se miran para cosas distintas —una tanda se repasa por tipo o por nombre,
+    // y la biblioteca se mira por lo último que llegó—, así que cada pantalla
+    // recuerda el suyo.
+    if (_lastListing is LoadScannedMediaEvent) {
+      await _preferences.setImportSortOrder(event.order);
+      await _loadScanned(state.importSource, emit);
+
+      return;
+    }
+
     await _preferences.setMediaSortOrder(event.order);
 
     if (state.searchSections != null) return;
 
-    await _loadLibrary(emit);
+    await _reloadFiltered(emit);
   }
 
   /// Marca todo lo que hay a la vista, o lo desmarca si ya estaba todo.
@@ -709,7 +756,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final sections = state.searchSections;
     if (sections == null) {
       emit(state.copyWith(sourceFilters: filters));
-      await _loadLibrary(emit);
+      await _reloadFiltered(emit);
       return;
     }
 
@@ -1411,11 +1458,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// Parar no emite nada: el recorrido se entera por la señal y termina como
   /// termina cualquier importación, dejando lo que ya se había traído.
   void onStopImport(StopImportEvent event, Emitter<MediaStates> emit) {
-    _cancellation.cancel();
-
-    // Y se para también el trabajo, para que el panel diga «parada» y no
-    // «terminada»: el trabajo se va a acabar igual en cuanto el recorrido vea
-    // la señal, pero acabar porque te han parado no es lo mismo que acabar.
+    // Parar el trabajo es parar la importación: su señal baja hasta el recorrido
+    // de las fuentes, que la mira entre contenido y contenido. Y el panel dice
+    // «parada» y no «terminada», que no es lo mismo.
     _jobs.cancelAllOfType(JobType.mediaImport);
   }
 
@@ -1442,8 +1487,64 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     });
   }
 
-  void onSelectAndScanDirectoryEvent(SelectAndScanDirectoryEvent event, Emitter<MediaStates> emit) async {
-    await _scan(emit, () => _selectAndScanDirectoryUsecase(params: event.limit));
+  /// Elegir otra carpeta del equipo y escanearla.
+  ///
+  /// El diálogo del sistema se abre aquí, que es lo único que tiene que pasar en
+  /// el hilo de la pantalla; escanear es el mismo trabajo de importación que
+  /// para cualquier otra fuente. Antes tenía su propio camino fuera de la cola,
+  /// y por eso no salía en el panel de tareas ni se podía parar desde ahí.
+  /// Trae lo de unos creadores concretos.
+  ///
+  /// Es el mismo trabajo de importación de siempre con una lista más en el
+  /// encargo: la fuente recorre sólo lo de ésos. Todo lo demás —el tope, la
+  /// tubería, poder pararlo— es igual, que es lo que hace que elegir creadores
+  /// no sea un camino aparte con sus propios fallos.
+  void onScanCreators(
+    ScanCreatorsEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    if (event.creators.isEmpty) return;
+
+    final source = state.importSource;
+
+    await _scan(emit, () async {
+      final id = _jobs.enqueue(
+        type: JobType.mediaImport,
+        priority: JobPriority.high,
+        payload: {
+          ImportJobRunner.sourceKey: source.id,
+          ImportJobRunner.limitKey: event.limit,
+          ImportJobRunner.creatorsKey: event.creators.toList(),
+          if (source.label != null) Job.nameKey: source.label,
+        },
+      );
+
+      return _importFeed.of(id);
+    });
+  }
+
+  void onSelectAndScanDirectoryEvent(
+    SelectAndScanDirectoryEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final chosen = await _selectImportDirectoryUsecase();
+
+    // Cerrar el diálogo sin elegir nada no es un fallo ni una importación vacía:
+    // no ha pasado nada y la pantalla se queda como estaba.
+    if (chosen is! DataSuccess || chosen.data == null) return;
+
+    await _scan(emit, () async {
+      final id = _jobs.enqueue(
+        type: JobType.mediaImport,
+        priority: JobPriority.high,
+        payload: {
+          ImportJobRunner.sourceKey: ImportSource.local.id,
+          ImportJobRunner.limitKey: event.limit,
+        },
+      );
+
+      return _importFeed.of(id);
+    });
   }
 
   /// Escaneo de una carpeta: el contenido que va apareciendo se añade a lo que ya
@@ -1457,11 +1558,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     Emitter<MediaStates> emit,
     Future<Stream<DataState<MediaSummaryEntity>>> Function() scan,
   ) async {
-    // La importación empieza sin nadie que la haya parado: lo que se pidiera
-    // parar la vez anterior ya se paró.
-    _cancellation.reset();
-
-    // Y sin respuestas heredadas: lo que se dijo que valía "para todo" valía
+    // Sin respuestas heredadas: lo que se dijo que valía "para todo" valía
     // para la importación anterior, no para ésta.
     _decisions.reset();
 
@@ -1490,11 +1587,41 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // Y la fuente que no tenía nada, que no es lo mismo que un fallo.
     EmptySourceException? empty;
 
+    // Si la pantalla que se está mirando sigue siendo la de importación.
+    //
+    // Una importación grande dura mucho y el usuario tiene todo el derecho a
+    // irse a la biblioteca, a los favoritos o a una etiqueta mientras tanto.
+    // Este bloc es uno solo para todas esas pantallas, así que escribir en él lo
+    // que va llegando le cambiaba la rejilla por la de la importación **esté
+    // donde esté**, con su velo de espera encima y sin poder tocar nada. La
+    // importación no se para: lo que se para es pintarla donde no toca.
+    // Y además que no haya nada abierto en el visor. El visor se cierra solo
+    // cuando el contenido que estaba mirando desaparece del estado, así que un
+    // contenido nuevo que llegue mientras alguien está mirando algo en grande le
+    // sacaba del visor de vuelta a la rejilla. Lo que llega puede esperar a que
+    // cierre: no se pierde, está en la base de datos.
+    bool showingImport() =>
+        _lastListing is LoadScannedMediaEvent && state is! DetailedMedia;
+
+    var wasShowing = showingImport();
+
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
       onData: (dataState) {
         if (dataState is DataSuccess && dataState.data != null) {
+          // Al volver a la pantalla de importación se relee de la base de
+          // datos, así que lo que hay a la vista manda sobre lo que esta cuenta
+          // llevara apuntado: se sigue desde ahí y no desde donde se quedó.
+          if (showingImport() && !wasShowing) {
+            currentMedia = List.from(state.mediaList ?? const []);
+          }
+
+          wasShowing = showingImport();
+
           currentMedia = List.from(currentMedia)..add(dataState.data!);
+
+          if (!wasShowing) return state;
+
           return MediaLoading(
             mediaList: currentMedia,
             selectedIds: selectedIds,
@@ -1519,6 +1646,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       },
     );
 
+    // Y lo que quedó sin traerse porque hacía falta el usuario, de una vez y al
+    // final. Es un resumen y no una pregunta: no para nada y no espera a nadie.
+    await _decisions.flushPendingLinks();
+
     // Lo que ha llegado de nuevo. Se avisa antes de emitir el estado final para
     // que el contador del menú ya esté puesto cuando la pantalla se recomponga.
     // Se avisa venga de donde venga: recorrer una carpeta grande del equipo
@@ -1535,7 +1666,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     // El escaneo ha terminado: se queda lo encontrado, se retira el indicador y
     // se recoge la fecha que acaba de sellar el caso de uso.
-    if (emit.isDone) return;
+    //
+    // Y sólo si la pantalla sigue siendo la suya: el que se fue a mirar otra
+    // cosa no tiene por qué ver cómo le cambia la rejilla debajo cuando una
+    // importación que ya no está viendo termina. Cuando vuelva, la pantalla de
+    // importación se relee sola.
+    if (emit.isDone || !showingImport()) return;
+
     emit(MediaLoading(
       mediaList: state.mediaList,
       selectedIds: state.selectedIds,
@@ -1545,6 +1682,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       sourceFilters: state.sourceFilters,
       searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
+      // Los dos filtros, no sólo el de fuentes: dejarse el de tipos aquí lo
+      // encendía entero al terminar cada importación.
+      typeFilters: state.typeFilters,
       importSource: state.importSource,
       lastImportAt: await _getLastImportUseCase(params: state.importSource),
       expiredSession: expiredSession,

@@ -34,6 +34,26 @@ class PreferencesService {
     return await _prefs.setString(mediaSortOrderPreferenceKey, order.id);
   }
 
+  /// En qué orden se pinta lo pendiente de revisar.
+  ///
+  /// Aparte del de la biblioteca porque las dos pantallas se miran para cosas
+  /// distintas: una tanda recién traída se repasa agrupada por tipo o por
+  /// nombre, y la biblioteca se mira por lo último que llegó.
+  ///
+  /// El azar no se ofrece ahí y tampoco se acepta aquí: barajar una tanda que
+  /// se está revisando de arriba abajo es perder el sitio.
+  MediaSortOrder getImportSortOrder() {
+    final saved = MediaSortOrder.fromId(
+      _prefs.getString(importSortOrderPreferenceKey),
+    );
+
+    return saved == MediaSortOrder.random ? MediaSortOrder.newestFirst : saved;
+  }
+
+  Future<bool> setImportSortOrder(MediaSortOrder order) async {
+    return await _prefs.setString(importSortOrderPreferenceKey, order.id);
+  }
+
 
   /// Con cuánto se importa: el último tope que se eligió.
   ///
@@ -110,8 +130,9 @@ class PreferencesService {
   }
 
 
-  String _lastImportKey(ImportSource source) =>
-      '$lastImportPreferenceKeyPrefix${source.id}';
+  String _lastImportKey(ImportSource source, [String? collection]) =>
+      '$lastImportPreferenceKeyPrefix${source.id}'
+      '${collection == null ? '' : '_$collection'}';
 
 
   /// Anota que se acaba de terminar un escaneo de [source].
@@ -119,17 +140,50 @@ class PreferencesService {
   /// Se sella al terminar, haya traído contenido o no: lo que dice es cuándo se
   /// miró por última vez, que es lo que hace falta para saber si lo que se está
   /// viendo está al día.
-  Future<bool> setLastImport(ImportSource source, DateTime at) async {
-    return await _prefs.setString(_lastImportKey(source), at.toIso8601String());
+  ///
+  /// [collection] es lo mismo que en [setLastImportMarker]: cada listado se
+  /// recorre por su cuenta, así que cada uno se miró por última vez cuando se
+  /// miró él, y no cuando se miró la fuente entera.
+  Future<bool> setLastImport(
+    ImportSource source,
+    DateTime at, {
+    String? collection,
+  }) async {
+    return await _prefs.setString(
+      _lastImportKey(source, collection),
+      at.toIso8601String(),
+    );
   }
 
 
   /// Cuándo se importó por última vez de [source], o `null` si nunca.
-  DateTime? getLastImport(ImportSource source) {
-    final value = _prefs.getString(_lastImportKey(source));
+  DateTime? getLastImport(ImportSource source, {String? collection}) {
+    final value = _prefs.getString(_lastImportKey(source, collection));
     if (value == null) return null;
 
     return DateTime.tryParse(value);
+  }
+
+
+  /// Cuándo se miró por última vez cada listado de [source].
+  ///
+  /// El compañero de [importMarkers], y por el mismo motivo: los creadores que
+  /// alguien sigue son los que son y cambian, así que no se pueden preguntar de
+  /// uno en uno por una lista que no se conoce de antemano.
+  ///
+  /// Sale de aquí y no de la fuente porque es **lo que sabe esta máquina**: se
+  /// lee al instante y no cuesta ni una petición, que es justo lo que hace falta
+  /// para poder decir algo en cuanto la lista aparece.
+  Map<String, DateTime> importDates(ImportSource source) {
+    final prefix = _lastImportKey(source);
+
+    return {
+      for (final key in _prefs.getKeys())
+        if (key.startsWith('${prefix}_'))
+          if (_prefs.getString(key) case final value?)
+            if (DateTime.tryParse(value) case final at?)
+              key.substring(prefix.length + 1): at,
+    };
   }
 
 

@@ -1,7 +1,14 @@
+import 'dart:async';
+
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/presentation/widgets/import_view_menu.dart';
+import 'package:Fern/features/media/presentation/widgets/remote_creator_card.dart';
+import 'package:Fern/features/media/domain/usecases/get_remote_creators_usecase.dart';
+import 'package:Fern/features/media/domain/entities/remote_creator.dart';
+import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 // Experimental: de aquí sale a dónde se manda al usuario a iniciar sesión.
@@ -9,6 +16,7 @@ import 'package:Fern/features/browser/domain/entities/browser_session_source.dar
 import 'package:Fern/features/browser/presentation/widgets/session_expired_dialog.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/suggestion_filter.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
@@ -128,6 +136,178 @@ class _ImportViewState extends State<_ImportView> {
   /// lo que haya.
   /// Hasta dónde llega el escaneo. Se arranca con lo último que se eligió.
   late int _limit = getIt<PreferencesService>().getImportLimit();
+
+  /// En qué orden se pinta lo pendiente de revisar.
+  ///
+  /// El suyo y no el de la biblioteca: una tanda recién traída se repasa
+  /// agrupada por tipo o puesta por nombre, y eso no tiene por qué ser cómo se
+  /// quiere ver la biblioteca después.
+  late MediaSortOrder _sortOrder =
+      getIt<PreferencesService>().getImportSortOrder();
+
+  /// Si se está enseñando la lista de creadores en vez del contenido.
+  ///
+  /// Empieza encendida en las fuentes que la ofrecen —es lo que el ajuste
+  /// pedía—, y se puede apagar desde el menú de la cabecera: la lista tapa la
+  /// rejilla, así que tiene que haber forma de quitarla de en medio.
+  bool _showCreators = true;
+
+  List<RemoteCreator> _creators = const [];
+  Set<String> _selectedCreators = {};
+  bool _loadingCreators = false;
+
+  /// Para poder descartar una lista que ya no es de la fuente que se está
+  /// mirando: cambiar de fuente mientras se cuentan las publicaciones dejaría
+  /// las tarjetas de la anterior con los números de la nueva.
+  ImportSource? _creatorsOf;
+
+  /// Trae la lista de creadores de la fuente, y luego sus cuentas.
+  ///
+  /// En dos pasos a propósito: contar es una petición por creador, y con
+  /// cincuenta marcados hacerlas antes de enseñar nada dejaría la pantalla en
+  /// blanco medio minuto.
+  Future<void> _loadCreators(ImportSource source) async {
+    setState(() {
+      _loadingCreators = true;
+      _creators = const [];
+      _selectedCreators = {};
+      _creatorsOf = source;
+    });
+
+    final found = await getIt<GetRemoteCreatorsUseCase>()(params: source);
+    if (!mounted || _creatorsOf != source) return;
+
+    final creators = found is DataSuccess ? found.data ?? const <RemoteCreator>[] : const <RemoteCreator>[];
+
+    setState(() {
+      _creators = creators;
+      _loadingCreators = false;
+    });
+
+    await for (final counted
+        in getIt<CountRemoteCreatorPostsUseCase>()(source, creators)) {
+      if (!mounted || _creatorsOf != source) return;
+
+      setState(() {
+        _creators = [
+          for (final creator in _creators)
+            if (creator.id == counted.id) counted else creator,
+        ];
+      });
+    }
+  }
+
+  /// Si esta fuente ofrece elegir por creadores.
+  ///
+  /// Dos condiciones, y las dos importan. **Pawchive** porque es la única cuyo
+  /// camino de red para esto se ha visto funcionar; las demás lo tendrán cuando
+  /// se compruebe el suyo con una sesión de verdad. Y **su ajuste puesto**
+  /// porque esta vista es lo que aquella casilla hacía: quien la tenga apagada
+  /// está pidiendo sus guardados, no los de la gente que sigue.
+  bool _offersCreators(ImportSource source) {
+    if (source != ImportSource.pawchive) return false;
+
+    return getIt<SettingsBloc>()
+        .state
+        .settings
+        .pawchive
+        .byFavoriteCreators;
+  }
+
+  /// Si lo que se está enseñando ahora mismo es la lista de creadores.
+  bool _showsCreatorsMode(ImportSource source) =>
+      _offersCreators(source) && _showCreators;
+
+  /// La rejilla de creadores: una tarjeta por cada uno.
+  ///
+  /// Pulsar una se trae lo suyo al momento; marcarla con el botón derecho la
+  /// junta con las demás para traérselas de una vez. Son dos gestos porque son
+  /// dos cosas: casi siempre se quiere uno, y de vez en cuando cinco.
+  Widget _creatorsGrid(AppLocalizations texts) {
+    if (_loadingCreators) {
+      return const Center(child: FernProgressIndicator());
+    }
+
+    if (_creators.isEmpty) {
+      return FernEmptyState(
+        imageAsset: fernEmptyImage,
+        message: texts.remoteCreatorsEmpty,
+      );
+    }
+
+    return FernSurface(
+      // Recortando: sin esto las celdas de arriba se salen por encima del borde
+      // redondeado al desplazarse, que es lo que se veía.
+      clipBehavior: Clip.antiAlias,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(AppSpacing.gridInset),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: remoteCreatorCardWidth,
+          mainAxisSpacing: AppSpacing.s,
+          crossAxisSpacing: AppSpacing.s,
+          // Alto fijo y no una proporción: lo que mide una tarjeta lo deciden
+          // su avatar y sus tres líneas de texto, no lo ancha que sea la
+          // ventana. Con una proporción, una columna estrecha dejaba las
+          // tarjetas más bajas que su contenido y éste se salía.
+          mainAxisExtent: remoteCreatorCardHeight,
+        ),
+        itemCount: _creators.length,
+        itemBuilder: (context, index) {
+          final creator = _creators[index];
+
+          return RemoteCreatorCard(
+            creator: creator,
+            isSelected: _selectedCreators.contains(creator.id),
+            onTap: () {
+              _importCreators({creator.id});
+
+              // Se dice que ha arrancado. Lo que pasa después ocurre en la cola
+              // y en otra pestaña de la rejilla: sin esto, pulsar una tarjeta no
+              // parecía haber hecho nada.
+              showFernToast(
+                context,
+                texts.remoteCreatorImporting(creator.name),
+                icon: Icons.download_outlined,
+              );
+            },
+            onSelectionToggled: () => setState(() {
+              _selectedCreators = {
+                for (final id in _selectedCreators)
+                  if (id != creator.id) id,
+                if (!_selectedCreators.contains(creator.id)) creator.id,
+              };
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Pide la lista de creadores si toca y todavía no se ha pedido.
+  ///
+  /// Se dispara desde el pintado porque es cuando se sabe qué fuente hay puesta
+  /// —la elige el bloc, no esta pantalla—, y con el guardia de [_creatorsOf] se
+  /// pide **una vez** por fuente: sin él, cada repintado lanzaría otra tanda de
+  /// peticiones.
+  void _loadCreatorsIfNeeded(ImportSource source) {
+    if (!_showsCreatorsMode(source)) return;
+    if (_creatorsOf == source || _loadingCreators) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_loadCreators(source));
+    });
+  }
+
+  /// Trae lo de estos creadores.
+  void _importCreators(Set<String> creators) {
+    if (creators.isEmpty) return;
+
+    getIt<MediaBloc>().add(
+      ScanCreatorsEvent(limit: _limit, creators: creators),
+    );
+
+    setState(() => _selectedCreators = {});
+  }
 
   /// Con qué parte de lo pendiente se está trabajando.
   ///
@@ -470,6 +650,11 @@ class _ImportViewState extends State<_ImportView> {
         // página en su pantalla.
         final canScan = source != ImportSource.browser;
 
+        // Entrar en una fuente que ofrece creadores los pide sola: es lo que se
+        // va a enseñar, así que esperar a que el usuario pulse algo sería
+        // enseñarle una pantalla vacía y pedirle que la llene.
+        _loadCreatorsIfNeeded(source);
+
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
           child: Column(
@@ -554,28 +739,9 @@ class _ImportViewState extends State<_ImportView> {
                             style: theme.textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
-                          const Spacer(),
                         ],
 
-                        // Con qué parte de lo pendiente se está trabajando.
-                        // Revisar lo ya propuesto y mirar a mano lo que nadie ha
-                        // visto son dos trabajos distintos, y se hacen mejor por
-                        // separado.
-                        if (hasMedia) ...[
-                          _LabeledControl(
-                            label: texts.importShowLabel,
-                            child: FernDropdownPill<SuggestionFilter>(
-                              value: _filter,
-                              items: SuggestionFilter.values,
-                              labelBuilder: (filter) => filter.label(texts),
-                              onChanged: (filter) {
-                                if (filter == null) return;
-                                setState(() => _filter = filter);
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.s),
-                        ],
+                        const Spacer(),
 
                         // RIGHT: Actions
                         //
@@ -608,22 +774,62 @@ class _ImportViewState extends State<_ImportView> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.s),
                         ],
+                        // Con qué parte de lo pendiente se trabaja y en qué
+                        // orden: las dos en un solo botón. Son dos preguntas
+                        // distintas, pero se contestan juntas, se cambian poco, y
+                        // dos desplegables más eran los que dejaban la cabecera
+                        // sin sitio.
+                        //
+                        // Con aire de sobra: son dos controles distintos y
+                        // pegados parecían uno partido en dos.
+                        const SizedBox(width: AppSpacing.l),
+                        ImportViewMenu(
+                          filter: _filter,
+                          order: _sortOrder,
+                          hasMedia: hasMedia,
+                          hasCreators: _offersCreators(source),
+                          showsCreators: _showCreators,
+                          onShowsCreatorsChanged: (creators) =>
+                              setState(() => _showCreators = creators),
+                          onFilterChanged: (filter) =>
+                              setState(() => _filter = filter),
+                          onOrderChanged: (order) {
+                            setState(() => _sortOrder = order);
+                            context
+                                .read<MediaBloc>()
+                                .add(MediaSortOrderChangedEvent(order));
+                          },
+                        ),
+                        const SizedBox(width: AppSpacing.s),
                         // Buscar contenido en la fuente es siempre lo mismo,
                         // pero el icono dice qué va a pasar: con la rejilla
                         // vacía todavía no ha llegado nada de esta fuente y lo
                         // que se hace es traerlo; con contenido a la vista, lo
                         // que se hace es actualizarlo.
                         IconButton(
-                          tooltip: hasMedia
-                              ? texts.actionRefresh
-                              : texts.actionImport,
+                          // En la vista de creadores el botón trae **lo que esté
+                          // marcado**, y sin nada marcado, lo de todos: es lo
+                          // que hacía la casilla de los ajustes a la que esta
+                          // vista sustituye.
+                          tooltip: _selectedCreators.isNotEmpty
+                              ? texts.remoteCreatorsImport(
+                                  _selectedCreators.length,
+                                )
+                              : hasMedia
+                                  ? texts.actionRefresh
+                                  : texts.actionImport,
                           onPressed: isConfigured && canScan
-                              ? () => _scan(context, source)
+                              ? () => _selectedCreators.isEmpty
+                                  ? _scan(context, source)
+                                  : _importCreators(Set.of(_selectedCreators))
                               : null,
                           icon: Icon(
-                            hasMedia ? Icons.refresh : Icons.download_outlined,
+                            _selectedCreators.isNotEmpty
+                                ? Icons.download_outlined
+                                : hasMedia
+                                    ? Icons.refresh
+                                    : Icons.download_outlined,
                           ),
                         ),
                         SelectAllButton(
@@ -650,10 +856,16 @@ class _ImportViewState extends State<_ImportView> {
 
               // GRID
               Expanded(
-                child: MediaGrid(
+                child: _showsCreatorsMode(source)
+                    ? _creatorsGrid(texts)
+                    : MediaGrid(
                   mediaList: visible,
                   columns: mediaGridColumns,
                   isLoading: state.isBusy,
+                  // Lo que hay en marcha aquí es traerse contenido: no tapa
+                  // nada, así que se puede seguir mirando y tocando lo que ya
+                  // ha llegado mientras llega el resto.
+                  isImporting: true,
                   returnsToViewed: true,
                   // Una importación puede durar mucho, así que se puede parar
                   // desde donde se está mirando cómo va. Lo ya traído se queda.

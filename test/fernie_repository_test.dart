@@ -78,9 +78,13 @@ void main() {
 
   /// Da de alta un contenido, que es lo que las regiones necesitan tener
   /// delante para poder apuntar a algo.
-  Future<int> addMedia(String path) async {
+  Future<int> addMedia(String path, {bool isImported = true}) async {
     final summary = MediaSummaryModel.fromEntity(
-      MediaSummaryEntity(id: Isar.autoIncrement, path: path),
+      MediaSummaryEntity(
+        id: Isar.autoIncrement,
+        path: path,
+        isImported: isImported,
+      ),
     );
 
     await isar.writeTxn(() => isar.mediaSummaryModels.put(summary));
@@ -183,6 +187,71 @@ void main() {
       expect(read.data!.regionCount, 3);
       expect(read.data!.mediaCount, 2,
           reason: 'tres regiones, pero sólo dos contenidos distintos');
+      expect(read.data!.usableRegionCount, 3,
+          reason: 'todo el contenido está confirmado, así que todo entrena');
+      expect(read.data!.usableMediaCount, 2);
+    });
+
+    test('lo marcado sobre contenido sin confirmar no cuenta como utilizable',
+        () async {
+      final firme = await addMedia(p.join(directory.path, 'firme.jpg'));
+      final pendiente = await addMedia(
+        p.join(directory.path, 'pendiente.jpg'),
+        isImported: false,
+      );
+      final fernie = await addFernie('Marinette');
+
+      await repository.addRegions([
+        region(firme, fernie.id),
+        region(pendiente, fernie.id),
+        region(pendiente, fernie.id),
+      ]);
+
+      final read = await repository.getFernie(fernie.id);
+      expect(read.data!.regionCount, 3, reason: 'marcadas están las tres');
+      expect(read.data!.mediaCount, 2);
+      expect(read.data!.usableRegionCount, 1,
+          reason: 'las dos del contenido sin confirmar no entrenan (D29)');
+      expect(read.data!.usableMediaCount, 1);
+    });
+
+    test('confirmar el contenido pasa sus regiones a utilizables', () async {
+      final media = await addMedia(
+        p.join(directory.path, 'pendiente.jpg'),
+        isImported: false,
+      );
+      final fernie = await addFernie('Adrien');
+
+      await repository.addRegions([region(media, fernie.id)]);
+
+      final antes = await repository.getFernie(fernie.id);
+      expect(antes.data!.usableRegionCount, 0);
+
+      await isar.writeTxn(() async {
+        final summary = await isar.mediaSummaryModels.get(media);
+        summary!.isImported = true;
+        await isar.mediaSummaryModels.put(summary);
+      });
+
+      final despues = await repository.getFernie(fernie.id);
+      expect(despues.data!.usableRegionCount, 1,
+          reason: 'la región estaba lista esperando a que se confirmara');
+      expect(despues.data!.usableMediaCount, 1);
+    });
+
+    test('una región huérfana tampoco cuenta como utilizable', () async {
+      final media = await addMedia(p.join(directory.path, 'uno.jpg'));
+      final fernie = await addFernie('Tikki');
+
+      await repository.addRegions([region(media, fernie.id)]);
+
+      await isar.writeTxn(() => isar.mediaSummaryModels.delete(media));
+
+      final read = await repository.getFernie(fernie.id);
+      expect(read.data!.regionCount, 1,
+          reason: 'sigue marcada hasta que alguien la limpie');
+      expect(read.data!.usableRegionCount, 0,
+          reason: 'sin contenido detrás no hay nada con lo que entrenar');
     });
 
     test('cada región da una celda, también las del mismo contenido', () async {

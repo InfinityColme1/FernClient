@@ -57,18 +57,28 @@ const MediaSummaryModelSchema = CollectionSchema(
       name: r'isNsfw',
       type: IsarType.bool,
     ),
-    r'path': PropertySchema(
+    r'mediaHeight': PropertySchema(
       id: 8,
+      name: r'mediaHeight',
+      type: IsarType.long,
+    ),
+    r'mediaWidth': PropertySchema(
+      id: 9,
+      name: r'mediaWidth',
+      type: IsarType.long,
+    ),
+    r'path': PropertySchema(
+      id: 10,
       name: r'path',
       type: IsarType.string,
     ),
     r'perceptualHash': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'perceptualHash',
       type: IsarType.long,
     ),
     r'recognizedAt': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'recognizedAt',
       type: IsarType.dateTime,
     )
@@ -185,9 +195,11 @@ void _mediaSummaryModelSerialize(
   writer.writeBool(offsets[5], object.isDeleted);
   writer.writeBool(offsets[6], object.isImported);
   writer.writeBool(offsets[7], object.isNsfw);
-  writer.writeString(offsets[8], object.path);
-  writer.writeLong(offsets[9], object.perceptualHash);
-  writer.writeDateTime(offsets[10], object.recognizedAt);
+  writer.writeLong(offsets[8], object.mediaHeight);
+  writer.writeLong(offsets[9], object.mediaWidth);
+  writer.writeString(offsets[10], object.path);
+  writer.writeLong(offsets[11], object.perceptualHash);
+  writer.writeDateTime(offsets[12], object.recognizedAt);
 }
 
 MediaSummaryModel _mediaSummaryModelDeserialize(
@@ -206,9 +218,11 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
   object.isDeleted = reader.readBool(offsets[5]);
   object.isImported = reader.readBool(offsets[6]);
   object.isNsfw = reader.readBool(offsets[7]);
-  object.path = reader.readString(offsets[8]);
-  object.perceptualHash = reader.readLongOrNull(offsets[9]);
-  object.recognizedAt = reader.readDateTimeOrNull(offsets[10]);
+  object.mediaHeight = reader.readLongOrNull(offsets[8]);
+  object.mediaWidth = reader.readLongOrNull(offsets[9]);
+  object.path = reader.readString(offsets[10]);
+  object.perceptualHash = reader.readLongOrNull(offsets[11]);
+  object.recognizedAt = reader.readDateTimeOrNull(offsets[12]);
   return object;
 }
 
@@ -236,10 +250,14 @@ P _mediaSummaryModelDeserializeProp<P>(
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 9:
       return (reader.readLongOrNull(offset)) as P;
     case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readLongOrNull(offset)) as P;
+    case 12:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1174,6 +1192,154 @@ extension MediaSummaryModelQueryFilter
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mediaHeight',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mediaHeight',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaHeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mediaHeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mediaHeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mediaHeight',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mediaWidth',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mediaWidth',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaWidth',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mediaWidth',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mediaWidth',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mediaWidth',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       pathEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1593,6 +1759,34 @@ extension MediaSummaryModelQuerySortBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaHeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaHeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaWidth() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaWidthDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       sortByPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.asc);
@@ -1763,6 +1957,34 @@ extension MediaSummaryModelQuerySortThenBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaHeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaHeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaWidth() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaWidthDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       thenByPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.asc);
@@ -1863,6 +2085,20 @@ extension MediaSummaryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByMediaHeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mediaHeight');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByMediaWidth() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mediaWidth');
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct> distinctByPath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1942,6 +2178,19 @@ extension MediaSummaryModelQueryProperty
   QueryBuilder<MediaSummaryModel, bool, QQueryOperations> isNsfwProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isNsfw');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, int?, QQueryOperations>
+      mediaHeightProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mediaHeight');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, int?, QQueryOperations> mediaWidthProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mediaWidth');
     });
   }
 

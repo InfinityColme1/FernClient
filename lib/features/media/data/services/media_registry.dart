@@ -5,9 +5,12 @@ import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
+import 'package:Fern/core/services/media_preview_service.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 
 /// Da de alta en la base de datos los ficheros que aparecen, vengan de donde
@@ -83,6 +86,27 @@ class MediaRegistry {
   ///
   /// Devuelve `null` si ya estaba: lo que ya se conoce no se toca, que puede
   /// llevar horas de revisión encima.
+  /// Lo que mide un contenido recién llegado.
+  ///
+  /// Que falle no impide darlo de alta: sin tamaño la rejilla lo averigua sola
+  /// la primera vez que lo pinta, que es lo que hace con todo lo que entró antes
+  /// de que esto existiera.
+  Future<MediaPreview?> _sizeOf(String path) async {
+    // Un vídeo, no. Medirlo obliga a abrirlo con el reproductor —segundos por
+    // fichero, y una instancia de libmpv cada vez—, y eso durante una
+    // importación de mil es lo que la hacía eterna. Su fotograma se saca
+    // igualmente la primera vez que se pinta, y desde entonces está en la caché
+    // de disco.
+    if (path.isVideoPath) return null;
+
+    try {
+      return await MediaPreviewService.instance.load(path);
+    } on Object catch (error) {
+      debugPrint('No se pudo medir "$path": $error');
+      return null;
+    }
+  }
+
   Future<MediaSummaryEntity?> register({
     required String path,
     required ImportSource source,
@@ -94,11 +118,19 @@ class MediaRegistry {
 
     final id = idOf(path);
 
+    // Lo que mide, ahora que el fichero ya está aquí y hay que abrirlo de todas
+    // formas para enseñarlo. Guardarlo aquí es lo que le ahorra a la rejilla
+    // tener que abrirlo ella para saber cómo colocarlo, una vez por contenido y
+    // por cada arranque.
+    final size = await _sizeOf(path);
+
     final summary = MediaSummaryModel()
       ..id = id
       ..path = path
       ..isImported = false
-      ..importSource = source.id;
+      ..importSource = source.id
+      ..mediaWidth = size?.width
+      ..mediaHeight = size?.height;
 
     final details = MediaModel(id: id, path: path)
       ..downloaded = DateTime.now()

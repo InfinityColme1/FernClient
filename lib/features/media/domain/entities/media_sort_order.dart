@@ -39,6 +39,14 @@ enum MediaSortOrder {
 
   final String id;
 
+  /// Los que se ofrecen en la pantalla de importación.
+  ///
+  /// Todos menos el azar. Lo que hay ahí es una tanda que se está revisando de
+  /// arriba abajo: barajarla es perder el sitio, y encima el azar de la sesión
+  /// no cambia, así que ni siquiera sirve para redescubrir nada.
+  static List<MediaSortOrder> get forImport =>
+      [for (final order in values) if (order != random) order];
+
   static MediaSortOrder fromId(String? id) {
     return MediaSortOrder.values.firstWhere(
       (order) => order.id == id,

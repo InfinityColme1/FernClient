@@ -119,7 +119,7 @@ const firstSchemaVersion = 1;
 /// modelos de reconocimiento y sus fernies asignados. Son colecciones nuevas,
 /// así que Isar las crea sola y no hay ninguna migración que escribir: el número
 /// sube igual para dejar constancia de que el esquema no es el mismo.
-const currentSchemaVersion = 5;
+const currentSchemaVersion = 6;
 
 // Preferences keys
 /// Hasta qué versión se ha puesto al día la base de datos de este equipo.
@@ -348,9 +348,21 @@ const importLimitPreferenceKey = 'import_limit';
 
 /// En qué orden se pinta la biblioteca.
 const mediaSortOrderPreferenceKey = 'media_sort_order';
+
+/// Y en qué orden se pinta lo pendiente de revisar, que es otro ajuste.
+const importSortOrderPreferenceKey = 'import_sort_order';
+/// Los topes que se ofrecen al importar.
+///
+/// Empieza en uno a propósito: probar una fuente recién configurada, o mirar qué
+/// pinta tiene lo que va a llegar, es lo primero que se hace y para eso diez ya
+/// son muchos. Los tres primeros son para asomarse; los demás, para traerse de
+/// verdad.
 const importLimitOptions = [
   unlimitedImportLimit,
   untilLastImportLimit,
+  1,
+  2,
+  5,
   10,
   25,
   50,
@@ -417,7 +429,60 @@ const remoteMediaContentTypes = ['image/', 'video/'];
 const redgifsTokenUrl = 'https://api.redgifs.com/v2/auth/temporary';
 const redgifsGifUrl = 'https://api.redgifs.com/v2/gifs/';
 
+/// Su sitio, y el servidor del que salen los ficheros.
+const redgifsSiteUrl = 'https://www.redgifs.com';
+const redgifsMediaHost = 'media.redgifs.com';
+
+/// Lo que hay que mandar para bajarse un fichero suyo.
+///
+/// Su servidor de contenidos mira de dónde dice venir la petición, igual que el
+/// de Pixiv. Sin esto puede contestar con algo que no es lo que se pidió — y es
+/// uno de los sospechosos de que los vídeos llegaran sin sonido.
+const Map<String, String> redgifsDownloadHeaders = {
+  'Referer': '$redgifsSiteUrl/',
+  'Origin': redgifsSiteUrl,
+};
+
 // Reddit
+/// Donde se registran las aplicaciones de Reddit.
+///
+/// Registrarla es cosa de Reddit y no hay forma de saltárselo desde aquí; lo que
+/// sí se puede es llevar al usuario directo al sitio, y con su sesión ya puesta
+/// porque el navegador es el de la propia aplicación.
+/// Cuánto se deja a la vista del navegador destruirse antes de montar otra.
+///
+/// Suficiente para que el motor de debajo se cierre del todo. Montar la nueva
+/// en el mismo fotograma la hace nacer sobre uno a medio morir.
+const browserResetPause = Duration(milliseconds: 400);
+
+/// Dónde se recuerda cuándo hay que apartar el navegador.
+const browserAsidePreferenceKey = 'browser_aside_policy';
+
+/// A partir de cuántos contenidos una importación se considera grande.
+///
+/// El número sale de lo que se ha visto romper el navegador: traerse diez no lo
+/// rompe nunca y traerse mil sí. Cincuenta es donde una importación deja de ser
+/// asomarse y pasa a tener a la máquina descargando y descodificando un buen
+/// rato seguido.
+const browserAsideLargeImport = 50;
+
+/// Cuánto puede tardar una página antes de que se dé por atascada.
+///
+/// Generoso a propósito: hay sitios lentos y conexiones peores. Lo que se busca
+/// no es cortar nada, es que una carga que no va a terminar nunca lo diga en vez
+/// de dejar la barra dando vueltas para siempre.
+const browserBlankTimeout = Duration(seconds: 15);
+
+const redditAppsUrl = 'https://www.reddit.com/prefs/apps';
+
+/// La dirección de redirección que pide el formulario de Reddit.
+///
+/// Es obligatoria y **no se usa para nada** en una aplicación de tipo script:
+/// nadie va a volver a ella. Se fija una y se ofrece copiada porque equivocarse
+/// ahí deja la aplicación creada y sin funcionar, y el error no se ve por
+/// ninguna parte.
+const redditRedirectUri = 'http://localhost:8080';
+
 /// La dirección con la que se nombra lo que hay en Reddit (una comunidad, un
 /// autor, una publicación). No es por donde se habla con su API: es lo que el
 /// usuario ve en la barra del navegador, y por tanto lo que escribiría al
@@ -493,6 +558,9 @@ const pixivSourceTagName = 'Pixiv';
 /// donde responde su API: es pública y se pide a las mismas direcciones que se
 /// ven en el navegador, añadiéndoles `.json`.
 const danbooruSiteUrl = 'https://danbooru.donmai.us';
+
+/// La ficha de usuario, que es donde vive la clave de API.
+const danbooruAccountUrl = 'https://danbooru.donmai.us/profile';
 const danbooruApiHost = 'danbooru.donmai.us';
 
 /// Cuántas publicaciones se piden por página. Es el máximo que admite su
@@ -523,6 +591,9 @@ const danbooruApiKeyPreferenceKey = 'danbooru_api_key';
 /// La dirección con la que se nombra lo que hay en Gelbooru, y por donde
 /// responde su API: todo cuelga de la misma página, distinguida por parámetros.
 const gelbooruSiteUrl = 'https://gelbooru.com';
+
+/// Las opciones de la cuenta, donde está el enlace de las credenciales de API.
+const gelbooruOptionsUrl = 'https://gelbooru.com/index.php?page=account&s=options';
 const gelbooruApiHost = 'gelbooru.com';
 const gelbooruApiPath = '/index.php';
 
@@ -633,6 +704,40 @@ String pawchiveCreatorCollection({
 /// único que dice en qué orden se marcaron.
 const pawchiveFavoriteSequence = 'faved_seq';
 
+/// El avatar de un creador de Pawchive.
+///
+/// Se arma con la dirección y no se pide a la API porque la API no lo da: es una
+/// ruta fija del sitio. Si no hay avatar, la petición falla y la tarjeta enseña
+/// la inicial, que es lo que hace la aplicación con todo lo demás.
+String pawchiveCreatorAvatar({required String service, required String id}) =>
+    '$pawchiveSiteUrl/icons/$service/$id';
+
+/// Cuántos creadores se miran a la vez al contar sus publicaciones nuevas.
+///
+/// Contar obliga a una petición por creador, y con cincuenta marcados hacerlas
+/// todas de golpe es pedirle al sitio que corte. De cuatro en cuatro la lista se
+/// va llenando en unos segundos sin que nadie se queje.
+const remoteCreatorCountConcurrency = 4;
+
+/// Lo que mide una tarjeta de creador, y su proporción.
+///
+/// Por ancho máximo y no por número de columnas: son tarjetas pequeñas y lo que
+/// importa es que quepan las que quepan, no que sean siempre cuatro como en la
+/// rejilla de contenido.
+const remoteCreatorCardWidth = 200.0;
+
+/// Y lo que mide de alto.
+///
+/// Fijo y no una proporción: lo que ocupa una tarjeta lo deciden su avatar y sus
+/// tres líneas de texto, no lo ancha que sea la ventana. Con una proporción, una
+/// columna estrecha dejaba la tarjeta más baja que su contenido y éste se salía
+/// por abajo.
+/// El número sale de sumar lo que hay dentro con todo puesto: el avatar, el
+/// nombre, la plataforma, la cuenta de publicaciones nuevas y la marca de «ya lo
+/// tienes». La prueba de la tarjeta lo sostiene: si alguien le añade una línea,
+/// se entera ahí y no en una captura del usuario.
+const remoteCreatorCardHeight = 215.0;
+
 /// Si de Pawchive se importa lo de los creadores marcados en lugar de las
 /// publicaciones marcadas.
 const pawchiveByCreatorsPreferenceKey = 'pawchive_by_creators';
@@ -669,6 +774,19 @@ const fileRepositoryHosts = {
 ///
 /// Sólo la primera: las demás se reconocen para no darlas por contenido, pero
 /// no se descomprimen (harían falta más librerías, y son mucho menos comunes).
+/// Cuántas publicaciones con enlaces pendientes se recuerdan de una importación.
+///
+/// El resumen del final es para mirarlo: una lista de mil no la lee nadie, y
+/// arrastrarla en memoria durante una importación de horas no aporta nada.
+const pendingLinkPostsLimit = 100;
+
+/// Dónde se guardan las preguntas de enlaces que quedan sin contestar.
+///
+/// Se guardan porque aparcar una es decir «esto lo miro otro día», y otro día
+/// suele ser después de cerrar la aplicación. Perderlas al cerrar convertiría
+/// aparcar en tirar.
+const pendingLinkReviewsPreferenceKey = 'pending_link_reviews';
+
 const archiveExtensions = {'.zip', '.rar', '.7z'};
 const extractableArchiveExtensions = {'.zip'};
 
@@ -1362,6 +1480,40 @@ const imageCacheMaxBytes = 200 << 20;
 /// vista pidiendo cada una su miniatura.
 const mediaGridCacheExtent = 600.0;
 
+/// A partir de qué velocidad se considera que la rejilla va lanzada.
+///
+/// En píxeles por segundo. El número sale de separar dos cosas que hay que
+/// distinguir bien: una rueda de ratón usada con ganas se queda en torno a mil o
+/// mil quinientos, y un lanzamiento con el dedo o un tirón de la barra empieza
+/// por encima de tres mil. El listón está donde no molesta a lo primero y coge
+/// lo segundo.
+const fastScrollVelocity = 3500.0;
+
+/// Sobre cuánto tiempo se mide esa velocidad.
+///
+/// Por ventanas y no entre dos avisos seguidos: la rueda del ratón salta de
+/// golpe y sin animación, así que entre dos avisos suyos la velocidad sale
+/// enorme aunque se esté yendo despacio.
+const fastScrollWindow = Duration(milliseconds: 90);
+
+/// Cuánto se espera sin noticias antes de dar el desplazamiento por terminado.
+///
+/// Es un seguro: lo normal es que avise de que ha parado. Si ese aviso no
+/// llegara, sin esto la rejilla se quedaría sin cargar nada para siempre.
+const fastScrollIdleTimeout = Duration(milliseconds: 250);
+
+/// De cuántos en cuántos se guardan los tamaños que la rejilla va descubriendo.
+///
+/// Al desplazarse se descubren decenas por segundo: una transacción por cada uno
+/// sería peor que el problema que resuelve.
+const mediaSizeBatchSize = 60;
+
+/// Cuánto se espera antes de guardar una tanda a medias.
+///
+/// Lo justo para que una rejilla que se queda quieta acabe guardando lo suyo sin
+/// que nadie note la escritura.
+const mediaSizeBatchDelay = Duration(seconds: 2);
+
 /// Cuántas columnas tiene la rejilla de contenido.
 ///
 /// Una sola cuenta para las cinco rejillas que hay (biblioteca, importación,
@@ -1388,6 +1540,29 @@ const videoProbeTimeout = Duration(seconds: 12);
 const videoScreenshotAttempts = 10;
 const videoScreenshotRetryDelay = Duration(milliseconds: 120);
 const maxConcurrentVideoJobs = 2;
+
+/// Cuántas cabeceras de imagen se leen a la vez.
+///
+/// Averiguar lo que mide una imagen obliga a **cargar el fichero entero en
+/// memoria** (`ImmutableBuffer.fromFilePath`), aunque después sólo se lea su
+/// cabecera. Sin tope, desplazarse deprisa por una biblioteca grande lanzaba una
+/// lectura por celda construida —cientos en unos segundos, cada una con su
+/// fichero entero dentro—, y con imágenes de veinte o treinta megas eso son
+/// gigabytes a la vez. Es la causa más probable de que la aplicación se cayera
+/// al bajar de golpe.
+///
+/// Seis, y no dos como los vídeos: leer una cabecera son milisegundos y abrir un
+/// vídeo son segundos.
+const maxConcurrentImageJobs = 6;
+
+/// Cuánto se lee de una imagen para saber lo que mide.
+///
+/// El tamaño vive en los primeros cien bytes de todos los formatos que se
+/// entienden; el margen es para el JPEG, que puede llevar delante metadatos y
+/// hasta una miniatura entera antes de decir cuánto mide. Con esto no hace falta
+/// leer el fichero entero, que era lo que encarecía tanto la importación como la
+/// primera vuelta por la biblioteca.
+const imageHeaderProbeBytes = 128 * 1024;
 
 /// Cuánto se espera a que un salto dentro de un vídeo ya abierto llegue a su
 /// sitio.
@@ -1437,6 +1612,36 @@ const suggestionLowConfidence = 0.5;
 ///
 /// Por debajo de esto sí se tira: son cajas al azar sobre el fondo.
 const recognitionFloor = 0.05;
+
+/// Cuántas imágenes se le mandan al motor en una sola petición.
+///
+/// Reconocer una biblioteca con un árbol de tres modelos eran tres peticiones
+/// por contenido; en lote son tres por nivel, y el motor deja de ir y volver
+/// entre unos pesos y otros. El tope existe porque una petición sin límite es
+/// una petición que no se puede parar hasta que acabe: con este corte, parar
+/// tarda como mucho lo que tarden estas imágenes.
+///
+/// Sesenta y cuatro salen de lo que hay: veinte fotogramas por vídeo, así que
+/// cabe algo más de tres vídeos por petición, y con imágenes sueltas son
+/// sesenta y cuatro de golpe.
+const recognitionImagesPerCall = 64;
+
+/// Cuántos contenidos recorren el árbol juntos, como mucho.
+///
+/// El recorrido en lote poda por contenido, pero el lote entero baja de nivel a
+/// la vez: lo que se puede contar es cuántos han terminado, no por dónde va el
+/// que se está mirando. De ahí el tope, y de ahí que el tamaño de verdad lo
+/// decida [recognitionProgressSteps].
+const recognitionMediaPerBatch = 25;
+
+/// En cuántos tramos se quiere que avance la barra, como mínimo.
+///
+/// Es lo que ata el tamaño del lote a lo que el usuario ve: reconocer cuatro
+/// contenidos los mira de uno en uno y la barra los cuenta uno a uno —que es
+/// donde se nota—, y reconocer la biblioteca entera los agrupa, porque ahí una
+/// barra de doce tramos se entiende igual de bien y el motor deja de ir y volver
+/// entre unos pesos y otros.
+const recognitionProgressSteps = 12;
 
 /// Lo grueso del marco con el que se señala un contenido del último aviso.
 ///

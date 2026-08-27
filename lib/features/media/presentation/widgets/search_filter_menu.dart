@@ -68,12 +68,20 @@ class SearchFilterMenu extends StatelessWidget {
   /// recortar.
   final bool hasSearch;
 
+  /// Si se enseña el grupo de «de dónde salen los resultados».
+  ///
+  /// Ese grupo sólo recorta una búsqueda, así que en una pantalla que no tiene
+  /// buscador —favoritos— no pinta nada: enseñarlo atenuado explicaría un filtro
+  /// que ahí no puede existir nunca.
+  final bool showResultTypes;
+
   const SearchFilterMenu({
     super.key,
     required this.filters,
     required this.sourceFilters,
     required this.typeFilters,
     required this.hasSearch,
+    this.showResultTypes = true,
   });
 
   @override
@@ -88,19 +96,21 @@ class SearchFilterMenu extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _groupTitle(context, texts.filtersResultsFrom),
-              for (final type in SearchResultType.values)
-                FernCheckboxTile(
-                  label: type.filterLabel(texts),
-                  value: filters.contains(type),
-                  // Sin búsqueda no hay nada que recortar: la casilla se queda
-                  // atenuada en lugar de desaparecer, que así se entiende que el
-                  // filtro existe y por qué no hace nada.
-                  onChanged: hasSearch
-                      ? (_) => bloc.add(ToggleSearchFilterEvent(type))
-                      : null,
-                ),
-              const SizedBox(height: AppSpacing.m),
+              if (showResultTypes) ...[
+                _groupTitle(context, texts.filtersResultsFrom),
+                for (final type in SearchResultType.values)
+                  FernCheckboxTile(
+                    label: type.filterLabel(texts),
+                    value: filters.contains(type),
+                    // Sin búsqueda no hay nada que recortar: la casilla se queda
+                    // atenuada en lugar de desaparecer, que así se entiende que
+                    // el filtro existe y por qué no hace nada.
+                    onChanged: hasSearch
+                        ? (_) => bloc.add(ToggleSearchFilterEvent(type))
+                        : null,
+                  ),
+                const SizedBox(height: AppSpacing.m),
+              ],
               _groupTitle(context, texts.filtersSource),
               for (final source in ImportSource.listed)
                 FernCheckboxTile(

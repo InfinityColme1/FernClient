@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
@@ -7,6 +9,8 @@ import 'package:Fern/core/navigation/sidebar.dart';
 import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
 import 'package:Fern/features/jobs/presentation/widgets/jobs_indicator.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/presentation/services/dialog_import_decisions.dart';
+import 'package:Fern/features/media/data/services/pending_link_reviews.dart';
 import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
 import 'package:Fern/features/recognition/data/services/recognition_log_store.dart';
@@ -238,13 +242,26 @@ class _MainLayoutState extends State<MainLayout> {
           // caso especial por tipo de trabajo para que acabara importando media
           // aplicación.
           JobsIndicator(
-            hasDetail: (job) => getIt<RecognitionLogStore>().has(job.id),
-            onDetail: (context, job) => showFernDialog<void, JobsBloc>(
-              context: context,
-              builder: (_) => RecognitionLogDialog(
-                logs: getIt<RecognitionLogStore>().of(job.id),
-              ),
-            ),
+            hasDetail: (job) =>
+                getIt<RecognitionLogStore>().has(job.id) ||
+                getIt<PendingLinkReviews>().has(job.id),
+            onDetail: (context, job) {
+              // Una publicación con enlaces esperando decisión: se abre su
+              // pregunta. Es la única tarea que no cuenta lo que ha pasado sino
+              // que pide algo.
+              if (getIt<PendingLinkReviews>().has(job.id)) {
+                unawaited(DialogImportDecisions.openReview(context, job.id));
+
+                return;
+              }
+
+              unawaited(showFernDialog<void, JobsBloc>(
+                context: context,
+                builder: (_) => RecognitionLogDialog(
+                  logs: getIt<RecognitionLogStore>().of(job.id),
+                ),
+              ));
+            },
           ),
           FernPopupMenu<_CreateOption>(
             options: _createOptions(AppLocalizations.of(context)),

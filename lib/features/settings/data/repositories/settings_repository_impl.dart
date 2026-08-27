@@ -239,6 +239,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ),
       browserHome: _preferences.getString(browserHomePreferenceKey) ??
           browserHomeUrl,
+      browserAside: BrowserAsidePolicy.fromId(
+        _preferences.getString(browserAsidePreferenceKey),
+      ),
       pawchive: PawchiveSettingsEntity(
         sessionId: _secret(pawchiveSessionIdPreferenceKey),
         byFavoriteCreators:
@@ -405,6 +408,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setString(
       browserHomePreferenceKey,
       settings.browserHome,
+    );
+
+    await _preferences.setString(
+      browserAsidePreferenceKey,
+      settings.browserAside.id,
     );
 
     await _saveNotifications(settings.notifications);

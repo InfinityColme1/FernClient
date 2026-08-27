@@ -105,6 +105,76 @@ void main() {
     return row.id;
   }
 
+  /// Da de alta un contenido. Lo que no está confirmado se marca aparte: sus
+  /// regiones se guardan pero no entrenan (D29).
+  Future<int> addMedia(String path, {bool isImported = true}) async {
+    final summary = MediaSummaryModel()
+      ..path = path
+      ..isImported = isImported;
+
+    await isar.writeTxn(() => isar.mediaSummaryModels.put(summary));
+
+    return summary.id;
+  }
+
+  Future<void> addRegion(int fernieId, int mediaId) async {
+    final fernie = await isar.fernieModels.get(fernieId);
+
+    final region = FernieRegionModel()
+      ..mediaId = mediaId
+      ..x = 0.1
+      ..y = 0.1
+      ..w = 0.3
+      ..h = 0.3;
+
+    await isar.writeTxn(() async {
+      await isar.fernieRegionModels.put(region);
+      region.fernie.value = fernie;
+      await region.fernie.save();
+    });
+  }
+
+  group('los recuentos de un fernie dentro de un modelo', () {
+    test('separan lo marcado de lo que entrena', () async {
+      final model = await addModel('Personajes');
+      final fernie = await addFernie('Marinette');
+
+      final firme = await addMedia('C:/biblioteca/uno.jpg');
+      final pendiente =
+          await addMedia('C:/biblioteca/dos.jpg', isImported: false);
+
+      await addRegion(fernie, firme);
+      await addRegion(fernie, pendiente);
+      await addRegion(fernie, pendiente);
+
+      await repository.assignFernie(modelId: model.id, fernieId: fernie);
+
+      final assignments = await repository.getFerniesOfModel(model.id);
+      final counted = assignments.data!.single.fernie;
+
+      expect(counted.regionCount, 3);
+      expect(counted.mediaCount, 2);
+      expect(counted.usableRegionCount, 1,
+          reason: 'las del contenido sin confirmar no entrenan');
+      expect(counted.usableMediaCount, 1);
+    });
+
+    test('sin nada pendiente los dos recuentos coinciden', () async {
+      final model = await addModel('Personajes');
+      final fernie = await addFernie('Adrien');
+      final media = await addMedia('C:/biblioteca/uno.jpg');
+
+      await addRegion(fernie, media);
+      await repository.assignFernie(modelId: model.id, fernieId: fernie);
+
+      final assignments = await repository.getFerniesOfModel(model.id);
+      final counted = assignments.data!.single.fernie;
+
+      expect(counted.regionCount, counted.usableRegionCount);
+      expect(counted.mediaCount, counted.usableMediaCount);
+    });
+  });
+
   group('modelos', () {
     test('se crea y se relee', () async {
       final model = await addModel('Personajes');

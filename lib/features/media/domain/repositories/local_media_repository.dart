@@ -1,3 +1,4 @@
+import 'package:Fern/core/services/media_size_store.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
@@ -16,6 +17,13 @@ abstract class LocalMediaRepository {
   Stream<DataState<MediaSummaryEntity>> scanDirectory(String rootPath);
 
   Future<DataState> saveScannedMedia(List<MediaEntity> mediaList);
+
+  /// Apunta lo que mide cada contenido, de una vez.
+  ///
+  /// Lo que entró antes de que el tamaño se guardara lo va descubriendo la
+  /// rejilla al pintarlo; esto es donde se queda, para no volver a abrir el
+  /// fichero nunca más sólo para saber cómo colocarlo.
+  Future<DataState<int>> rememberSizes(Map<int, MediaSize> sizes);
   
   /// Guarda el contenido y lo marca como definitivo.
   ///
@@ -68,6 +76,7 @@ abstract class LocalMediaRepository {
   /// devuelve el de todas.
   Future<DataState<List<MediaSummaryEntity>>> getScannedMedia({
     ImportSource source,
+    MediaSortOrder order,
   });
 
   /// Contenido marcado para borrar, el de la pantalla de eliminados.

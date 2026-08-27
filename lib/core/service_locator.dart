@@ -2,8 +2,9 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart' show Locale;
-import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/core/services/jobs/cancellation_token.dart';
+import 'package:Fern/core/services/media_size_store.dart';
 import 'package:Fern/core/services/jobs/job_queue.dart';
 import 'package:Fern/core/services/schema_migrator.dart';
 import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
@@ -98,7 +99,12 @@ import 'package:Fern/features/settings/domain/usecases/wipe_database_usecase.dar
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:Fern/features/media/data/services/import_feed.dart';
 import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
+import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/data/services/import_job_runner.dart';
+import 'package:Fern/features/media/data/services/link_import_job_runner.dart';
+import 'package:Fern/features/media/data/services/link_reviews_storage.dart';
+import 'package:Fern/features/media/data/services/pending_link_reviews.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:Fern/core/services/secret_storage.dart';
@@ -166,7 +172,9 @@ import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usec
 import 'package:Fern/features/media/domain/usecases/set_media_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/select_scan_directory_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_remote_creators_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/remember_media_sizes_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/select_import_directory_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
@@ -182,7 +190,6 @@ Future<void> initializeDependencies() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
   
-  getIt.registerLazySingleton<ImportCancellation>(() => ImportCancellation());
 
   // Los trabajos largos que corren por detrás (entrenar, reconocer, buscar
   // repetidos). Único: el indicador cuelga de la barra superior, que está en el
@@ -450,26 +457,39 @@ Future<void> initializeDependencies() async {
       )
   );
 
-  getIt.registerSingleton<SelectAndScanDirectoryUsecase>(
-    SelectAndScanDirectoryUsecase(
-        preferencesService: getIt(),
-        localMediaRepository: getIt(),
-        cancellation: getIt()
-    )
+  getIt.registerSingleton<SelectImportDirectoryUsecase>(
+    SelectImportDirectoryUsecase(preferencesService: getIt())
   );
 
   getIt.registerSingleton<ScanSourceUseCase>(
     ScanSourceUseCase(
         localMediaRepository: getIt(),
         remoteMediaRepository: getIt(),
-        preferencesService: getIt(),
-        cancellation: getIt()
+        preferencesService: getIt()
     )
   );
 
   getIt.registerSingleton<GetScannedMediaUseCase>(
     GetScannedMediaUseCase(localMediaRepository: getIt())
   );
+
+  getIt.registerSingleton<GetRemoteCreatorsUseCase>(
+    GetRemoteCreatorsUseCase(remote: getIt(), creators: getIt())
+  );
+
+  getIt.registerSingleton<CountRemoteCreatorPostsUseCase>(
+    CountRemoteCreatorPostsUseCase(remote: getIt())
+  );
+
+  getIt.registerSingleton<RememberMediaSizesUseCase>(
+    RememberMediaSizesUseCase(repository: getIt())
+  );
+
+  // Y quién escribe lo que la rejilla va descubriendo. El almacén está en
+  // `core/` y no sabe de base de datos: se le dice aquí a dónde va lo suyo.
+  MediaSizeStore.instance.writer = (sizes) async {
+    await getIt<RememberMediaSizesUseCase>()(params: sizes);
+  };
 
   getIt.registerSingleton<GetLastImportUseCase>(
     GetLastImportUseCase(getIt())
@@ -917,6 +937,9 @@ Future<void> initializeDependencies() async {
       frameSamples: () =>
           getIt<SettingsRepository>().getSettings().frameSamples,
       predict: _predictWith,
+      // Y con qué se pregunta por toda una tanda de golpe, que es lo que hace
+      // que reconocer una biblioteca no sean tres peticiones por contenido.
+      predictMany: _predictManyWith,
       durationOf: _durationOf,
       extractFrames: _extractFrames,
     ),
@@ -958,7 +981,6 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<ImportJobRunner>(
     () => ImportJobRunner(
       scan: getIt(),
-      cancellation: getIt(),
       feed: getIt(),
     ),
   );
@@ -966,6 +988,55 @@ Future<void> initializeDependencies() async {
   getIt<JobQueue>().register(
     JobType.mediaImport,
     (context) => getIt<ImportJobRunner>().run(context),
+  );
+
+  // Las publicaciones con enlaces que esperan a que alguien decida. No son
+  // trabajo: son preguntas aparcadas, y por eso su tipo de tarea no se ejecuta
+  // nunca.
+  getIt.registerLazySingleton<LinkReviewsStorage>(
+    () => LinkReviewsStorage(preferences: getIt()),
+  );
+
+  getIt.registerLazySingleton<PendingLinkReviews>(
+    () => PendingLinkReviews()
+      ..persist = (reviews) => getIt<LinkReviewsStorage>().write(reviews),
+  );
+
+  // Y lo que quedó sin contestar la última vez vuelve a la lista. Aparcar una
+  // pregunta es decir «esto lo miro otro día», y otro día suele ser después de
+  // cerrar la aplicación: perderlas al cerrar convertiría aparcar en tirar.
+  for (final saved in getIt<LinkReviewsStorage>().read()) {
+    final id = getIt<JobQueue>().enqueue(
+      type: JobType.linkReview,
+      priority: JobPriority.normal,
+      payload: {Job.nameKey: saved.postTitle},
+    );
+
+    getIt<PendingLinkReviews>().add(LinkReview(
+      jobId: id,
+      postTitle: saved.postTitle,
+      links: saved.links,
+      source: saved.source,
+      namePrefix: saved.namePrefix,
+      sourceUrls: saved.sourceUrls,
+    ));
+  }
+
+  // Y se van con su tarea: quitarla de la lista es decir que no interesa.
+  getIt<JobQueue>().changes.listen((jobs) {
+    getIt<PendingLinkReviews>().keepOnly({
+      for (final job in jobs)
+        if (job.status.isActive) job.id,
+    });
+  });
+
+  getIt.registerLazySingleton<LinkImportJobRunner>(
+    () => LinkImportJobRunner(fetch: _fetchLink),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.linkImport,
+    (context) => getIt<LinkImportJobRunner>().run(context),
   );
 
   getIt.registerLazySingleton<DuplicateRepository>(
@@ -1078,13 +1149,12 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
-        cancellation: getIt(),
         decisions: getIt(),
         getScannedMediaUseCase: getIt(),
         getLastImportUseCase: getIt(),
         jobs: getIt(),
         importFeed: getIt(),
-        selectAndScanDirectoryUsecase: getIt(),
+        selectImportDirectoryUsecase: getIt(),
         getMediaDetailsUsecase: getIt(),
         saveMediaUseCase: getIt(),
         deleteMissingMediaUseCase: getIt(),
@@ -1169,6 +1239,35 @@ Future<bool> _hasPendingReview(Set<int> mediaIds) async {
   return false;
 }
 
+/// Se trae un enlace suelto y lo da de alta bajo la fuente de la que salió.
+///
+/// Es el mismo camino que lo que trae una publicación —el mismo descargador y el
+/// mismo registro—, con la única diferencia de que la decisión de traérselo llega
+/// a destiempo: cuando el usuario contesta la tarea que quedó aparcada.
+Future<MediaSummaryEntity?> _fetchLink({
+  required String url,
+  required String name,
+  required ImportSource source,
+  required String description,
+  required List<String> sourceUrls,
+  required bool asArchive,
+}) async {
+  final path = await getIt<RemoteMediaDownloader>().download(
+    url: url,
+    name: name,
+    source: source,
+    asArchive: asArchive,
+  );
+  if (path == null) return null;
+
+  return getIt<MediaRegistry>().register(
+    path: path,
+    source: source,
+    description: description.isEmpty ? null : description,
+    sourceUrls: sourceUrls,
+  );
+}
+
 /// Dónde está guardado un contenido.
 Future<String?> _pathOfMedia(int mediaId) async {
   final result = await getIt<GetMediaDetailsUsecase>()(params: mediaId);
@@ -1231,62 +1330,99 @@ Future<List<SampledFrame>> _extractFrames(String path, List<Duration> at) async 
 
 /// Lo que ve un modelo en una imagen.
 ///
-/// Traduce lo que devuelve el sidecar a lo que entiende el reconocedor.
+/// Es la de varias con una sola: la conversion de lo que contesta el sidecar
+/// vive en un unico sitio, o las dos acabarian leyendo la caja de forma
+/// distinta.
 ///
-/// El listón lo pone quien llama y **no el modelo**. Antes lo ponía el modelo,
-/// que ahorraba traer detecciones por el tubo, pero dejaba a la aplicación sin
-/// poder distinguir «no ha visto nada» de «lo vio al 27 % y tu listón está en el
-/// 35 %». Lo primero no se puede arreglar; lo segundo sí, y era lo que pasaba de
+/// El liston lo pone quien llama y **no el modelo**. Antes lo ponia el modelo,
+/// que ahorraba traer detecciones por el tubo, pero dejaba a la aplicacion sin
+/// poder distinguir «no ha visto nada» de «lo vio al 27 % y tu liston esta en el
+/// 35 %». Lo primero no se puede arreglar; lo segundo si, y era lo que pasaba de
 /// verdad. Lo que sobra son unas pocas cajas por imagen.
 Future<List<RawDetection>> _predictWith(
   RecognitionModelEntity model,
   String imagePath,
   double confidence,
 ) async {
-  final weights = model.weightsPath;
-  if (weights == null) return const [];
+  final byImage = await _predictManyWith(model, [imagePath], confidence, null);
 
-  final result = await getIt<RecognitionEngine>().predict({
-    'weights': weights,
-    'images': [imagePath],
-    // La que pide quien llama, no la del modelo: se pregunta por debajo de su
-    // listón para poder contar después qué vio y descartó.
-    'conf': confidence,
-    'imgsz': model.imgsz,
-  });
+  return byImage.isEmpty ? const [] : byImage.first;
+}
+
+/// Lo que ve un modelo en **varias imágenes de una vez**.
+///
+/// Es la misma petición que la de una imagen —el sidecar siempre recibió una
+/// lista— pero con la lista llena. Reconocer una biblioteca con un árbol de tres
+/// modelos eran tres peticiones por contenido; así son tres por tanda.
+///
+/// Contesta **una lista por imagen y en el mismo orden en que se pidieron**. El
+/// sidecar devuelve una entrada por imagen, incluidas las que ya no están en su
+/// sitio (que vuelven vacías), así que el orden se sostiene; aun así se rellena
+/// hasta el número pedido, porque quien lo usa reparte por posición y un hueco
+/// le pondría las cajas de un contenido en otro.
+Future<List<List<RawDetection>>> _predictManyWith(
+  RecognitionModelEntity model,
+  List<String> imagePaths,
+  double confidence,
+  CancellationToken? token,
+) async {
+  final weights = model.weightsPath;
+  if (weights == null) return [for (final _ in imagePaths) const []];
+
+  final result = await getIt<RecognitionEngine>().predict(
+    {
+      'weights': weights,
+      'images': imagePaths,
+      'conf': confidence,
+      'imgsz': model.imgsz,
+    },
+    // Para que parar pare de verdad a media tanda: el sidecar mira la señal
+    // entre imagen e imagen.
+    token: token,
+  );
 
   final images = result['results'];
-  if (images is! List) return const [];
+  if (images is! List) return [for (final _ in imagePaths) const []];
+
+  final byImage = <List<RawDetection>>[];
+
+  for (final image in images) {
+    byImage.add(image is Map ? _detectionsOf(image['detections']) : const []);
+  }
+
+  while (byImage.length < imagePaths.length) {
+    byImage.add(const []);
+  }
+
+  return byImage;
+}
+
+/// Las cajas de una respuesta del sidecar, ya en el formato de la aplicación.
+List<RawDetection> _detectionsOf(Object? found) {
+  if (found is! List) return const [];
 
   final detections = <RawDetection>[];
 
-  for (final image in images) {
-    if (image is! Map) continue;
+  for (final one in found) {
+    if (one is! Map) continue;
 
-    final found = image['detections'];
-    if (found is! List) continue;
+    final classIndex = one['class'];
+    final confidence = one['conf'];
+    if (classIndex is! int || confidence is! num) continue;
 
-    for (final one in found) {
-      if (one is! Map) continue;
+    // La caja llega en el formato de ultralytics —centro y tamaño, ya
+    // normalizados— y aquí se guarda con la esquina superior izquierda, que es
+    // como están las regiones y como el visor las pinta.
+    final box = boxFromCenter(one['box']);
 
-      final classIndex = one['class'];
-      final confidence = one['conf'];
-      if (classIndex is! int || confidence is! num) continue;
-
-      // La caja llega en el formato de ultralytics —centro y tamaño, ya
-      // normalizados— y aquí se guarda con la esquina superior izquierda, que
-      // es como están las regiones y como el visor las pinta.
-      final box = boxFromCenter(one['box']);
-
-      detections.add(RawDetection(
-        classIndex: classIndex,
-        confidence: confidence.toDouble(),
-        x: box?.x,
-        y: box?.y,
-        w: box?.w,
-        h: box?.h,
-      ));
-    }
+    detections.add(RawDetection(
+      classIndex: classIndex,
+      confidence: confidence.toDouble(),
+      x: box?.x,
+      y: box?.y,
+      w: box?.w,
+      h: box?.h,
+    ));
   }
 
   return detections;
@@ -1317,6 +1453,9 @@ Future<List<DatasetRegion>> _regionsForModel(int modelId) async {
         w: entry.region.w,
         h: entry.region.h,
         classIndex: assignment.classIndex,
+        // Lo que todavía no es definitivo no entrena (D29): la región viaja con
+        // el dato y el planificador la deja fuera.
+        isDefinitive: entry.media.isImported,
       ));
     }
   }

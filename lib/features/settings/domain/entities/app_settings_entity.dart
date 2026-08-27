@@ -66,6 +66,39 @@ enum FileOrganizationCriteria {
 ///
 /// Lo segundo es lo de fábrica: importar es revisar unos cuantos contenidos
 /// seguidos, y cerrar el visor en cada uno obliga a volver a entrar.
+/// Cuándo se aparta el navegador mientras se importa.
+///
+/// **Por qué existe.** Traerse mucho contenido de golpe descarga, da de alta y
+/// descodifica sin parar durante minutos; con el motor de la vista web vivo al
+/// lado, la página carga y luego no se pinta nada, y ahí ya no hay nada que
+/// recargar porque lo que se ha caído es el motor. Apartarlo lo evita: lo que no
+/// está montado no se puede romper.
+///
+/// Pero es una precaución, no una ley, y el usuario tiene derecho a decidir
+/// cuánto le compensa. De fábrica se aparta siempre, que es lo que se ha visto
+/// funcionar.
+enum BrowserAsidePolicy {
+  /// Siempre que haya una importación en marcha.
+  always(id: 'always'),
+
+  /// Sólo cuando la importación es de las que traen mucho.
+  largeImports(id: 'large'),
+
+  /// Nunca: el navegador se queda, pase lo que pase.
+  never(id: 'never');
+
+  const BrowserAsidePolicy({required this.id});
+
+  final String id;
+
+  static BrowserAsidePolicy fromId(String? id) {
+    return BrowserAsidePolicy.values.firstWhere(
+      (policy) => policy.id == id,
+      orElse: () => BrowserAsidePolicy.always,
+    );
+  }
+}
+
 enum ViewerSaveBehavior {
   goToNext(id: 'next'),
   closeViewer(id: 'close');
@@ -356,6 +389,9 @@ class AppSettingsEntity extends Equatable {
   /// inicio, y por eso la elige él.
   final String browserHome;
 
+  /// Cuándo se aparta el navegador mientras se importa.
+  final BrowserAsidePolicy browserAside;
+
   /// Credenciales de la fuente remota de Pixiv. Viene vacía mientras el usuario
   /// no la haya rellenado, que es como la aplicación sabe que esa fuente
   /// todavía no se puede usar.
@@ -391,6 +427,7 @@ class AppSettingsEntity extends Equatable {
     this.pauseWhenSeeking = false,
     this.returnToViewedMedia = true,
     this.browserHome = browserHomeUrl,
+    this.browserAside = BrowserAsidePolicy.always,
     this.reddit = const RedditSettingsEntity(),
     this.pixiv = const PixivSettingsEntity(),
     this.danbooru = const DanbooruSettingsEntity(),
@@ -430,6 +467,7 @@ class AppSettingsEntity extends Equatable {
     bool? pauseWhenSeeking,
     bool? returnToViewedMedia,
     String? browserHome,
+    BrowserAsidePolicy? browserAside,
     RedditSettingsEntity? reddit,
     PixivSettingsEntity? pixiv,
     DanbooruSettingsEntity? danbooru,
@@ -467,6 +505,7 @@ class AppSettingsEntity extends Equatable {
       pauseWhenSeeking: pauseWhenSeeking ?? this.pauseWhenSeeking,
       returnToViewedMedia: returnToViewedMedia ?? this.returnToViewedMedia,
       browserHome: browserHome ?? this.browserHome,
+      browserAside: browserAside ?? this.browserAside,
       reddit: reddit ?? this.reddit,
       pixiv: pixiv ?? this.pixiv,
       danbooru: danbooru ?? this.danbooru,
@@ -504,6 +543,7 @@ class AppSettingsEntity extends Equatable {
         pauseWhenSeeking,
         returnToViewedMedia,
         browserHome,
+        browserAside,
         reddit,
         pixiv,
         danbooru,

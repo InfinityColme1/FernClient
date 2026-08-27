@@ -19,7 +19,14 @@ enum NotificationKind {
   ///
   /// El identificador sigue diciendo «remoto» porque antes sólo avisaba de eso
   /// y cambiarlo dejaría huérfanos el contador y el sonido ya elegidos.
-  importFinished(id: 'remote_import', route: importRoute);
+  importFinished(id: 'remote_import', route: importRoute),
+
+  /// Una publicación con varios enlaces está esperando a que alguien decida.
+  ///
+  /// Avisa porque **la importación ya no espera**: si no se dijera, la pregunta
+  /// se quedaría en la lista de tareas sin que nadie supiera que está ahí, y
+  /// esos enlaces se perderían sin más.
+  linkReview(id: 'link_review', route: importRoute);
 
   const NotificationKind({required this.id, required this.route});
 

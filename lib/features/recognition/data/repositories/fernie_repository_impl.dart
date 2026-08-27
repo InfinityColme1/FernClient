@@ -395,20 +395,38 @@ class FernieRepositoryImpl implements FernieRepository {
     return [for (final region in regions) region.id];
   }
 
-  /// Pasa los modelos a entidades resolviendo lo que no está en la fila: los dos
-  /// recuentos y el nombre de lo enlazado.
+  /// Pasa los modelos a entidades resolviendo lo que no está en la fila: los
+  /// cuatro recuentos y el nombre de lo enlazado.
   Future<List<FernieEntity>> _toEntities(List<FernieModel> models) async {
     final entities = <FernieEntity>[];
 
+    // Qué contenidos son definitivos se pregunta **una vez para toda la lista**
+    // y no una por fernie: con doce fernies que comparten biblioteca, lo segundo
+    // son doce lecturas para responder lo mismo.
+    final regionsOf = <int, List<FernieRegionModel>>{};
+
     for (final model in models) {
       await model.regions.load();
+      regionsOf[model.id] = model.regions.toList();
+    }
 
-      final regions = model.regions.toList();
-      final mediaIds = {for (final region in regions) region.mediaId};
+    final definitive = await _definitiveAmong({
+      for (final regions in regionsOf.values)
+        for (final region in regions) region.mediaId,
+    });
+
+    for (final model in models) {
+      final regions = regionsOf[model.id] ?? const <FernieRegionModel>[];
+      final usable = [
+        for (final region in regions)
+          if (definitive.contains(region.mediaId)) region,
+      ];
 
       entities.add(model.toEntity(
         regionCount: regions.length,
-        mediaCount: mediaIds.length,
+        mediaCount: {for (final region in regions) region.mediaId}.length,
+        usableRegionCount: usable.length,
+        usableMediaCount: {for (final region in usable) region.mediaId}.length,
         linkedName: await _linkedName(model),
       ));
     }
@@ -418,6 +436,22 @@ class FernieRepositoryImpl implements FernieRepository {
     );
 
     return entities;
+  }
+
+  /// Cuáles de estos contenidos ya son definitivos.
+  ///
+  /// Lo que no está en la base de datos tampoco está aquí, y eso es lo correcto:
+  /// una región huérfana no entrena, igual que una que espera revisión.
+  Future<Set<int>> _definitiveAmong(Set<int> mediaIds) async {
+    if (mediaIds.isEmpty) return const {};
+
+    final summaries =
+        await _database.mediaSummaryModels.getAll(mediaIds.toList());
+
+    return {
+      for (final summary in summaries.nonNulls)
+        if (summary.isImported) summary.id,
+    };
   }
 
   /// Cómo se llama la etiqueta o el creador enlazado.

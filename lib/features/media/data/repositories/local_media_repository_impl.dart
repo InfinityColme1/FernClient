@@ -1,3 +1,4 @@
+import 'package:Fern/core/services/media_size_store.dart';
 import 'dart:io';
 import 'dart:math';
 
@@ -159,6 +160,43 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
   @override
+  Future<DataState<int>> rememberSizes(Map<int, MediaSize> sizes) async {
+    try {
+      if (sizes.isEmpty) return const DataSuccess(0);
+
+      final summaries =
+          await _appDatabase.mediaSummaryModels.getAll(sizes.keys.toList());
+
+      final changed = <MediaSummaryModel>[];
+
+      for (final summary in summaries.nonNulls) {
+        final size = sizes[summary.id];
+        if (size == null) continue;
+
+        // Lo que ya tiene tamaño no se toca: es el del fichero de verdad, y esto
+        // llega de una celda que pudo pintarse con otra cosa.
+        if (summary.mediaWidth != null && summary.mediaHeight != null) continue;
+
+        summary
+          ..mediaWidth = size.width
+          ..mediaHeight = size.height;
+
+        changed.add(summary);
+      }
+
+      if (changed.isEmpty) return const DataSuccess(0);
+
+      await _appDatabase.writeTxn(
+        () => _appDatabase.mediaSummaryModels.putAll(changed),
+      );
+
+      return DataSuccess(changed.length);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
   Future<DataState> saveScannedMedia(List<MediaEntity> mediaList) async {
     try {
       final models = mediaList.map((e) => MediaModel.fromEntity(e)).toList();
@@ -304,6 +342,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<List<MediaSummaryEntity>>> getScannedMedia({
     ImportSource source = ImportSource.all,
+    MediaSortOrder order = MediaSortOrder.newestFirst,
   }) async {
     try {
       // Devolvemos solo el contenido ESCANEADO pendiente de importar.
@@ -324,7 +363,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       // También aquí: lo que acaba de importarse puede venir con una etiqueta
       // bloqueada puesta por el etiquetado automático, y la pantalla de
       // importación no es menos pantalla que las demás.
-      return DataSuccess(_visible(query).map((e) => e.toEntity()).toList());
+      //
+      // Y en el orden que se pida, con la misma cuenta que la biblioteca: una
+      // tanda de trescientos recién traídos se revisa igual de mal sin poder
+      // agruparla por tipo o ponerla por nombre.
+      final sorted = await _sorted(_visible(query), order);
+
+      return DataSuccess([for (final summary in sorted) summary.toEntity()]);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -525,10 +570,16 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         if (sourceModel == null) {
           sourceModel = await _appDatabase.tagModels.filter().nameEqualTo("Unknown").findFirst();
           if (sourceModel == null) {
-            sourceModel = TagModel.fromEntity(unknownTag);
+            // En una variable propia y no sobre la anulable: dentro del cierre
+            // ésta no se promociona y hacían falta dos `!` para convencer al
+            // analizador de algo que ya se sabía tres líneas antes.
+            final unknown = TagModel.fromEntity(unknownTag);
+
             await _appDatabase.writeTxn(() async {
-              sourceModel!.id = await _appDatabase.tagModels.put(sourceModel!);
+              unknown.id = await _appDatabase.tagModels.put(unknown);
             });
+
+            sourceModel = unknown;
           }
         }
       }

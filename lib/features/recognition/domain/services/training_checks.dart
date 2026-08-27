@@ -85,14 +85,17 @@ List<TrainingIssue> checkTraining({
   for (final assignment in fernies) {
     final fernie = assignment.fernie;
 
-    if (fernie.regionCount < minRegionsPerClass) {
+    // Se mira **lo que entrena**, no lo marcado: una región sobre contenido sin
+    // confirmar se queda fuera del conjunto de datos, y contarla aquí dejaba
+    // pasar a entrenar con cero muestras a un fernie que decía tener ciento.
+    if (fernie.usableRegionCount < minRegionsPerClass) {
       issues.add(TrainingIssue(
         kind: TrainingIssueKind.tooFewRegions,
         isBlocking: true,
         fernieName: fernie.name,
         amount: minRegionsPerClass,
       ));
-    } else if (fernie.regionCount < lowRegionsPerClass) {
+    } else if (fernie.usableRegionCount < lowRegionsPerClass) {
       issues.add(TrainingIssue(
         kind: TrainingIssueKind.fewRegions,
         isBlocking: false,
@@ -101,7 +104,7 @@ List<TrainingIssue> checkTraining({
       ));
     }
 
-    if (fernie.mediaCount < minMediaPerClass) {
+    if (fernie.usableMediaCount < minMediaPerClass) {
       issues.add(TrainingIssue(
         kind: TrainingIssueKind.tooFewMedia,
         isBlocking: false,
@@ -124,7 +127,7 @@ List<TrainingIssue> checkTraining({
   // El desequilibrio se mira entre el que más tiene y el que menos: con diez a
   // uno, el modelo aprende a contestar siempre el mayoritario y acierta el
   // noventa por ciento de las veces sin haber aprendido nada.
-  final counts = [for (final a in fernies) a.fernie.regionCount]..sort();
+  final counts = [for (final a in fernies) a.fernie.usableRegionCount]..sort();
   final fewest = counts.first;
   final most = counts.last;
 

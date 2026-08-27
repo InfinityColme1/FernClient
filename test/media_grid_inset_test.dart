@@ -13,8 +13,8 @@ import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/core/ui/ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Una celda cualquiera: lo que se mide es el margen de la rejilla, no lo que
@@ -39,9 +39,9 @@ Future<EdgeInsets> _insetOf(WidgetTester tester, {required bool hasSurface}) asy
     ),
   ));
 
-  final grid = tester.widget<MasonryGridView>(find.byType(MasonryGridView));
+  final grid = tester.widget<FernMasonryGrid>(find.byType(FernMasonryGrid));
 
-  return grid.padding! as EdgeInsets;
+  return grid.padding;
 }
 
 void main() {

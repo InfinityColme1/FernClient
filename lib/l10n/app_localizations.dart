@@ -2220,6 +2220,96 @@ abstract class AppLocalizations {
   /// **'Nothing was brought in.'**
   String get browserImportNothing;
 
+  /// No description provided for @redditGuideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I get these?'**
+  String get redditGuideAction;
+
+  /// No description provided for @redditGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting Fern to Reddit'**
+  String get redditGuideTitle;
+
+  /// No description provided for @redditGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Reddit will not let anything read your saved posts until you register an app on your account. It takes a couple of minutes and it is only done once.'**
+  String get redditGuideIntro;
+
+  /// No description provided for @redditGuideStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Open reddit.com/prefs/apps with the button below. It opens inside Fern, so you are already signed in.'**
+  String get redditGuideStep1;
+
+  /// No description provided for @redditGuideStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to the bottom and press \"create another app...\" (or \"are you a developer? create an app...\").'**
+  String get redditGuideStep2;
+
+  /// No description provided for @redditGuideStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the type \"script\". This is the one that gets missed: with any other type Reddit still creates the app, and then rejects every request without saying why.'**
+  String get redditGuideStep3;
+
+  /// No description provided for @redditGuideStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Give it any name you like, leave the description empty, and paste this into \"redirect uri\":'**
+  String get redditGuideStep4;
+
+  /// No description provided for @redditGuideStep5.
+  ///
+  /// In en, this message translates to:
+  /// **'Press \"create app\". Reddit shows you the card for the app you just made.'**
+  String get redditGuideStep5;
+
+  /// No description provided for @redditGuideStep6.
+  ///
+  /// In en, this message translates to:
+  /// **'The client ID is the short string right under \"personal use script\", at the top left of the card. The secret is the field labelled \"secret\".'**
+  String get redditGuideStep6;
+
+  /// No description provided for @redditGuideStep7.
+  ///
+  /// In en, this message translates to:
+  /// **'Come back here and paste both, plus your Reddit username and password.'**
+  String get redditGuideStep7;
+
+  /// No description provided for @redditGuideTwoFactor.
+  ///
+  /// In en, this message translates to:
+  /// **'With two-factor authentication on, write the password as password:code — Reddit expects both in the same field.'**
+  String get redditGuideTwoFactor;
+
+  /// No description provided for @redditGuidePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'The four values stay on this computer, encrypted, and are only ever sent to Reddit.'**
+  String get redditGuidePrivacy;
+
+  /// No description provided for @redditGuideOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Reddit'**
+  String get redditGuideOpen;
+
+  /// No description provided for @redditGuideCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the redirect URI'**
+  String get redditGuideCopy;
+
+  /// No description provided for @redditGuideCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Redirect URI copied'**
+  String get redditGuideCopied;
+
   /// No description provided for @danbooruTitle.
   ///
   /// In en, this message translates to:
@@ -2346,6 +2436,204 @@ abstract class AppLocalizations {
   /// **'Fern downloads the posts you have favourited on Pawchive. There is nothing to fill in here: log in from Fern’s browser and press the key button there, and the session is saved.'**
   String get pawchiveDescription;
 
+  /// No description provided for @sourceGuideOpenSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the site'**
+  String get sourceGuideOpenSite;
+
+  /// No description provided for @sourceGuideOpenLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the sign-in page'**
+  String get sourceGuideOpenLogin;
+
+  /// No description provided for @sourceGuidePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'What you paste stays on this computer, encrypted, and is only ever sent to that site.'**
+  String get sourceGuidePrivacy;
+
+  /// No description provided for @sessionGuideStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Press the button below. Fern opens the site in its own browser and takes you to the sign-in page.'**
+  String get sessionGuideStep1;
+
+  /// No description provided for @sessionGuideStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in exactly as you would anywhere else — captcha, email code and all. That is precisely why this cannot be done from outside.'**
+  String get sessionGuideStep2;
+
+  /// No description provided for @sessionGuideStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Once you are in, press the key icon in the browser toolbar to save the session. Without this step nothing is saved and the import will still say it is not set up.'**
+  String get sessionGuideStep3;
+
+  /// No description provided for @sessionGuideExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions expire on their own after a while. When that happens Fern tells you, and repeating these steps is all it takes.'**
+  String get sessionGuideExpires;
+
+  /// No description provided for @danbooruGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting Fern to Danbooru'**
+  String get danbooruGuideTitle;
+
+  /// No description provided for @danbooruGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Danbooru gives every account an API key so programs can read on its behalf. You take it from your profile; your password is never involved.'**
+  String get danbooruGuideIntro;
+
+  /// No description provided for @danbooruGuideStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your profile with the button below and make sure you are signed in.'**
+  String get danbooruGuideStep1;
+
+  /// No description provided for @danbooruGuideStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Find the \"API Key\" row on your profile and press \"view\". Danbooru asks for your password to show it.'**
+  String get danbooruGuideStep2;
+
+  /// No description provided for @danbooruGuideStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'If there is none yet, press \"Add\" and give it any name. One key is enough for Fern.'**
+  String get danbooruGuideStep3;
+
+  /// No description provided for @danbooruGuideStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the long string it shows you.'**
+  String get danbooruGuideStep4;
+
+  /// No description provided for @danbooruGuideStep5.
+  ///
+  /// In en, this message translates to:
+  /// **'Come back here: the username is the same one you sign in with, and the key goes in the second field — not your password. Danbooru accepts it and simply returns nothing.'**
+  String get danbooruGuideStep5;
+
+  /// No description provided for @danbooruGuideNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoking the key from that same page cuts Fern off immediately, without touching your password.'**
+  String get danbooruGuideNote;
+
+  /// No description provided for @gelbooruGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting Fern to Gelbooru'**
+  String get gelbooruGuideTitle;
+
+  /// No description provided for @gelbooruGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Gelbooru hands you both values at once, written as a single line. Splitting that line in two is the whole job.'**
+  String get gelbooruGuideIntro;
+
+  /// No description provided for @gelbooruGuideStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your account options with the button below and make sure you are signed in.'**
+  String get gelbooruGuideStep1;
+
+  /// No description provided for @gelbooruGuideStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll down to \"API Access Credentials\" and open the link it offers.'**
+  String get gelbooruGuideStep2;
+
+  /// No description provided for @gelbooruGuideStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Gelbooru shows one line that looks like &api_key=abc123&user_id=456.'**
+  String get gelbooruGuideStep3;
+
+  /// No description provided for @gelbooruGuideStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'That line holds two separate values. Do not paste it whole into one field: Gelbooru accepts it and then nothing works, without saying why.'**
+  String get gelbooruGuideStep4;
+
+  /// No description provided for @gelbooruGuideStep5.
+  ///
+  /// In en, this message translates to:
+  /// **'Put what comes after user_id= in the first field, and what comes after api_key= in the second.'**
+  String get gelbooruGuideStep5;
+
+  /// No description provided for @pixivGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting Fern to Pixiv'**
+  String get pixivGuideTitle;
+
+  /// No description provided for @pixivGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Pixiv has no keys to copy. There is nothing to type here: you sign in inside Fern and the session is what identifies you.'**
+  String get pixivGuideIntro;
+
+  /// No description provided for @pixivGuideStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'That is it. Nothing to paste here — go to the import screen and pick Pixiv.'**
+  String get pixivGuideStep4;
+
+  /// No description provided for @pinterestGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting Fern to Pinterest'**
+  String get pinterestGuideTitle;
+
+  /// No description provided for @pinterestGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your username alone is enough for public boards. The session is only needed for the secret ones.'**
+  String get pinterestGuideIntro;
+
+  /// No description provided for @pinterestGuideStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your Pinterest username in the field above. With that, public boards already work.'**
+  String get pinterestGuideStep1;
+
+  /// No description provided for @pinterestGuideStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Only if you also want the secret boards, press the button below and sign in.'**
+  String get pinterestGuideStep2;
+
+  /// No description provided for @pawchiveGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting Fern to Pawchive'**
+  String get pawchiveGuideTitle;
+
+  /// No description provided for @pawchiveGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no keys here either: you sign in inside Fern and the session is what identifies you.'**
+  String get pawchiveGuideIntro;
+
+  /// No description provided for @pawchiveGuideStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Back here, choose below whether to bring your saved posts or everything from the creators you follow.'**
+  String get pawchiveGuideStep4;
+
+  /// No description provided for @pawchiveGuideLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Posts often link to download sites (Mega, Drive, Pixeldrain). Fern brings in whatever it can on its own and lists the rest once the import ends.'**
+  String get pawchiveGuideLinks;
+
   /// No description provided for @linkChoiceTitle.
   ///
   /// In en, this message translates to:
@@ -2394,23 +2682,35 @@ abstract class AppLocalizations {
   /// **'Open in the browser'**
   String get linkChoiceOpen;
 
-  /// No description provided for @repositoryLinkTitle.
+  /// No description provided for @pendingLinksToast.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{This post links to a file host} other{This post links to {count} file hosts}}'**
-  String repositoryLinkTitle(int count);
+  /// **'{count, plural, =1{1 post links to a download site} other{{count} posts link to download sites}}'**
+  String pendingLinksToast(int count);
 
-  /// No description provided for @repositoryLinkDescription.
+  /// No description provided for @pendingLinksTitle.
   ///
   /// In en, this message translates to:
-  /// **'Fern cannot fetch from these on its own: they have their own waits and checks. You can open them in Fern’s browser and bring in what you want from there. The import carries on meanwhile.'**
-  String get repositoryLinkDescription;
+  /// **'{count, plural, =1{1 post needs you} other{{count} posts need you}}'**
+  String pendingLinksTitle(int count);
 
-  /// No description provided for @repositoryLinkOpen.
+  /// No description provided for @pendingLinksDescription.
   ///
   /// In en, this message translates to:
-  /// **'Open in the browser'**
-  String get repositoryLinkOpen;
+  /// **'These link to download sites that cannot be browsed automatically: they have their own waiting times, captchas or file listings. Open the ones you want and bring them in from the browser.'**
+  String get pendingLinksDescription;
+
+  /// No description provided for @pendingLinksFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'folder'**
+  String get pendingLinksFolder;
+
+  /// No description provided for @pendingLinksFile.
+  ///
+  /// In en, this message translates to:
+  /// **'file'**
+  String get pendingLinksFile;
 
   /// No description provided for @pawchiveByCreators.
   ///
@@ -2477,6 +2777,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This page could not be loaded ({reason}); back to the home page'**
   String browserLoadFailedHome(String reason);
+
+  /// No description provided for @browserReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Start over'**
+  String get browserReset;
+
+  /// No description provided for @browserResetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'The browser has been started over'**
+  String get browserResetDone;
+
+  /// No description provided for @browserResetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing the browser engine…'**
+  String get browserResetting;
+
+  /// No description provided for @browserSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'This page is taking longer than usual'**
+  String get browserSlow;
+
+  /// No description provided for @browserEngineStuck.
+  ///
+  /// In en, this message translates to:
+  /// **'The page loaded but nothing is being drawn. The browser engine has stopped responding: close Fern completely and open it again.'**
+  String get browserEngineStuck;
+
+  /// No description provided for @browserAsideImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'The browser is set aside while the import runs'**
+  String get browserAsideImporting;
+
+  /// No description provided for @browserAsideImportingWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Bringing in a lot of content at once uses the machine hard, and that is what leaves the browser loading pages it never draws. What is not running cannot break.'**
+  String get browserAsideImportingWhy;
+
+  /// No description provided for @browserAsideAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring it back anyway'**
+  String get browserAsideAnyway;
+
+  /// No description provided for @browserAsideOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for this visit: leaving and coming back sets it aside again.'**
+  String get browserAsideOnce;
+
+  /// No description provided for @browserAsideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser during imports'**
+  String get browserAsideTitle;
+
+  /// No description provided for @browserAsideNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Bringing in a lot of content at once uses the machine hard, and that is what leaves the browser loading pages it never draws. Setting it aside prevents it.'**
+  String get browserAsideNote;
+
+  /// No description provided for @browserAsideAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always set it aside'**
+  String get browserAsideAlways;
+
+  /// No description provided for @browserAsideAlwaysDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'While any import runs. It is what has been seen to work.'**
+  String get browserAsideAlwaysDescription;
+
+  /// No description provided for @browserAsideLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on big imports'**
+  String get browserAsideLarge;
+
+  /// No description provided for @browserAsideLargeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Only when the import brings everything, everything new, or 50 or more.'**
+  String get browserAsideLargeDescription;
+
+  /// No description provided for @browserAsideNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get browserAsideNever;
+
+  /// No description provided for @browserAsideNeverDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The browser stays put. If it goes blank, Start over is in its toolbar.'**
+  String get browserAsideNeverDescription;
 
   /// No description provided for @browserReload.
   ///
@@ -2841,7 +3243,7 @@ abstract class AppLocalizations {
   /// No description provided for @jobsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Nothing running right now'**
+  /// **'Nothing waiting and nothing running'**
   String get jobsEmpty;
 
   /// No description provided for @jobRunning.
@@ -2909,6 +3311,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reading content'**
   String get jobHashing;
+
+  /// No description provided for @jobLinkReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Links to review'**
+  String get jobLinkReview;
+
+  /// No description provided for @jobLinkImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Bringing in links'**
+  String get jobLinkImport;
 
   /// No description provided for @jobImport.
   ///
@@ -3666,6 +4080,12 @@ abstract class AppLocalizations {
   /// **'At least {count} regions are recommended'**
   String fernieRecommendedRegions(int count);
 
+  /// No description provided for @ferniePendingRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 region is on content that is not confirmed yet, so it does not train} other{{count} regions are on content that is not confirmed yet, so they do not train}}'**
+  String ferniePendingRegions(int count);
+
   /// No description provided for @viewerRecognize.
   ///
   /// In en, this message translates to:
@@ -3894,6 +4314,18 @@ abstract class AppLocalizations {
   /// **'did not run: it has no weights'**
   String get recognitionLogVerdictUntrained;
 
+  /// No description provided for @jobReviewTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Decide about these links'**
+  String get jobReviewTooltip;
+
+  /// No description provided for @notifyLinkReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Links waiting for you'**
+  String get notifyLinkReview;
+
   /// No description provided for @jobDetailTooltip.
   ///
   /// In en, this message translates to:
@@ -4067,6 +4499,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accept over {percent}%'**
   String acceptAboveLabel(int percent);
+
+  /// No description provided for @remoteCreatorsMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Creators'**
+  String get remoteCreatorsMode;
+
+  /// No description provided for @remoteContentMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get remoteContentMode;
+
+  /// No description provided for @remoteCreatorNewPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{nothing new} =1{1 new post} other{{count} new posts}}'**
+  String remoteCreatorNewPosts(int count);
+
+  /// No description provided for @remoteCreatorImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Bringing in {name}…'**
+  String remoteCreatorImporting(String name);
+
+  /// No description provided for @remoteCreatorLastImport.
+  ///
+  /// In en, this message translates to:
+  /// **'last brought in {date}'**
+  String remoteCreatorLastImport(String date);
+
+  /// No description provided for @remoteCreatorNewsSince.
+  ///
+  /// In en, this message translates to:
+  /// **'new since {date}'**
+  String remoteCreatorNewsSince(String date);
+
+  /// No description provided for @remoteCreatorNeverImported.
+  ///
+  /// In en, this message translates to:
+  /// **'never brought in'**
+  String get remoteCreatorNeverImported;
+
+  /// No description provided for @remoteCreatorKnown.
+  ///
+  /// In en, this message translates to:
+  /// **'already yours'**
+  String get remoteCreatorKnown;
+
+  /// No description provided for @remoteCreatorsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No creators found in this source'**
+  String get remoteCreatorsEmpty;
+
+  /// No description provided for @remoteCreatorsUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This source cannot list creators yet'**
+  String get remoteCreatorsUnsupported;
+
+  /// No description provided for @remoteCreatorsImport.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Bring in 1 creator} other{Bring in {count} creators}}'**
+  String remoteCreatorsImport(int count);
+
+  /// No description provided for @importReviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get importReviewLabel;
+
+  /// No description provided for @importSortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get importSortLabel;
+
+  /// No description provided for @importCreatorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get importCreatorsLabel;
 
   /// No description provided for @importShowLabel.
   ///

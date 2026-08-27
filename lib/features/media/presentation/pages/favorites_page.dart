@@ -1,12 +1,11 @@
-import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
-import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
+import 'package:Fern/features/media/presentation/widgets/search_filter_menu.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -79,14 +78,14 @@ class _FavoritesView extends StatelessWidget {
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const Spacer(),
-                    // TODO: los filtros son otra tarea; el botón ya está en su
-                    // sitio para colgarlos de él.
-                    FernPillButton(
-                      label: texts.filters,
-                      icon: Icons.tune,
-                      backgroundColor: context.colors.primary,
-                      foregroundColor: context.colors.black,
-                      onPressed: () {},
+                    // El mismo panel de la biblioteca, sin el grupo que sólo
+                    // recorta una búsqueda: aquí no hay buscador.
+                    SearchFilterMenu(
+                      filters: state.searchFilters,
+                      sourceFilters: state.sourceFilters,
+                      typeFilters: state.typeFilters,
+                      hasSearch: false,
+                      showResultTypes: false,
                     ),
                   ],
                 ),

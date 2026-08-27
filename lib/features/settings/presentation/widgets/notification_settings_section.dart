@@ -24,6 +24,7 @@ extension NotificationKindLabels on NotificationKind {
         NotificationKind.trainingFinished => texts.notifyTraining,
         NotificationKind.recognitionFinished => texts.notifyRecognition,
         NotificationKind.importFinished => texts.notifyImport,
+        NotificationKind.linkReview => texts.notifyLinkReview,
       };
 }
 

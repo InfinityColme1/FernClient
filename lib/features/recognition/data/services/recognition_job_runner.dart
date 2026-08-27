@@ -1,3 +1,4 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/core/services/jobs/job_runner.dart';
@@ -62,6 +63,21 @@ class RecognitionJobRunner {
   /// La clave con la que viajan los contenidos en el `payload`.
   static const mediaIdsKey = 'mediaIds';
 
+  /// De cuántos en cuántos se recorre el árbol, según cuántos haya.
+  ///
+  /// El lote ahorra peticiones al motor, pero el lote entero termina a la vez y
+  /// la barra sólo puede avanzar cuando termina. Con pocos contenidos eso se
+  /// nota y el ahorro no, así que van de uno en uno; con la biblioteca entera es
+  /// al revés. El corte no es un número inventado: sale de querer que la barra
+  /// tenga siempre al menos [recognitionProgressSteps] tramos.
+  static int batchSizeFor(int total) {
+    if (total <= recognitionProgressSteps) return 1;
+
+    return (total / recognitionProgressSteps)
+        .ceil()
+        .clamp(1, recognitionMediaPerBatch);
+  }
+
   /// Lo que la cola llama.
   Future<void> call(JobContext context) => run(context);
 
@@ -89,7 +105,9 @@ class RecognitionJobRunner {
     final returnToReview = _returnToReview?.call() ?? false;
 
     // Lo que se cuenta es **un contenido**, que es lo que el usuario entiende
-    // por «va por la mitad». Los fotogramas de dentro son cosa nuestra.
+    // por «va por la mitad». Los fotogramas de dentro, y que se recorra el árbol
+    // por tandas, son cosa nuestra: la barra avanza de tanda en tanda pero sigue
+    // hablando de contenidos.
     context.report(0, total: ids.length);
 
     var suggested = 0;
@@ -98,22 +116,28 @@ class RecognitionJobRunner {
     // a la pantalla: los demás no tienen nada que mirar.
     final withSuggestions = <int>{};
 
-    for (var index = 0; index < ids.length; index++) {
+    final batch = batchSizeFor(ids.length);
+
+    for (var from = 0; from < ids.length; from += batch) {
       context.token.throwIfCancelled();
 
-      final found = await _recognizeOne(
-        ids[index],
+      final to = (from + batch).clamp(0, ids.length);
+
+      final found = await _recognizeBatch(
+        ids.sublist(from, to),
         tree.data!,
         context,
-        done: index,
+        done: from,
         total: ids.length,
         returnToReview: returnToReview,
       );
 
-      suggested += found;
-      if (found > 0) withSuggestions.add(ids[index]);
+      for (final entry in found.entries) {
+        suggested += entry.value;
+        if (entry.value > 0) withSuggestions.add(entry.key);
+      }
 
-      context.report(index + 1, total: ids.length);
+      context.report(to, total: ids.length);
     }
 
     // Sólo si hay algo que mirar. Avisar de que «ya está» cuando no ha salido
@@ -121,14 +145,18 @@ class RecognitionJobRunner {
     if (suggested > 0) await _notify(withSuggestions);
   }
 
-  /// Reconoce un contenido y guarda lo que salga. Devuelve cuántas propuestas.
+  /// Reconoce una tanda de contenidos y guarda lo que salga.
   ///
-  /// Un contenido que falle **no para el lote**: en una biblioteca de miles hay
-  /// ficheros movidos, corruptos y formatos raros, y que uno de ellos deje sin
-  /// reconocer los otros novecientos noventa y nueve es lo peor que podría
-  /// hacer esto.
-  Future<int> _recognizeOne(
-    int mediaId,
+  /// Devuelve cuántas propuestas por contenido. La tanda entera recorre el árbol
+  /// junta: un árbol de tres modelos sobre veinticinco contenidos son tres
+  /// peticiones al motor en vez de setenta y cinco, y el motor deja de ir y
+  /// volver entre unos pesos y otros. La poda sigue siendo por contenido, así
+  /// que el resultado es el mismo que reconociéndolos de uno en uno.
+  ///
+  /// Una tanda que falle **no para el trabajo**: se cuenta y se sigue con la
+  /// siguiente. Lo que sí para es que el usuario lo pida.
+  Future<Map<int, int>> _recognizeBatch(
+    List<int> mediaIds,
     ModelTreeEntity tree,
     JobContext context, {
     required int done,
@@ -136,12 +164,19 @@ class RecognitionJobRunner {
     required bool returnToReview,
   }) async {
     try {
-      final path = await _pathOf(mediaId);
-      if (path == null) return 0;
+      final targets = <RecognitionTarget>[];
 
-      final found = await _recognizer.recognize(
-        mediaId: mediaId,
-        path: path,
+      for (final mediaId in mediaIds) {
+        final path = await _pathOf(mediaId);
+        if (path == null) continue;
+
+        targets.add(RecognitionTarget(mediaId: mediaId, path: path));
+      }
+
+      if (targets.isEmpty) return const {};
+
+      final found = await _recognizer.recognizeMany(
+        targets: targets,
         tree: tree,
         token: context.token,
         // Qué modelo está mirando ahora mismo. Con un árbol de tres, saberlo es
@@ -154,27 +189,33 @@ class RecognitionJobRunner {
       );
 
       if (found is! DataSuccess || found.data == null) {
-        debugPrint('No se pudo reconocer $mediaId: ${found.exception}');
-        return 0;
+        debugPrint('No se pudo reconocer la tanda: ${found.exception}');
+        return const {};
       }
 
-      // El parte se guarda **siempre**, hayan salido sugerencias o no: es
-      // justamente cuando no sale ninguna cuando alguien lo abre.
-      _logs.add(context.job.id, found.data!.log);
+      final saved = <int, int>{};
 
-      final saved = await _results.replaceSuggestions(
-        mediaId: mediaId,
-        results: found.data!.suggestions,
-        returnToReview: returnToReview,
-      );
+      for (final entry in found.data!.entries) {
+        // El parte se guarda **siempre**, hayan salido sugerencias o no: es
+        // justamente cuando no sale ninguna cuando alguien lo abre.
+        _logs.add(context.job.id, entry.value.log);
 
-      return saved is DataSuccess ? saved.data ?? 0 : 0;
+        final written = await _results.replaceSuggestions(
+          mediaId: entry.key,
+          results: entry.value.suggestions,
+          returnToReview: returnToReview,
+        );
+
+        saved[entry.key] = written is DataSuccess ? written.data ?? 0 : 0;
+      }
+
+      return saved;
     } on JobCancelledException {
       // Parar sí para: es lo que el usuario acaba de pedir.
       rethrow;
     } on Object catch (error) {
-      debugPrint('No se pudo reconocer $mediaId: $error');
-      return 0;
+      debugPrint('No se pudo reconocer la tanda: $error');
+      return const {};
     }
   }
 

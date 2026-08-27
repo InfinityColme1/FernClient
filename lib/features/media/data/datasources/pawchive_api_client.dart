@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/data/datasources/remote_media_item.dart';
 import 'package:Fern/features/media/data/datasources/remote_post.dart';
+import 'package:Fern/features/media/domain/entities/remote_creator.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/post_link.dart';
 import 'package:Fern/features/media/domain/entities/remote_session_expired.dart';
+import 'package:Fern/features/media/domain/services/pawchive_timestamps.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:http/http.dart' as http;
 
@@ -77,6 +79,124 @@ class PawchiveApiClient {
         collection: collection,
         stopAt: stopAt[collection],
       );
+    }
+  }
+
+  /// Los creadores que el usuario tiene marcados, para poder elegir.
+  ///
+  /// Se devuelven **sin contar** sus publicaciones nuevas: contarlas es una
+  /// petición por creador, y con cincuenta marcados eso son cincuenta esperas
+  /// antes de poder enseñar nada. La lista sale enseguida y los números van
+  /// llegando después.
+  Future<List<RemoteCreator>> favoriteCreators(
+    PawchiveSettingsEntity credentials,
+  ) async {
+    final entries = await _favorites(credentials, type: 'artist');
+
+    final creators = <RemoteCreator>[];
+
+    for (final entry in entries) {
+      final id = entry['id']?.toString() ?? '';
+      final service = entry['service'] as String? ?? '';
+      if (id.isEmpty || service.isEmpty) continue;
+
+      creators.add(RemoteCreator(
+        id: pawchiveCreatorCollection(service: service, id: id),
+        name: (entry['name'] as String?)?.trim().isNotEmpty == true
+            ? (entry['name'] as String).trim()
+            : id,
+        service: service,
+        avatarUrl: pawchiveCreatorAvatar(service: service, id: id),
+        // Cuándo publicó por última vez. Viene aquí mismo, así que cruzarlo con
+        // la fecha de la última importación dice si tiene novedades sin
+        // preguntar por él aparte.
+        updatedAt: pawchiveTimestamp(entry['updated']),
+      ));
+    }
+
+    return creators;
+  }
+
+  /// Cuántas publicaciones nuevas tiene un creador desde [stopAt].
+  ///
+  /// Sólo se mira la primera página: con más de una hoja de publicaciones
+  /// nuevas, el número exacto deja de importar —lo que dice la tarjeta es «hay
+  /// mucho»— y seguir pidiendo páginas por cada uno de cincuenta creadores es
+  /// mucho pedirle al sitio.
+  ///
+  /// Sin [stopAt] no hay con qué comparar: nunca se ha mirado esa cuenta, así
+  /// que no hay «nuevas», hay todas.
+  Future<int?> newPostCount(
+    PawchiveSettingsEntity credentials, {
+    required String service,
+    required String user,
+    required String? stopAt,
+  }) async {
+    if (stopAt == null || stopAt.isEmpty) return null;
+
+    try {
+      final posts = await _get(
+        credentials,
+        '/api/v1/$service/user/$user',
+        {'o': '0'},
+      );
+
+      if (posts is! List) return null;
+
+      var count = 0;
+
+      for (final entry in posts) {
+        if (entry is! Map<String, dynamic>) continue;
+        if (entry['id']?.toString() == stopAt) return count;
+
+        count++;
+      }
+
+      return count;
+    } on Exception {
+      return null;
+    }
+  }
+
+  /// Todo lo de **estos** creadores, y no lo de todos los marcados.
+  ///
+  /// Es lo que hay detrás de elegir unos cuantos en la pantalla de importación.
+  /// [only] lleva las claves de colección; una lista vacía significa todos, que
+  /// es como se comportaba antes de poder elegir.
+  ///
+  /// [onCreator] avisa de cada creador **cuando se ha terminado de recorrerlo**,
+  /// y hace falta porque uno que no ha publicado nada nuevo no suelta ni una
+  /// publicación: sin esto, quien escucha no se entera de que se le ha mirado, y
+  /// «cuándo se miró por última vez» se quedaría clavado en la vez que sí trajo
+  /// algo.
+  ///
+  /// Al terminar y no al empezar, que es lo que hace que cortar la importación a
+  /// medias no deje a nadie por mirado sin haberlo mirado entero.
+  Stream<RemotePost> postsOfCreators(
+    PawchiveSettingsEntity credentials, {
+    Set<String> only = const {},
+    Map<String, String> stopAt = const {},
+    void Function(String collection)? onCreator,
+  }) async* {
+    final creators = await _favorites(credentials, type: 'artist');
+
+    for (final creator in creators) {
+      final id = creator['id']?.toString() ?? '';
+      final service = creator['service'] as String? ?? '';
+      if (id.isEmpty || service.isEmpty) continue;
+
+      final collection = pawchiveCreatorCollection(service: service, id: id);
+      if (only.isNotEmpty && !only.contains(collection)) continue;
+
+      yield* _postsOf(
+        credentials,
+        service: service,
+        user: id,
+        collection: collection,
+        stopAt: stopAt[collection],
+      );
+
+      onCreator?.call(collection);
     }
   }
 

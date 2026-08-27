@@ -1344,6 +1344,61 @@ class AppLocalizationsCa extends AppLocalizations {
   String get browserImportNothing => 'No s\'ha portat res.';
 
   @override
+  String get redditGuideAction => 'Com aconsegueixo això?';
+
+  @override
+  String get redditGuideTitle => 'Connectar Fern amb Reddit';
+
+  @override
+  String get redditGuideIntro =>
+      'Reddit no deixa que ningú llegeixi els teus desats fins que registris una aplicació al teu compte. Són un parell de minuts i es fa una sola vegada.';
+
+  @override
+  String get redditGuideStep1 =>
+      'Obre reddit.com/prefs/apps amb el botó de sota. S\'obre dins del Fern, així que ja ets dins del teu compte.';
+
+  @override
+  String get redditGuideStep2 =>
+      'Baixa fins al final de la pàgina i prem «create another app...» (o «are you a developer? create an app...»).';
+
+  @override
+  String get redditGuideStep3 =>
+      'Tria el tipus «script». És el pas que es falla: amb qualsevol altre tipus Reddit crea l\'aplicació igualment, i després rebutja cada petició sense dir per què.';
+
+  @override
+  String get redditGuideStep4 =>
+      'Posa-li el nom que vulguis, deixa la descripció buida i enganxa això a «redirect uri»:';
+
+  @override
+  String get redditGuideStep5 =>
+      'Prem «create app». Reddit t\'ensenya la fitxa de l\'aplicació que acabes de crear.';
+
+  @override
+  String get redditGuideStep6 =>
+      'El client ID és la cadena curta que hi ha just sota «personal use script», a dalt a l\'esquerra de la fitxa. El secret és el camp que posa «secret».';
+
+  @override
+  String get redditGuideStep7 =>
+      'Torna aquí i enganxa els dos, més el teu usuari i la teva contrasenya de Reddit.';
+
+  @override
+  String get redditGuideTwoFactor =>
+      'Amb la verificació en dos passos activada, la contrasenya s\'escriu com a contrasenya:codi — Reddit espera les dues coses al mateix camp.';
+
+  @override
+  String get redditGuidePrivacy =>
+      'Les quatre dades es queden en aquest equip, xifrades, i només s\'envien a Reddit.';
+
+  @override
+  String get redditGuideOpen => 'Obre Reddit';
+
+  @override
+  String get redditGuideCopy => 'Copia l\'adreça de redirecció';
+
+  @override
+  String get redditGuideCopied => 'Adreça de redirecció copiada';
+
+  @override
   String get danbooruTitle => 'Danbooru';
 
   @override
@@ -1414,6 +1469,130 @@ class AppLocalizationsCa extends AppLocalizations {
       'El Fern es descarrega les publicacions que tinguis als preferits de Pawchive. Aquí no hi ha res a omplir: inicia la sessió des del navegador del Fern i prem allà el botó de la clau, i la sessió es desa sola.';
 
   @override
+  String get sourceGuideOpenSite => 'Obre el lloc';
+
+  @override
+  String get sourceGuideOpenLogin => 'Obre la pantalla d\'entrada';
+
+  @override
+  String get sourceGuidePrivacy =>
+      'El que enganxis es queda en aquest equip, xifrat, i només s\'envia a aquell lloc.';
+
+  @override
+  String get sessionGuideStep1 =>
+      'Prem el botó de sota. El Fern obre el lloc al seu propi navegador i et porta a la pantalla d\'entrar.';
+
+  @override
+  String get sessionGuideStep2 =>
+      'Entra igual que ho faries a qualsevol altre lloc: captcha, codi per correu i tot. És justament per això que això no es pot fer des de fora.';
+
+  @override
+  String get sessionGuideStep3 =>
+      'Quan hi siguis a dins, prem la clau de la barra del navegador per desar la sessió. Sense aquest pas no es desa res i la importació seguirà dient que no està configurada.';
+
+  @override
+  String get sessionGuideExpires =>
+      'Les sessions caduquen soles al cap d\'un temps. Quan passi, el Fern t\'avisa i n\'hi ha prou amb repetir aquests passos.';
+
+  @override
+  String get danbooruGuideTitle => 'Connectar el Fern amb Danbooru';
+
+  @override
+  String get danbooruGuideIntro =>
+      'Danbooru dóna a cada compte una clau d\'API perquè els programes puguin llegir en nom seu. Es treu de la teva fitxa, i la teva contrasenya no hi entra.';
+
+  @override
+  String get danbooruGuideStep1 =>
+      'Obre la teva fitxa amb el botó de sota i assegura\'t que has entrat amb el teu compte.';
+
+  @override
+  String get danbooruGuideStep2 =>
+      'Busca la fila «API Key» de la teva fitxa i prem «view». Danbooru et demana la contrasenya per ensenyar-te-la.';
+
+  @override
+  String get danbooruGuideStep3 =>
+      'Si encara no n\'hi ha cap, prem «Add» i posa-li el nom que vulguis. Al Fern li\'n basta una.';
+
+  @override
+  String get danbooruGuideStep4 => 'Copia la cadena llarga que t\'ensenya.';
+
+  @override
+  String get danbooruGuideStep5 =>
+      'Torna aquí: l\'usuari és el mateix amb què entres, i al segon camp hi va la clau, no la teva contrasenya. Danbooru l\'accepta i senzillament no retorna res.';
+
+  @override
+  String get danbooruGuideNote =>
+      'Revocar la clau des d\'aquella mateixa pàgina li talla el pas al Fern a l\'instant, sense tocar la teva contrasenya.';
+
+  @override
+  String get gelbooruGuideTitle => 'Connectar el Fern amb Gelbooru';
+
+  @override
+  String get gelbooruGuideIntro =>
+      'Gelbooru et dóna els dos valors de cop, escrits en una sola línia. Partir aquesta línia en dos és tota la feina.';
+
+  @override
+  String get gelbooruGuideStep1 =>
+      'Obre les opcions del teu compte amb el botó de sota i assegura\'t que has entrat.';
+
+  @override
+  String get gelbooruGuideStep2 =>
+      'Baixa fins a «API Access Credentials» i obre l\'enllaç que ofereix.';
+
+  @override
+  String get gelbooruGuideStep3 =>
+      'Gelbooru t\'ensenya una línia amb aquesta pinta: &api_key=abc123&user_id=456.';
+
+  @override
+  String get gelbooruGuideStep4 =>
+      'Aquella línia porta dos valors diferents a dins. No l\'enganxis sencera en un camp: Gelbooru l\'accepta i després no funciona res, sense dir per què.';
+
+  @override
+  String get gelbooruGuideStep5 =>
+      'Posa el que ve després de user_id= al primer camp, i el que ve després de api_key= al segon.';
+
+  @override
+  String get pixivGuideTitle => 'Connectar el Fern amb Pixiv';
+
+  @override
+  String get pixivGuideIntro =>
+      'Pixiv no té claus per copiar. Aquí no hi ha res a escriure: entres dins del Fern i la sessió és el que t\'identifica.';
+
+  @override
+  String get pixivGuideStep4 =>
+      'Ja està. Aquí no hi ha res a enganxar: vés a la pantalla d\'importació i tria Pixiv.';
+
+  @override
+  String get pinterestGuideTitle => 'Connectar el Fern amb Pinterest';
+
+  @override
+  String get pinterestGuideIntro =>
+      'Amb el teu nom d\'usuari n\'hi ha prou per als taulers públics. La sessió només cal per als secrets.';
+
+  @override
+  String get pinterestGuideStep1 =>
+      'Escriu el teu nom d\'usuari de Pinterest al camp de dalt. Amb això els taulers públics ja funcionen.';
+
+  @override
+  String get pinterestGuideStep2 =>
+      'Només si a més vols els taulers secrets, prem el botó de sota i entra amb el teu compte.';
+
+  @override
+  String get pawchiveGuideTitle => 'Connectar el Fern amb Pawchive';
+
+  @override
+  String get pawchiveGuideIntro =>
+      'Aquí tampoc hi ha claus: entres dins del Fern i la sessió és el que t\'identifica.';
+
+  @override
+  String get pawchiveGuideStep4 =>
+      'De tornada aquí, tria a sota si vols els teus desats o tot el dels creadors que segueixes.';
+
+  @override
+  String get pawchiveGuideLinks =>
+      'Les publicacions solen enllaçar a llocs de descàrregues (Mega, Drive, Pixeldrain). El Fern es porta el que pot pel seu compte i et llista la resta en acabar la importació.';
+
+  @override
   String linkChoiceTitle(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1454,22 +1633,36 @@ class AppLocalizationsCa extends AppLocalizations {
   String get linkChoiceOpen => 'Mostra al navegador';
 
   @override
-  String repositoryLinkTitle(int count) {
+  String pendingLinksToast(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Aquesta publicació porta a $count repositoris de contingut',
-      one: 'Aquesta publicació porta a un repositori de contingut',
+      other: '$count publicacions porten a llocs de descàrregues',
+      one: '1 publicació porta a un lloc de descàrregues',
     );
     return '$_temp0';
   }
 
   @override
-  String get repositoryLinkDescription =>
-      'El Fern no pot portar-s\'ho tot sol: són pàgines amb la seva pròpia espera i comprovacions. Les pots obrir al navegador del Fern i endur-te\'n el que vulguis. Mentrestant la importació continua.';
+  String pendingLinksTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count publicacions et necessiten',
+      one: '1 publicació et necessita',
+    );
+    return '$_temp0';
+  }
 
   @override
-  String get repositoryLinkOpen => 'Mostra al navegador';
+  String get pendingLinksDescription =>
+      'Porten a llocs de descàrregues que no es poden recórrer sols: tenen la seva pròpia espera, el seu captcha o el seu llistat de fitxers. Obre els que t\'interessin i porta\'ls des del navegador.';
+
+  @override
+  String get pendingLinksFolder => 'carpeta';
+
+  @override
+  String get pendingLinksFile => 'fitxer';
 
   @override
   String get pawchiveByCreators => 'Importa per creadors preferits';
@@ -1513,6 +1706,65 @@ class AppLocalizationsCa extends AppLocalizations {
   String browserLoadFailedHome(String reason) {
     return 'No s\'ha pogut carregar la pàgina ($reason); es torna a la d\'inici';
   }
+
+  @override
+  String get browserReset => 'Comença de zero';
+
+  @override
+  String get browserResetDone => 'El navegador s\'ha reiniciat';
+
+  @override
+  String get browserResetting => 'S\'està tancant el motor del navegador…';
+
+  @override
+  String get browserSlow => 'Aquesta pàgina està trigant més del normal';
+
+  @override
+  String get browserEngineStuck =>
+      'La pàgina ha carregat però no s\'està pintant res. El motor del navegador ha deixat de respondre: tanca el Fern del tot i torna a obrir-lo.';
+
+  @override
+  String get browserAsideImporting =>
+      'El navegador està apartat mentre s\'importa';
+
+  @override
+  String get browserAsideImportingWhy =>
+      'Portar molt contingut de cop esprem la màquina, i això és el que deixa el navegador carregant pàgines que després no pinta. El que no està en marxa no es pot trencar.';
+
+  @override
+  String get browserAsideAnyway => 'Torna\'l igualment';
+
+  @override
+  String get browserAsideOnce =>
+      'Només per a aquesta visita: en sortir i tornar s\'aparta un altre cop.';
+
+  @override
+  String get browserAsideTitle => 'El navegador durant les importacions';
+
+  @override
+  String get browserAsideNote =>
+      'Portar molt contingut de cop esprem la màquina, i això és el que deixa el navegador carregant pàgines que després no pinta. Apartar-lo ho evita.';
+
+  @override
+  String get browserAsideAlways => 'Aparta\'l sempre';
+
+  @override
+  String get browserAsideAlwaysDescription =>
+      'Mentre hi hagi qualsevol importació en marxa. És el que s\'ha vist funcionar.';
+
+  @override
+  String get browserAsideLarge => 'Només en importacions grans';
+
+  @override
+  String get browserAsideLargeDescription =>
+      'Només quan la importació es porta tot, tot el nou, o 50 o més.';
+
+  @override
+  String get browserAsideNever => 'Mai';
+
+  @override
+  String get browserAsideNeverDescription =>
+      'El navegador es queda. Si es posa en blanc, «Comença de zero» és a la seva barra.';
 
   @override
   String get browserReload => 'Torna a carregar';
@@ -1766,10 +2018,10 @@ class AppLocalizationsCa extends AppLocalizations {
   String get jobsTooltip => 'Tasques en marxa';
 
   @override
-  String get jobsTitle => 'Tasques en segon pla';
+  String get jobsTitle => 'Tasques';
 
   @override
-  String get jobsEmpty => 'Ara mateix no hi ha res en marxa';
+  String get jobsEmpty => 'Res esperant i res en marxa';
 
   @override
   String get jobRunning => 'En marxa…';
@@ -1805,6 +2057,12 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get jobHashing => 'Llegint contingut';
+
+  @override
+  String get jobLinkReview => 'Enllaços per revisar';
+
+  @override
+  String get jobLinkImport => 'Portant enllaços';
 
   @override
   String get jobImport => 'Important';
@@ -2249,6 +2507,18 @@ class AppLocalizationsCa extends AppLocalizations {
   }
 
   @override
+  String ferniePendingRegions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count regions són sobre contingut sense confirmar, així que no entrenen',
+      one: '1 regió és sobre contingut sense confirmar, així que no entrena',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get viewerRecognize => 'Reconeix amb els models';
 
   @override
@@ -2391,6 +2661,12 @@ class AppLocalizationsCa extends AppLocalizations {
   String get recognitionLogVerdictUntrained => 'no va córrer: no té pesos';
 
   @override
+  String get jobReviewTooltip => 'Decideix sobre aquests enllaços';
+
+  @override
+  String get notifyLinkReview => 'Enllaços esperant-te';
+
+  @override
   String get jobDetailTooltip => 'Mira què han fet els models';
 
   @override
@@ -2529,6 +2805,72 @@ class AppLocalizationsCa extends AppLocalizations {
   String acceptAboveLabel(int percent) {
     return 'Accepta més del $percent %';
   }
+
+  @override
+  String get remoteCreatorsMode => 'Creadors';
+
+  @override
+  String get remoteContentMode => 'Contingut';
+
+  @override
+  String remoteCreatorNewPosts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count publicacions noves',
+      one: '1 publicació nova',
+      zero: 'res de nou',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteCreatorImporting(String name) {
+    return 'Portant el de $name…';
+  }
+
+  @override
+  String remoteCreatorLastImport(String date) {
+    return 'darrera vegada, el $date';
+  }
+
+  @override
+  String remoteCreatorNewsSince(String date) {
+    return 'novetats des del $date';
+  }
+
+  @override
+  String get remoteCreatorNeverImported => 'mai importat';
+
+  @override
+  String get remoteCreatorKnown => 'ja el tens';
+
+  @override
+  String get remoteCreatorsEmpty => 'No hi ha creadors en aquesta font';
+
+  @override
+  String get remoteCreatorsUnsupported =>
+      'Aquesta font encara no sap donar els seus creadors';
+
+  @override
+  String remoteCreatorsImport(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Porta $count creadors',
+      one: 'Porta 1 creador',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importReviewLabel => 'Revisa';
+
+  @override
+  String get importSortLabel => 'Ordena';
+
+  @override
+  String get importCreatorsLabel => 'Mostra';
 
   @override
   String get importShowLabel => 'Veure';

@@ -12,6 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  // La pantalla de prueba mide 800 de ancho, y la rejilla es de una columna: el
+  // alto de cada celda sale de su proporcion, asi que 800/4 son 200.
+  const width = 800.0;
   const cell = 200.0;
   const count = 200;
 
@@ -28,13 +31,10 @@ void main() {
             padding: EdgeInsets.zero,
             cacheExtent: 600,
             spacing: 0,
-            itemCount: count,
+            ratios: List<double?>.filled(count, width / cell),
+            fallbackRatio: 1,
             focusIndex: focusIndex,
-            itemBuilder: (context, index, key) => SizedBox(
-              key: key,
-              height: cell,
-              child: Text('celda $index'),
-            ),
+            itemBuilder: (context, index) => Text('celda $index'),
           ),
         ),
       ),
@@ -74,7 +74,8 @@ void main() {
   // Con celdas de alto desigual la cuenta se desvía: estima por la posición en
   // la lista, y en una rejilla de mampostería cada celda mide lo que le toca.
   // Es el caso de verdad —contenido apaisado y contenido vertical mezclados— y
-  // lo que lo salva es el afinado con la celda ya construida.
+  // lo que lo salva es que la rejilla esté calculada entera: dónde cae una celda
+  // es un dato, no una aproximación.
   testWidgets('aunque las celdas midan cosas distintas', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -85,13 +86,15 @@ void main() {
             padding: EdgeInsets.zero,
             cacheExtent: 600,
             spacing: 0,
-            itemCount: count,
+            // Contenido apaisado y vertical mezclado, que es el caso de verdad:
+            // ochenta de alto uno y trescientos veinte el siguiente.
+            ratios: [
+              for (var index = 0; index < count; index++)
+                index.isEven ? width / 80 : width / 320,
+            ],
+            fallbackRatio: 1,
             focusIndex: 120,
-            itemBuilder: (context, index, key) => SizedBox(
-              key: key,
-              height: index.isEven ? 80.0 : 320.0,
-              child: Text('celda $index'),
-            ),
+            itemBuilder: (context, index) => Text('celda $index'),
           ),
         ),
       ),

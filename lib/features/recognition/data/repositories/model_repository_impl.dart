@@ -1,4 +1,5 @@
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/model_tree_edge_model.dart';
@@ -353,10 +354,7 @@ class ModelRepositoryImpl implements ModelRepository {
       modelId: row.model.value?.id ?? 0,
       fernie: fernie == null
           ? FernieEntity(id: 0, name: '')
-          : fernie.toEntity(
-              regionCount: await _regionCountOf(fernie),
-              mediaCount: await _mediaCountOf(fernie),
-            ),
+          : await _countedEntity(fernie),
       split: DatasetSplit(
         train: row.trainPercent,
         validation: row.valPercent,
@@ -380,18 +378,50 @@ class ModelRepositoryImpl implements ModelRepository {
     );
   }
 
-  Future<int> _regionCountOf(FernieModel fernie) async {
+  /// El fernie con sus cuatro recuentos puestos.
+  ///
+  /// Sobre cuántos contenidos distintos está marcado hace falta además del
+  /// número de regiones: cien regiones de un solo fichero enseñan el fondo, no
+  /// el objeto, y de eso avisa la pantalla del modelo.
+  ///
+  /// Y de lo marcado se separa lo que entrena: una región sobre contenido sin
+  /// confirmar se queda fuera del conjunto de datos (D29), así que contarla como
+  /// si entrenara dejaba pasar a entrenar modelos con cero muestras diciendo que
+  /// tenían de sobra.
+  Future<FernieEntity> _countedEntity(FernieModel fernie) async {
     await fernie.regions.load();
-    return fernie.regions.length;
+
+    final regions = fernie.regions.toList();
+    final definitive = await _definitiveAmong({
+      for (final region in regions) region.mediaId,
+    });
+
+    final usable = [
+      for (final region in regions)
+        if (definitive.contains(region.mediaId)) region,
+    ];
+
+    return fernie.toEntity(
+      regionCount: regions.length,
+      mediaCount: {for (final region in regions) region.mediaId}.length,
+      usableRegionCount: usable.length,
+      usableMediaCount: {for (final region in usable) region.mediaId}.length,
+    );
   }
 
-  /// Sobre cuántos contenidos distintos está marcado.
+  /// Cuáles de estos contenidos ya son definitivos.
   ///
-  /// Hace falta además del número de regiones: cien regiones de un solo fichero
-  /// enseñan el fondo, no el objeto, y de eso avisa la pantalla del modelo.
-  Future<int> _mediaCountOf(FernieModel fernie) async {
-    await fernie.regions.load();
+  /// Lo que no está en la base de datos tampoco está aquí: una región huérfana
+  /// no entrena, igual que una que espera revisión.
+  Future<Set<int>> _definitiveAmong(Set<int> mediaIds) async {
+    if (mediaIds.isEmpty) return const {};
 
-    return {for (final region in fernie.regions) region.mediaId}.length;
+    final summaries =
+        await _database.mediaSummaryModels.getAll(mediaIds.toList());
+
+    return {
+      for (final summary in summaries.nonNulls)
+        if (summary.isImported) summary.id,
+    };
   }
 }

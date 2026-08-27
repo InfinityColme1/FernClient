@@ -1345,6 +1345,61 @@ class AppLocalizationsEs extends AppLocalizations {
   String get browserImportNothing => 'No se ha traído nada.';
 
   @override
+  String get redditGuideAction => '¿Cómo consigo esto?';
+
+  @override
+  String get redditGuideTitle => 'Conectar Fern con Reddit';
+
+  @override
+  String get redditGuideIntro =>
+      'Reddit no deja que nadie lea tus guardados hasta que registres una aplicación en tu cuenta. Son un par de minutos y se hace una sola vez.';
+
+  @override
+  String get redditGuideStep1 =>
+      'Abre reddit.com/prefs/apps con el botón de abajo. Se abre dentro de Fern, así que ya estás dentro de tu cuenta.';
+
+  @override
+  String get redditGuideStep2 =>
+      'Baja hasta el final de la página y pulsa «create another app...» (o «are you a developer? create an app...»).';
+
+  @override
+  String get redditGuideStep3 =>
+      'Elige el tipo «script». Es el paso que se falla: con cualquier otro tipo Reddit crea la aplicación igual, y luego rechaza cada petición sin decir por qué.';
+
+  @override
+  String get redditGuideStep4 =>
+      'Ponle el nombre que quieras, deja la descripción vacía y pega esto en «redirect uri»:';
+
+  @override
+  String get redditGuideStep5 =>
+      'Pulsa «create app». Reddit te enseña la ficha de la aplicación que acabas de crear.';
+
+  @override
+  String get redditGuideStep6 =>
+      'El client ID es la cadena corta que hay justo debajo de «personal use script», arriba a la izquierda de la ficha. El secret es el campo que pone «secret».';
+
+  @override
+  String get redditGuideStep7 =>
+      'Vuelve aquí y pega los dos, más tu usuario y tu contraseña de Reddit.';
+
+  @override
+  String get redditGuideTwoFactor =>
+      'Con la verificación en dos pasos activada, la contraseña se escribe como contraseña:código — Reddit espera las dos cosas en el mismo campo.';
+
+  @override
+  String get redditGuidePrivacy =>
+      'Los cuatro datos se quedan en este equipo, cifrados, y sólo se mandan a Reddit.';
+
+  @override
+  String get redditGuideOpen => 'Abrir Reddit';
+
+  @override
+  String get redditGuideCopy => 'Copiar la dirección de redirección';
+
+  @override
+  String get redditGuideCopied => 'Dirección de redirección copiada';
+
+  @override
   String get danbooruTitle => 'Danbooru';
 
   @override
@@ -1415,6 +1470,130 @@ class AppLocalizationsEs extends AppLocalizations {
       'Fern se descarga las publicaciones que tengas en favoritos en Pawchive. Aquí no hay nada que rellenar: inicia sesión desde el navegador de Fern y pulsa allí el botón de la llave, y la sesión se guarda sola.';
 
   @override
+  String get sourceGuideOpenSite => 'Abrir el sitio';
+
+  @override
+  String get sourceGuideOpenLogin => 'Abrir la pantalla de entrada';
+
+  @override
+  String get sourceGuidePrivacy =>
+      'Lo que pegues se queda en este equipo, cifrado, y sólo se manda a ese sitio.';
+
+  @override
+  String get sessionGuideStep1 =>
+      'Pulsa el botón de abajo. Fern abre el sitio en su propio navegador y te lleva a la pantalla de entrar.';
+
+  @override
+  String get sessionGuideStep2 =>
+      'Entra igual que lo harías en cualquier otro sitio: captcha, código por correo y todo. Es justamente por eso por lo que esto no se puede hacer desde fuera.';
+
+  @override
+  String get sessionGuideStep3 =>
+      'Cuando estés dentro, pulsa la llave de la barra del navegador para guardar la sesión. Sin este paso no se guarda nada y la importación seguirá diciendo que no está configurada.';
+
+  @override
+  String get sessionGuideExpires =>
+      'Las sesiones caducan solas al cabo de un tiempo. Cuando pase, Fern te avisa y basta con repetir estos pasos.';
+
+  @override
+  String get danbooruGuideTitle => 'Conectar Fern con Danbooru';
+
+  @override
+  String get danbooruGuideIntro =>
+      'Danbooru le da a cada cuenta una clave de API para que los programas puedan leer en su nombre. Se saca de tu ficha, y tu contraseña no entra en esto.';
+
+  @override
+  String get danbooruGuideStep1 =>
+      'Abre tu ficha con el botón de abajo y asegúrate de que has entrado con tu cuenta.';
+
+  @override
+  String get danbooruGuideStep2 =>
+      'Busca la fila «API Key» de tu ficha y pulsa «view». Danbooru te pide la contraseña para enseñártela.';
+
+  @override
+  String get danbooruGuideStep3 =>
+      'Si no hay ninguna todavía, pulsa «Add» y ponle el nombre que quieras. A Fern le basta con una.';
+
+  @override
+  String get danbooruGuideStep4 => 'Copia la cadena larga que te enseña.';
+
+  @override
+  String get danbooruGuideStep5 =>
+      'Vuelve aquí: el usuario es el mismo con el que entras, y en el segundo campo va la clave, no tu contraseña. Danbooru la acepta y sencillamente no devuelve nada.';
+
+  @override
+  String get danbooruGuideNote =>
+      'Revocar la clave desde esa misma página le corta el paso a Fern al momento, sin tocar tu contraseña.';
+
+  @override
+  String get gelbooruGuideTitle => 'Conectar Fern con Gelbooru';
+
+  @override
+  String get gelbooruGuideIntro =>
+      'Gelbooru te da los dos valores de golpe, escritos en una sola línea. Partir esa línea en dos es todo el trabajo.';
+
+  @override
+  String get gelbooruGuideStep1 =>
+      'Abre las opciones de tu cuenta con el botón de abajo y asegúrate de que has entrado.';
+
+  @override
+  String get gelbooruGuideStep2 =>
+      'Baja hasta «API Access Credentials» y abre el enlace que ofrece.';
+
+  @override
+  String get gelbooruGuideStep3 =>
+      'Gelbooru te enseña una línea con esta pinta: &api_key=abc123&user_id=456.';
+
+  @override
+  String get gelbooruGuideStep4 =>
+      'Esa línea lleva dos valores distintos dentro. No la pegues entera en un campo: Gelbooru la acepta y luego no funciona nada, sin decir por qué.';
+
+  @override
+  String get gelbooruGuideStep5 =>
+      'Pon lo que viene después de user_id= en el primer campo, y lo que viene después de api_key= en el segundo.';
+
+  @override
+  String get pixivGuideTitle => 'Conectar Fern con Pixiv';
+
+  @override
+  String get pixivGuideIntro =>
+      'Pixiv no tiene claves que copiar. Aquí no hay nada que escribir: entras dentro de Fern y la sesión es lo que te identifica.';
+
+  @override
+  String get pixivGuideStep4 =>
+      'Ya está. Aquí no hay nada que pegar: vete a la pantalla de importación y elige Pixiv.';
+
+  @override
+  String get pinterestGuideTitle => 'Conectar Fern con Pinterest';
+
+  @override
+  String get pinterestGuideIntro =>
+      'Con tu nombre de usuario basta para los tableros públicos. La sesión sólo hace falta para los secretos.';
+
+  @override
+  String get pinterestGuideStep1 =>
+      'Escribe tu nombre de usuario de Pinterest en el campo de arriba. Con eso los tableros públicos ya funcionan.';
+
+  @override
+  String get pinterestGuideStep2 =>
+      'Sólo si además quieres los tableros secretos, pulsa el botón de abajo y entra con tu cuenta.';
+
+  @override
+  String get pawchiveGuideTitle => 'Conectar Fern con Pawchive';
+
+  @override
+  String get pawchiveGuideIntro =>
+      'Aquí tampoco hay claves: entras dentro de Fern y la sesión es lo que te identifica.';
+
+  @override
+  String get pawchiveGuideStep4 =>
+      'De vuelta aquí, elige abajo si quieres tus guardados o todo lo de los creadores que sigues.';
+
+  @override
+  String get pawchiveGuideLinks =>
+      'Las publicaciones suelen enlazar a sitios de descargas (Mega, Drive, Pixeldrain). Fern se trae lo que puede por su cuenta y te lista el resto al terminar la importación.';
+
+  @override
   String linkChoiceTitle(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1455,22 +1634,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get linkChoiceOpen => 'Ver en el navegador';
 
   @override
-  String repositoryLinkTitle(int count) {
+  String pendingLinksToast(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Esta publicación lleva a $count repositorios de contenido',
-      one: 'Esta publicación lleva a un repositorio de contenido',
+      other: '$count publicaciones llevan a sitios de descargas',
+      one: '1 publicación lleva a un sitio de descargas',
     );
     return '$_temp0';
   }
 
   @override
-  String get repositoryLinkDescription =>
-      'Fern no puede traerse esto por su cuenta: son páginas con su propia espera y sus comprobaciones. Puedes abrirlas en el navegador de Fern y traerte desde ahí lo que quieras. Mientras tanto la importación sigue.';
+  String pendingLinksTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count publicaciones te necesitan',
+      one: '1 publicación te necesita',
+    );
+    return '$_temp0';
+  }
 
   @override
-  String get repositoryLinkOpen => 'Ver en el navegador';
+  String get pendingLinksDescription =>
+      'Llevan a sitios de descargas que no se pueden recorrer solos: tienen su propia espera, su captcha o su listado de ficheros. Abre los que te interesen y tráetelos desde el navegador.';
+
+  @override
+  String get pendingLinksFolder => 'carpeta';
+
+  @override
+  String get pendingLinksFile => 'fichero';
 
   @override
   String get pawchiveByCreators => 'Importar por creadores favoritos';
@@ -1514,6 +1707,65 @@ class AppLocalizationsEs extends AppLocalizations {
   String browserLoadFailedHome(String reason) {
     return 'No se ha podido cargar la página ($reason); se vuelve a la de inicio';
   }
+
+  @override
+  String get browserReset => 'Empezar de cero';
+
+  @override
+  String get browserResetDone => 'El navegador se ha reiniciado';
+
+  @override
+  String get browserResetting => 'Cerrando el motor del navegador…';
+
+  @override
+  String get browserSlow => 'Esta página está tardando más de lo normal';
+
+  @override
+  String get browserEngineStuck =>
+      'La página ha cargado pero no se está pintando nada. El motor del navegador ha dejado de responder: cierra Fern del todo y vuelve a abrirlo.';
+
+  @override
+  String get browserAsideImporting =>
+      'El navegador está apartado mientras se importa';
+
+  @override
+  String get browserAsideImportingWhy =>
+      'Traerse mucho contenido de golpe exprime la máquina, y eso es lo que deja al navegador cargando páginas que luego no pinta. Lo que no está en marcha no se puede romper.';
+
+  @override
+  String get browserAsideAnyway => 'Traerlo de vuelta igualmente';
+
+  @override
+  String get browserAsideOnce =>
+      'Sólo para esta visita: al salir y volver se aparta otra vez.';
+
+  @override
+  String get browserAsideTitle => 'El navegador durante las importaciones';
+
+  @override
+  String get browserAsideNote =>
+      'Traerse mucho contenido de golpe exprime la máquina, y eso es lo que deja al navegador cargando páginas que luego no pinta. Apartarlo lo evita.';
+
+  @override
+  String get browserAsideAlways => 'Apartarlo siempre';
+
+  @override
+  String get browserAsideAlwaysDescription =>
+      'Mientras haya cualquier importación en marcha. Es lo que se ha visto funcionar.';
+
+  @override
+  String get browserAsideLarge => 'Sólo en importaciones grandes';
+
+  @override
+  String get browserAsideLargeDescription =>
+      'Sólo cuando la importación se trae todo, todo lo nuevo, o 50 o más.';
+
+  @override
+  String get browserAsideNever => 'Nunca';
+
+  @override
+  String get browserAsideNeverDescription =>
+      'El navegador se queda. Si se pone en blanco, «Empezar de cero» está en su barra.';
 
   @override
   String get browserReload => 'Recargar';
@@ -1768,10 +2020,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get jobsTooltip => 'Tareas en marcha';
 
   @override
-  String get jobsTitle => 'Tareas en segundo plano';
+  String get jobsTitle => 'Tareas';
 
   @override
-  String get jobsEmpty => 'Ahora mismo no hay nada en marcha';
+  String get jobsEmpty => 'Nada esperando y nada en marcha';
 
   @override
   String get jobRunning => 'En marcha…';
@@ -1807,6 +2059,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get jobHashing => 'Leyendo contenido';
+
+  @override
+  String get jobLinkReview => 'Enlaces por revisar';
+
+  @override
+  String get jobLinkImport => 'Trayendo enlaces';
 
   @override
   String get jobImport => 'Importando';
@@ -2249,6 +2507,18 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String ferniePendingRegions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count regiones están sobre contenido sin confirmar, así que no entrenan',
+      one: '1 región está sobre contenido sin confirmar, así que no entrena',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get viewerRecognize => 'Reconocer con los modelos';
 
   @override
@@ -2391,6 +2661,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recognitionLogVerdictUntrained => 'no corrió: no tiene pesos';
 
   @override
+  String get jobReviewTooltip => 'Decidir sobre estos enlaces';
+
+  @override
+  String get notifyLinkReview => 'Enlaces esperándote';
+
+  @override
   String get jobDetailTooltip => 'Ver qué hicieron los modelos';
 
   @override
@@ -2530,6 +2806,72 @@ class AppLocalizationsEs extends AppLocalizations {
   String acceptAboveLabel(int percent) {
     return 'Aceptar más del $percent %';
   }
+
+  @override
+  String get remoteCreatorsMode => 'Creadores';
+
+  @override
+  String get remoteContentMode => 'Contenido';
+
+  @override
+  String remoteCreatorNewPosts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count publicaciones nuevas',
+      one: '1 publicación nueva',
+      zero: 'nada nuevo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String remoteCreatorImporting(String name) {
+    return 'Trayendo lo de $name…';
+  }
+
+  @override
+  String remoteCreatorLastImport(String date) {
+    return 'última vez, el $date';
+  }
+
+  @override
+  String remoteCreatorNewsSince(String date) {
+    return 'novedades desde el $date';
+  }
+
+  @override
+  String get remoteCreatorNeverImported => 'nunca importado';
+
+  @override
+  String get remoteCreatorKnown => 'ya lo tienes';
+
+  @override
+  String get remoteCreatorsEmpty => 'No hay creadores en esta fuente';
+
+  @override
+  String get remoteCreatorsUnsupported =>
+      'Esta fuente todavía no sabe dar sus creadores';
+
+  @override
+  String remoteCreatorsImport(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Traer $count creadores',
+      one: 'Traer 1 creador',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importReviewLabel => 'Revisar';
+
+  @override
+  String get importSortLabel => 'Ordenar';
+
+  @override
+  String get importCreatorsLabel => 'Mostrar';
 
   @override
   String get importShowLabel => 'Ver';

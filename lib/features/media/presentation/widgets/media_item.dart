@@ -11,6 +11,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/media_preview_service.dart';
+import 'package:Fern/core/services/media_size_store.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
@@ -248,6 +249,16 @@ class _MediaItemState extends State<MediaItem> {
   /// La de reserva importa para las proporciones: la celda tiene que saber lo
   /// que mide el fichero antes de tener todos los fotogramas, o daría un salto
   /// de forma al llegar el primero.
+  /// Si esta celda puede colocarse sin abrir el fichero.
+  ///
+  /// Una imagen cuyo tamaño ya está guardado no necesita nada más: se pinta con
+  /// `Image.file` y ya. Lo que obligaba a leer el fichero era saber cuánto medía
+  /// para darle su sitio en la rejilla, y eso ahora se sabe de antemano.
+  ///
+  /// Un vídeo no cuenta: de él hace falta además el fotograma, que sólo se puede
+  /// sacar abriéndolo.
+  bool get _sizeIsKnown => !_isVideo && widget.media.hasSize;
+
   MediaPreview? get _preview {
     if (_previews.isEmpty) return null;
 
@@ -268,6 +279,23 @@ class _MediaItemState extends State<MediaItem> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final flinging = FastScrollScope.of(context);
+    if (flinging == _isFlinging) return;
+
+    _isFlinging = flinging;
+
+    // Al parar, lo que se dejó para luego es justo lo que ha quedado delante:
+    // es el momento de cargarlo, y ahora sin nadie compitiendo.
+    if (!flinging && _deferred) {
+      _deferred = false;
+      _resetPreviews();
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant MediaItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     // El recorte también identifica lo que hay que enseñar: dos celdas del
@@ -281,6 +309,8 @@ class _MediaItemState extends State<MediaItem> {
     _stopPreview();
     _stopFlipbook();
     _loadFailureReported = false;
+    _retriedAfterDrop = false;
+    _painted = null;
     _resetPreviews();
   }
 
@@ -289,7 +319,37 @@ class _MediaItemState extends State<MediaItem> {
     _cancelHoverDelay();
     _stopPreview();
     _stopFlipbook();
+    _releaseHeld();
     super.dispose();
+  }
+
+  /// Lo que esta celda tiene pedido al servicio de previsualizaciones.
+  ///
+  /// Se apunta para poder **soltarlo** al desmontarse o al pasar a ser de otro
+  /// contenido. Sin eso, desplazarse deprisa dejaba miles de peticiones vivas de
+  /// celdas que ya no existen, cada una abriendo su vídeo o cargando su fichero
+  /// entero en memoria cuando le llegaba el turno.
+  ({String path, List<Duration?> frames})? _held;
+
+  void _hold(String path, List<Duration?> frames) {
+    _releaseHeld();
+
+    for (final frame in frames) {
+      MediaPreviewService.instance.hold(path, frame: frame);
+    }
+
+    _held = (path: path, frames: frames);
+  }
+
+  void _releaseHeld() {
+    final held = _held;
+    if (held == null) return;
+
+    _held = null;
+
+    for (final frame in held.frames) {
+      MediaPreviewService.instance.release(held.path, frame: frame);
+    }
   }
 
   /// Deja la celda esperando los fotogramas que le tocan, con los que ya
@@ -303,11 +363,29 @@ class _MediaItemState extends State<MediaItem> {
         MediaPreviewService.instance.peek(widget.media.path, frame: frame),
     ];
 
+    // Una imagen de la que ya se sabe lo que mide no necesita que se le abra el
+    // fichero: se pinta y ya. Es lo que convierte mil trescientas lecturas
+    // completas de disco en ninguna.
+    if (_sizeIsKnown && _crops.isEmpty) {
+      _releaseHeld();
+      return;
+    }
+
     if (_previews.any((preview) => preview == null)) {
+      // Con la rejilla lanzada no se pide: se apunta para cuando pare.
+      if (_isFlinging) {
+        _deferred = true;
+        _releaseHeld();
+
+        return;
+      }
+
+      _hold(widget.media.path, frames);
       _loadPreviews(frames);
       return;
     }
 
+    _releaseHeld();
     _startFlipbook();
   }
 
@@ -323,8 +401,13 @@ class _MediaItemState extends State<MediaItem> {
     for (var index = 0; index < frames.length; index++) {
       if (_previews[index] != null) continue;
 
-      final preview =
-          await MediaPreviewService.instance.load(path, frame: frames[index]);
+      final preview = await MediaPreviewService.instance.load(
+        path,
+        frame: frames[index],
+        // Prescindible: si al llegar su turno esta celda ya es de otro
+        // contenido, no hay nada que enseñar y no merece abrir el fichero.
+        droppable: true,
+      );
 
       // La celda se reaprovecha al desplazar la rejilla: si mientras se pedía el
       // fotograma ha pasado a ser de otro contenido, esto ya no le sirve.
@@ -337,15 +420,75 @@ class _MediaItemState extends State<MediaItem> {
       if (!listEquals(_frames, frames)) return;
 
       if (preview == null) {
+        // Puede ser que el fichero no valga, o que el trabajo se dejara pasar
+        // por no quedar nadie esperándolo. Lo segundo no es un fallo, y esta
+        // celda sigue montada, así que se vuelve a pedir en vez de darlo por
+        // roto: dar por roto un vídeo bueno lo saca de la rejilla.
+        if (_held != null && !_retriedAfterDrop) {
+          _retriedAfterDrop = true;
+          _hold(path, frames);
+          unawaited(_loadPreviews(frames));
+
+          return;
+        }
+
+        _releaseHeld();
         _reportLoadFailure();
+
         return;
       }
+
+      _remember(preview);
 
       setState(() => _previews[index] = preview);
     }
 
+    _releaseHeld();
     _startFlipbook();
   }
+
+  /// Apunta lo que mide el fichero, para no volver a averiguarlo.
+  ///
+  /// Sólo lo que se ha tenido que descubrir: el contenido que se da de alta hoy
+  /// ya nace con su tamaño puesto, y esto es para el que entró antes de que eso
+  /// existiera. Se escribe en tandas, no una transacción por celda.
+  void _remember(MediaPreview preview) {
+    if (widget.media.hasSize) return;
+
+    final width = preview.width;
+    final height = preview.height;
+    if (width == null || height == null) return;
+
+    MediaSizeStore.instance.remember(
+      widget.media.id,
+      width: width,
+      height: height,
+    );
+  }
+
+  /// La rejilla va lanzada ahora mismo.
+  ///
+  /// Mientras lo esté, esta celda no empieza a cargar nada ni descodifica
+  /// ninguna imagen nueva: es trabajo para medio fotograma que se lo quita a las
+  /// celdas que van a quedarse delante cuando pare.
+  bool _isFlinging = false;
+
+  /// Había algo que cargar y se dejó para cuando pare.
+  bool _deferred = false;
+
+  /// El fichero que esta celda ya tiene pintado.
+  ///
+  /// Lo que ya está a la vista se sigue enseñando aunque la rejilla vaya
+  /// lanzada: volver a pintarlo no cuesta nada —está descodificado— y quitarlo
+  /// sería apagar media pantalla por gusto. Lo que se aparta es **empezar** algo
+  /// nuevo.
+  String? _painted;
+
+  /// Si ya se ha vuelto a pedir una vez lo que se dejó pasar.
+  ///
+  /// Una sola: con dos celdas peleando por el mismo fichero, reintentar sin tope
+  /// sería un bucle.
+  bool _retriedAfterDrop = false;
 
   /// Arranca el pase de fotogramas de un tramo.
   ///
@@ -511,20 +654,24 @@ class _MediaItemState extends State<MediaItem> {
   ///
   /// Sin esto la región saldría deformada: se pintaría el trozo que toca dentro
   /// de una celda con la forma del fichero entero.
+  /// El ancho del fichero: lo guardado si lo hay, y si no lo que dijo la
+  /// previsualización.
+  int? get _intrinsicWidth => widget.media.width ?? _preview?.width;
+  int? get _intrinsicHeight => widget.media.height ?? _preview?.height;
+
   double get _aspectRatio {
-    final preview = _preview;
+    final width = _intrinsicWidth;
+    final height = _intrinsicHeight;
+
+    if (width == null || height == null || width <= 0 || height <= 0) {
+      return mediaFallbackAspectRatio;
+    }
+
     // Siempre la del primer fotograma, aunque el tramo se esté moviendo: si
     // cada fotograma pusiera la suya, la celda cambiaría de forma en cada paso
     // y arrastraría con ella a toda la fila de la rejilla.
     final crop = _crops.isEmpty ? null : _crops.first;
-
-    if (crop == null) return preview?.aspectRatio ?? mediaFallbackAspectRatio;
-
-    final width = preview?.width;
-    final height = preview?.height;
-    if (width == null || height == null || width <= 0 || height <= 0) {
-      return mediaFallbackAspectRatio;
-    }
+    if (crop == null) return width / height;
 
     return crop.aspectRatio(Size(width.toDouble(), height.toDouble()));
   }
@@ -661,6 +808,15 @@ class _MediaItemState extends State<MediaItem> {
     final path = _isVideo ? _preview?.thumbnailPath : widget.media.path;
     if (path == null) return _buildPlaceholder();
 
+    // Mientras la rejilla va lanzada sólo se sigue pintando lo que ya estaba
+    // pintado. Descodificar una imagen nueva para enseñarla medio fotograma es
+    // el trabajo que hacía que desplazarse deprisa fuera lento y desigual.
+    if (_isFlinging && _painted != path) return _buildPlaceholder();
+
+    // Se apunta en el pintado a propósito y sin `setState`: no cambia nada de lo
+    // que se ve, sólo recuerda que esta celda ya tiene esto delante.
+    _painted = path;
+
     if (_crop case final crop?) return _buildCroppedContent(path, crop);
 
     return LayoutBuilder(
@@ -751,7 +907,7 @@ class _MediaItemState extends State<MediaItem> {
     final target = (layoutWidth * devicePixelRatio * mediaHoverScale).ceil();
     final stepped =
         (target / mediaDecodeWidthStep).ceil() * mediaDecodeWidthStep;
-    final intrinsic = _preview?.width;
+    final intrinsic = _intrinsicWidth;
 
     if (intrinsic == null || intrinsic <= 0) return stepped;
     return math.min(stepped, intrinsic);

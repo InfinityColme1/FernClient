@@ -8,6 +8,7 @@
 // Y que parar pare de verdad, que es lo unico que el usuario puede hacer cuando
 // se ha lanzado sobre la biblioteca entera por error.
 
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/core/services/jobs/job.dart';
@@ -92,8 +93,15 @@ class _FakeRecognizer implements MediaRecognizer {
 
   final looked = <int>[];
 
-  /// Contenidos que dan error al mirarlos.
+  /// De cuántos en cuántos se le ha ido preguntando.
+  final batches = <List<int>>[];
+
+  /// Contenidos que no se pueden mirar: se quedan fuera del resultado, como
+  /// hace el de verdad cuando no le puede sacar fotogramas.
   Set<int> broken = const {};
+
+  /// Contenidos que hacen reventar la tanda entera, como haria el motor caido.
+  Set<int> explodesOn = const {};
 
   /// Cuántas sugerencias salen de cada contenido.
   int Function(int mediaId) suggestions = (_) => 1;
@@ -110,33 +118,69 @@ class _FakeRecognizer implements MediaRecognizer {
     CancellationToken? token,
     ModelProgress? onModel,
   }) async {
-    token?.throwIfCancelled();
-    looked.add(mediaId);
+    final many = await recognizeMany(
+      targets: [RecognitionTarget(mediaId: mediaId, path: path)],
+      tree: tree,
+      token: token,
+      onModel: onModel,
+    );
 
-    if (broken.contains(mediaId)) throw StateError('fichero roto');
+    final mine = many.data?[mediaId];
+    if (mine == null) return DataException(Exception('nada'));
+
+    return DataSuccess(mine);
+  }
+
+  @override
+  Future<DataState<Map<int, MediaRecognition>>> recognizeMany({
+    required List<RecognitionTarget> targets,
+    required ModelTreeEntity tree,
+    CancellationToken? token,
+    ModelProgress? onModel,
+  }) async {
+    token?.throwIfCancelled();
+
+    final ids = [for (final target in targets) target.mediaId];
+    batches.add(ids);
+
+    if (ids.any(explodesOn.contains)) throw StateError('el motor se cayo');
+
+    final found = <int, MediaRecognition>{};
+
+    for (final target in targets) {
+      looked.add(target.mediaId);
+
+      // Un fichero roto se queda fuera del resultado, como hace el de verdad
+      // cuando no le puede sacar fotogramas: los demás de la tanda siguen.
+      if (broken.contains(target.mediaId)) continue;
+
+      found[target.mediaId] = MediaRecognition(
+        suggestions: [
+          for (var index = 0;
+              index < suggestions(target.mediaId);
+              index++)
+            RecognitionResultEntity(
+              mediaId: target.mediaId,
+              modelId: 1,
+              fernieId: 10 + index,
+              confidence: 0.9,
+              createdAt: DateTime(2026),
+            ),
+        ],
+        log: MediaRecognitionLog(
+          mediaId: target.mediaId,
+          name: 'media-${target.mediaId}.jpg',
+          models: const [],
+          at: DateTime(2026),
+        ),
+      );
+    }
 
     for (final name in announced) {
       onModel?.call(name);
     }
 
-    return DataSuccess(MediaRecognition(
-      suggestions: [
-        for (var index = 0; index < suggestions(mediaId); index++)
-          RecognitionResultEntity(
-            mediaId: mediaId,
-            modelId: 1,
-            fernieId: 10 + index,
-            confidence: 0.9,
-            createdAt: DateTime(2026),
-          ),
-      ],
-      log: MediaRecognitionLog(
-        mediaId: mediaId,
-        name: 'media-$mediaId.jpg',
-        models: const [],
-        at: DateTime(2026),
-      ),
-    ));
+    return DataSuccess(found);
   }
 
   @override
@@ -324,6 +368,18 @@ void main() {
       expect(results.saved.keys.toList()..sort(), [1, 3]);
     });
 
+    test('una tanda que revienta no para el trabajo', () async {
+      recognizer.explodesOn = {2};
+
+      final work = job([1, 2, 3]);
+      await runner().run(work.context);
+
+      // La tanda que fallo se pierde entera, pero las demas se guardan y el
+      // trabajo termina: un fallo del motor a mitad de biblioteca no puede
+      // dejar sin reconocer todo lo que venia detras.
+      expect(results.saved.keys.toList()..sort(), [1, 3]);
+    });
+
     test('el avance sigue contando el que fallo', () async {
       recognizer.broken = {2};
 
@@ -338,6 +394,50 @@ void main() {
       await runner(missingPaths: {1}).run(work.context);
 
       expect(recognizer.looked, [2]);
+    });
+  });
+
+  group('de cuantos en cuantos', () {
+    test('con pocos contenidos van de uno en uno', () async {
+      final work = job([1, 2, 3]);
+      await runner().run(work.context);
+
+      // Con pocos, lo que se nota es la barra; el ahorro de agruparlos, no.
+      expect(recognizer.batches, [
+        [1],
+        [2],
+        [3],
+      ]);
+      expect(work.reported, [0, 1, 2, 3]);
+    });
+
+    test('con muchos se agrupan sin pasarse del tope', () async {
+      final ids = [for (var id = 1; id <= 300; id++) id];
+
+      final work = job(ids);
+      await runner().run(work.context);
+
+      expect(recognizer.batches, hasLength(12));
+      expect(recognizer.batches.first, hasLength(25));
+
+      // La barra sigue hablando de contenidos: doce tramos de veinticinco.
+      expect(work.reported.first, 0);
+      expect(work.reported.last, 300);
+      expect(work.reported, hasLength(13));
+    });
+
+    test('el tope no se pasa aunque haya miles', () {
+      expect(RecognitionJobRunner.batchSizeFor(100000),
+          recognitionMediaPerBatch);
+    });
+
+    test('ninguna tanda se queda vacia ni se pierde nadie', () async {
+      final ids = [for (var id = 1; id <= 37; id++) id];
+
+      await runner().run(job(ids).context);
+
+      expect(recognizer.batches.every((one) => one.isNotEmpty), isTrue);
+      expect(recognizer.looked, ids);
     });
   });
 

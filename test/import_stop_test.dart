@@ -7,10 +7,11 @@
 // porque el usuario lo ha dicho.
 
 import 'package:Fern/core/resources/data_state.dart';
-import 'package:Fern/core/services/import_cancellation.dart';
+import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/remote_creator.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/repositories/remote_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
@@ -24,9 +25,18 @@ class _EndlessRemote implements RemoteMediaRepository {
   int produced = 0;
 
   @override
+  Future<DataState<List<RemoteCreator>>> remoteCreators(ImportSource source) async =>
+      const DataSuccess([]);
+
+  @override
+  Future<int?> countNewPosts(ImportSource source, RemoteCreator creator) async =>
+      null;
+
+  @override
   Stream<DataState<MediaSummaryEntity>> scanRemoteSource(
     ImportSource source, {
     bool untilLastImport = false,
+    Set<String> creators = const {},
   }) async* {
     for (var i = 0; i < 100; i++) {
       produced++;
@@ -50,7 +60,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late PreferencesService preferences;
-  late ImportCancellation cancellation;
+  late CancellationToken token;
   late _EndlessRemote remote;
   late ScanSourceUseCase scan;
 
@@ -58,20 +68,19 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     preferences = PreferencesService(await SharedPreferences.getInstance());
-    cancellation = ImportCancellation();
+    token = CancellationToken();
     remote = _EndlessRemote();
     scan = ScanSourceUseCase(
       localMediaRepository: _UnusedLocal(),
       remoteMediaRepository: remote,
       preferencesService: preferences,
-      cancellation: cancellation,
     );
   });
 
   /// Recorre la fuente y para en cuanto han llegado [after] contenidos.
   Future<List<MediaSummaryEntity>> scanStoppingAfter(int after) async {
     final stream = await scan.call(
-      params: (source: ImportSource.pixiv, limit: 0),
+      params: (source: ImportSource.pixiv, limit: 0, token: token, creators: const {}),
     );
 
     final received = <MediaSummaryEntity>[];
@@ -79,7 +88,7 @@ void main() {
       if (result is DataSuccess && result.data != null) {
         received.add(result.data!);
       }
-      if (received.length == after) cancellation.cancel();
+      if (received.length == after) token.cancel();
     }
 
     return received;
@@ -106,9 +115,31 @@ void main() {
     expect(preferences.getLastImport(ImportSource.pixiv), isNotNull);
   });
 
+  test('parar una importacion no para la que corre al lado', () async {
+    // Era el problema de la senal global: la levantaba quien fuera y la miraban
+    // todos. Ahora cada trabajo lleva la suya.
+    final otra = CancellationToken();
+
+    final stream = await scan.call(
+      params: (source: ImportSource.pixiv, limit: 0, token: otra, creators: const {}),
+    );
+
+    token.cancel();
+
+    expect(await stream.length, 100);
+  });
+
+  test('sin senal de parada tampoco se para nada', () async {
+    final stream = await scan.call(
+      params: (source: ImportSource.pixiv, limit: 0, token: null, creators: const {}),
+    );
+
+    expect(await stream.length, 100);
+  });
+
   test('sin parar nada, se recorre la fuente entera', () async {
     final stream = await scan.call(
-      params: (source: ImportSource.pixiv, limit: 0),
+      params: (source: ImportSource.pixiv, limit: 0, token: token, creators: const {}),
     );
 
     expect(await stream.length, 100);

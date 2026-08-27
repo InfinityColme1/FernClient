@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/data/datasources/remote_media_item.dart';
+import 'package:Fern/features/media/domain/services/reddit_post_url.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
 import 'package:http/http.dart' as http;
 
@@ -167,7 +168,7 @@ class RedditApiClient {
       ];
     }
 
-    final url = _singleUrl(post);
+    final url = redditPostUrl(post);
     if (url == null) return const [];
 
     return [
@@ -237,38 +238,6 @@ class RedditApiClient {
     }
 
     return urls;
-  }
-
-  /// De dónde se descarga una publicación que no es una galería.
-  ///
-  /// Puede ser el fichero directamente (lo que aloja Reddit) o el enlace a otro
-  /// sitio: de ese se encarga el resolvedor al descargar, que es quien sabe a
-  /// qué sitios se puede ir a buscar el vídeo. Aquí sólo se descarta lo que
-  /// desde luego no lleva a ninguna parte, como una publicación de texto.
-  String? _singleUrl(Map<String, dynamic> post) {
-    final video = _videoUrl(post['media']) ??
-        _videoUrl(post['secure_media']) ??
-        _fallbackUrl(
-          (post['preview'] as Map<String, dynamic>?)?['reddit_video_preview'],
-        );
-    if (video != null) return video;
-
-    if (post['is_self'] == true) return null;
-
-    final url = (post['url_overridden_by_dest'] ?? post['url']) as String?;
-    if (url == null || !url.startsWith('https')) return null;
-
-    return url;
-  }
-
-  String? _videoUrl(Object? media) {
-    if (media is! Map<String, dynamic>) return null;
-    return _fallbackUrl(media['reddit_video']);
-  }
-
-  String? _fallbackUrl(Object? video) {
-    if (video is! Map<String, dynamic>) return null;
-    return video['fallback_url'] as String?;
   }
 
   /// Deja el texto en algo que sirva como nombre de fichero en cualquier

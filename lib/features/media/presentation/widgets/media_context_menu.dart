@@ -41,11 +41,6 @@ class MediaContextMenu extends StatelessWidget {
   /// Si lo que se va a hacer afecta a más de un contenido.
   bool get _isBulk => targetIds.length > 1;
 
-  void _run(BuildContext context, MediaEvents event) {
-    context.read<MediaBloc>().add(event);
-    onDone();
-  }
-
   /// Marca la selección y lanza [event], en ese orden.
   ///
   /// Las acciones en tanda del bloc trabajan sobre `selectedIds`, así que actuar

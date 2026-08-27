@@ -210,7 +210,18 @@ class _MediaViewState extends State<_MediaView> {
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
-                    const Spacer(),
+                    // Lo que va a la derecha, **en una o en dos líneas**: con la
+                    // ventana en su ancho mínimo y algo marcado, la cabecera ya
+                    // no cabía. Envolviéndola, cuando cabe se ve igual que
+                    // siempre y cuando no cabe baja a una segunda línea en vez
+                    // de esconder nada.
+                    Expanded(
+                      child: Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppSpacing.s,
+                        runSpacing: AppSpacing.s,
+                        children: [
                     if (hasSelection) ...[
                       Text(
                         texts.selectedCount(selectedCount),
@@ -299,13 +310,15 @@ class _MediaViewState extends State<_MediaView> {
                               .add(MediaSortOrderChangedEvent(order));
                         },
                       ),
-                      const SizedBox(width: AppSpacing.s),
                     ],
                     SearchFilterMenu(
                       filters: state.searchFilters,
                       sourceFilters: state.sourceFilters,
                       typeFilters: state.typeFilters,
                       hasSearch: state.searchSections != null,
+                    ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

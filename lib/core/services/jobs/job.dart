@@ -22,6 +22,26 @@ enum JobType {
   /// Se llama así y no `import` porque en Dart eso es una palabra con oficio
   /// propio.
   mediaImport,
+
+  /// Una publicación con varios enlaces, esperando a que el usuario decida qué
+  /// se hace con ellos.
+  ///
+  /// **No es trabajo, es una pregunta**, y por eso no se ejecuta nunca: se queda
+  /// en la lista hasta que alguien la abre y contesta, o hasta que la quita. Ver
+  /// [isPassive].
+  linkReview,
+
+  /// Traerse los enlaces que alguien ya ha elegido.
+  linkImport,
+}
+
+extension JobTypeBehaviour on JobType {
+  /// Este trabajo no se ejecuta: espera al usuario.
+  ///
+  /// La cola lo deja donde está y no le da turno, que es lo que hace que cinco
+  /// preguntas sin contestar no dejen la aplicación sin poder hacer nada. En la
+  /// lista se ve como lo que es: algo que está esperando.
+  bool get isPassive => this == JobType.linkReview;
 }
 
 /// Por dónde va un trabajo.

@@ -409,6 +409,225 @@ void main() {
     });
   });
 
+  group('varios contenidos de una vez', () {
+    // El recorrido en lote esta demostrado equivalente al de uno en uno en
+    // model_tree_traversal_test. Lo que se comprueba aqui es lo de alrededor:
+    // que a cada contenido le llegan sus cajas y no las del vecino, que se
+    // pregunta una vez por nivel en lugar de una por contenido, y que un
+    // fichero que no se puede abrir no se lleva por delante la tanda.
+
+    /// Un reconocedor con predictor de tanda: apunta cuantas veces se le
+    /// pregunta y con cuantas imagenes cada vez.
+    ({MediaRecognizer subject, List<List<String>> calls}) batched({
+      Map<int, Map<int, int>> classes = const {
+        1: {0: 10},
+      },
+      Map<String, List<RawDetection>> sees = const {},
+      Set<String> unreadable = const {},
+    }) {
+      final calls = <List<String>>[];
+
+      return (
+        calls: calls,
+        subject: MediaRecognizer(
+          models: _FakeModels(classes),
+          durationOf: (_) async => null,
+          extractFrames: (_, at) async => const [],
+          predict: (model, imagePath, conf) async => sees[imagePath] ?? const [],
+          predictMany: (model, imagePaths, conf, token) async {
+            calls.add(imagePaths);
+
+            return [
+              for (final path in imagePaths) sees[path] ?? const <RawDetection>[],
+            ];
+          },
+        ),
+      );
+    }
+
+    test('a cada contenido le llegan sus cajas', () async {
+      final harness = batched(
+        classes: const {
+          1: {0: 10, 1: 20},
+        },
+        sees: {
+          'C:/fotos/uno.jpg': [_seen(0)],
+          'C:/fotos/dos.jpg': [_seen(1)],
+        },
+      );
+
+      final result = await harness.subject.recognizeMany(
+        targets: const [
+          RecognitionTarget(mediaId: 1, path: 'C:/fotos/uno.jpg'),
+          RecognitionTarget(mediaId: 2, path: 'C:/fotos/dos.jpg'),
+        ],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect(result, isA<DataSuccess>());
+
+      // Repartir mal no da un error: da la sugerencia de un contenido puesta en
+      // otro, y el usuario la acepta sin enterarse.
+      expect(result.data![1]!.suggestions.single.fernieId, 10);
+      expect(result.data![2]!.suggestions.single.fernieId, 20);
+    });
+
+    test('se pregunta una vez por nivel, no una por contenido', () async {
+      final harness = batched();
+
+      await harness.subject.recognizeMany(
+        targets: const [
+          RecognitionTarget(mediaId: 1, path: 'C:/fotos/uno.jpg'),
+          RecognitionTarget(mediaId: 2, path: 'C:/fotos/dos.jpg'),
+          RecognitionTarget(mediaId: 3, path: 'C:/fotos/tres.jpg'),
+        ],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect(harness.calls, hasLength(1));
+      expect(harness.calls.single, [
+        'C:/fotos/uno.jpg',
+        'C:/fotos/dos.jpg',
+        'C:/fotos/tres.jpg',
+      ]);
+    });
+
+    test('cada contenido se lleva su parte, con o sin sugerencias', () async {
+      final harness = batched(
+        sees: {
+          'C:/fotos/uno.jpg': [_seen(0)],
+        },
+      );
+
+      final result = await harness.subject.recognizeMany(
+        targets: const [
+          RecognitionTarget(mediaId: 1, path: 'C:/fotos/uno.jpg'),
+          RecognitionTarget(mediaId: 2, path: 'C:/fotos/dos.jpg'),
+        ],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      // Es justamente cuando no sale ninguna sugerencia cuando alguien abre el
+      // parte, asi que el que no propuso nada tambien tiene el suyo.
+      expect(result.data![1]!.log.name, 'uno.jpg');
+      expect(result.data![2]!.log.name, 'dos.jpg');
+      expect(result.data![2]!.suggestions, isEmpty);
+      expect(result.data![2]!.log.models, hasLength(1));
+    });
+
+    test('un fichero que no se puede abrir no se lleva la tanda', () async {
+      final calls = <List<String>>[];
+
+      final subject = MediaRecognizer(
+        models: _FakeModels(const {
+          1: {0: 10},
+        }),
+        durationOf: (path) async {
+          if (path.endsWith('roto.mp4')) throw StateError('fichero roto');
+          return null;
+        },
+        extractFrames: (_, at) async => const [],
+        predict: (model, imagePath, conf) async => const [],
+        predictMany: (model, imagePaths, conf, token) async {
+          calls.add(imagePaths);
+          return [for (final _ in imagePaths) const <RawDetection>[]];
+        },
+      );
+
+      final result = await subject.recognizeMany(
+        targets: const [
+          RecognitionTarget(mediaId: 1, path: 'C:/fotos/uno.jpg'),
+          RecognitionTarget(mediaId: 2, path: 'C:/videos/roto.mp4'),
+          RecognitionTarget(mediaId: 3, path: 'C:/fotos/tres.jpg'),
+        ],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      // En una biblioteca de miles hay ficheros movidos, corruptos y formatos
+      // raros: que uno deje sin reconocer a los otros veinticuatro es lo peor
+      // que podria hacer esto.
+      expect(result.data!.keys.toList()..sort(), [1, 3]);
+      expect(calls.single, ['C:/fotos/uno.jpg', 'C:/fotos/tres.jpg']);
+    });
+
+    test('los fotogramas de un video van en la misma pregunta', () async {
+      final calls = <List<String>>[];
+
+      final subject = MediaRecognizer(
+        models: _FakeModels(const {
+          1: {0: 10},
+        }),
+        frameSamples: () => 3,
+        durationOf: (_) async => const Duration(seconds: 3),
+        extractFrames: (path, at) async => [
+          for (final moment in at)
+            SampledFrame(
+              path: 'C:/cache/${moment.inMilliseconds}.jpg',
+              frameMs: moment.inMilliseconds,
+            ),
+        ],
+        predict: (model, imagePath, conf) async => const [],
+        predictMany: (model, imagePaths, conf, token) async {
+          calls.add(imagePaths);
+          return [for (final _ in imagePaths) const <RawDetection>[]];
+        },
+      );
+
+      await subject.recognizeMany(
+        targets: const [
+          RecognitionTarget(mediaId: 1, path: 'C:/videos/uno.mp4'),
+        ],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      // Un video eran veinte peticiones al motor, una por fotograma.
+      expect(calls, hasLength(1));
+      expect(calls.single, hasLength(3));
+    });
+
+    test('la senal de parada viaja con la pregunta', () async {
+      final token = CancellationToken();
+      CancellationToken? received;
+
+      final subject = MediaRecognizer(
+        models: _FakeModels(const {
+          1: {0: 10},
+        }),
+        durationOf: (_) async => null,
+        extractFrames: (_, at) async => const [],
+        predict: (model, imagePath, conf) async => const [],
+        predictMany: (model, imagePaths, conf, given) async {
+          received = given;
+          return [for (final _ in imagePaths) const <RawDetection>[]];
+        },
+      );
+
+      await subject.recognizeMany(
+        targets: const [
+          RecognitionTarget(mediaId: 1, path: 'C:/fotos/uno.jpg'),
+        ],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+        token: token,
+      );
+
+      // Una tanda mandada no se puede cortar desde aqui: lo unico que se puede
+      // hacer es que la senal llegue hasta el motor.
+      expect(received, same(token));
+    });
+
+    test('sin nada a lo que mirar no se pregunta', () async {
+      final harness = batched();
+
+      final result = await harness.subject.recognizeMany(
+        targets: const [],
+        tree: ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect(result.data, isEmpty);
+      expect(harness.calls, isEmpty);
+    });
+  });
+
   group('parar', () {
     test('cancelar deja de mirar', () async {
       final token = CancellationToken()..cancel();

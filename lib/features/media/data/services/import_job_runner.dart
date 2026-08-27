@@ -1,6 +1,5 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
-import 'package:Fern/core/services/import_cancellation.dart';
 import 'package:Fern/core/services/jobs/job_runner.dart';
 import 'package:Fern/features/media/data/services/import_feed.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
@@ -19,15 +18,12 @@ import 'package:Fern/features/media/domain/usecases/scan_source_usecase.dart';
 /// llegan, no un montón al final.
 class ImportJobRunner {
   final ScanSourceUseCase _scan;
-  final ImportCancellation _cancellation;
   final ImportFeed _feed;
 
   ImportJobRunner({
     required ScanSourceUseCase scan,
-    required ImportCancellation cancellation,
     required ImportFeed feed,
   })  : _scan = scan,
-        _cancellation = cancellation,
         _feed = feed;
 
   /// De dónde se trae, por el identificador de la fuente.
@@ -35,6 +31,9 @@ class ImportJobRunner {
 
   /// Hasta dónde: una cuenta, todo, o hasta la importación anterior.
   static const limitKey = 'limit';
+
+  /// Qué creadores de la fuente, cuando el usuario ha elegido unos cuantos.
+  static const creatorsKey = 'creators';
 
   /// Lo que la cola llama.
   Future<void> call(JobContext context) => run(context);
@@ -44,17 +43,21 @@ class ImportJobRunner {
     final limit = context.payload<int>(limitKey) ?? unlimitedImportLimit;
     final id = context.job.id;
 
-    // Parar desde el panel de tareas tiene que parar la importación de verdad.
-    // El recorrido de las fuentes no mira este token, mira la señal compartida,
-    // así que se le pasa el aviso.
-    //
-    // Sin esperarlo: si nadie cancela, esto no se cumple nunca.
-    context.token.whenCancelled.then((_) => _cancellation.cancel()).ignore();
-
     var arrived = 0;
 
     try {
-      final stream = await _scan(params: (source: source, limit: limit));
+      // La señal del trabajo baja hasta el recorrido de las fuentes: parar desde
+      // el panel de tareas tiene que parar la importación de verdad, y sólo
+      // ésta, no lo que se haya lanzado al lado.
+      final stream = await _scan(params: (
+        source: source,
+        limit: limit,
+        token: context.token,
+        creators: {
+          for (final one in context.payload<List<dynamic>>(creatorsKey) ?? const [])
+            if (one is String) one,
+        },
+      ));
 
       await for (final result in stream) {
         _feed.add(id, result);

@@ -34,11 +34,15 @@ class FernieModel {
 
   FernieModel();
 
-  /// [regionCount] y [mediaCount] los cuenta el repositorio: no están en la
-  /// fila, salen de contar las regiones enlazadas.
+  /// Los cuatro recuentos los cuenta el repositorio: no están en la fila, salen
+  /// de contar las regiones enlazadas. Los de «utilizable» necesitan además
+  /// mirar si el contenido de cada región ya es definitivo, que es lo único que
+  /// distingue una región que entrena de una que espera.
   FernieEntity toEntity({
     int regionCount = 0,
     int mediaCount = 0,
+    int? usableRegionCount,
+    int? usableMediaCount,
     String? linkedName,
   }) {
     return FernieEntity(
@@ -51,6 +55,8 @@ class FernieModel {
       createdAt: createdAt,
       regionCount: regionCount,
       mediaCount: mediaCount,
+      usableRegionCount: usableRegionCount,
+      usableMediaCount: usableMediaCount,
     );
   }
 

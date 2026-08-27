@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../constants/app_constants.dart';
+import '../utils/image_header.dart';
 import '../utils/media_type.dart';
 
 /// Datos necesarios para pintar un fichero multimedia en la rejilla sin tener
@@ -64,10 +65,46 @@ class MediaPreviewService {
   /// primera clave es la que lleva más tiempo sin renovarse.
   final Map<String, MediaPreview> _cache = {};
   final Map<String, Future<MediaPreview?>> _pending = {};
-  final List<Completer<void>> _waiting = [];
+
+  /// Los que esperan turno, del que lleva más tiempo al que acaba de llegar.
+  final List<Completer<void>> _waitingVideo = [];
+  final List<Completer<void>> _waitingImage = [];
 
   int _runningVideoJobs = 0;
+  int _runningImageJobs = 0;
+
+  /// Quién sigue esperando cada previsualización.
+  ///
+  /// Al desplazarse deprisa se piden miles en unos segundos y casi ninguna sigue
+  /// en pantalla cuando le llega el turno. Sin esto se hacían todas igual: se
+  /// abrían miles de vídeos y se cargaban miles de ficheros enteros en memoria
+  /// para leer una cabecera que ya no le importaba a nadie.
+  ///
+  /// La cuenta la llevan las celdas con [hold] y [release]; el trabajo que llega
+  /// a su turno sin nadie detrás no se hace. Sólo afecta a quien lo pide como
+  /// prescindible: ver [load].
+  final Map<String, int> _wanted = {};
+
   Directory? _thumbnailDir;
+
+  /// Una celda empieza a esperar esta previsualización.
+  void hold(String path, {Duration? frame}) {
+    final key = _key(path, frame);
+    _wanted[key] = (_wanted[key] ?? 0) + 1;
+  }
+
+  /// Una celda deja de esperarla: se ha desmontado, o ya es de otro contenido.
+  void release(String path, {Duration? frame}) {
+    final key = _key(path, frame);
+    final left = (_wanted[key] ?? 0) - 1;
+
+    if (left <= 0) {
+      _wanted.remove(key);
+      return;
+    }
+
+    _wanted[key] = left;
+  }
 
   /// Clave con la que se guarda una previsualización.
   ///
@@ -87,7 +124,18 @@ class MediaPreviewService {
   /// Con [frame] se saca el fotograma de ese instante en vez del de por
   /// defecto. Es lo que necesitan las regiones marcadas sobre vídeo y GIF, que
   /// llevan apuntado de qué momento son.
-  Future<MediaPreview?> load(String path, {Duration? frame}) {
+  /// Con [droppable] se acepta que el trabajo **no llegue a hacerse** si al
+  /// llegar su turno ya no queda ninguna celda esperándolo ([hold]/[release]).
+  /// Lo pide la rejilla, que monta y desmonta celdas a docenas por segundo; no
+  /// lo pide el reconocimiento ni el hasheo, cuyo trabajo no se puede dejar
+  /// caer. Un trabajo que se deja pasar devuelve `null` **sin haber fallado**:
+  /// quien lo pidió ya no está, y volver a pedirlo no cuesta más que la primera
+  /// vez.
+  Future<MediaPreview?> load(
+    String path, {
+    Duration? frame,
+    bool droppable = false,
+  }) {
     final key = _key(path, frame);
 
     final cached = _cache[key];
@@ -96,8 +144,8 @@ class MediaPreviewService {
     return _pending.putIfAbsent(key, () async {
       try {
         final preview = path.isVideoPath
-            ? await _loadVideo(path, frame: frame)
-            : await _loadImage(path);
+            ? await _loadVideo(path, frame: frame, droppable: droppable)
+            : await _loadImage(path, key: key, droppable: droppable);
         if (preview != null) _remember(key, preview);
         return preview;
       } catch (e) {
@@ -108,6 +156,10 @@ class MediaPreviewService {
       }
     });
   }
+
+  /// Si al llegar el turno queda alguien esperando esto.
+  bool _isStillWanted(String key, bool droppable) =>
+      !droppable || _wanted.containsKey(key);
 
   /// Guarda una previsualización sin dejar que la caché crezca sin fin.
   ///
@@ -244,20 +296,78 @@ class MediaPreviewService {
     await Future<void>.delayed(videoSeekSettle);
   }
 
-  Future<MediaPreview?> _loadImage(String path) async {
-    final buffer = await ui.ImmutableBuffer.fromFilePath(path);
+  /// Lo que mide una imagen, leyendo su cabecera.
+  ///
+  /// Va por turnos aunque sólo lea la cabecera: `fromFilePath` carga **el
+  /// fichero entero** en memoria antes de dejar mirar nada, así que sin tope
+  /// desplazarse deprisa por una biblioteca de fotografías grandes ponía
+  /// gigabytes en vuelo a la vez.
+  Future<MediaPreview?> _loadImage(
+    String path, {
+    required String key,
+    required bool droppable,
+  }) async {
+    await _acquireImageSlot();
     try {
-      final descriptor = await ui.ImageDescriptor.encoded(buffer);
-      final preview =
-          MediaPreview(width: descriptor.width, height: descriptor.height);
-      descriptor.dispose();
-      return preview;
+      if (!_isStillWanted(key, droppable)) return null;
+
+      // Primero por la cabecera, que son unos kilobytes. Sólo si el formato no
+      // se entiende se paga lo caro.
+      final fromHeader = await _sizeFromHeader(path);
+      if (fromHeader != null) {
+        return MediaPreview(
+          width: fromHeader.width,
+          height: fromHeader.height,
+        );
+      }
+
+      final buffer = await ui.ImmutableBuffer.fromFilePath(path);
+      try {
+        final descriptor = await ui.ImageDescriptor.encoded(buffer);
+        final preview =
+            MediaPreview(width: descriptor.width, height: descriptor.height);
+        descriptor.dispose();
+        return preview;
+      } finally {
+        buffer.dispose();
+      }
     } finally {
-      buffer.dispose();
+      _releaseImageSlot();
     }
   }
 
-  Future<MediaPreview?> _loadVideo(String path, {Duration? frame}) async {
+  /// Lo que mide una imagen, leyendo sólo el principio del fichero.
+  ///
+  /// `null` cuando el formato no está entre los que se entienden, y entonces se
+  /// cae al camino de siempre: más vale pagar el fichero entero que inventarse
+  /// un tamaño, que descolocaría la rejilla.
+  Future<ImageSize?> _sizeFromHeader(String path) async {
+    RandomAccessFile? file;
+
+    try {
+      file = await File(path).open();
+
+      final length = await file.length();
+      final head = await file.read(
+        length < imageHeaderProbeBytes ? length : imageHeaderProbeBytes,
+      );
+
+      final size = imageSizeFromHeader(head);
+      if (size == null || size.width <= 0 || size.height <= 0) return null;
+
+      return size;
+    } on Object {
+      return null;
+    } finally {
+      await file?.close();
+    }
+  }
+
+  Future<MediaPreview?> _loadVideo(
+    String path, {
+    Duration? frame,
+    bool droppable = false,
+  }) async {
     final file = File(path);
     if (!file.existsSync()) return null;
 
@@ -271,6 +381,10 @@ class MediaPreviewService {
 
     await _acquireSlot();
     try {
+      // Abrir un vídeo son segundos. Hacerlo para una celda que ya no está en
+      // pantalla es tiempo y memoria que le quitas a la que sí lo está.
+      if (!_isStillWanted(_key(path, frame), droppable)) return null;
+
       return await _extractVideoPreview(path, thumbnail, metadata, frame);
     } finally {
       _releaseSlot();
@@ -390,16 +504,42 @@ class MediaPreviewService {
       _runningVideoJobs++;
       return Future.value();
     }
+
     final completer = Completer<void>();
-    _waiting.add(completer);
+    _waitingVideo.add(completer);
     return completer.future;
   }
 
+  /// Le da el turno al **último** que lo pidió, no al primero.
+  ///
+  /// Con una cola normal, desplazarse deprisa dejaba lo que se está mirando
+  /// detrás de mil peticiones de celdas que ya no existen. El último en pedir es
+  /// el que está en pantalla ahora, y las viejas se resuelven igual de rápido
+  /// porque casi ninguna llega a abrir nada.
   void _releaseSlot() {
-    if (_waiting.isNotEmpty) {
-      _waiting.removeAt(0).complete();
+    if (_waitingVideo.isNotEmpty) {
+      _waitingVideo.removeLast().complete();
       return;
     }
     _runningVideoJobs--;
+  }
+
+  Future<void> _acquireImageSlot() {
+    if (_runningImageJobs < maxConcurrentImageJobs) {
+      _runningImageJobs++;
+      return Future.value();
+    }
+
+    final completer = Completer<void>();
+    _waitingImage.add(completer);
+    return completer.future;
+  }
+
+  void _releaseImageSlot() {
+    if (_waitingImage.isNotEmpty) {
+      _waitingImage.removeLast().complete();
+      return;
+    }
+    _runningImageJobs--;
   }
 }

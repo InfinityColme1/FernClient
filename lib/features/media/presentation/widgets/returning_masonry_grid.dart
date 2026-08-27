@@ -1,6 +1,6 @@
-import 'package:Fern/features/media/domain/services/grid_return_scroll.dart';
+import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/core/utils/masonry_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 /// La rejilla de contenido, con la vuelta del visor.
 ///
@@ -21,15 +21,21 @@ class ReturningMasonryGrid extends StatefulWidget {
   final EdgeInsets padding;
   final double cacheExtent;
   final double spacing;
-  final int itemCount;
+
+  /// Ancho partido por alto de cada celda, en orden. `null` en las que todavía
+  /// no se sepa.
+  ///
+  /// Es lo que permite calcular la rejilla entera antes de pintarla, y con ello
+  /// que la barra de desplazamiento deje de moverse sola.
+  final List<double?> ratios;
+
+  final double fallbackRatio;
 
   /// A qué posición hay que ir. `null` si no hay que ir a ninguna, que es lo
   /// normal: sólo se vuelve del visor de vez en cuando.
   final int? focusIndex;
 
-  /// La celda número [index]. La que toca centrar recibe [key]: es con lo que
-  /// se sabe dónde ha caído de verdad, si ha llegado a construirse.
-  final Widget Function(BuildContext context, int index, Key? key) itemBuilder;
+  final Widget Function(BuildContext context, int index) itemBuilder;
 
   const ReturningMasonryGrid({
     super.key,
@@ -37,8 +43,9 @@ class ReturningMasonryGrid extends StatefulWidget {
     required this.padding,
     required this.cacheExtent,
     required this.spacing,
-    required this.itemCount,
+    required this.ratios,
     required this.itemBuilder,
+    required this.fallbackRatio,
     this.focusIndex,
   });
 
@@ -48,7 +55,9 @@ class ReturningMasonryGrid extends StatefulWidget {
 
 class _ReturningMasonryGridState extends State<ReturningMasonryGrid> {
   final _controller = ScrollController();
-  final _focusKey = GlobalKey();
+
+  /// Las cuentas de la rejilla, según las va haciendo.
+  MasonryLayout _layout = MasonryLayout.empty;
 
   /// A qué celda se ha ido ya.
   int? _honoured;
@@ -79,45 +88,39 @@ class _ReturningMasonryGridState extends State<ReturningMasonryGrid> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _returnTo(index));
   }
 
-  Future<void> _returnTo(int index) async {
-    if (!mounted || !_controller.hasClients) return;
+  /// Lleva la rejilla hasta la celda [index] y la deja a media altura.
+  ///
+  /// **Exacto y de un salto.** Antes esto era una estimación por la posición en
+  /// la lista, y luego un afinado con la celda de verdad si había llegado a
+  /// construirse: en una rejilla de mampostería cada celda tiene el alto que le
+  /// toca y la cuenta se desviaba tanto como se desviaran las proporciones.
+  /// Ahora la rejilla está calculada entera, así que dónde cae una celda es un
+  /// dato, no una aproximación.
+  void _returnTo(int index) {
+    if (!mounted || !_controller.hasClients || _layout.isEmpty) return;
 
-    final position = _controller.position;
-    _controller.jumpTo(gridReturnOffset(
-      index: index,
-      count: widget.itemCount,
-      maxScrollExtent: position.maxScrollExtent,
-      viewportHeight: position.viewportDimension,
+    _controller.jumpTo(_layout.offsetToCentre(
+      index,
+      _controller.position.viewportDimension,
     ));
-
-    // Y se afina. Lo de arriba es una estimación por la posición en la lista: en
-    // una rejilla de mampostería cada celda tiene el alto que le toca, y la
-    // cuenta se desvía tanto como se desvíen las proporciones. Después del
-    // salto, si la celda se ha llegado a construir, ya se sabe dónde cae de
-    // verdad y se corrige.
-    await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
-
-    final cell = _focusKey.currentContext;
-    if (cell == null) return;
-
-    await Scrollable.ensureVisible(cell, alignment: 0.5);
   }
 
   @override
   Widget build(BuildContext context) {
-    return MasonryGridView.count(
-      controller: _controller,
-      padding: widget.padding,
-      cacheExtent: widget.cacheExtent,
-      crossAxisCount: widget.columns,
-      mainAxisSpacing: widget.spacing,
-      crossAxisSpacing: widget.spacing,
-      itemCount: widget.itemCount,
-      itemBuilder: (context, index) => widget.itemBuilder(
-        context,
-        index,
-        index == widget.focusIndex ? _focusKey : null,
+    // Mientras la rejilla va lanzada, las celdas no empiezan a cargar nada: se
+    // pedirían cientos de miniaturas que no da tiempo a enseñar, y ese trabajo
+    // se lo quitan a las que sí se van a quedar delante.
+    return FastScrollDetector(
+      child: FernMasonryGrid(
+        controller: _controller,
+        padding: widget.padding,
+        cacheExtent: widget.cacheExtent,
+        columns: widget.columns,
+        spacing: widget.spacing,
+        ratios: widget.ratios,
+        fallbackRatio: widget.fallbackRatio,
+        onLayout: (layout) => _layout = layout,
+        itemBuilder: widget.itemBuilder,
       ),
     );
   }

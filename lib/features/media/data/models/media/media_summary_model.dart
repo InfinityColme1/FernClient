@@ -41,6 +41,15 @@ class MediaSummaryModel {
   @Index()
   bool hasPendingSuggestions = false;
 
+  /// Lo que mide el contenido, en píxeles. `null` mientras no se sepa.
+  ///
+  /// Se guarda para que la rejilla no tenga que abrir el fichero sólo para saber
+  /// cómo colocarlo: leer la cabecera de una imagen obliga a cargarla entera en
+  /// memoria, y con mil contenidos eso es lo que hacía que desplazarse deprisa
+  /// fuera a tirones.
+  int? mediaWidth;
+  int? mediaHeight;
+
   /// El usuario ha marcado **este contenido** como NSFW, uno a uno o en tanda.
   ///
   /// Es una marca propia y no la que hereda de sus etiquetas: las dos existen y
@@ -95,6 +104,8 @@ class MediaSummaryModel {
         importSource: ImportSource.fromId(importSource),
         hasPendingSuggestions: hasPendingSuggestions,
         recognizedAt: recognizedAt,
+        width: mediaWidth,
+        height: mediaHeight,
     );
   }
 
@@ -105,7 +116,9 @@ class MediaSummaryModel {
       ..isImported = entity.isImported
       ..isDeleted = entity.isDeleted
       ..deletedAt = entity.deletedAt
-      ..importSource = entity.importSource.id;
+      ..importSource = entity.importSource.id
+      ..mediaWidth = entity.width
+      ..mediaHeight = entity.height;
     return model;
   }
 }

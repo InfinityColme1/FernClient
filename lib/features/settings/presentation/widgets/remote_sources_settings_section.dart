@@ -8,6 +8,9 @@ import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.da
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
+import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/settings/domain/entities/source_guide.dart';
+import 'package:Fern/features/settings/presentation/widgets/source_guide_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -146,8 +149,13 @@ class _RemoteSourcesSettingsSectionState
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
+        _title(context, ImportSource.pixiv.label ?? ''),
+        _description(context, texts.pixivGuideIntro),
+        _guide(context, ImportSource.pixiv),
+        const SizedBox(height: AppSpacing.xl),
         _title(context, texts.redditTitle),
         _description(context, texts.redditDescription),
+        _guide(context, ImportSource.reddit),
         const SizedBox(height: AppSpacing.l),
         FernLabeledTextField(
           label: texts.redditClientId,
@@ -183,6 +191,7 @@ class _RemoteSourcesSettingsSectionState
         const SizedBox(height: AppSpacing.xl),
         _title(context, texts.danbooruTitle),
         _description(context, texts.danbooruDescription),
+        _guide(context, ImportSource.danbooru),
         const SizedBox(height: AppSpacing.l),
         FernLabeledTextField(
           label: texts.danbooruUsername,
@@ -203,6 +212,7 @@ class _RemoteSourcesSettingsSectionState
         const SizedBox(height: AppSpacing.xl),
         _title(context, texts.gelbooruTitle),
         _description(context, texts.gelbooruDescription),
+        _guide(context, ImportSource.gelbooru),
         const SizedBox(height: AppSpacing.l),
         FernLabeledTextField(
           label: texts.gelbooruUserId,
@@ -223,6 +233,7 @@ class _RemoteSourcesSettingsSectionState
         const SizedBox(height: AppSpacing.xl),
         _title(context, texts.pinterestTitle),
         _description(context, texts.pinterestDescription),
+        _guide(context, ImportSource.pinterest),
         const SizedBox(height: AppSpacing.l),
         FernLabeledTextField(
           label: texts.pinterestUsername,
@@ -235,6 +246,7 @@ class _RemoteSourcesSettingsSectionState
         const SizedBox(height: AppSpacing.xl),
         _title(context, texts.pawchiveTitle),
         _description(context, texts.pawchiveDescription),
+        _guide(context, ImportSource.pawchive),
         const SizedBox(height: AppSpacing.l),
         // Esta sí es de `BlocSelector`: es una casilla, se repinta entera con
         // cada cambio y no hay ningún cursor que mover de sitio.
@@ -254,6 +266,35 @@ class _RemoteSourcesSettingsSectionState
           ),
         ),
       ],
+    );
+  }
+
+  /// El botón que abre la guía de una fuente.
+  ///
+  /// Todas la tienen porque todas piden algo que no es evidente, y en todas el
+  /// paso que se falla es del mismo tipo: uno que la otra web deja pasar sin
+  /// quejarse y que rompe lo demás en silencio.
+  Widget _guide(BuildContext context, ImportSource source) {
+    final texts = AppLocalizations.of(context);
+
+    final guide = sourceGuideFor(source, texts);
+    if (guide == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: FernPillButton(
+          label: texts.redditGuideAction,
+          icon: Icons.help_outline,
+          backgroundColor: context.colors.secondary,
+          foregroundColor: context.colors.black,
+          onPressed: () => showFernDialog<void, Never>(
+            context: context,
+            builder: (_) => SourceGuideDialog(guide: guide),
+          ),
+        ),
+      ),
     );
   }
 

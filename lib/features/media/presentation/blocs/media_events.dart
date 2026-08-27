@@ -7,6 +7,11 @@ import 'package:Fern/features/media/domain/entities/media/media_summary_entity.d
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 
+/// Los eventos del bloc de contenido.
+///
+/// **No son `Equatable` a propósito.** `bloc` no descarta eventos repetidos, así
+/// que compararlos no decide nada; cuatro de ellos llegaron a declarar un `props`
+/// con `@override` que no sobreescribía nada y no lo leía nadie.
 abstract class MediaEvents {
   const MediaEvents();
 }
@@ -155,19 +160,24 @@ class AddTagToMediaEvent extends MediaEvents {
   final List<int> mediaIds;
 
   const AddTagToMediaEvent({required this.tagId, required this.mediaIds});
-
-  @override
-  List<Object?> get props => [tagId, mediaIds];
 }
 
 /// Enciende o apaga una clase de contenido en el filtro de la cabecera.
+/// Trae lo de unos creadores concretos de la fuente que se esté mirando.
+///
+/// Va aparte de [ScanSourceEvent] porque no es lo mismo: aquél recorre la fuente
+/// entera y éste sólo lo de quien se haya elegido en las tarjetas.
+class ScanCreatorsEvent extends MediaEvents {
+  final int limit;
+  final Set<String> creators;
+
+  const ScanCreatorsEvent({required this.limit, required this.creators});
+}
+
 class ToggleTypeFilterEvent extends MediaEvents {
   final MediaKind kind;
 
   const ToggleTypeFilterEvent(this.kind);
-
-  @override
-  List<Object?> get props => [kind];
 }
 
 /// Cambia en qué orden se pinta la biblioteca.
@@ -175,9 +185,6 @@ class MediaSortOrderChangedEvent extends MediaEvents {
   final MediaSortOrder order;
 
   const MediaSortOrderChangedEvent(this.order);
-
-  @override
-  List<Object?> get props => [order];
 }
 
 /// Marca de golpe todo lo que hay a la vista.
@@ -189,9 +196,6 @@ class SelectAllMediaEvent extends MediaEvents {
   final List<int> ids;
 
   const SelectAllMediaEvent(this.ids);
-
-  @override
-  List<Object?> get props => [ids];
 }
 
 /// Vuelve a pedir el listado que se esté enseñando, sea el que sea.

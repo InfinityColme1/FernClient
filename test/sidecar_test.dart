@@ -14,6 +14,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_client.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_paths.dart';
 import 'package:Fern/features/recognition/data/services/sidecar_process.dart';
@@ -296,6 +297,58 @@ void main() {
               .having((error) => error.isCancelled, 'isCancelled', isTrue),
         ),
       );
+    });
+
+    test('la senal de parada llega al sidecar sin que nadie la traduzca',
+        () async {
+      final channel = _FakeChannel();
+      final client = SidecarClient(channel);
+      final token = CancellationToken();
+
+      final answer = client.call(
+        'predict',
+        params: const {'images': ['a.jpg', 'b.jpg']},
+        timeout: Duration.zero,
+        token: token,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final predictId = channel.last['id'] as String;
+
+      // Una tanda de sesenta imagenes no se puede cortar desde aqui una vez
+      // mandada: lo unico que se puede hacer es decirselo al sidecar, que la
+      // mira entre imagen e imagen.
+      token.cancel();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(channel.last['method'], 'cancel');
+      expect(channel.last['params'], {'target': predictId});
+
+      channel.reply(channel.last['id'] as String, {'cancelled': true});
+      channel.fail(predictId, 'CANCELLED', 'Prediction cancelled');
+
+      await expectLater(answer, throwsA(isA<SidecarException>()));
+    });
+
+    test('parar despues de contestar no manda nada', () async {
+      final channel = _FakeChannel();
+      final client = SidecarClient(channel);
+      final token = CancellationToken();
+
+      final answer = client.call('ping', token: token);
+      await Future<void>.delayed(Duration.zero);
+
+      channel.reply(channel.last['id'] as String, {'pong': true});
+      await answer;
+
+      final before = channel.sent.length;
+
+      // Pedir parar lo que ya termino dejaria la marca puesta en el sidecar para
+      // siempre: la limpia al terminar la peticion, no despues.
+      token.cancel();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(channel.sent, hasLength(before));
     });
   });
 }

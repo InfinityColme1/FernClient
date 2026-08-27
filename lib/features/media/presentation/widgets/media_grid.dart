@@ -110,6 +110,17 @@ class MediaGrid extends StatelessWidget {
   /// leyendo no se puede decir que no haya nada, todavía no se sabe.
   final bool isLoading;
 
+  /// Lo que está en marcha es una importación, y no una operación sobre lo que
+  /// ya hay.
+  ///
+  /// Cambia lo que se ve y, sobre todo, **lo que se puede hacer**. El velo de
+  /// espera existe para tapar contenido que está a punto de cambiar: mientras se
+  /// borra una selección o se recarga una lista, tocar algo sería tocar lo que
+  /// ya no va a estar. Una importación no cambia nada de lo que hay —sólo va
+  /// añadiendo—, así que taparlo era impedir mirar la biblioteca durante los
+  /// veinte minutos que tarda en traerse mil ficheros.
+  final bool isImporting;
+
   /// Qué hacer si el usuario quiere parar lo que se está haciendo. Con esto
   /// puesto, el indicador de espera lleva encima el botón de parar; sin ello,
   /// sólo se espera.
@@ -125,6 +136,7 @@ class MediaGrid extends StatelessWidget {
     required this.columns,
     this.hasSurface = true,
     this.isLoading = false,
+    this.isImporting = false,
     this.onStop,
     this.returnsToViewed = false,
   })  : sections = null,
@@ -163,6 +175,7 @@ class MediaGrid extends StatelessWidget {
     this.isLoading = false,
     this.emptyMessage,
   })  : mediaList = const [],
+        isImporting = false,
         sections = null,
         onStop = null,
         returnsToViewed = false;
@@ -178,6 +191,7 @@ class MediaGrid extends StatelessWidget {
     this.isLoading = false,
     this.onStop,
   })  : mediaList = const [],
+        isImporting = false,
         returnsToViewed = false,
         crops = null,
         selectedCropIds = const {},
@@ -253,6 +267,21 @@ class MediaGrid extends StatelessWidget {
 
     final highlight = getIt<RecognitionHighlight>();
 
+    // Importando no se tapa: lo que llega se suma a lo que ya hay, y taparlo
+    // sería impedir mirar la biblioteca mientras dura. La cuenta y el botón de
+    // parar se enseñan encima, sin quitarle el paso a nada.
+    if (isLoading && isImporting) {
+      return Padding(
+        padding: _padding,
+        child: Column(
+          children: [
+            _importingBar(context),
+            Expanded(child: _framed(content, orderedIds, highlight)),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: _padding,
       child: FernBusyOverlay(
@@ -262,20 +291,50 @@ class MediaGrid extends StatelessWidget {
         // Las marcas van **encima** del scroll y fuera de la superficie: dicen a
         // qué altura está lo señalado, que en una rejilla de trescientas
         // miniaturas casi siempre queda fuera de la pantalla.
-        child: Stack(
-          children: [
-            hasSurface
-                ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
-                : content,
-            ListenableBuilder(
-              listenable: highlight,
-              builder: (context, _) => HighlightScrollMarks(
-                orderedIds: orderedIds,
-                highlighted: highlight.mediaIds,
-              ),
-            ),
-          ],
+        child: _framed(content, orderedIds, highlight),
+      ),
+    );
+  }
+
+  /// La rejilla con sus marcas de desplazamiento encima.
+  ///
+  /// Las marcas van **encima** del scroll y fuera de la superficie: dicen a qué
+  /// altura está lo señalado, que en una rejilla de trescientas miniaturas casi
+  /// siempre queda fuera de la pantalla.
+  Widget _framed(
+    Widget content,
+    List<int> orderedIds,
+    RecognitionHighlight highlight,
+  ) {
+    return Stack(
+      children: [
+        hasSurface
+            ? FernSurface(clipBehavior: Clip.antiAlias, child: content)
+            : content,
+        ListenableBuilder(
+          listenable: highlight,
+          builder: (context, _) => HighlightScrollMarks(
+            orderedIds: orderedIds,
+            highlighted: highlight.mediaIds,
+          ),
         ),
+      ],
+    );
+  }
+
+  /// Lo que se enseña mientras entra contenido: que está entrando, y el botón
+  /// de parar. Encima de la rejilla y sin quitarle el paso a nada.
+  Widget _importingBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s),
+      child: Row(
+        children: [
+          const Expanded(child: LinearProgressIndicator(minHeight: 2)),
+          if (_stopButton(context) case final stop?) ...[
+            const SizedBox(width: AppSpacing.s),
+            stop,
+          ],
+        ],
       ),
     );
   }
@@ -316,11 +375,38 @@ class MediaGrid extends StatelessWidget {
       cacheExtent: mediaGridCacheExtent,
       columns: columns,
       spacing: AppSpacing.s,
-      itemCount: mediaList.length,
+      // Con esto la rejilla se calcula entera antes de pintar nada, y la barra
+      // de desplazamiento deja de moverse sola.
+      ratios: [for (final media in mediaList) _ratioOf(media)],
+      fallbackRatio: mediaFallbackAspectRatio,
       focusIndex: _returnIndex,
-      itemBuilder: (context, index, key) =>
-          _buildItem(mediaList[index], orderedIds, requestMenu, key),
+      itemBuilder: (context, index) =>
+          _buildItem(mediaList[index], orderedIds, requestMenu),
     );
+  }
+
+  /// La proporción de un recorte: la de la región, no la del fichero.
+  ///
+  /// Sin el tamaño del fichero no se puede saber: una región es una fracción de
+  /// él, y una fracción de algo que no se sabe cuánto mide no mide nada.
+  double? _cropRatioOf(MediaCrop crop) {
+    final media = crop.media;
+    if (!media.hasSize) return null;
+
+    return crop.crop.aspectRatio(
+      Size(media.width!.toDouble(), media.height!.toDouble()),
+    );
+  }
+
+  /// La proporción de un contenido, o `null` si todavía no se sabe.
+  ///
+  /// Sale del sumario y no del fichero: es justamente lo que se guarda para no
+  /// tener que abrirlo. Lo que no la tenga se coloca con la de reserva y se
+  /// recoloca solo en cuanto la rejilla la descubra.
+  double? _ratioOf(MediaSummaryEntity media) {
+    if (!media.hasSize) return null;
+
+    return media.width! / media.height!;
   }
 
   /// A qué celda hay que volver, si es que hay que volver a alguna.
@@ -385,13 +471,13 @@ class MediaGrid extends StatelessWidget {
   /// La rejilla de recortes. Se arma igual que la de contenidos: lo único que
   /// cambia es que cada celda lleva su región y su propia selección.
   Widget _buildCropGrid(List<MediaCrop> crops) {
-    return MasonryGridView.count(
+    return ReturningMasonryGrid(
       padding: EdgeInsets.all(_inset),
       cacheExtent: mediaGridCacheExtent,
-      crossAxisCount: columns,
-      mainAxisSpacing: AppSpacing.s,
-      crossAxisSpacing: AppSpacing.s,
-      itemCount: crops.length,
+      columns: columns,
+      spacing: AppSpacing.s,
+      ratios: [for (final crop in crops) _cropRatioOf(crop)],
+      fallbackRatio: mediaFallbackAspectRatio,
       itemBuilder: (context, index) {
         final crop = crops[index];
 
@@ -423,9 +509,8 @@ class MediaGrid extends StatelessWidget {
   Widget _buildItem(
     MediaSummaryEntity media,
     List<int> orderedIds,
-    RequestMediaMenu requestMenu, [
-    Key? key,
-  ]) {
+    RequestMediaMenu requestMenu,
+  ) {
     final highlight = getIt<RecognitionHighlight>();
 
     return BlocSelector<MediaBloc, MediaStates, Set<int>>(

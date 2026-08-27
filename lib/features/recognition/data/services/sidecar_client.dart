@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:Fern/core/services/jobs/cancellation_token.dart';
+
 import 'package:Fern/features/recognition/data/services/sidecar_process.dart';
 
 /// Un fallo que el sidecar sabe nombrar.
@@ -70,6 +72,7 @@ class SidecarClient {
     Map<String, dynamic> params = const {},
     void Function(Map<String, dynamic> data)? onProgress,
     Duration? timeout,
+    CancellationToken? token,
   }) {
     if (_isClosed) {
       return Future.error(
@@ -88,6 +91,13 @@ class SidecarClient {
       'method': method,
       'params': params,
     }));
+
+    // La señal de quien llama se traduce a una petición de parada en cuanto se
+    // levanta. Hace falta aquí y no fuera porque el identificador de la petición
+    // sólo se conoce aquí dentro, y sin él no hay a qué mandar el «para».
+    if (token != null) {
+      unawaited(token.whenCancelled.then((_) => cancel(id)));
+    }
 
     final effective = timeout ?? this.timeout;
 
@@ -113,6 +123,10 @@ class SidecarClient {
   /// Va por su propia petición porque el sidecar está ocupado con la otra: lo
   /// que hace es levantar una bandera que el trabajo mira entre paso y paso.
   Future<void> cancel(String requestId) async {
+    // Si ya contestó no hay nada que parar, y pedirlo dejaría la marca puesta en
+    // el sidecar para siempre: la limpia al terminar la petición, no después.
+    if (!_pending.containsKey(requestId)) return;
+
     try {
       await call('cancel', params: {'target': requestId});
     } on SidecarException {

@@ -30,6 +30,7 @@ DatasetRegion _region({
   double y = 0.2,
   double w = 0.3,
   double h = 0.3,
+  bool isDefinitive = true,
 }) {
   return DatasetRegion(
     regionId: _nextId++,
@@ -41,6 +42,7 @@ DatasetRegion _region({
     w: w,
     h: h,
     classIndex: classIndex,
+    isDefinitive: isDefinitive,
   );
 }
 
@@ -188,6 +190,31 @@ void main() {
       ]);
 
       expect(plan.images.single.labels, hasLength(1));
+    });
+
+    test('una region sobre contenido sin confirmar no entra', () {
+      // D29: se guarda igual, esperando a que el contenido se confirme, pero no
+      // entrena. La rejilla de fernies lo avisa con su icono de peligro.
+      final plan = _plan([
+        _region(mediaId: 1, isDefinitive: false),
+        _region(mediaId: 2),
+      ]);
+
+      expect(plan.images, hasLength(1));
+      expect(plan.images.single.mediaId, 2);
+    });
+
+    test('un contenido sin confirmar no arrastra al resto del reparto', () {
+      // Ni siquiera aparece como contenido vacio: lo que no entrena no ocupa
+      // sitio en ninguna de las tres partes.
+      final plan = _plan([
+        for (var id = 1; id <= 10; id++) _region(mediaId: id),
+        for (var id = 11; id <= 20; id++)
+          _region(mediaId: id, isDefinitive: false),
+      ]);
+
+      expect(plan.images, hasLength(10));
+      expect(plan.regionsByClass[0], 10);
     });
   });
 

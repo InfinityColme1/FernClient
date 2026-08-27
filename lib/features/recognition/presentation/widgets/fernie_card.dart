@@ -15,7 +15,6 @@ import 'package:Fern/features/recognition/domain/usecases/update_fernie_usecase.
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_states.dart';
-import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
@@ -348,12 +347,18 @@ class _FernieCardState extends State<FernieCard> {
     final theme = Theme.of(context);
     final fernie = widget.fernie;
 
+    // Los avisos se miden sobre **lo que entrena**, no sobre lo marcado: un
+    // fernie con cien regiones sobre contenido sin confirmar entrena con cero, y
+    // decirle aquí que va sobrado es mentirle justo donde iba a mirar.
+    final usable = fernie.usableRegionCount;
+    final pending = fernie.regionCount - usable;
+
     final warnings = <String>[
-      if (fernie.regionCount < fernieMinRegions) texts.fernieFewRegions,
-      if (fernie.regionCount >= fernieMinRegions &&
-          fernie.regionCount < fernieRecommendedRegions)
+      if (pending > 0) texts.ferniePendingRegions(pending),
+      if (usable < fernieMinRegions) texts.fernieFewRegions,
+      if (usable >= fernieMinRegions && usable < fernieRecommendedRegions)
         texts.fernieRecommendedRegions(fernieRecommendedRegions),
-      if (fernie.regionCount > 0 && fernie.mediaCount < fernieMinDistinctMedia)
+      if (usable > 0 && fernie.usableMediaCount < fernieMinDistinctMedia)
         texts.fernieLowVariety,
       // El enlace apunta a algo que ya no está: el fernie sigue entrenando, pero
       // ha dejado de proponer nada y conviene enterarse aquí y no al reconocer.
