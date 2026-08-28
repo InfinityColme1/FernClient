@@ -12,6 +12,23 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.1.1
+
+- **Filtro en los gestores.** Las listas de etiquetas y de creadores traen un
+  campo para acotarlas por nombre, sin distinguir mayúsculas y buscando por
+  cualquier parte del nombre.
+- **La jerarquía de etiquetas se toca arrastrando.** Se suelta una etiqueta sobre
+  otra y se elige entre colgarla de ella o relacionar las dos. Antes había que
+  abrir la ficha de cada una.
+- **Los nombres de etiqueta son únicos.** Ya no se pueden crear dos que se llamen
+  igual, ni renombrar una con el nombre de otra.
+- **Importar en paralelo de verdad.** Salir de la pantalla de importación y
+  volver ya no deja fuera lo que estaba llegando, el indicador sigue puesto
+  mientras dure, y parar avisa de que está parando.
+- **Los avisos se amontonan** en vez de taparse unos a otros, hasta tres a la vez.
+
+---
+
 ## Novedades de la 2.1
 
 - **Volumen del visor.** La línea de tiempo de los vídeos trae un botón que abre
