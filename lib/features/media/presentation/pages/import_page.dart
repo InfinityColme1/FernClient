@@ -10,6 +10,8 @@ import 'package:Fern/features/media/presentation/widgets/remote_creator_card.dar
 import 'package:Fern/features/media/domain/usecases/get_remote_creators_usecase.dart';
 import 'package:Fern/features/media/domain/entities/remote_creator.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/services/jobs/job.dart';
+import 'package:Fern/core/services/jobs/job_queue.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 // Experimental: de aquí sale a dónde se manda al usuario a iniciar sesión.
@@ -97,16 +99,60 @@ class _ImportView extends StatefulWidget {
 class _ImportViewState extends State<_ImportView> {
   late final RecognitionHighlight _highlight = getIt<RecognitionHighlight>();
 
+  /// Si hay una importación corriendo **de verdad**.
+  ///
+  /// Sale de la cola de trabajos y no del estado de la pantalla. El estado dice
+  /// «ocupado» también mientras se relee la lista al entrar, y esa relectura
+  /// termina enseguida: saliendo de la pantalla y volviendo, el indicador se
+  /// apagaba aunque la importación siguiera. La cola es la que sabe.
+  bool _isImporting = false;
+
+  /// Ya se ha pedido parar y todavía no ha parado.
+  bool _isStopping = false;
+
+  StreamSubscription<List<Job>>? _jobs;
+
   @override
   void initState() {
     super.initState();
     _highlight.addListener(_onRecognized);
+
+    _onJobs(getIt<JobQueue>().activeJobs);
+    _jobs = getIt<JobQueue>().changes.listen(_onJobs);
   }
 
   @override
   void dispose() {
     _highlight.removeListener(_onRecognized);
+    _jobs?.cancel();
     super.dispose();
+  }
+
+  /// Se ha movido algo en la cola de trabajos.
+  void _onJobs(List<Job> jobs) {
+    final importing = jobs.any((job) => job.type == JobType.mediaImport);
+    if (importing == _isImporting || !mounted) return;
+
+    setState(() {
+      _isImporting = importing;
+
+      // Ha parado: lo pedido ya está hecho, así que el botón vuelve.
+      if (!importing) _isStopping = false;
+    });
+  }
+
+  /// Parar la importación.
+  ///
+  /// **No es inmediato y no puede serlo**: la señal se mira entre un contenido y
+  /// el siguiente, así que lo que se esté descargando termina de llegar antes de
+  /// que el recorrido pueda mirarla. Se dice, entonces: el botón se apaga y un
+  /// aviso cuenta que está parando. Sin eso, pulsar parar no hacía nada visible
+  /// durante varios segundos y se volvía a pulsar.
+  void _stop(BuildContext context) {
+    context.read<MediaBloc>().add(const StopImportEvent());
+
+    setState(() => _isStopping = true);
+    showFernToast(context, AppLocalizations.of(context).importStopping);
   }
 
   /// Un reconocimiento ha terminado sobre esta pantalla.
@@ -851,16 +897,16 @@ class _ImportViewState extends State<_ImportView> {
               : MediaGrid(
                   mediaList: visible,
                   columns: mediaGridColumns,
-                  isLoading: state.isBusy,
+                  isLoading: state.isBusy || _isImporting,
                   // Lo que hay en marcha aquí es traerse contenido: no tapa
                   // nada, así que se puede seguir mirando y tocando lo que ya
                   // ha llegado mientras llega el resto.
                   isImporting: true,
                   returnsToViewed: true,
+                  isStopping: _isStopping,
                   // Una importación puede durar mucho, así que se puede parar
                   // desde donde se está mirando cómo va. Lo ya traído se queda.
-                  onStop: () =>
-                      context.read<MediaBloc>().add(const StopImportEvent()),
+                  onStop: () => _stop(context),
                 ),
         );
       },

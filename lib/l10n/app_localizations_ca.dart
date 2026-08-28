@@ -3719,4 +3719,23 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get viewerVolume => 'Volum';
+
+  @override
+  String get tagNameTaken => 'Ja hi ha una etiqueta amb aquest nom';
+
+  @override
+  String get filterByNameHint => 'Filtrar per nom';
+
+  @override
+  String tagDropAsChild(String name) {
+    return 'Penjar de «$name»';
+  }
+
+  @override
+  String tagDropAsSibling(String name) {
+    return 'Relacionar amb «$name»';
+  }
+
+  @override
+  String get importStopping => 'Aturant la importació…';
 }

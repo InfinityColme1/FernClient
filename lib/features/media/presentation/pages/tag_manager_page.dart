@@ -1,9 +1,14 @@
 import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/core/navigation/screen_choreography.dart';
+import 'package:Fern/core/navigation/screen_slot.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
@@ -80,17 +85,56 @@ class _TagManagerPageState extends State<TagManagerPage> {
     getIt<MediaBloc>().add(LoadMediaByTagEvent(tag.id));
   }
 
-  /// Etiqueta de la que cuelga [id], si cuelga de alguna. La jerarquía sólo se
-  /// conoce de arriba abajo (cada etiqueta tiene sus hijas), así que el padre se
-  /// busca recorriendo el árbol.
-  TagEntity? _parentOf(List<TagEntity> tags, int id) {
-    for (final tag in tags) {
-      if (tag.children.any((child) => child.id == id)) return tag;
+  /// Se ha soltado una etiqueta sobre otra y se ha elegido qué hacer.
+  ///
+  /// Las dos opciones tocan cosas distintas: colgar cambia el árbol, relacionar
+  /// crea un enlace entre dos etiquetas que se quedan donde estaban.
+  Future<void> _onDropped(
+    TagEntity dragged,
+    TagEntity target,
+    TagDropMode mode,
+  ) async {
+    final done = switch (mode) {
+      TagDropMode.child => await _hangFrom(dragged, target),
+      TagDropMode.related => await _relate(dragged, target),
+    };
 
-      final found = _parentOf(tag.children, id);
-      if (found != null) return found;
-    }
-    return null;
+    if (!done || !mounted) return;
+
+    // El árbol cambia en el menú lateral y en esta lista, así que se relee. Las
+    // relacionadas no salen en el menú, pero sí en la ficha de las dos.
+    _tagsBloc.add(const LoadTagsEvent());
+  }
+
+  /// Cuelga [tag] de [parent].
+  ///
+  /// Se guarda la etiqueta entera y no sólo su madre porque `updateTag` escribe
+  /// lo que se le da: las del árbol vienen con su nombre, su avatar y sus
+  /// direcciones, así que pasan intactas.
+  Future<bool> _hangFrom(TagEntity tag, TagEntity parent) async {
+    final result = await getIt<UpdateTagUseCase>()(
+      params: UpdateTagParams(tag: tag, parent: parent),
+    );
+
+    return result is DataSuccess;
+  }
+
+  /// Relaciona [tag] con [other], sin moverlas del árbol.
+  ///
+  /// Se manda la lista entera y no sólo la nueva: es como se guardan las
+  /// relacionadas, sustituyendo lo que hubiera. La relación es simétrica y de
+  /// eso se encarga el repositorio.
+  Future<bool> _relate(TagEntity tag, TagEntity other) async {
+    final ids = {for (final each in tag.siblings) each.id};
+
+    // Ya lo estaban: no hay nada que guardar ni nada que decir.
+    if (!ids.add(other.id)) return false;
+
+    final result = await getIt<SaveTagSiblingsUseCase>()(
+      params: SaveTagSiblingsParams(tagId: tag.id, siblingIds: ids.toList()),
+    );
+
+    return result is DataSuccess;
   }
 
   TagEntity? _selectedTag(List<TagRow> rows) {
@@ -114,16 +158,25 @@ class _TagManagerPageState extends State<TagManagerPage> {
           // primera lectura está en marcha no se dice que no haya ninguna,
           // todavía no se sabe: se espera con el indicador.
           if (rows.isEmpty) {
-            return Padding(
-              padding: AppSpacing.pagePadding,
-              child: state.isLoaded
-                  ? FernEmptyState(
-                      imageAsset: fernEmptyImage,
-                      message: AppLocalizations.of(context).noTagsYet,
-                      description:
-                          AppLocalizations.of(context).noTagsYetHint,
-                    )
-                  : const Center(child: FernProgressIndicator()),
+            // Con la transición de la pantalla, igual que el resto.
+            //
+            // Sin ella, la pantalla vacía era lo único que no pasaba por la
+            // coreografía: al ir de una gestión a otra estando las dos vacías,
+            // los dos textos se pintaban a la vez y centrados en el mismo sitio,
+            // así que se leían uno encima del otro.
+            return ScreenSlotTransition(
+              slot: ScreenSlot.grid,
+              child: Padding(
+                padding: AppSpacing.pagePadding,
+                child: state.isLoaded
+                    ? FernEmptyState(
+                        imageAsset: fernEmptyImage,
+                        message: AppLocalizations.of(context).noTagsYet,
+                        description:
+                            AppLocalizations.of(context).noTagsYetHint,
+                      )
+                    : const Center(child: FernProgressIndicator()),
+              ),
             );
           }
 
@@ -143,7 +196,7 @@ class _TagManagerPageState extends State<TagManagerPage> {
               // nacer con los de la nueva.
               key: ValueKey(selected.id),
               tag: selected,
-              parent: _parentOf(state.tags, selected.id),
+              parent: TagList.parentOf(state.tags, selected.id),
             ),
             grid: _tagMedia(),
             // Al guardar o borrar una etiqueta la lista se vuelve a leer: hasta
@@ -157,6 +210,7 @@ class _TagManagerPageState extends State<TagManagerPage> {
                 tags: state.tags,
                 selectedTagId: selected.id,
                 onSelected: _select,
+                onDropped: _onDropped,
               ),
             ),
           );

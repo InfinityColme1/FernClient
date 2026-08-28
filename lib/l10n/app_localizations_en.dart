@@ -3702,4 +3702,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewerVolume => 'Volume';
+
+  @override
+  String get tagNameTaken => 'A tag with that name already exists';
+
+  @override
+  String get filterByNameHint => 'Filter by name';
+
+  @override
+  String tagDropAsChild(String name) {
+    return 'Hang from “$name”';
+  }
+
+  @override
+  String tagDropAsSibling(String name) {
+    return 'Relate to “$name”';
+  }
+
+  @override
+  String get importStopping => 'Stopping the import…';
 }

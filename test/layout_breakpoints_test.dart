@@ -30,9 +30,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-/// Anchos del menú lateral, que son los de [CollapsingNavigationDrawer].
-const _sidebarExpandedWidth = 210.0;
-const _sidebarCollapsedWidth = 70.0;
+/// Anchos del menú lateral. Se leen de [AppSizes] y no se copian: la barra de
+/// arriba los usa también —el buscador empieza donde acaba el menú—, así que un
+/// número repetido aquí dejaría de avisar en cuanto alguien cambiara el de allí.
+const _sidebarExpandedWidth = AppSizes.sidebarWidth;
+const _sidebarCollapsedWidth = AppSizes.sidebarCollapsedWidth;
 
 const _locales = [Locale('en'), Locale('es'), Locale('ca'), Locale('fr')];
 

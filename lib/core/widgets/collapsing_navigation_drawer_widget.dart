@@ -46,8 +46,8 @@ class CollapsingNavigationDrawer extends StatefulWidget {
   const CollapsingNavigationDrawer({
     super.key,
     required this.sections,
-    this.maxWidth = 210,
-    this.minWidth = 70,
+    this.maxWidth = AppSizes.sidebarWidth,
+    this.minWidth = AppSizes.sidebarCollapsedWidth,
     required this.textStyle,
     required this.iconSize,
 

@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/core/navigation/screen_choreography.dart';
+import 'package:Fern/core/navigation/screen_slot.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
@@ -107,16 +109,25 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
           // primera lectura está en marcha no se dice que no haya ninguno,
           // todavía no se sabe: se espera con el indicador.
           if (creators.isEmpty) {
-            return Padding(
-              padding: AppSpacing.pagePadding,
-              child: state.isLoaded
-                  ? FernEmptyState(
-                      imageAsset: fernEmptyImage,
-                      message: AppLocalizations.of(context).noCreatorsYet,
-                      description:
-                          AppLocalizations.of(context).noCreatorsYetHint,
-                    )
-                  : const Center(child: FernProgressIndicator()),
+            // Con la transición de la pantalla, igual que el resto.
+            //
+            // Sin ella, la pantalla vacía era lo único que no pasaba por la
+            // coreografía: al ir de una gestión a otra estando las dos vacías,
+            // los dos textos se pintaban a la vez y centrados en el mismo sitio,
+            // así que se leían uno encima del otro.
+            return ScreenSlotTransition(
+              slot: ScreenSlot.grid,
+              child: Padding(
+                padding: AppSpacing.pagePadding,
+                child: state.isLoaded
+                    ? FernEmptyState(
+                        imageAsset: fernEmptyImage,
+                        message: AppLocalizations.of(context).noCreatorsYet,
+                        description:
+                            AppLocalizations.of(context).noCreatorsYetHint,
+                      )
+                    : const Center(child: FernProgressIndicator()),
+              ),
             );
           }
 

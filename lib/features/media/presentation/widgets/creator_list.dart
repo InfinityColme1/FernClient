@@ -15,7 +15,7 @@ import 'package:material_symbols_icons/symbols.dart';
 /// Es la hermana de `TagList` sin la jerarquía: un creador no cuelga de otro, así
 /// que no hay ni sangría ni árbol que recorrer, sólo la lista tal y como llega
 /// (ordenada por nombre).
-class CreatorList extends StatelessWidget {
+class CreatorList extends StatefulWidget {
   final List<CreatorEntity> creators;
 
   /// Creador marcado, por identificador: al guardar cambian el nombre y el
@@ -32,8 +32,32 @@ class CreatorList extends StatelessWidget {
   });
 
   @override
+  State<CreatorList> createState() => _CreatorListState();
+}
+
+class _CreatorListState extends State<CreatorList> {
+  /// Lo escrito en el filtro. Vacío es la lista entera.
+  String _query = '';
+
+  /// Los que encajan con lo escrito.
+  ///
+  /// Se compara sin distinguir mayúsculas y por cualquier parte del nombre, no
+  /// sólo por el principio: con doscientos creadores, acordarse de cómo empieza
+  /// uno es justo lo que no pasa.
+  List<CreatorEntity> get _visible {
+    final needle = _query.trim().toLowerCase();
+    if (needle.isEmpty) return widget.creators;
+
+    return [
+      for (final creator in widget.creators)
+        if (creator.name.toLowerCase().contains(needle)) creator,
+    ];
+  }
+
+  @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    final creators = _visible;
 
     // La lista va directamente sobre el fondo de la pantalla: la superficie de
     // esta pantalla es la de la ficha, no la de todo lo que hay en ella.
@@ -47,6 +71,18 @@ class CreatorList extends StatelessWidget {
             title: texts.creatorsTitle,
           ),
         ),
+        // Encima de la lista y debajo del rótulo: filtra lo que hay justo
+        // debajo, así que es donde se busca sin pensarlo.
+        Padding(
+          padding: const EdgeInsets.only(
+            bottom: AppSpacing.s,
+            right: AppSizes.scrollbarLane,
+          ),
+          child: FernFilterField(
+            hintText: texts.filterByNameHint,
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
         Expanded(
           // Las filas se pintan bajo demanda: los creadores pueden ser muchos.
           child: ListView.builder(
@@ -57,8 +93,8 @@ class CreatorList extends StatelessWidget {
             itemCount: creators.length,
             itemBuilder: (context, index) => _CreatorTile(
               creator: creators[index],
-              isSelected: creators[index].id == selectedCreatorId,
-              onTap: () => onSelected(creators[index]),
+              isSelected: creators[index].id == widget.selectedCreatorId,
+              onTap: () => widget.onSelected(creators[index]),
             ),
           ),
         ),

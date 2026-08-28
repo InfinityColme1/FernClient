@@ -8,6 +8,7 @@ import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
@@ -186,7 +187,16 @@ class _TagCardState extends State<TagCard> {
         parent: _parent,
       ),
     );
-    if (result is! DataSuccess || !mounted) return;
+    if (!mounted) return;
+
+    // El nombre ya lo tiene otra. Se dice y no se guarda nada: el formulario se
+    // queda con lo escrito, que es lo que hace falta para corregirlo.
+    if (result.exception is DuplicateTagNameException) {
+      showFernToast(context, AppLocalizations.of(context).tagNameTaken);
+      return;
+    }
+
+    if (result is! DataSuccess) return;
 
     getIt<TagsBloc>().add(const LoadTagsEvent());
     context.read<MediaBloc>().add(LoadMediaByTagEvent(widget.tag.id));
@@ -488,10 +498,14 @@ class _TagCardState extends State<TagCard> {
 
   /// Enseña el árbol y aplica lo que se decida en él.
   ///
-  /// La madre se queda pendiente de guardar, como estaba: es un cambio del
-  /// formulario. Las relacionadas se escriben en el momento, también como
-  /// estaba: no son un campo de la etiqueta sino un enlace entre dos, y quien
-  /// las añade espera verlas puestas.
+  /// **Se guarda todo al cerrar la ventana**, la madre incluida. Antes la madre
+  /// se quedaba pendiente del botón de guardar de la ficha: se movía la etiqueta
+  /// en el árbol, se cerraba, y el árbol seguía igual hasta pulsar guardar aquí
+  /// — que no es lo que espera quien acaba de moverla.
+  ///
+  /// Se guarda [widget.tag] y no lo que haya en el formulario: esta ventana es
+  /// de la jerarquía, así que un nombre o un avatar a medio escribir siguen
+  /// pendientes, como estaban.
   Future<void> _editRelations() async {
     final result = await showFernDialog<TagRelations, Never>(
       context: context,
@@ -510,14 +524,34 @@ class _TagCardState extends State<TagCard> {
 
     if (result == null || !mounted) return;
 
+    final parentChanged = result.parent?.id != _parent?.id;
     setState(() => _parent = result.parent);
 
     final before = {for (final one in _siblings) one.id};
     final after = {for (final one in result.siblings) one.id};
+    final siblingsChanged = !setEquals(before, after);
 
-    if (!setEquals(before, after)) {
-      await _run(() => _saveSiblings(result.siblings));
-    }
+    if (!parentChanged && !siblingsChanged) return;
+
+    await _run(() async {
+      if (parentChanged) await _saveParent(result.parent);
+      if (siblingsChanged) await _saveSiblings(result.siblings);
+    });
+  }
+
+  /// Guarda de quién cuelga la etiqueta.
+  ///
+  /// Va aparte de [_save] porque no guarda el formulario: sólo mueve la etiqueta
+  /// de sitio en el árbol, con todo lo demás como estaba.
+  Future<void> _saveParent(TagEntity? parent) async {
+    final result = await _updateTag(
+      params: UpdateTagParams(tag: widget.tag, parent: parent),
+    );
+
+    if (result is! DataSuccess || !mounted) return;
+
+    // El árbol cambia en el menú lateral y en la lista de al lado.
+    getIt<TagsBloc>().add(const LoadTagsEvent());
   }
 
 

@@ -8,6 +8,7 @@ import 'package:Fern/features/notifications/domain/entities/app_notification.dar
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/remote_session_expired.dart';
+import 'package:Fern/features/media/presentation/blocs/import_arrivals.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/domain/usecases/confirm_media_list_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/delete_media_list_usecase.dart';
@@ -307,7 +308,14 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// importación. Se parte de un estado limpio: la selección de lo que se estaba
   /// viendo no tiene nada que ver con lo que llega.
   Future<void> _loadScanned(ImportSource source, Emitter<MediaStates> emit) async {
+    // Se conserva lo que ya se está viendo mientras se consulta.
+    //
+    // Vaciando la rejilla se abría un hueco de un par de fotogramas en el que el
+    // estado no tenía lista, y una importación en marcha que soltara un
+    // contenido justo ahí lo tomaba como que no había nada. Además de eso, con
+    // el hueco la pantalla parpadeaba en blanco cada vez que se volvía a ella.
     emit(MediaLoading(
+      mediaList: state.mediaList,
       importSource: source,
       lastImportAt: await _getLastImportUseCase(params: source),
       isBusy: true,
@@ -1596,11 +1604,14 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // para la importación anterior, no para ésta.
     _decisions.reset();
 
-    List<MediaSummaryEntity> currentMedia = state.mediaList != null ? List.from(state.mediaList!) : [];
-    final arrivedBefore = currentMedia.length;
+    // Cuántos han llegado, sólo para poder contarlo al final. **La lista no se
+    // lleva aquí**: la lista que vale es la del estado, y ésa la puede rehacer
+    // cualquier otra cosa mientras esto dura.
+    var arrived = 0;
+
     final selectedIds = state.selectedIds;
     emit(MediaLoading(
-      mediaList: currentMedia,
+      mediaList: state.mediaList,
       selectedIds: selectedIds,
       importSource: state.importSource,
       lastImportAt: state.lastImportAt,
@@ -1637,27 +1648,23 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     bool showingImport() =>
         _lastListing is LoadScannedMediaEvent && state is! DetailedMedia;
 
-    var wasShowing = showingImport();
-
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
       onData: (dataState) {
         if (dataState is DataSuccess && dataState.data != null) {
-          // Al volver a la pantalla de importación se relee de la base de
-          // datos, así que lo que hay a la vista manda sobre lo que esta cuenta
-          // llevara apuntado: se sigue desde ahí y no desde donde se quedó.
-          if (showingImport() && !wasShowing) {
-            currentMedia = List.from(state.mediaList ?? const []);
-          }
+          arrived++;
 
-          wasShowing = showingImport();
+          // Fuera de su pantalla no se pinta nada, pero lo que llega **no se
+          // pierde**: está en la base de datos, y al volver se relee de ahí.
+          if (!showingImport()) return state;
 
-          currentMedia = List.from(currentMedia)..add(dataState.data!);
-
-          if (!wasShowing) return state;
+          // Se añade a lo que hay a la vista, no a una copia de aquí: la regla
+          // y el porqué están en `withArrival`.
+          final merged = withArrival(state.mediaList, dataState.data!);
+          if (identical(merged, state.mediaList)) return state;
 
           return MediaLoading(
-            mediaList: currentMedia,
+            mediaList: merged,
             selectedIds: selectedIds,
             importSource: state.importSource,
             lastImportAt: state.lastImportAt,
@@ -1690,7 +1697,6 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // tarda tanto como traerse una cuenta, y también se lanza para irse a hacer
     // otra cosa. Antes sólo avisaban las remotas y una importación local larga
     // terminaba sin que nadie se enterara.
-    final arrived = currentMedia.length - arrivedBefore;
     if (arrived > 0) {
       await _notifications.notify(
         NotificationKind.importFinished,

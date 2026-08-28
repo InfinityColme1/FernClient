@@ -258,24 +258,44 @@ class _MainLayoutState extends State<MainLayout> {
   }) {
     return Scaffold(
       appBar: AppBar(
+        // El relleno de fábrica se quita y se pone a mano dentro del bloque del
+        // logo: es ese bloque el que tiene que medir lo que el menú lateral, y
+        // con un hueco por fuera la cuenta se iría justo por ese hueco.
+        titleSpacing: 0,
         title: Row(
           children: [
-            // Lo que abre y cierra el menú, en la esquina de la que sale el
-            // menú y junto al logo: desde ahí se ve y se alcanza igual con el
-            // menú desplegado que plegado.
-            TutorialAnchor(
-              id: TutorialAnchorId.sidebarToggle,
-              child: SidebarToggleButton(
-                isCollapsed: isSidebarCollapsed,
-                onPressed: () => setState(
-                  () => _isSidebarCollapsed = !_isSidebarCollapsed,
-                ),
+            // **El bloque del logo mide hasta donde empieza el texto del
+            // contenido**, que es el menú lateral más el margen de la pantalla.
+            //
+            // Así el buscador arranca en la misma vertical que el título de lo
+            // que se esté viendo. Antes lo separaba del logo un hueco fijo
+            // puesto a ojo, y no coincidía con nada.
+            //
+            // **Fijo, no atado al menú.** Plegar el menú no mueve el buscador:
+            // seguirlo lo dejaba pegado al logo, y además el buscador es de la
+            // barra de arriba, que no se pliega con nada.
+            SizedBox(
+              width: AppSizes.sidebarWidth + AppSpacing.l,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(width: AppSpacing.l),
+                  // Lo que abre y cierra el menú, en la esquina de la que sale
+                  // el menú y junto al logo: desde ahí se ve y se alcanza igual
+                  // con el menú desplegado que plegado.
+                  TutorialAnchor(
+                    id: TutorialAnchorId.sidebarToggle,
+                    child: SidebarToggleButton(
+                      isCollapsed: isSidebarCollapsed,
+                      onPressed: () => setState(
+                        () => _isSidebarCollapsed = !_isSidebarCollapsed,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s),
+                  const FernLogo(height: AppSizes.logoHeight),
+                ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.s),
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.xxxl),
-              child: const FernLogo(height: AppSizes.logoHeight),
             ),
             const TutorialAnchor(
               id: TutorialAnchorId.search,

@@ -10,9 +10,13 @@ import 'package:material_symbols_icons/symbols.dart';
 /// Aviso breve que aparece abajo, dice lo que acaba de pasar y se va solo.
 ///
 /// Va por encima de todo (en la capa raíz), así que sirve igual en una pantalla
-/// normal, sobre un diálogo o con la aplicación a pantalla completa. Sólo hay
-/// uno a la vez: si llega otro, sustituye al que hubiera, que es lo que se
-/// espera cuando se repite una acción varias veces seguidas.
+/// normal, sobre un diálogo o con la aplicación a pantalla completa.
+///
+/// **Se amontonan, no se tapan.** Antes cada aviso quitaba al anterior, así que
+/// dos cosas que terminaban a la vez dejaban ver sólo una. Ahora se ponen uno
+/// encima de otro, el más nuevo abajo, y como mucho tres: al llegar el cuarto se
+/// va el más viejo, porque una columna de mensajes comiéndose la pantalla ya no
+/// se lee, se mira.
 void showFernToast(
   BuildContext context,
   String message, {
@@ -25,8 +29,31 @@ void showFernToast(
   _FernToastHost.show(overlay, message: message, icon: icon, onTap: onTap);
 }
 
+/// Un aviso puesto, mientras dura.
+class _Toast {
+  final int id;
+  final String message;
+  final IconData? icon;
+  final VoidCallback? onTap;
+
+  const _Toast({
+    required this.id,
+    required this.message,
+    required this.icon,
+    required this.onTap,
+  });
+}
+
+/// La pila de avisos.
+///
+/// **Una sola entrada en la capa de encima con una columna dentro**, y no una
+/// entrada por aviso. Con una cada uno habría que saber cuánto mide el de abajo
+/// para colocar el de arriba, y no se sabe hasta después de medirlo; con la
+/// columna, se apilan solos.
 class _FernToastHost {
-  static OverlayEntry? _current;
+  static OverlayEntry? _entry;
+  static final ValueNotifier<List<_Toast>> _toasts = ValueNotifier(const []);
+  static var _nextId = 0;
 
   static void show(
     OverlayState overlay, {
@@ -34,25 +61,67 @@ class _FernToastHost {
     IconData? icon,
     VoidCallback? onTap,
   }) {
-    _current?.remove();
-    _current = null;
+    _mount(overlay);
 
-    late final OverlayEntry entry;
-    entry = OverlayEntry(
-      builder: (context) => _FernToast(
-        message: message,
-        icon: icon,
-        onTap: onTap,
-        onDismissed: () {
-          if (!identical(_current, entry)) return;
-          entry.remove();
-          _current = null;
-        },
+    final puestos = [
+      ..._toasts.value,
+      _Toast(id: _nextId++, message: message, icon: icon, onTap: onTap),
+    ];
+
+    // Al llegar el cuarto se va el más viejo, sin despedirse: lo que importa es
+    // lo que acaba de pasar, y el sitio lo necesita el nuevo.
+    _toasts.value = puestos.length > maxStackedToasts
+        ? puestos.sublist(puestos.length - maxStackedToasts)
+        : puestos;
+  }
+
+  static void _mount(OverlayState overlay) {
+    if (_entry != null) return;
+
+    _entry = OverlayEntry(
+      builder: (context) => ValueListenableBuilder<List<_Toast>>(
+        valueListenable: _toasts,
+        builder: (context, toasts, _) => Positioned(
+          left: 0,
+          right: 0,
+          bottom: AppSpacing.xxl,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final toast in toasts)
+                Padding(
+                  key: ValueKey(toast.id),
+                  padding: const EdgeInsets.only(top: AppSpacing.s),
+                  child: _FernToast(
+                    message: toast.message,
+                    icon: toast.icon,
+                    onTap: toast.onTap,
+                    onDismissed: () => _remove(toast.id),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
 
-    _current = entry;
-    overlay.insert(entry);
+    overlay.insert(_entry!);
+  }
+
+  static void _remove(int id) {
+    _toasts.value = [
+      for (final toast in _toasts.value)
+        if (toast.id != id) toast,
+    ];
+
+    if (_toasts.value.isNotEmpty) return;
+
+    // Sin avisos no hace falta la entrada. Se quita en el fotograma siguiente:
+    // esto llega desde dentro de su propia construcción.
+    final entry = _entry;
+    _entry = null;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => entry?.remove());
   }
 }
 
@@ -126,28 +195,24 @@ class _FernToastState extends State<_FernToast>
       curve: Curves.easeOutCubic,
     );
 
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: AppSpacing.xxl,
-      child: IgnorePointer(
-        // El que lleva a algún sitio sí atiende a las pulsaciones; el resto no,
-        // porque lo que hay debajo es la pantalla.
-        ignoring: widget.onTap == null,
-        child: FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            // Entra subiendo un poco desde abajo, lo justo para que se note de
-            // dónde sale sin que parezca que cruza la pantalla.
-            position: Tween<Offset>(
-              begin: const Offset(0, toastSlideOffset),
-              end: Offset.zero,
-            ).animate(animation),
-            child: Center(
-              child: widget.onTap == null
-                  ? _buildBubble(context)
-                  : _tappable(context),
-            ),
+    // Sin colocarse: dónde va lo decide la pila, que es quien sabe cuántos hay.
+    return IgnorePointer(
+      // El que lleva a algún sitio sí atiende a las pulsaciones; el resto no,
+      // porque lo que hay debajo es la pantalla.
+      ignoring: widget.onTap == null,
+      child: FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          // Entra subiendo un poco desde abajo, lo justo para que se note de
+          // dónde sale sin que parezca que cruza la pantalla.
+          position: Tween<Offset>(
+            begin: const Offset(0, toastSlideOffset),
+            end: Offset.zero,
+          ).animate(animation),
+          child: Center(
+            child: widget.onTap == null
+                ? _buildBubble(context)
+                : _tappable(context),
           ),
         ),
       ),

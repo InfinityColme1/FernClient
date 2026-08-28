@@ -5951,6 +5951,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Volume'**
   String get viewerVolume;
+
+  /// No description provided for @tagNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag with that name already exists'**
+  String get tagNameTaken;
+
+  /// No description provided for @filterByNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by name'**
+  String get filterByNameHint;
+
+  /// No description provided for @tagDropAsChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Hang from “{name}”'**
+  String tagDropAsChild(String name);
+
+  /// No description provided for @tagDropAsSibling.
+  ///
+  /// In en, this message translates to:
+  /// **'Relate to “{name}”'**
+  String tagDropAsSibling(String name);
+
+  /// No description provided for @importStopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping the import…'**
+  String get importStopping;
 }
 
 class _AppLocalizationsDelegate

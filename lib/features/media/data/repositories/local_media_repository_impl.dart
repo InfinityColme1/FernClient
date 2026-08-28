@@ -22,6 +22,7 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
+import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
@@ -995,7 +996,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<TagEntity>> saveTag(TagEntity tag, {TagEntity? parent}) async {
     try {
+      if (await _isTagNameTaken(tag.name)) {
+        return DataException(DuplicateTagNameException(tag.name));
+      }
+
       final model = TagModel.fromEntity(tag)
+        ..name = tag.name.trim()
         ..sourceUrls = normalizedSourceUrls(tag.sourceUrls);
 
       await _appDatabase.writeTxn(() async {
@@ -1018,6 +1024,27 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
+  /// Si ya hay otra etiqueta llamada así.
+  ///
+  /// **Sin distinguir mayúsculas y sin los espacios de los extremos**: si
+  /// «Paisajes» ya existe, «paisajes » es la misma etiqueta escrita de otra
+  /// manera. Un nombre vacío no se compara con nada — de eso se encarga el
+  /// formulario, que no deja guardarlo.
+  ///
+  /// [exceptId] es la propia etiqueta cuando se está renombrando: si no, dejarle
+  /// el nombre que ya tiene contaría como repetido.
+  Future<bool> _isTagNameTaken(String name, {int? exceptId}) async {
+    final clean = name.trim();
+    if (clean.isEmpty) return false;
+
+    final same = await _appDatabase.tagModels
+        .filter()
+        .nameEqualTo(clean, caseSensitive: false)
+        .findAll();
+
+    return same.any((each) => each.id != exceptId);
+  }
+
   /// Cambia los datos de una etiqueta que ya existe: su nombre, su avatar y de
   /// quién cuelga.
   ///
@@ -1032,6 +1059,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     try {
       final model = await _appDatabase.tagModels.get(tag.id);
       if (model == null) return DataException(Exception("Tag not found"));
+
+      // Renombrar tiene el mismo límite que crear, menos ella misma: dejarle el
+      // nombre que ya tenía no es repetirlo.
+      if (await _isTagNameTaken(tag.name, exceptId: tag.id)) {
+        return DataException(DuplicateTagNameException(tag.name));
+      }
 
       final newParent = await _allowedParent(model, parent);
 

@@ -121,6 +121,14 @@ class AppSizes {
   static const double dialogMaxWidth = 800.0;
   static const double menuWidth = 280.0;
 
+  /// Lo que le queda al texto de una fila de menu despues del icono y los
+  /// rellenos.
+  ///
+  /// Hace falta cuando el texto lleva dentro algo que escribe el usuario —el
+  /// nombre de una etiqueta, por ejemplo—: sin un tope, un nombre largo desborda
+  /// el panel en vez de recortarse.
+  static const double menuLabelWidth = 196.0;
+
   /// El panel de trabajos en segundo plano. Más ancho que un menú corriente
   /// porque lleva barras de progreso y no sólo texto.
   static const double jobsPanelWidth = 320.0;
@@ -146,6 +154,14 @@ class AppSizes {
   /// cuya mitad es mayor que este número el menú se pliega aquí para que no
   /// desborde antes de llegar a [largeScreenMinWidth].
   static const double sidebarAutoCollapseMinWidth = 1320.0;
+
+  /// Lo ancho que es el menu lateral, desplegado y plegado.
+  ///
+  /// Vive aqui y no como valor por defecto del cajon porque la barra de arriba
+  /// tambien lo necesita: el buscador empieza donde acaba el menu, y con cada
+  /// uno usando su propio numero eso se descuadra en cuanto alguien toque uno.
+  static const double sidebarWidth = 210.0;
+  static const double sidebarCollapsedWidth = 70.0;
 
   // Grosores de borde
   /// El trazo de los contornos dibujados a mano (el círculo del botón de
@@ -255,6 +271,12 @@ class AppSizes {
   /// El carril y el tirador de un deslizador.
   static const double sliderTrack = 4.0;
   static const double sliderThumb = 7.0;
+
+  /// El hueco del icono de la lupa en un campo de filtro.
+  ///
+  /// El de fabrica es cuadrado y ancho, pensado para un campo alto; en uno
+  /// estrecho se come la mitad de lo que se escribe.
+  static const double filterFieldIconSlot = 36.0;
 
   // Barra de desplazamiento
   /// Lo gorda que es. Fina a propósito: es una referencia, no un mando que se

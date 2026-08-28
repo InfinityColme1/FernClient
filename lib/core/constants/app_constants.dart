@@ -1694,6 +1694,13 @@ const toastDuration = Duration(seconds: 3);
 /// que alguien lo pulsara, y como no tenía forma de cerrarse, quien no quería ir
 /// se lo encontraba clavado en la pantalla para siempre.
 const toastActionDuration = Duration(seconds: 12);
+/// Cuantos avisos se ven a la vez.
+///
+/// Se amontonan uno encima de otro en vez de taparse, y al llegar el cuarto se
+/// va el mas viejo. Mas de tres es una columna de mensajes comiendose la
+/// pantalla, y los de abajo ya no se leen: se miran.
+const maxStackedToasts = 3;
+
 const toastFadeDuration = Duration(milliseconds: 200);
 
 /// Desde dónde entra, en alturas suyas, y cuánto tapa lo que hay detrás.

@@ -127,6 +127,13 @@ class MediaGrid extends StatelessWidget {
   /// sólo se espera.
   final VoidCallback? onStop;
 
+  /// Ya se ha pedido parar y todavía no ha parado.
+  ///
+  /// Parar no es inmediato: la señal se mira entre un contenido y el siguiente,
+  /// así que lo que se esté descargando termina de llegar. Sin decirlo, el botón
+  /// parece no haber hecho nada y se pulsa otra vez.
+  final bool isStopping;
+
   /// Lo que se dice cuando la rejilla está vacía. Sin decir nada, que la
   /// biblioteca está vacía, que es lo que toca en casi todas las pantallas.
   final String? emptyMessage;
@@ -143,6 +150,7 @@ class MediaGrid extends StatelessWidget {
     this.isLoading = false,
     this.isImporting = false,
     this.onStop,
+    this.isStopping = false,
     this.returnsToViewed = false,
   })  : sections = null,
         crops = null,
@@ -183,6 +191,7 @@ class MediaGrid extends StatelessWidget {
     this.emptyDescription,
   })  : mediaList = const [],
         isImporting = false,
+        isStopping = false,
         sections = null,
         onStop = null,
         returnsToViewed = false;
@@ -200,6 +209,7 @@ class MediaGrid extends StatelessWidget {
     this.onStop,
   })  : mediaList = const [],
         isImporting = false,
+        isStopping = false,
         returnsToViewed = false,
         crops = null,
         selectedCropIds = const {},
@@ -366,10 +376,17 @@ class MediaGrid extends StatelessWidget {
     final color = Theme.of(context).progressIndicatorTheme.color ??
         Theme.of(context).colorScheme.primary;
 
+    final texts = AppLocalizations.of(context);
+
     return IconButton(
-      tooltip: AppLocalizations.of(context).actionStopImport,
-      onPressed: onStop,
-      icon: Icon(Symbols.stop_circle, color: color),
+      // Mientras para, el botón lo dice y deja de responder: volver a pulsarlo
+      // no para más rápido, y sin apagarlo parece que la primera vez no contó.
+      tooltip: isStopping ? texts.importStopping : texts.actionStopImport,
+      onPressed: isStopping ? null : onStop,
+      icon: Icon(
+        isStopping ? Symbols.hourglass_top : Symbols.stop_circle,
+        color: color,
+      ),
       iconSize: AppSizes.iconLarge,
     );
   }

@@ -44,6 +44,7 @@ export 'inputs/fern_color_field.dart';
 export 'inputs/fern_directory_field.dart';
 export 'inputs/fern_dropdown_pill.dart';
 export 'inputs/fern_entity_search_field.dart';
+export 'inputs/fern_filter_field.dart';
 export 'inputs/fern_field_label.dart';
 export 'inputs/fern_labeled_text_field.dart';
 export 'inputs/fern_outlined_field.dart';

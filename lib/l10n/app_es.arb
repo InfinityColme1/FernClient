@@ -1210,5 +1210,11 @@
   "tourModels7Body": "El panel de la derecha son los modelos que están fuera. Elige un nodo del árbol y lo que metas colgará de él. Un modelo no puede colgar de sí mismo ni cerrar un círculo: el árbol se mordería la cola.",
   "tourModels8Title": "Cada rama tiene su condición",
   "tourModels8Body": "Un hijo sólo se ejecuta cuando el padre detecta el fernie que le hayas puesto a esa unión. Ahí está la gracia: uno general filtra, y sólo lo que encuentra abre los especializados. Sin condición se ejecutan ante cualquier detección, y un padre sin entrenar no abre nada.",
-  "viewerVolume": "Volumen"
+  "viewerVolume": "Volumen",
+  "tagNameTaken": "Ya hay una etiqueta con ese nombre",
+  "filterByNameHint": "Filtrar por nombre",
+
+  "tagDropAsChild": "Colgar de «{name}»",
+  "tagDropAsSibling": "Relacionar con «{name}»",
+  "importStopping": "Parando la importación…"
 }

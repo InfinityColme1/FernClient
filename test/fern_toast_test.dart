@@ -108,33 +108,60 @@ void main() {
     });
   });
 
-  testWidgets('uno nuevo sustituye al anterior', (tester) async {
+  /// Una pantalla con un boton que va sacando avisos, uno por pulsacion.
+  Future<void> pumpStack(WidgetTester tester, List<String> messages) async {
+    var next = 0;
+
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: Builder(
-          builder: (context) => Row(
-            children: [
-              ElevatedButton(
-                onPressed: () => showFernToast(context, 'el primero'),
-                child: const Text('uno'),
-              ),
-              ElevatedButton(
-                onPressed: () => showFernToast(context, 'el segundo'),
-                child: const Text('dos'),
-              ),
-            ],
+          builder: (context) => ElevatedButton(
+            onPressed: () => showFernToast(context, messages[next++]),
+            child: const Text('sacar'),
           ),
         ),
       ),
     ));
 
-    await tester.tap(find.text('uno'));
-    await tester.pump();
-    await tester.tap(find.text('dos'));
-    await tester.pump();
+    for (var i = 0; i < messages.length; i++) {
+      await tester.tap(find.text('sacar'));
+      await tester.pump();
+    }
+  }
 
-    expect(find.text('el primero'), findsNothing);
+  testWidgets('varios se amontonan en vez de taparse', (tester) async {
+    // Antes cada aviso quitaba al anterior, asi que dos cosas que terminaban a
+    // la vez dejaban ver solo una.
+    await pumpStack(tester, ['el primero', 'el segundo']);
+
+    expect(find.text('el primero'), findsOneWidget);
     expect(find.text('el segundo'), findsOneWidget);
+
+    await tester.pump(toastDuration);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('al llegar el cuarto se va el mas viejo', (tester) async {
+    await pumpStack(tester, ['uno', 'dos', 'tres', 'cuatro']);
+
+    expect(find.text('uno'), findsNothing, reason: 'el mas viejo se va');
+    for (final quedan in ['dos', 'tres', 'cuatro']) {
+      expect(find.text(quedan), findsOneWidget, reason: quedan);
+    }
+
+    await tester.pump(toastDuration);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('el mas nuevo va debajo', (tester) async {
+    // Debajo, que es donde se mira: lo que acaba de pasar es lo mas cerca del
+    // borde, y lo de antes va subiendo.
+    await pumpStack(tester, ['el primero', 'el segundo']);
+
+    expect(
+      tester.getCenter(find.text('el segundo')).dy,
+      greaterThan(tester.getCenter(find.text('el primero')).dy),
+    );
 
     await tester.pump(toastDuration);
     await tester.pumpAndSettle();

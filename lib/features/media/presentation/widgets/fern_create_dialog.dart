@@ -7,6 +7,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
+import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
@@ -140,6 +141,12 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   ModelFunction _function = ModelFunction.boolean;
   final _storeAvatar = getIt<StoreAvatarUseCase>();
 
+  /// Lo que falla del nombre, si falla algo. Se enseña bajo el campo.
+  ///
+  /// Sin esto, el nombre repetido no se guardaba y el dialogo se quedaba igual:
+  /// pulsar guardar no hacia nada y no habia forma de saber por que.
+  String? _nameError;
+
   late final TextEditingController _nameController =
       TextEditingController(text: widget.initialName);
 
@@ -262,8 +269,17 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           ),
         );
 
+        if (!mounted) return;
+
+        // El nombre ya lo tiene otra: se dice y el dialogo se queda abierto con
+        // lo escrito, que es lo que hace falta para cambiarlo.
+        if (result.exception is DuplicateTagNameException) {
+          setState(() => _nameError = AppLocalizations.of(context).tagNameTaken);
+          return;
+        }
+
         final tag = result.data;
-        if (!mounted || result is! DataSuccess || tag == null) return;
+        if (result is! DataSuccess || tag == null) return;
 
         // La etiqueta nueva tiene que salir en el menú lateral sin tener que
         // reiniciar: es el único sitio donde se crean, así que el aviso va aquí.
@@ -391,9 +407,20 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
             label: widget.type.nameLabel(texts),
             hintText: texts.enterNameHint,
             controller: _nameController,
-            // El panel de la izquierda sigue al nombre en cada pulsación.
-            onChanged: (_) => setState(() {}),
+            // El panel de la izquierda sigue al nombre en cada pulsación. Y al
+            // tocarlo se retira la queja: ya no habla del nombre que hay.
+            onChanged: (_) => setState(() => _nameError = null),
           ),
+          if (_nameError case final message?) ...[
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              message,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: context.colors.error),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xl),
           switch (widget.type) {
             CreateDialogType.tag => _parentTagField(),

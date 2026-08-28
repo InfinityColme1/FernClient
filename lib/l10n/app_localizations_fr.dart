@@ -3727,4 +3727,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get viewerVolume => 'Volume';
+
+  @override
+  String get tagNameTaken => 'Une étiquette porte déjà ce nom';
+
+  @override
+  String get filterByNameHint => 'Filtrer par nom';
+
+  @override
+  String tagDropAsChild(String name) {
+    return 'Rattacher à « $name »';
+  }
+
+  @override
+  String tagDropAsSibling(String name) {
+    return 'Associer à « $name »';
+  }
+
+  @override
+  String get importStopping => 'Arrêt de l’importation…';
 }
