@@ -122,6 +122,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// sólo decide desde dónde se extiende el siguiente mayúsculas + clic.
   int? _selectionAnchorId;
 
+  /// Si lo que se suelta sobre una etiqueta se queda marcado.
+  ///
+  /// Llega como función y no como valor para no tener que enterarse de que el
+  /// usuario lo ha cambiado en los ajustes: se lee al soltar, y lo siguiente que
+  /// se suelte ya se comporta como toque.
+  final bool Function() _keepsSelectionOnDrop;
+
   MediaBloc({
     required SelectImportDirectoryUsecase selectImportDirectoryUsecase,
     required JobQueue jobs,
@@ -156,7 +163,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required ShuffleSeed shuffle,
     required NotificationService notifications,
     required ImportDecisions decisions,
+    bool Function()? keepsSelectionOnDrop,
   })  : _selectImportDirectoryUsecase = selectImportDirectoryUsecase,
+        _keepsSelectionOnDrop = keepsSelectionOnDrop ?? _dropClearsSelection,
         _jobs = jobs,
         _importFeed = importFeed,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
@@ -237,6 +246,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<UpdateMediaInfoEvent>(onUpdateMediaInfo);
     on<UpdateMediaDescriptionEvent>(onUpdateMediaDescription);
   }
+
+  /// De fábrica, soltar desmarca: es el comportamiento de siempre, y es el que
+  /// obtiene quien monta el bloc sin decir nada (las pruebas, sobre todo).
+  static bool _dropClearsSelection() => false;
 
   /// El estado tal cual, pero sin la señal de espera.
   ///
@@ -1206,14 +1219,26 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// nueva puede esconder el contenido —si es una marcada como NSFW y el filtro
   /// está puesto— y quién desaparece no lo decide esto.
   ///
-  /// La selección se deja como estaba: quien acaba de etiquetar treinta
-  /// contenidos a menudo quiere ponerles otra etiqueta más, y obligarle a
-  /// volver a marcarlos sería cobrarle el mismo trabajo dos veces.
+  /// Qué pasa con la selección lo dice el ajuste. De fábrica se pierde —soltar
+  /// es dar el trabajo por terminado, y una selección que sobrevive sin haberla
+  /// pedido se arrastra a lo siguiente que se haga—, y encendido se conserva,
+  /// que es lo que quiere quien le está poniendo tres etiquetas a la misma
+  /// tanda.
+  ///
+  /// Conservarla es devolverla **después** de la relectura y no antes: quien la
+  /// borra es el listado que se vuelve a leer, así que ponerla aquí no
+  /// serviría de nada. Y se devuelve sólo lo que siga a la vista: una etiqueta
+  /// marcada puede haberse llevado por delante la mitad de lo que había
+  /// seleccionado, y seguir contándolo sería tener marcado lo que ya no está.
   void onAddTagToMedia(
     AddTagToMediaEvent event,
     Emitter<MediaStates> emit,
   ) async {
     if (event.mediaIds.isEmpty) return;
+
+    final keep = _keepsSelectionOnDrop()
+        ? Set<int>.of(state.selectedIds)
+        : const <int>{};
 
     emit(state.copyWith(isBusy: true));
 
@@ -1230,6 +1255,35 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // rejilla al soltar contenido en una etiqueta. Se queda encendido hasta que
     // la lectura termina, que es cuando de verdad se ha acabado.
     add(const ReloadCurrentMediaEvent());
+
+    if (keep.isEmpty) return;
+
+    await _restoreSelection(keep, emit);
+  }
+
+  /// Devuelve lo que estaba marcado en cuanto la relectura en curso termina.
+  ///
+  /// Se espera al primer estado que ya no está ocupado, que es el que trae la
+  /// lista nueva. Con un tope, porque un listado que no llegara a contestar
+  /// dejaría este manejador esperando para siempre y con él la cola de su
+  /// evento.
+  Future<void> _restoreSelection(
+    Set<int> selected,
+    Emitter<MediaStates> emit,
+  ) async {
+    final reloaded = await stream
+        .firstWhere((one) => !one.isBusy)
+        .timeout(selectionRestoreTimeout, onTimeout: () => state)
+        .catchError((_) => state);
+
+    if (isClosed) return;
+
+    emit(reloaded.copyWith(
+      selectedIds: {
+        for (final media in reloaded.mediaList ?? const <MediaSummaryEntity>[])
+          if (selected.contains(media.id)) media.id,
+      },
+    ));
   }
 
   /// Marca o desmarca como NSFW la selección de la rejilla.

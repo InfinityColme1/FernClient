@@ -32,6 +32,21 @@ void main() {
     expect(settings.customTheme.isEmpty, isTrue);
   });
 
+  test('de fábrica, soltar en una etiqueta desmarca la selección', () {
+    // El comportamiento de siempre: soltar es dar el trabajo por terminado, y
+    // una selección que sobrevive sin haberla pedido se arrastra a lo siguiente
+    // que se haga.
+    expect(repository.getSettings().keepsSelectionOnDrop, isFalse);
+  });
+
+  test('mantener la selección al soltar vuelve tal cual', () async {
+    await repository.saveSettings(
+      repository.getSettings().copyWith(keepsSelectionOnDrop: true),
+    );
+
+    expect(repository.getSettings().keepsSelectionOnDrop, isTrue);
+  });
+
   test('el tema elegido vuelve tal cual', () async {
     await repository.saveSettings(
       repository.getSettings().copyWith(themeMode: AppThemeMode.dark),

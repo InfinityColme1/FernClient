@@ -55,6 +55,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
+    on<KeepsSelectionOnDropToggledEvent>(onKeepsSelectionOnDropToggled);
     on<PauseWhenSeekingToggledEvent>(onPauseWhenSeekingToggled);
     on<ReturnToViewedMediaToggledEvent>(onReturnToViewedMediaToggled);
     on<RecognizeOnImportToggledEvent>(onRecognizeOnImportToggled);
@@ -269,6 +270,18 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(showListAvatars: event.enabled),
+      emit,
+    );
+  }
+
+  /// Lo lee la rejilla al soltar, así que no hay nada que repintar: lo
+  /// siguiente que se suelte ya se comporta como diga esto.
+  Future<void> onKeepsSelectionOnDropToggled(
+    KeepsSelectionOnDropToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(keepsSelectionOnDrop: event.enabled),
       emit,
     );
   }

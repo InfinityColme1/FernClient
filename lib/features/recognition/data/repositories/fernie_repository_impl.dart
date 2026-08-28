@@ -15,11 +15,24 @@ class FernieRepositoryImpl implements FernieRepository {
   final Isar _database;
   final AvatarStorageService _avatarStorage;
 
+  /// Qué hacer cuando cambia lo que está marcado como no apto.
+  ///
+  /// Llega de fuera —es rehacer el índice— porque el índice vive en el dominio
+  /// del contenido y aquí no se sabe nada de él. Igual que en el repositorio de
+  /// la biblioteca: quien marca no tiene que acordarse de avisar a nadie.
+  ///
+  /// No sólo lo llama marcar. Un fernie se esconde también por la etiqueta que
+  /// propone, y un modelo por los fernies que aprende, así que cambiar el enlace
+  /// o borrar un fernie mueve el filtro sin que nadie haya tocado una marca.
+  final Future<void> Function()? _onNsfwChanged;
+
   FernieRepositoryImpl({
     required Isar database,
     required AvatarStorageService avatarStorage,
+    Future<void> Function()? onNsfwChanged,
   })  : _database = database,
-        _avatarStorage = avatarStorage;
+        _avatarStorage = avatarStorage,
+        _onNsfwChanged = onNsfwChanged;
 
   // ---------------------------------------------------------------------------
   // Fernies
@@ -112,7 +125,36 @@ class FernieRepositoryImpl implements FernieRepository {
         await _avatarStorage.remove(previousPicture);
       }
 
+      // El enlace ha podido cambiar, y de él depende si el fernie se esconde.
+      await _onNsfwChanged?.call();
+
       return getFernie(fernie.id);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Marca o desmarca el fernie, y rehace el índice antes de contestar.
+  ///
+  /// Se escribe sólo este campo y no la fila entera: la ficha puede tener
+  /// cambios sin guardar en el nombre o en el enlace, y tocar el interruptor no
+  /// es guardarlos.
+  @override
+  Future<DataState<bool>> setFernieNsfw(int id, {required bool isNsfw}) async {
+    try {
+      final model = await _database.fernieModels.get(id);
+      if (model == null) return DataException(Exception('Fernie $id no existe'));
+
+      if (model.isNsfw == isNsfw) return const DataSuccess(true);
+
+      await _database.writeTxn(() async {
+        model.isNsfw = isNsfw;
+        await _database.fernieModels.put(model);
+      });
+
+      await _onNsfwChanged?.call();
+
+      return const DataSuccess(true);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -133,6 +175,10 @@ class FernieRepositoryImpl implements FernieRepository {
       });
 
       await _avatarStorage.remove(picturePath);
+
+      // Borrar la última clase normal de un modelo lo deja hablando sólo de lo
+      // marcado: lo que se esconde no es sólo este fernie.
+      await _onNsfwChanged?.call();
 
       return const DataSuccess(true);
     } on Exception catch (e) {

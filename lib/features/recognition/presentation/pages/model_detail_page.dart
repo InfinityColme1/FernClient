@@ -8,7 +8,10 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/usecases/save_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/set_model_nsfw_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/import_model_weights_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/search_fernies_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
@@ -63,6 +66,7 @@ class ModelDetailPage extends StatefulWidget {
 class _ModelDetailPageState extends State<ModelDetailPage> {
   final _bloc = getIt<ModelsBloc>();
   final _saveModel = getIt<SaveModelUseCase>();
+  final _setModelNsfw = getIt<SetModelNsfwUseCase>();
   final _searchFernies = getIt<SearchFerniesUseCase>();
   final _storeAvatar = getIt<StoreAvatarUseCase>();
   final _jobs = getIt<JobQueue>();
@@ -233,6 +237,33 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
 
     showFernToast(context, AppLocalizations.of(context).modelSaved,
         icon: Symbols.check);
+  }
+
+  /// Marca o desmarca el modelo como no apto.
+  ///
+  /// Se escribe al pulsar y no con el botón de guardar, igual que en la ficha de
+  /// etiquetas: es una decisión que hace desaparecer cosas de la pantalla.
+  ///
+  /// **No desconecta nada.** El modelo marcado se sigue entrenando y el árbol lo
+  /// sigue ejecutando; lo único que pasa es que con el filtro puesto deja de
+  /// verse, aquí y en la rejilla de modelos.
+  Future<void> _toggleNsfw(RecognitionModelEntity model) async {
+    final result = await _setModelNsfw(
+      params: SetModelNsfwParams(modelId: model.id, isNsfw: !model.isNsfw),
+    );
+
+    if (result is! DataSuccess || !mounted) return;
+
+    _bloc.add(const LoadModelsEvent());
+
+    // Marcado con el filtro puesto, esta pantalla ya no puede leer el modelo:
+    // se vuelve a la rejilla en vez de quedarse delante de un detalle vacío.
+    if (!model.isNsfw && getIt<NsfwVisibility>().hidesModel(model.id)) {
+      context.pop();
+      return;
+    }
+
+    _bloc.add(ModelSelectedEvent(model.id));
   }
 
   /// Guarda los mandos del entrenamiento.
@@ -457,6 +488,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
                 ),
               ),
               const SizedBox(width: AppSpacing.l),
+              _nsfwButton(context, texts, model),
               IconButton(
                 tooltip: texts.modelImportWeightsHint,
                 onPressed: _isImporting || _job != null
@@ -499,6 +531,27 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
             _notice(context, texts.modelRetrainNotice),
           ],
         ],
+      ),
+    );
+  }
+
+  /// El interruptor de NSFW, un icono más de la fila de la identidad.
+  ///
+  /// Sólo con contraseña puesta: sin ella marcar no escondería nada y el botón
+  /// prometería algo que no va a pasar.
+  Widget _nsfwButton(
+    BuildContext context,
+    AppLocalizations texts,
+    RecognitionModelEntity model,
+  ) {
+    if (!getIt<NsfwModeService>().isConfigured) return const SizedBox.shrink();
+
+    return IconButton(
+      tooltip: model.isNsfw ? texts.nsfwMarkOnTooltip : texts.tagNsfwOffTooltip,
+      onPressed: _isSaving ? null : () => _toggleNsfw(model),
+      icon: Icon(
+        Symbols.visibility_off,
+        color: model.isNsfw ? context.colors.terciary : null,
       ),
     );
   }

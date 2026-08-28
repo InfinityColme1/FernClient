@@ -25,6 +25,7 @@ import 'package:Fern/features/media/domain/entities/media/suggestion_filter.dart
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
 import 'package:Fern/features/recognition/domain/usecases/accept_suggestions_above_usecase.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_remote_import_dialog.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
@@ -129,8 +130,15 @@ class _ImportViewState extends State<_ImportView> {
   }
 
   /// Se ha movido algo en la cola de trabajos.
+  ///
+  /// Lo que llega por el flujo es la cola **entera**, terminados incluidos: la
+  /// importación que acaba de terminar sigue ahí, en la historia, y contarla
+  /// dejaba el indicador encendido para siempre. Se mira sólo lo que sigue
+  /// vivo, que es lo mismo que se mira al entrar en la pantalla.
   void _onJobs(List<Job> jobs) {
-    final importing = jobs.any((job) => job.type == JobType.mediaImport);
+    final importing = jobs.any(
+      (job) => job.type == JobType.mediaImport && job.status.isActive,
+    );
     if (importing == _isImporting || !mounted) return;
 
     setState(() {
@@ -975,6 +983,23 @@ class _SelectionBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
+        // Esconder lo marcado detrás del filtro NSFW, igual que en la
+        // biblioteca. Aquí hace más falta que allí: es lo primero que se ve de
+        // una tanda recién traída, y obligar a confirmarla antes para poder
+        // marcarla es obligar a pasarla por la biblioteca sin esconder.
+        //
+        // Marca, no interruptor: la selección puede mezclar marcado y sin
+        // marcar. Para quitarla está el visor, que sabe cómo está cada uno.
+        if (getIt<NsfwModeService>().isConfigured) ...[
+          IconButton(
+            tooltip: texts.mediaNsfwMark,
+            onPressed: () => context.read<MediaBloc>().add(
+              const SetSelectedMediaNsfwEvent(isNsfw: true),
+            ),
+            icon: const Icon(Symbols.visibility_off),
+          ),
+          const SizedBox(width: AppSpacing.s),
+        ],
         // Antes que «aceptar los seguros»: para que haya sugerencias que aceptar
         // primero tiene que haber pasado esto.
         FernPillButton(

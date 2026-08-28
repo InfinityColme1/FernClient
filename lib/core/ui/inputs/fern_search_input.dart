@@ -43,6 +43,17 @@ class FernSearchInput extends StatefulWidget {
   /// escrito se está consultando y que el desplegable está por llegar.
   final bool isSearching;
 
+  /// Al elegir una sugerencia, el campo se vacía y se queda listo para la
+  /// siguiente búsqueda.
+  ///
+  /// Es para los buscadores que sirven para elegir **varias cosas seguidas**
+  /// —las etiquetas de un contenido—, donde lo elegido ya se ve en otro sitio y
+  /// dejarlo escrito obliga a borrarlo a mano antes de buscar lo siguiente. Los
+  /// que eligen una sola cosa (el padre de una etiqueta, el enlace de un fernie)
+  /// lo dejan apagado: ahí el nombre escrito **es** el valor del campo, y
+  /// vaciarlo sería deshacer lo que se acaba de elegir.
+  final bool clearOnSelected;
+
   const FernSearchInput({
     super.key,
     required this.label,
@@ -55,6 +66,7 @@ class FernSearchInput extends StatefulWidget {
     this.maxSuggestionsHeight = 200,
     this.filterSuggestions = true,
     this.isSearching = false,
+    this.clearOnSelected = false,
   });
 
   @override
@@ -109,12 +121,17 @@ class _FernSearchInputState extends State<FernSearchInput> {
           link: _layerLink,
           showWhenUnlinked: false,
           offset: Offset(0.0, size.height + AppSpacing.xs),
+          // El color va en el `Material` y no en una caja por debajo: las filas
+          // pintan su fondo y su resalte sobre el `Material` más cercano, y con
+          // una caja de color en medio quedaban tapados —pasar por encima de
+          // una sugerencia no se notaba— y Flutter lo avisaba por consola.
           child: Material(
             elevation: 0.0,
-            color: Colors.transparent,
+            color: context.colors.white,
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            clipBehavior: Clip.antiAlias,
             child: Container(
               decoration: BoxDecoration(
-                color: context.colors.white,
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                 border: Border.all(color: context.colors.lightgray),
               ),
@@ -133,10 +150,28 @@ class _FernSearchInputState extends State<FernSearchInput> {
                                 ?.copyWith(fontFamily: 'Courier'),
                           ),
                           onTap: () {
+                            // Se escribe antes de avisar: quien escucha
+                            // resuelve la sugerencia por su texto, así que
+                            // tiene que estar puesto cuando le llegue.
                             _controller.text = suggestion;
                             widget.onSelected?.call(suggestion);
+
+                            if (widget.clearOnSelected) {
+                              _controller.clear();
+                              widget.onChanged?.call('');
+                            }
+
                             _hideOverlay();
-                            FocusScope.of(context).unfocus();
+
+                            // Vaciándose, el foco se queda: lo siguiente que se
+                            // va a hacer es escribir la búsqueda siguiente, y
+                            // devolver el cursor a mano es el trabajo que esto
+                            // ahorra.
+                            if (!widget.clearOnSelected) {
+                              FocusScope.of(context).unfocus();
+                            }
+
+                            setState(() {});
                           },
                         ))
                     .toList(),
@@ -183,10 +218,17 @@ class _FernSearchInputState extends State<FernSearchInput> {
           },
           decoration: InputDecoration(
             hintText: widget.hintText,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.l,
-              vertical: AppSpacing.m,
-            ),
+            // Sin márgenes propios: los pone el tema, que es el mismo que los
+            // pone en un campo de texto normal. Con los suyos, el texto de un
+            // buscador y el de un campo de nombre no arrancaban a la misma
+            // altura ni a la misma distancia del borde.
+            //
+            // **Ni fondo ni marco: los pinta [FernOutlinedField] por fuera.**
+            // Con el relleno puesto se pintaban los dos, y el de dentro es un
+            // rectángulo recto que tapaba el borde del de fuera justo en las
+            // esquinas: la caja salía con las cuatro puntas comidas y sólo se
+            // veían los cuatro lados rectos.
+            filled: false,
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,

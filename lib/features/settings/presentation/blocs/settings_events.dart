@@ -170,6 +170,16 @@ class ShowListAvatarsToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Decide si lo que se suelta sobre una etiqueta se queda marcado.
+class KeepsSelectionOnDropToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const KeepsSelectionOnDropToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 /// Cambia el tema con el que se pinta la aplicación.
 ///
 /// Se ve al instante y en toda la aplicación: el tema cuelga de la raíz, así que

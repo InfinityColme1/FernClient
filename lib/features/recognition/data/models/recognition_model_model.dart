@@ -52,6 +52,13 @@ class RecognitionModelModel {
 
   bool isImportedWeights = false;
 
+  /// El modelo está marcado como no apto.
+  ///
+  /// Sólo afecta a lo que se ve: el árbol lo sigue ejecutando y el
+  /// entrenamiento lo sigue tocando, porque quien lee para trabajar lo hace por
+  /// el repositorio y no por los casos de uso, que son los que filtran.
+  bool isNsfw = false;
+
   DateTime createdAt = DateTime.now();
 
   @Backlink(to: 'model')
@@ -82,6 +89,7 @@ class RecognitionModelModel {
       lastError: lastError,
       isTraining: isTraining,
       isImportedWeights: isImportedWeights,
+      isNsfw: isNsfw,
       createdAt: createdAt,
       fernieCount: fernieCount,
       regionCount: regionCount,
@@ -108,6 +116,7 @@ class RecognitionModelModel {
       ..lastError = entity.lastError
       ..isTraining = entity.isTraining
       ..isImportedWeights = entity.isImportedWeights
+      ..isNsfw = entity.isNsfw
       ..createdAt = entity.createdAt;
   }
 }

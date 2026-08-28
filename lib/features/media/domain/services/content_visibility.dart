@@ -49,4 +49,32 @@ class ContentVisibility {
   /// Incluye las que cuelgan de una marcada. Una hija esconde contenido igual
   /// que su madre, y no distinguirla sería avisar a medias.
   bool marksTag(int tagId) => false;
+
+  /// Si este fernie no se puede enseñar.
+  ///
+  /// Va aparte del contenido porque lo que esconde no es lo mismo: un fernie es
+  /// un nombre, una cara y un puñado de recortes de la biblioteca. Sin esto,
+  /// marcar contenido y luego recortarlo en un fernie devolvía ese contenido a
+  /// la vista por la pantalla de fernies, con el filtro puesto.
+  ///
+  /// **No dice nada de lo que el fernie hace.** Escondido sigue entrenando y
+  /// sigue proponiendo; por eso quien lee para trabajar —el conjunto de datos,
+  /// el reconocimiento— va por el repositorio y no por los casos de uso, que
+  /// son los que preguntan esto.
+  bool hidesFernie(int fernieId) => false;
+
+  /// Si este fernie esconde algo, esté el filtro puesto o no.
+  ///
+  /// Lo mismo que [marksTag] para las etiquetas: con el filtro quitado el
+  /// fernie se ve, y hay que poder distinguirlo de los demás.
+  bool marksFernie(int fernieId) => false;
+
+  /// Si este modelo no se puede enseñar.
+  ///
+  /// Tampoco dice nada de lo que el modelo hace: escondido se entrena y el
+  /// árbol lo sigue ejecutando.
+  bool hidesModel(int modelId) => false;
+
+  /// Si este modelo está marcado, esté el filtro puesto o no.
+  bool marksModel(int modelId) => false;
 }

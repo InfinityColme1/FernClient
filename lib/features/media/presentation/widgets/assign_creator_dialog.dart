@@ -79,7 +79,10 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
     final created = await replaceFernDialog<CreatorEntity, MediaBloc>(
       context: context,
       bloc: bloc,
-      builder: (_) => const FernCreateDialog.creator(),
+      // Con el contenido que se está viendo delante, igual que al crear una
+      // etiqueta desde aquí: el creador se da de alta mirando algo suyo, y
+      // ofrecerlo como avatar ahorra ir a buscarlo al explorador.
+      builder: (_) => FernCreateDialog.creator(currentMediaPath: media.path),
     );
 
     if (!navigatorContext.mounted) return;

@@ -1,7 +1,10 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_log_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -26,9 +29,51 @@ class RecognitionLogDialog extends StatefulWidget {
 }
 
 class _RecognitionLogDialogState extends State<RecognitionLogDialog> {
-  late final Set<int> _open = widget.logs.length == 1
-      ? {widget.logs.single.mediaId}
-      : <int>{};
+  /// El parte, sin lo que ahora mismo no se puede enseñar.
+  ///
+  /// El parte se arma mientras se reconoce y lleva dentro los nombres y las
+  /// caras de los modelos y de los fernies. Sin este filtro sería la puerta de
+  /// atrás de todo lo demás: bastaría reconocer una tanda y abrir el parte para
+  /// leer justo lo que el filtro esconde.
+  ///
+  /// Se calcula una vez, al abrir, y no en cada pintado: es una lista corta pero
+  /// se recorre entera, y el diálogo se reconstruye al desplegar cada fila.
+  late final List<MediaRecognitionLog> _logs = _visible(widget.logs);
+
+  late final Set<int> _open =
+      _logs.length == 1 ? {_logs.single.mediaId} : <int>{};
+
+  /// Quita del parte los modelos escondidos y, de los que quedan, lo que dijeron
+  /// de un fernie escondido.
+  List<MediaRecognitionLog> _visible(List<MediaRecognitionLog> logs) {
+    final visibility = getIt.isRegistered<NsfwVisibility>()
+        ? getIt<NsfwVisibility>()
+        : const ContentVisibility();
+
+    return [
+      for (final log in logs)
+        MediaRecognitionLog(
+          mediaId: log.mediaId,
+          name: log.name,
+          at: log.at,
+          models: [
+            for (final entry in log.models)
+              if (!visibility.hidesModel(entry.modelId))
+                RecognitionLogEntry(
+                  modelId: entry.modelId,
+                  modelName: entry.modelName,
+                  picturePath: entry.picturePath,
+                  verdict: entry.verdict,
+                  threshold: entry.threshold,
+                  sightings: [
+                    for (final sighting in entry.sightings)
+                      if (!visibility.hidesFernie(sighting.fernieId)) sighting,
+                  ],
+                ),
+          ],
+        ),
+    ];
+  }
 
   void _toggle(int mediaId) {
     setState(() {
@@ -51,7 +96,7 @@ class _RecognitionLogDialogState extends State<RecognitionLogDialog> {
           Text(texts.recognitionLogTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.s),
           Text(
-            texts.recognitionLogSubtitle(widget.logs.length),
+            texts.recognitionLogSubtitle(_logs.length),
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: context.colors.unremarked),
           ),
@@ -65,11 +110,11 @@ class _RecognitionLogDialogState extends State<RecognitionLogDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final log in widget.logs)
+                  for (final log in _logs)
                     _MediaRow(
                       log: log,
                       isOpen: _open.contains(log.mediaId),
-                      onTap: widget.logs.length == 1
+                      onTap: _logs.length == 1
                           ? null
                           : () => _toggle(log.mediaId),
                     ),

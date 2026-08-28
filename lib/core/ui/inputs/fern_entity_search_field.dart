@@ -35,6 +35,10 @@ class FernEntitySearchField<T> extends StatefulWidget {
 
   final Duration debounce;
 
+  /// Al elegir, el campo se vacía y queda listo para buscar otra cosa. Ver
+  /// [FernSearchInput.clearOnSelected].
+  final bool clearOnSelected;
+
   const FernEntitySearchField({
     super.key,
     required this.label,
@@ -46,6 +50,7 @@ class FernEntitySearchField<T> extends StatefulWidget {
     this.hintText = '',
     this.initialValue = '',
     this.debounce = const Duration(milliseconds: 250),
+    this.clearOnSelected = false,
   });
 
   @override
@@ -154,6 +159,7 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
 
               return item == null ? null : widget.trailingOf!(item);
             },
+      clearOnSelected: widget.clearOnSelected,
       onChanged: _onQueryChanged,
       onSelected: _onSuggestionSelected,
     );

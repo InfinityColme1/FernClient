@@ -318,6 +318,15 @@ class DuplicatesBloc extends Bloc<DuplicatesEvent, DuplicatesState> {
 
   StreamSubscription<List<Job>>? _subscription;
 
+  /// Abrir o cerrar el filtro NSFW no cambia los grupos, cambia **cuáles se
+  /// pueden enseñar**, así que hay que releer.
+  ///
+  /// Este bloc nace y muere con la pantalla, así que no puede releerlo el
+  /// arranque de la aplicación como hace con los demás: se entera él. Sin esto,
+  /// cerrar el filtro delante de la pantalla la deja enseñando los grupos que
+  /// acaban de esconderse.
+  StreamSubscription<bool>? _nsfwSubscription;
+
   /// El trabajo que encoló el botón, para saber en qué quedó.
   ///
   /// Se guarda el identificador en lugar de mirar el último escaneo terminado
@@ -333,6 +342,7 @@ class DuplicatesBloc extends Bloc<DuplicatesEvent, DuplicatesState> {
     required ApplyDuplicateGroupUseCase apply,
     required DismissDuplicateGroupUseCase dismiss,
     LastScanReader? lastScan,
+    Stream<bool>? nsfwChanges,
   })  : _repository = repository,
         _jobs = jobs,
         _details = details,
@@ -351,11 +361,15 @@ class DuplicatesBloc extends Bloc<DuplicatesEvent, DuplicatesState> {
 
     _subscription =
         _jobs.changes.listen((jobs) => add(DuplicateJobsChangedEvent(jobs)));
+
+    _nsfwSubscription =
+        nsfwChanges?.listen((_) => add(const LoadDuplicatesEvent()));
   }
 
   @override
   Future<void> close() {
     _subscription?.cancel();
+    _nsfwSubscription?.cancel();
 
     return super.close();
   }

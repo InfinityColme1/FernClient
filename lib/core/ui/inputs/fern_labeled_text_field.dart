@@ -1,5 +1,6 @@
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/ui/inputs/fern_field_label.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -57,13 +58,9 @@ class _FernLabeledTextFieldState extends State<FernLabeledTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
+        // El mismo rótulo que llevan los demás campos, y por el mismo sitio:
+        // es de donde sale que todos se lean igual.
+        FernFieldLabel(text: widget.label),
         const SizedBox(height: AppSpacing.s),
         TextField(
           controller: widget.controller,

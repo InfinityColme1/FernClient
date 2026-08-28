@@ -451,6 +451,40 @@ void main() {
       expect(result(await repository.getGroupsToReview()), hasLength(1));
     });
 
+    test('y el grupo llega sin la copia escondida', () async {
+      // La pantalla dice cuántas copias tiene el grupo antes de abrirlo. Con la
+      // lista entera diría «3 copias» sobre un grupo que enseña dos, y contar lo
+      // que no se puede enseñar es contar que está ahí.
+      await repository.saveGroups([await liveGroup([1, 2, 3])]);
+
+      hidden = {3};
+
+      final group = result(await repository.getGroupsToReview()).single;
+      expect(group.mediaIds, [1, 2]);
+
+      // Y vuelve entero al quitar el filtro: lo guardado no se ha tocado.
+      hidden = {};
+      expect(
+        result(await repository.getGroupsToReview()).single.mediaIds,
+        [1, 2, 3],
+      );
+    });
+
+    test('el escaneo mira todo el contenido, escondido incluido', () async {
+      // Lo que se filtra es la vista, no el trabajo: si el escaneo se saltara lo
+      // escondido, quitar el filtro dejaría media biblioteca sin huella y sin
+      // comparar, y los duplicados entre contenido marcado no aparecerían nunca.
+      await addMedia(1);
+      await addMedia(2);
+      await addMedia(3);
+
+      hidden = {1, 2, 3};
+
+      final hashable = result(await repository.getHashable());
+
+      expect([for (final one in hashable) one.mediaId], containsAll([1, 2, 3]));
+    });
+
     // El caso que separa «vivas» de «comparables»: un grupo resuelto vuelve a
     // abrirse cuando sus copias siguen vivas —alguien las sacó de la papelera—
     // y eso no puede depender de si el filtro las esconde ahora mismo. Con el

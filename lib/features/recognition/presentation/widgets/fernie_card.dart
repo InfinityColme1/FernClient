@@ -10,7 +10,9 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/set_fernie_nsfw_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/update_fernie_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
@@ -46,6 +48,7 @@ class _FernieCardState extends State<FernieCard> {
   final _searchCreators = getIt<SearchCreatorsUseCase>();
   final _updateFernie = getIt<UpdateFernieUseCase>();
   final _deleteFernie = getIt<DeleteFernieUseCase>();
+  final _setNsfw = getIt<SetFernieNsfwUseCase>();
   final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
@@ -69,6 +72,14 @@ class _FernieCardState extends State<FernieCard> {
   /// Clave del buscador del enlace. Cambiarla lo hace nacer de nuevo, que es la
   /// forma de vaciarlo desde fuera.
   Key _linkFieldKey = UniqueKey();
+
+  /// El fernie está marcado como contenido no apto.
+  ///
+  /// Se guarda al tocar el interruptor y no con el botón de guardar, igual que
+  /// en la ficha de etiquetas: es una decisión que hace desaparecer cosas de la
+  /// pantalla, y dejarla a medias —marcada en pantalla, sin marcar en la base de
+  /// datos— sería la peor forma de contarlo.
+  late bool _isNsfw = widget.fernie.isNsfw;
 
   /// Hay una escritura en marcha (guardar, borrar o copiar el avatar elegido).
   bool _isBusy = false;
@@ -170,6 +181,32 @@ class _FernieCardState extends State<FernieCard> {
     );
     if (result is! DataSuccess || !mounted) return;
 
+    // Enlazar con una etiqueta marcada marca el fernie, y eso pasa **al
+    // guardar**: el interruptor tiene que enterarse aquí, o diría que no está
+    // marcado sobre un fernie que acaba de esconderse.
+    final saved = result.data;
+    if (saved != null && saved.isNsfw != _isNsfw) {
+      setState(() => _isNsfw = saved.isNsfw);
+    }
+
+    context.read<FerniesBloc>().add(const LoadFerniesEvent());
+  }
+
+  /// Marca o desmarca el fernie.
+  ///
+  /// Con el filtro puesto, marcarlo lo saca de la lista de al lado en cuanto se
+  /// relee, y con él sus regiones: es lo que se está pidiendo. Lo que **no**
+  /// cambia es lo que el fernie hace: sigue entrenando a sus modelos y sigue
+  /// proponiendo lo suyo.
+  Future<void> _setNsfwMark(bool value) async {
+    final result = await _setNsfw(
+      params: SetFernieNsfwParams(fernieId: widget.fernie.id, isNsfw: value),
+    );
+
+    if (result is! DataSuccess || !mounted) return;
+
+    setState(() => _isNsfw = value);
+
     context.read<FerniesBloc>().add(const LoadFerniesEvent());
   }
 
@@ -200,6 +237,12 @@ class _FernieCardState extends State<FernieCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Arriba a la derecha, como en la ficha de etiquetas: es la misma
+            // acción y se busca en el mismo sitio.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [_nsfwButton(texts)],
+            ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -275,6 +318,26 @@ class _FernieCardState extends State<FernieCard> {
           ],
         ),
       ),
+    );
+  }
+
+  /// El interruptor de NSFW, hecho un icono más de la fila de arriba.
+  ///
+  /// Sólo con contraseña puesta. Sin ella, marcar no escondería nada (ver
+  /// `NsfwVisibility`) y el botón prometería algo que no va a pasar.
+  Widget _nsfwButton(AppLocalizations texts) {
+    if (!getIt<NsfwModeService>().isConfigured) return const SizedBox.shrink();
+
+    return IconButton(
+      icon: Icon(
+        Symbols.visibility_off,
+        size: AppSizes.iconCardAction,
+        // Encendido, con el color con el que la aplicación marca lo que hay que
+        // mirar dos veces. Apagado se queda como los demás iconos.
+        color: _isNsfw ? context.colors.terciary : null,
+      ),
+      tooltip: _isNsfw ? texts.nsfwMarkOnTooltip : texts.tagNsfwOffTooltip,
+      onPressed: _isBusy ? null : () => _run(() => _setNsfwMark(!_isNsfw)),
     );
   }
 

@@ -30,6 +30,14 @@ class FernieEntity extends Equatable {
   /// enseñarlo: quien manda es el identificador.
   final String? linkedName;
 
+  /// El usuario lo ha marcado como no apto.
+  ///
+  /// Es **su** marca y sólo la suya: un fernie también queda escondido si lo
+  /// que propone es una etiqueta marcada, pero eso lo resuelve `NsfwVisibility`
+  /// al preguntar y no se guarda aquí, por lo mismo que la rama de las
+  /// etiquetas no se guarda propagada.
+  final bool isNsfw;
+
   final DateTime createdAt;
 
   /// Cuántas regiones tiene y sobre cuántos contenidos distintos.
@@ -63,6 +71,7 @@ class FernieEntity extends Equatable {
     this.linkedTagId,
     this.linkedCreatorId,
     this.linkedName,
+    this.isNsfw = false,
     DateTime? createdAt,
     this.regionCount = 0,
     this.mediaCount = 0,
@@ -93,6 +102,7 @@ class FernieEntity extends Equatable {
     int? linkedTagId,
     int? linkedCreatorId,
     String? linkedName,
+    bool? isNsfw,
     int? regionCount,
     int? mediaCount,
     int? usableRegionCount,
@@ -105,6 +115,7 @@ class FernieEntity extends Equatable {
       linkedTagId: linkedTagId,
       linkedCreatorId: linkedCreatorId,
       linkedName: linkedName,
+      isNsfw: isNsfw ?? this.isNsfw,
       createdAt: createdAt,
       regionCount: regionCount ?? this.regionCount,
       mediaCount: mediaCount ?? this.mediaCount,
@@ -121,6 +132,7 @@ class FernieEntity extends Equatable {
         linkedTagId,
         linkedCreatorId,
         linkedName,
+        isNsfw,
         regionCount,
         mediaCount,
         usableRegionCount,

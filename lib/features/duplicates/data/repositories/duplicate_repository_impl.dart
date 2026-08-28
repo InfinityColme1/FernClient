@@ -272,11 +272,21 @@ class DuplicateRepositoryImpl implements DuplicateRepository {
         return byDistance != 0 ? byDistance : one.foundAt.compareTo(other.foundAt);
       });
 
+      // El grupo sale **sólo con las copias que se pueden comparar**, no con
+      // todas las que guarda. La pantalla dice cuántas hay antes de abrirlo, y
+      // con la lista entera diría «3 copias» sobre un grupo que enseña dos:
+      // contar lo que no se puede enseñar es contar que existe.
+      //
+      // Lo guardado no se toca: el grupo sigue siendo el que es, y en cuanto se
+      // quita el filtro vuelve entero.
       return DataSuccess([
         for (final row in rows)
           DuplicateGroupSummary(
             id: row.id,
-            mediaIds: row.mediaIds,
+            mediaIds: [
+              for (final mediaId in row.mediaIds)
+                if (comparable.contains(mediaId)) mediaId,
+            ],
             maxDistance: row.maxDistance,
             foundAt: row.foundAt,
           ),

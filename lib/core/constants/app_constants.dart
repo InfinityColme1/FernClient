@@ -254,6 +254,17 @@ const autoTagRemoteSourcePreferenceKey = 'auto_tag_remote_source';
 /// Si la lista de etiquetas del menú lateral enseña los avatares. Encendido de
 /// fábrica: es lo que permite reconocerlas con el menú plegado.
 const showListAvatarsPreferenceKey = 'show_list_avatars';
+
+/// Si lo que se suelta sobre una etiqueta sigue marcado después. Apagado de
+/// fábrica: soltar termina el trabajo, y quedarse con treinta celdas marcadas
+/// sin haberlo pedido es una selección que se arrastra sin querer a lo
+/// siguiente que se haga.
+const keepsSelectionOnDropPreferenceKey = 'keeps_selection_on_drop';
+
+/// Cuánto se espera como mucho a que termine la relectura para devolver lo que
+/// estaba marcado. Es un tope de seguridad, no un tiempo de espera esperado: la
+/// relectura tarda milésimas y quien acaba aquí es un listado que no contesta.
+const selectionRestoreTimeout = Duration(seconds: 5);
 const pauseWhenSeekingPreferenceKey = 'pause_when_seeking';
 
 /// Con qué colores se pinta la aplicación: el claro, el oscuro, el del sistema

@@ -1,5 +1,6 @@
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/recognition/domain/entities/model_tree_entity.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/features/recognition/domain/repositories/model_tree_repository.dart';
 import 'package:Fern/features/recognition/domain/services/model_tree_layout.dart';
@@ -229,13 +230,21 @@ class ModelTreeBloc extends Bloc<ModelTreeEvents, ModelTreeState> {
   final GetModelsUseCase _getModels;
   final GetFernieUseCase _getFernie;
 
+  /// El árbol se lee por el repositorio —no hay caso de uso que lo filtre— y
+  /// eso es lo correcto: el recorrido que reconoce lee por ahí y tiene que ver
+  /// el árbol entero. Aquí, que es la pantalla, se quitan los nodos escondidos
+  /// antes de pintar.
+  final ContentVisibility _visibility;
+
   ModelTreeBloc({
     required ModelTreeRepository repository,
     required GetModelsUseCase getModels,
     required GetFernieUseCase getFernie,
+    ContentVisibility visibility = const ContentVisibility(),
   })  : _repository = repository,
         _getModels = getModels,
         _getFernie = getFernie,
+        _visibility = visibility,
         super(const ModelTreeState()) {
     on<LoadModelTreeEvent>(_onLoad);
     on<SelectTreeNodeEvent>(_onSelect);
@@ -390,7 +399,7 @@ class ModelTreeBloc extends Bloc<ModelTreeEvents, ModelTreeState> {
       return _fail(emit, tree.exception);
     }
 
-    final laid = layoutModelTree(tree.data!);
+    final laid = layoutModelTree(_visible(tree.data!));
 
     emit(state.copyWith(
       tree: laid,
@@ -400,6 +409,38 @@ class ModelTreeBloc extends Bloc<ModelTreeEvents, ModelTreeState> {
       selectedNodeId: selectedNodeId,
       lastCreatedEdgeId: createdEdgeId,
     ));
+  }
+
+  /// El árbol sin lo que no se puede enseñar.
+  ///
+  /// Se van los nodos de modelos escondidos y, con ellos, las aristas que
+  /// tocaban: una flecha que sale de la nada no dice nada y una etiqueta de
+  /// condición delataría el nombre del fernie que la dispara. Un hijo que se
+  /// quede sin padres se pinta como raíz, que es lo que significa no tener
+  /// aristas entrantes.
+  ///
+  /// **Nada de esto cambia el árbol de verdad.** Lo guardado sigue entero y el
+  /// reconocimiento lo recorre completo: esto es sólo el dibujo.
+  ModelTreeEntity _visible(ModelTreeEntity tree) {
+    final hidden = {
+      for (final node in tree.nodes)
+        if (_visibility.hidesModel(node.model.id)) node.id,
+    };
+
+    if (hidden.isEmpty) return tree;
+
+    return ModelTreeEntity(
+      nodes: [
+        for (final node in tree.nodes)
+          if (!hidden.contains(node.id)) node,
+      ],
+      edges: [
+        for (final edge in tree.edges)
+          if (!hidden.contains(edge.parentNodeId) &&
+              !hidden.contains(edge.childNodeId))
+            edge,
+      ],
+    );
   }
 
   /// Cómo se llaman los fernies que disparan alguna arista.

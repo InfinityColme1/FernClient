@@ -961,6 +961,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Each tag is drawn with its own picture instead of the shared icon, so you can tell them apart while the menu is collapsed. Tags without a picture keep the icon.';
 
   @override
+  String get keepsSelectionOnDrop =>
+      'Keep the selection after dropping it on a tag';
+
+  @override
+  String get keepsSelectionOnDropDescription =>
+      'Off, dropping content on a tag clears the selection, which calls the job done. On, it stays selected so you can add another tag right away without picking everything again.';
+
+  @override
+  String get useCurrentImageAsAvatar => 'Use the picture you are viewing';
+
+  @override
   String get viewerSaveSectionTitle => 'Saving imported media';
 
   @override
@@ -3111,7 +3122,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nsfwDisableNote =>
-      'Turning the filter off for good unmarks every tag and stops hiding anything. Your content is untouched: it was marked, not encrypted.';
+      'Turning the filter off for good unmarks everything you had marked —tags, content, fernies and models— and stops hiding anything. Nothing is deleted: it was marked, not encrypted.';
 
   @override
   String get nsfwDisableAction => 'Turn the filter off for good';
@@ -3272,6 +3283,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagNsfwOffTooltip => 'Mark as NSFW';
+
+  @override
+  String get nsfwMarkOnTooltip => 'Marked as NSFW · click to unmark';
 
   @override
   String get mediaNsfwMark => 'Mark as NSFW';

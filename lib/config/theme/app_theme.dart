@@ -295,6 +295,19 @@ class AppTheme {
       // se espera es ver la caja entera —dónde empieza y dónde acaba lo que se
       // puede escribir—, y además así el campo se parece a todo lo demás de la
       // aplicación, que va en cajas redondeadas con su trazo fino.
+      // **El cursor, del color del texto.**
+      //
+      // De fábrica lo pinta Material con el primario del esquema de color, que
+      // aquí es el lavanda de la aplicación: sobre el fondo de un campo era una
+      // raya de un píxel y medio tono, y había que buscarla para saber dónde se
+      // estaba escribiendo. [AppPalette.black] es «lo que se escribe encima del
+      // fondo» —casi blanco en el tema oscuro, casi negro en el claro—, así que
+      // el cursor va del mismo color que las letras que deja.
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: palette.black,
+        selectionHandleColor: palette.primary,
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: palette.secondary,
@@ -303,8 +316,14 @@ class AppTheme {
           horizontal: AppSpacing.m,
           vertical: AppSpacing.m,
         ),
-        border: _field(palette.outline),
-        enabledBorder: _field(palette.outline),
+        // **Con [AppPalette.lightgray], no con el velo de [AppPalette.outline].**
+        // Aquél es el trazo del resto del armazón —diálogos, superficies,
+        // menús— y va a un diez por ciento de opacidad: sobre un panel es la
+        // separación justa, pero en un campo de texto era una raya que había que
+        // buscar, y un campo que no se ve no invita a escribir en él. Éste es un
+        // color entero, el mismo con el que ya se enmarcan los desplegables.
+        border: _field(palette.lightgray),
+        enabledBorder: _field(palette.lightgray),
         // Al escribir, el trazo se marca con el color de la aplicación: es lo
         // que dice dónde va lo que se teclea cuando hay varios campos a la vista.
         focusedBorder: _field(palette.primary, width: AppSizes.borderRegular),

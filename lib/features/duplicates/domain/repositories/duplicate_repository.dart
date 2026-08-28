@@ -57,6 +57,11 @@ abstract class DuplicateRepository {
   /// enseñarlo invita a conservar precisamente la copia que ya está borrada.
   /// No se borran, se esconden: de la papelera se vuelve durante siete días, y
   /// con la copia vuelve el grupo.
+  ///
+  /// Lo mismo con lo que esconde el filtro NSFW, y cada grupo llega **sólo con
+  /// las copias que se pueden enseñar**: comparar dos copias es abrirlas, y un
+  /// recuento que incluyera las escondidas contaría que están ahí. El escaneo,
+  /// en cambio, las mira todas: lo que se filtra es la vista, no el trabajo.
   Future<DataState<List<DuplicateGroupSummary>>> getGroupsToReview();
 
   /// Da un grupo por revisado.

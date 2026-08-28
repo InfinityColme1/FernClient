@@ -214,6 +214,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
           _preferences.getBool(autoTagRemoteSourcePreferenceKey) ?? false,
       showListAvatars:
           _preferences.getBool(showListAvatarsPreferenceKey) ?? true,
+      keepsSelectionOnDrop:
+          _preferences.getBool(keepsSelectionOnDropPreferenceKey) ?? false,
       pauseWhenSeeking:
           _preferences.getBool(pauseWhenSeekingPreferenceKey) ?? false,
       themeMode: AppThemeMode.fromId(
@@ -342,6 +344,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setBool(
       showListAvatarsPreferenceKey,
       settings.showListAvatars,
+    );
+
+    await _preferences.setBool(
+      keepsSelectionOnDropPreferenceKey,
+      settings.keepsSelectionOnDrop,
     );
 
     await _preferences.setBool(

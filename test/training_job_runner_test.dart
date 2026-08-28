@@ -84,6 +84,10 @@ class _FakeRepository implements ModelRepository {
   Future<DataState<bool>> deleteModel(int id) async => const DataSuccess(true);
 
   @override
+  Future<DataState<bool>> setModelNsfw(int id, {required bool isNsfw}) async =>
+      const DataSuccess(true);
+
+  @override
   Future<DataState<ModelFernieEntity>> assignFernie({
     required int modelId,
     required int fernieId,

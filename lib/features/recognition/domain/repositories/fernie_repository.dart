@@ -28,6 +28,14 @@ abstract class FernieRepository {
   /// Borra el fernie y, con él, todas sus regiones.
   Future<DataState<bool>> deleteFernie(int id);
 
+  /// Marca o desmarca el fernie como no apto.
+  ///
+  /// Va aparte de [updateFernie] y no como un campo más del formulario por lo
+  /// mismo que en las etiquetas: es una decisión que hace desaparecer cosas de
+  /// la pantalla en cuanto se toma, así que se escribe al tocarla y no cuando
+  /// alguien se acuerde de pulsar «guardar».
+  Future<DataState<bool>> setFernieNsfw(int id, {required bool isNsfw});
+
   /// Guarda varias regiones de golpe, cada una para el fernie que diga su
   /// `fernieId`. Es lo que hace aceptar una sesión de modo fernie: todo lo
   /// marcado entra en una sola transacción o no entra nada.

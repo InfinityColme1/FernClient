@@ -3,6 +3,7 @@ import 'package:Fern/core/usecases/usecase.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/media_suggestion_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_result_entity.dart';
@@ -26,14 +27,17 @@ class GetMediaSuggestionsUseCase
   final RecognitionResultRepository _results;
   final FernieRepository _fernies;
   final LocalMediaRepository _library;
+  final ContentVisibility _visibility;
 
   GetMediaSuggestionsUseCase({
     required RecognitionResultRepository results,
     required FernieRepository fernies,
     required LocalMediaRepository library,
+    ContentVisibility visibility = const ContentVisibility(),
   })  : _results = results,
         _fernies = fernies,
-        _library = library;
+        _library = library,
+        _visibility = visibility;
 
   @override
   Future<DataState<List<MediaSuggestionEntity>>> call({int? params}) async {
@@ -99,6 +103,12 @@ class GetMediaSuggestionsUseCase
     final fernies = <int, FernieEntity>{};
 
     for (final id in ids) {
+      // El fernie escondido se salta como el que ya no existe: su sugerencia
+      // lleva su nombre y su cara, y enseñarla sería enseñarlo. La propuesta no
+      // se pierde ni se contesta sola; sigue guardada, esperando a que se quite
+      // el filtro.
+      if (_visibility.hidesFernie(id)) continue;
+
       final found = await _fernies.getFernie(id);
 
       if (found is DataSuccess && found.data != null) {

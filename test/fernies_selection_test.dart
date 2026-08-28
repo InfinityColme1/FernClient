@@ -83,6 +83,10 @@ class _FakeRepository implements FernieRepository {
   Future<DataState<bool>> deleteFernie(int id) async => const DataSuccess(true);
 
   @override
+  Future<DataState<bool>> setFernieNsfw(int id, {required bool isNsfw}) async =>
+      const DataSuccess(true);
+
+  @override
   Future<DataState<List<FernieRegionEntity>>> addRegions(
     List<FernieRegionEntity> regions,
   ) async =>

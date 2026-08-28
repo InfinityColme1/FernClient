@@ -137,6 +137,17 @@ class AppearanceSettingsSection extends StatelessWidget {
                   .read<SettingsBloc>()
                   .add(ShowListAvatarsToggledEvent(value)),
             ),
+            // Va aquí porque aquí es donde se suelta: las etiquetas del menú
+            // lateral son el único sitio de la aplicación al que se puede
+            // arrastrar contenido.
+            FernCheckboxTile(
+              label: texts.keepsSelectionOnDrop,
+              description: texts.keepsSelectionOnDropDescription,
+              value: settings.keepsSelectionOnDrop,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(KeepsSelectionOnDropToggledEvent(value)),
+            ),
           ],
         );
       },

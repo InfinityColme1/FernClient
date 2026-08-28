@@ -32,6 +32,8 @@ import 'package:Fern/features/nsfw/data/services/password_service.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
+import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
@@ -90,6 +92,8 @@ void main() {
         MediaModelSchema,
         FernieModelSchema,
         FernieRegionModelSchema,
+        RecognitionModelModelSchema,
+        ModelFernieModelSchema,
         DuplicateGroupModelSchema,
       ],
       directory: directory.path,

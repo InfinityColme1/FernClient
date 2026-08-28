@@ -109,6 +109,14 @@ class RecognitionModelEntity extends Equatable {
   /// Los pesos vienen de fuera en vez de haberse entrenado aquí.
   final bool isImportedWeights;
 
+  /// El usuario lo ha marcado como no apto.
+  ///
+  /// Esconde **la ficha del modelo**, no lo que el modelo hace: marcado se
+  /// entrena, se ejecuta desde el árbol y sigue proponiendo lo de siempre. Lo
+  /// único que cambia es que con el filtro puesto no aparece en ninguna
+  /// pantalla, y con él no aparecen los nombres de sus fernies.
+  final bool isNsfw;
+
   final DateTime createdAt;
 
   /// Cuántos fernies tiene asignados y cuántas regiones suman entre todos.
@@ -134,6 +142,7 @@ class RecognitionModelEntity extends Equatable {
     this.lastError,
     this.isTraining = false,
     this.isImportedWeights = false,
+    this.isNsfw = false,
     required this.createdAt,
     this.fernieCount = 0,
     this.regionCount = 0,
@@ -191,6 +200,7 @@ class RecognitionModelEntity extends Equatable {
     String? lastMetrics,
     bool? isTraining,
     bool? isImportedWeights,
+    bool? isNsfw,
     int? fernieCount,
     int? regionCount,
     // El error del último entrenamiento no se arrastra con el `??` de siempre:
@@ -220,6 +230,7 @@ class RecognitionModelEntity extends Equatable {
       lastError: lastError,
       isTraining: isTraining ?? this.isTraining,
       isImportedWeights: isImportedWeights ?? this.isImportedWeights,
+      isNsfw: isNsfw ?? this.isNsfw,
       createdAt: createdAt,
       fernieCount: fernieCount ?? this.fernieCount,
       regionCount: regionCount ?? this.regionCount,
@@ -244,6 +255,7 @@ class RecognitionModelEntity extends Equatable {
         lastError,
         isTraining,
         isImportedWeights,
+        isNsfw,
         fernieCount,
         regionCount,
       ];

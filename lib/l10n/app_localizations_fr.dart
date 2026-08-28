@@ -962,6 +962,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Chaque tag est dessiné avec sa propre image au lieu de l\'icône commune, ce qui permet de les distinguer quand le menu est replié. Les tags sans image gardent l\'icône.';
 
   @override
+  String get keepsSelectionOnDrop =>
+      'Garder la sélection après l\'avoir déposée sur un tag';
+
+  @override
+  String get keepsSelectionOnDropDescription =>
+      'Désactivé, déposer du contenu sur un tag le désélectionne, ce qui clôt le travail. Activé, il reste sélectionné pour pouvoir lui ajouter un autre tag sans tout resélectionner.';
+
+  @override
+  String get useCurrentImageAsAvatar => 'Utiliser l\'image que vous regardez';
+
+  @override
   String get viewerSaveSectionTitle => 'En enregistrant un média importé';
 
   @override
@@ -3133,7 +3144,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get nsfwDisableNote =>
-      'Désactiver le filtre démarque toutes les étiquettes et cesse de cacher quoi que ce soit. Votre contenu n’est pas touché : il était marqué, pas chiffré.';
+      'Désactiver le filtre démarque tout ce que vous aviez marqué —étiquettes, contenu, fernies et modèles— et cesse de cacher quoi que ce soit. Rien n’est supprimé : il était marqué, pas chiffré.';
 
   @override
   String get nsfwDisableAction => 'Désactiver le filtre';
@@ -3295,6 +3306,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tagNsfwOffTooltip => 'Marquer comme NSFW';
+
+  @override
+  String get nsfwMarkOnTooltip => 'Marqué NSFW · cliquez pour le démarquer';
 
   @override
   String get mediaNsfwMark => 'Marquer comme NSFW';

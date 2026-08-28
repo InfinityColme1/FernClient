@@ -22,23 +22,28 @@ const FernieModelSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'linkedCreatorId': PropertySchema(
+    r'isNsfw': PropertySchema(
       id: 1,
+      name: r'isNsfw',
+      type: IsarType.bool,
+    ),
+    r'linkedCreatorId': PropertySchema(
+      id: 2,
       name: r'linkedCreatorId',
       type: IsarType.long,
     ),
     r'linkedTagId': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'linkedTagId',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'picturePath': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'picturePath',
       type: IsarType.string,
     )
@@ -88,10 +93,11 @@ void _fernieModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeLong(offsets[1], object.linkedCreatorId);
-  writer.writeLong(offsets[2], object.linkedTagId);
-  writer.writeString(offsets[3], object.name);
-  writer.writeString(offsets[4], object.picturePath);
+  writer.writeBool(offsets[1], object.isNsfw);
+  writer.writeLong(offsets[2], object.linkedCreatorId);
+  writer.writeLong(offsets[3], object.linkedTagId);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.picturePath);
 }
 
 FernieModel _fernieModelDeserialize(
@@ -103,10 +109,11 @@ FernieModel _fernieModelDeserialize(
   final object = FernieModel();
   object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
-  object.linkedCreatorId = reader.readLongOrNull(offsets[1]);
-  object.linkedTagId = reader.readLongOrNull(offsets[2]);
-  object.name = reader.readString(offsets[3]);
-  object.picturePath = reader.readStringOrNull(offsets[4]);
+  object.isNsfw = reader.readBool(offsets[1]);
+  object.linkedCreatorId = reader.readLongOrNull(offsets[2]);
+  object.linkedTagId = reader.readLongOrNull(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.picturePath = reader.readStringOrNull(offsets[5]);
   return object;
 }
 
@@ -120,12 +127,14 @@ P _fernieModelDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 2:
       return (reader.readLongOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -332,6 +341,16 @@ extension FernieModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FernieModel, FernieModel, QAfterFilterCondition> isNsfwEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isNsfw',
+        value: value,
       ));
     });
   }
@@ -851,6 +870,18 @@ extension FernieModelQuerySortBy
     });
   }
 
+  QueryBuilder<FernieModel, FernieModel, QAfterSortBy> sortByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FernieModel, FernieModel, QAfterSortBy> sortByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
   QueryBuilder<FernieModel, FernieModel, QAfterSortBy> sortByLinkedCreatorId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'linkedCreatorId', Sort.asc);
@@ -927,6 +958,18 @@ extension FernieModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<FernieModel, FernieModel, QAfterSortBy> thenByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FernieModel, FernieModel, QAfterSortBy> thenByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
   QueryBuilder<FernieModel, FernieModel, QAfterSortBy> thenByLinkedCreatorId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'linkedCreatorId', Sort.asc);
@@ -985,6 +1028,12 @@ extension FernieModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<FernieModel, FernieModel, QDistinct> distinctByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isNsfw');
+    });
+  }
+
   QueryBuilder<FernieModel, FernieModel, QDistinct>
       distinctByLinkedCreatorId() {
     return QueryBuilder.apply(this, (query) {
@@ -1024,6 +1073,12 @@ extension FernieModelQueryProperty
   QueryBuilder<FernieModel, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<FernieModel, bool, QQueryOperations> isNsfwProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isNsfw');
     });
   }
 

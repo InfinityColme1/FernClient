@@ -88,4 +88,26 @@ class NsfwVisibility extends ContentVisibility {
   /// filtro esté quitado, y es entonces cuando hay que reconocerla.
   @override
   bool marksTag(int tagId) => _index.hasTag(tagId);
+
+  /// Los fernies marcados se esconden con el bloqueo cerrado, igual que las
+  /// etiquetas y por lo mismo: un fernie es un nombre y una cara, y eso no se
+  /// puede tapar a medias.
+  ///
+  /// El índice ya incluye los que lo están por su etiqueta enlazada, así que
+  /// aquí no hay que resolver nada.
+  @override
+  bool hidesFernie(int fernieId) =>
+      _isActive && !_mode.isUnlocked && _index.hasFernie(fernieId);
+
+  @override
+  bool marksFernie(int fernieId) => _index.hasFernie(fernieId);
+
+  /// Igual con los modelos, y el índice ya trae también los que están
+  /// escondidos porque **todos** sus fernies lo están.
+  @override
+  bool hidesModel(int modelId) =>
+      _isActive && !_mode.isUnlocked && _index.hasModel(modelId);
+
+  @override
+  bool marksModel(int modelId) => _index.hasModel(modelId);
 }

@@ -2,7 +2,10 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +43,13 @@ class ModelCard extends StatefulWidget {
 
 class _ModelCardState extends State<ModelCard> {
   bool _isHovered = false;
+
+  /// Quién sabe si este modelo está marcado. Se pregunta al pintar, como en la
+  /// lista de fernies: con el filtro puesto la tarjeta ni se pinta, así que esto
+  /// sólo se ve sin él.
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +108,22 @@ class _ModelCardState extends State<ModelCard> {
                   iconSize: AppSizes.iconExtraLarge,
                 ),
                 const SizedBox(height: AppSpacing.m),
-                Text(
-                  model.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        model.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                    if (_visibility.marksModel(model.id)) ...[
+                      const SizedBox(width: AppSpacing.s),
+                      const NsfwTagMark(),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xxs),
 

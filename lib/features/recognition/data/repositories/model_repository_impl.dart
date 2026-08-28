@@ -14,7 +14,19 @@ import 'package:isar/isar.dart';
 class ModelRepositoryImpl implements ModelRepository {
   final Isar _database;
 
-  ModelRepositoryImpl({required Isar database}) : _database = database;
+  /// Qué hacer cuando cambia lo que está marcado como no apto: rehacer el
+  /// índice. Llega de fuera por lo mismo que en el repositorio de fernies.
+  ///
+  /// No sólo lo llama marcar: un modelo se esconde también cuando **todos** sus
+  /// fernies lo están, así que meter o sacar uno cambia el filtro aunque nadie
+  /// haya tocado ninguna marca.
+  final Future<void> Function()? _onNsfwChanged;
+
+  ModelRepositoryImpl({
+    required Isar database,
+    Future<void> Function()? onNsfwChanged,
+  })  : _database = database,
+        _onNsfwChanged = onNsfwChanged;
 
   // ---------------------------------------------------------------------------
   // Modelos
@@ -63,6 +75,31 @@ class ModelRepositoryImpl implements ModelRepository {
       // Se relee en vez de devolver lo que se acaba de escribir: la función
       // efectiva depende de cuántos fernies tiene, y eso se cuenta aquí.
       return getModel(row.id);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Marca o desmarca el modelo, y rehace el índice antes de contestar.
+  ///
+  /// Sólo este campo: la pantalla de detalle tiene el nombre y la función a
+  /// medio editar, y tocar el interruptor no es guardarlos.
+  @override
+  Future<DataState<bool>> setModelNsfw(int id, {required bool isNsfw}) async {
+    try {
+      final row = await _database.recognitionModelModels.get(id);
+      if (row == null) return DataException(Exception('Modelo $id no existe'));
+
+      if (row.isNsfw == isNsfw) return const DataSuccess(true);
+
+      await _database.writeTxn(() async {
+        row.isNsfw = isNsfw;
+        await _database.recognitionModelModels.put(row);
+      });
+
+      await _onNsfwChanged?.call();
+
+      return const DataSuccess(true);
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -168,6 +205,10 @@ class ModelRepositoryImpl implements ModelRepository {
         await row.fernie.save();
       });
 
+      // Meter una clase normal en un modelo que sólo tenía marcadas lo devuelve
+      // a la vista, y al revés.
+      await _onNsfwChanged?.call();
+
       return DataSuccess(await _toAssignment(row));
     } on Exception catch (e) {
       return DataException(e);
@@ -180,6 +221,10 @@ class ModelRepositoryImpl implements ModelRepository {
       await _database.writeTxn(
         () => _database.modelFernieModels.delete(assignmentId),
       );
+
+      // Sacar la última clase normal deja el modelo hablando sólo de lo
+      // marcado, y entonces se esconde.
+      await _onNsfwChanged?.call();
 
       return const DataSuccess(true);
     } on Exception catch (e) {

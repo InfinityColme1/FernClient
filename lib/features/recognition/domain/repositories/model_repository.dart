@@ -19,6 +19,16 @@ abstract class ModelRepository {
   /// son suyos, no del modelo, y siguen valiendo para otros.
   Future<DataState<bool>> deleteModel(int id);
 
+  /// Marca o desmarca el modelo como no apto.
+  ///
+  /// Va aparte de [saveModel] porque se escribe al tocar el interruptor, sin
+  /// esperar al botón de guardar: dejarla a medias —marcada en pantalla, sin
+  /// marcar en la base de datos— sería la peor forma de contarlo.
+  ///
+  /// **No cambia nada de lo que el modelo hace.** Se sigue entrenando y el
+  /// árbol lo sigue ejecutando; lo único que cambia es que deja de verse.
+  Future<DataState<bool>> setModelNsfw(int id, {required bool isNsfw});
+
   // ---------------------------------------------------------------------------
   // Fernies del modelo
   // ---------------------------------------------------------------------------

@@ -961,6 +961,17 @@ class AppLocalizationsCa extends AppLocalizations {
       'Cada etiqueta es pinta amb la seva pròpia imatge en comptes de la icona comuna, així es distingeixen amb el menú plegat. Les etiquetes sense imatge es queden amb la icona.';
 
   @override
+  String get keepsSelectionOnDrop =>
+      'Mantenir la selecció en deixar-la anar sobre una etiqueta';
+
+  @override
+  String get keepsSelectionOnDropDescription =>
+      'Apagat, deixar anar contingut sobre una etiqueta el desmarca, que és donar la feina per acabada. Encès es queda marcat, per poder posar-li una altra etiqueta seguida sense tornar a assenyalar-ho tot.';
+
+  @override
+  String get useCurrentImageAsAvatar => 'Usar la imatge que estàs veient';
+
+  @override
   String get viewerSaveSectionTitle => 'En desar contingut importat';
 
   @override
@@ -3127,7 +3138,7 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get nsfwDisableNote =>
-      'Desactivar el filtre desmarca totes les etiquetes i deixa d’amagar res. El contingut no es toca: estava marcat, no xifrat.';
+      'Desactivar el filtre desmarca tot el que haguessis marcat —etiquetes, contingut, fernies i models— i deixa d’amagar res. No s’esborra res: estava marcat, no xifrat.';
 
   @override
   String get nsfwDisableAction => 'Desactivar el filtre';
@@ -3288,6 +3299,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get tagNsfwOffTooltip => 'Marcar com a NSFW';
+
+  @override
+  String get nsfwMarkOnTooltip => 'Marcat com a NSFW · prem per desmarcar-lo';
 
   @override
   String get mediaNsfwMark => 'Marcar com a NSFW';

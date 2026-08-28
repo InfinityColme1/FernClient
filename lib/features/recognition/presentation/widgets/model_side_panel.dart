@@ -1,7 +1,10 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/features/recognition/presentation/widgets/tree_drag_payload.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -46,6 +49,12 @@ class ModelSidePanel extends StatefulWidget {
 }
 
 class _ModelSidePanelState extends State<ModelSidePanel> {
+  /// Quién sabe si un modelo esconde algo. Con el filtro puesto no llega hasta
+  /// aquí —la lista sale ya filtrada—, así que esto sólo se ve sin él.
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
+
   String _query = '';
 
   /// Por qué función se filtra, o `null` por todas.
@@ -214,11 +223,24 @@ class _ModelSidePanelState extends State<ModelSidePanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    model.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          model.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                      // El mismo distintivo que en el nodo del árbol: quien
+                      // coloca un modelo tiene que saber con qué trabaja antes
+                      // de colgarlo de una rama.
+                      if (_visibility.marksModel(model.id)) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        const NsfwTagMark(),
+                      ],
+                    ],
                   ),
                   Text(
                     note,

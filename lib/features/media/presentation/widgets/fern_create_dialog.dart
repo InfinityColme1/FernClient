@@ -5,6 +5,8 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/services/media_preview_service.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
@@ -109,20 +111,35 @@ class FernCreateDialog extends StatefulWidget {
   /// mismo.
   final String initialName;
 
-  const FernCreateDialog.tag({super.key, this.initialName = ''})
-      : type = CreateDialogType.tag;
+  /// El contenido que se está mirando cuando se abre el diálogo, si se abre
+  /// desde el visor.
+  ///
+  /// Con él aparece el botón que lo usa de avatar. Sólo tiene sentido ahí: la
+  /// etiqueta —o el creador— se crea mirando justo la imagen que la explica, y
+  /// buscarla en el explorador para volver a elegirla sería ir a por un fichero
+  /// que ya se tiene delante. Desde el resto de sitios llega `null` y el botón
+  /// no aparece.
+  final String? currentMediaPath;
 
-  const FernCreateDialog.creator({super.key})
+  const FernCreateDialog.tag({
+    super.key,
+    this.initialName = '',
+    this.currentMediaPath,
+  }) : type = CreateDialogType.tag;
+
+  const FernCreateDialog.creator({super.key, this.currentMediaPath})
       : type = CreateDialogType.creator,
         initialName = '';
 
   const FernCreateDialog.fernie({super.key})
       : type = CreateDialogType.fernie,
-        initialName = '';
+        initialName = '',
+        currentMediaPath = null;
 
   const FernCreateDialog.model({super.key})
       : type = CreateDialogType.model,
-        initialName = '';
+        initialName = '',
+        currentMediaPath = null;
 
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
@@ -199,6 +216,30 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     // usuario.
     await _run(() async {
       final storedPath = await _storeAvatar(params: path);
+      if (!mounted) return;
+
+      setState(() => _selectedImagePath = storedPath);
+    });
+  }
+
+  /// Se queda con lo que se está mirando como avatar.
+  ///
+  /// De un vídeo se coge **su fotograma**, no el fichero: un `.mp4` en la
+  /// carpeta de avatares no se puede pintar en ningún círculo. El fotograma ya
+  /// está sacado y cacheado —es el que se ve en la rejilla—, así que esto no
+  /// abre nada.
+  Future<void> _useCurrentMedia() async {
+    final path = widget.currentMediaPath;
+    if (path == null) return;
+
+    await _run(() async {
+      final source = path.isVideoPath
+          ? (await MediaPreviewService.instance.load(path))?.thumbnailPath
+          : path;
+
+      if (source == null || !mounted) return;
+
+      final storedPath = await _storeAvatar(params: source);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);
@@ -398,6 +439,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           iconSize: AppSizes.iconHuge,
           onTap: _pickImage,
         ),
+        // Debajo del avatar y su nombre, que es donde se está mirando cuando se
+        // decide qué cara ponerle.
+        footer: _useCurrentMediaButton(texts),
       ),
       rightContent: Column(
         mainAxisSize: MainAxisSize.min,
@@ -436,6 +480,28 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         icon: null,
         isBusy: _isBusy,
         onPressed: _confirm,
+      ),
+    );
+  }
+
+  /// El botón que usa de avatar lo que se está mirando.
+  ///
+  /// Sólo cuando el diálogo se ha abierto desde el visor: en cualquier otro
+  /// sitio no hay ninguna «imagen actual» de la que hablar. No mira de qué
+  /// variante es el diálogo —lo hace igual para una etiqueta que para un
+  /// creador— porque la pregunta que contesta es la misma en las dos: qué cara
+  /// ponerle a lo que se está creando mientras se mira algo suyo.
+  Widget? _useCurrentMediaButton(AppLocalizations texts) {
+    if (widget.currentMediaPath == null) return null;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.m),
+      child: FernPillButton(
+        label: texts.useCurrentImageAsAvatar,
+        icon: Symbols.image,
+        backgroundColor: context.colors.secondary,
+        foregroundColor: context.colors.black,
+        onPressed: _isBusy ? null : _useCurrentMedia,
       ),
     );
   }

@@ -27,6 +27,16 @@ class FernieModel {
 
   int? linkedCreatorId;
 
+  /// El fernie está marcado como no apto.
+  ///
+  /// Es la misma marca que llevan las etiquetas y el contenido, y está por lo
+  /// mismo: sin ella, lo que se hubiera marcado en la biblioteca volvía a verse
+  /// aquí en cuanto alguien recortaba una región sobre ello.
+  ///
+  /// Lo que esconde es **al fernie**, no lo que el fernie sabe: marcado sigue
+  /// entrenando y sigue proponiendo igual que antes, simplemente no se enseña.
+  bool isNsfw = false;
+
   DateTime createdAt = DateTime.now();
 
   @Backlink(to: 'fernie')
@@ -52,6 +62,7 @@ class FernieModel {
       linkedTagId: linkedTagId,
       linkedCreatorId: linkedCreatorId,
       linkedName: linkedName,
+      isNsfw: isNsfw,
       createdAt: createdAt,
       regionCount: regionCount,
       mediaCount: mediaCount,
@@ -69,6 +80,7 @@ class FernieModel {
       ..picturePath = entity.picturePath
       ..linkedTagId = entity.linkedTagId
       ..linkedCreatorId = entity.linkedCreatorId
+      ..isNsfw = entity.isNsfw
       ..createdAt = entity.createdAt;
   }
 }

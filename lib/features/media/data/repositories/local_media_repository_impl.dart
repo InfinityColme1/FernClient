@@ -28,7 +28,9 @@ import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart'
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
+import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:isar/isar.dart';
@@ -1335,7 +1337,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
-  /// Quita la marca de todas las etiquetas.
+  /// Quita la marca de todo lo que la lleve: etiquetas, contenido, fernies y
+  /// modelos.
   ///
   /// Es la salida de quien ha perdido la contraseña y el código: se pierde el
   /// marcado, **nunca el contenido**. Devuelve cuántas se desmarcaron, para
@@ -1351,9 +1354,26 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .isNsfwEqualTo(true)
           .findAll();
 
-      if (tags.isEmpty && media.isEmpty) return const DataSuccess(0);
+      // Los fernies y los modelos llevan la misma marca desde que se puede
+      // esconderlos, y quitar el filtro tiene que quitarla también: uno que se
+      // quedara marcado seguiría escondido cuando ya no hay filtro que lo
+      // explique, y sin contraseña no habría forma de volver a enseñarlo.
+      final fernies =
+          await _appDatabase.fernieModels.filter().isNsfwEqualTo(true).findAll();
 
-      // Las dos en la misma escritura: si sólo entrara una, quedaría media
+      final models = await _appDatabase.recognitionModelModels
+          .filter()
+          .isNsfwEqualTo(true)
+          .findAll();
+
+      if (tags.isEmpty &&
+          media.isEmpty &&
+          fernies.isEmpty &&
+          models.isEmpty) {
+        return const DataSuccess(0);
+      }
+
+      // Todas en la misma escritura: si sólo entraran unas, quedaría media
       // biblioteca marcada y media no, y desde fuera parecería que se ha
       // limpiado todo.
       await _appDatabase.writeTxn(() async {
@@ -1365,8 +1385,18 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           one.isNsfw = false;
         }
 
+        for (final fernie in fernies) {
+          fernie.isNsfw = false;
+        }
+
+        for (final model in models) {
+          model.isNsfw = false;
+        }
+
         await _appDatabase.tagModels.putAll(tags);
         await _appDatabase.mediaSummaryModels.putAll(media);
+        await _appDatabase.fernieModels.putAll(fernies);
+        await _appDatabase.recognitionModelModels.putAll(models);
       });
 
       await _nsfwChanged();

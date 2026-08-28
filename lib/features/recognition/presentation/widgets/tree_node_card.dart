@@ -1,7 +1,10 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/model_tree_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +36,13 @@ class TreeNodeCard extends StatelessWidget {
     this.onTap,
     this.onRemove,
   });
+
+  /// Quién sabe si este modelo esconde algo. Con el filtro puesto el nodo ni se
+  /// pinta —el bloc lo saca del árbol—, así que esto sólo se ve sin él: es
+  /// entonces cuando hace falta saber qué rama del árbol trabaja con lo marcado.
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +92,13 @@ class TreeNodeCard extends StatelessWidget {
                         style: theme.textTheme.titleSmall,
                       ),
                     ),
+                    // Alejado no: la tarjeta simplificada es un rótulo con una
+                    // cara, y un distintivo más a ese tamaño no se lee.
+                    if (!isSimplified &&
+                        _visibility.marksModel(node.model.id)) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      const NsfwTagMark(),
+                    ],
                     if (onRemove != null && !isSimplified)
                       IconButton(
                         tooltip: texts.treeRemoveNode,

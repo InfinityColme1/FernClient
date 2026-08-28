@@ -80,6 +80,8 @@ import 'package:Fern/features/recognition/domain/usecases/delete_regions_of_medi
 import 'package:Fern/features/recognition/domain/usecases/get_fernie_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/set_fernie_nsfw_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/set_model_nsfw_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_media_of_fernie_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_regions_of_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/save_fernie_usecase.dart';
@@ -87,6 +89,7 @@ import 'package:Fern/features/recognition/domain/usecases/search_fernies_usecase
 import 'package:Fern/features/recognition/domain/usecases/update_fernie_region_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/update_fernie_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/media/data/datasources/danbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/gelbooru_api_client.dart';
 import 'package:Fern/features/media/data/datasources/pawchive_api_client.dart';
@@ -407,6 +410,9 @@ Future<void> initializeDependencies() async {
       FernieRepositoryImpl(
         database: getIt<Isar>(),
         avatarStorage: getIt(),
+        // Marcar un fernie cambia lo que está escondido, así que el índice se
+        // rehace desde aquí y no desde la pantalla que lo marca.
+        onNsfwChanged: getIt<NsfwIndex>().rebuild,
       )
   );
 
@@ -414,7 +420,10 @@ Future<void> initializeDependencies() async {
   // su propia vida (entrenar, guardar pesos, medir) que no tiene nada que ver
   // con marcar regiones.
   getIt.registerLazySingleton<ModelRepository>(
-      () => ModelRepositoryImpl(database: getIt<Isar>())
+      () => ModelRepositoryImpl(
+        database: getIt<Isar>(),
+        onNsfwChanged: getIt<NsfwIndex>().rebuild,
+      )
   );
 
   // El que materializa el dataset con el que se entrena. No guarda estado: se
@@ -638,9 +647,17 @@ Future<void> initializeDependencies() async {
     RemoveCreatorFromMediaUseCase(getIt())
   );
 
-  getIt.registerSingleton<GetModelsUseCase>(GetModelsUseCase(getIt()));
-  getIt.registerSingleton<GetModelUseCase>(GetModelUseCase(getIt()));
+  // Los que leen para la interfaz llevan el filtro puesto; los que escriben no
+  // lo necesitan, y quien lee para trabajar —entrenar, reconocer— va por el
+  // repositorio y ni pasa por aquí.
+  getIt.registerSingleton<GetModelsUseCase>(
+    GetModelsUseCase(getIt(), visibility: getIt<NsfwVisibility>()),
+  );
+  getIt.registerSingleton<GetModelUseCase>(
+    GetModelUseCase(getIt(), visibility: getIt<NsfwVisibility>()),
+  );
   getIt.registerSingleton<SaveModelUseCase>(SaveModelUseCase(getIt()));
+  getIt.registerSingleton<SetModelNsfwUseCase>(SetModelNsfwUseCase(getIt()));
   // Borrar un modelo se lleva también lo que dejó en disco: los pesos, la
   // carpeta de la run y el dataset temporal si se quedó a medias. Los fernies no
   // se tocan, que son suyos y no del modelo.
@@ -658,6 +675,7 @@ Future<void> initializeDependencies() async {
       repository: getIt(),
       getModels: getIt(),
       getFernie: getIt(),
+      visibility: getIt<NsfwVisibility>(),
     ),
   );
 
@@ -671,7 +689,7 @@ Future<void> initializeDependencies() async {
     DeleteModelUseCase(getIt(), getIt()),
   );
   getIt.registerSingleton<GetFerniesOfModelUseCase>(
-    GetFerniesOfModelUseCase(getIt()),
+    GetFerniesOfModelUseCase(getIt(), visibility: getIt<NsfwVisibility>()),
   );
   getIt.registerSingleton<AssignFernieToModelUseCase>(
     AssignFernieToModelUseCase(getIt()),
@@ -687,15 +705,19 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerSingleton<GetFerniesUseCase>(
-    GetFerniesUseCase(getIt())
+    GetFerniesUseCase(getIt(), visibility: getIt<NsfwVisibility>())
   );
 
   getIt.registerSingleton<GetFernieUseCase>(
-    GetFernieUseCase(getIt())
+    GetFernieUseCase(getIt(), visibility: getIt<NsfwVisibility>())
   );
 
   getIt.registerSingleton<SearchFerniesUseCase>(
-    SearchFerniesUseCase(getIt())
+    SearchFerniesUseCase(getIt(), visibility: getIt<NsfwVisibility>())
+  );
+
+  getIt.registerSingleton<SetFernieNsfwUseCase>(
+    SetFernieNsfwUseCase(getIt())
   );
 
   getIt.registerSingleton<SaveFernieUseCase>(
@@ -703,7 +725,9 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerSingleton<UpdateFernieUseCase>(
-    UpdateFernieUseCase(getIt())
+    // Con el filtro delante: enlazar un fernie con una etiqueta marcada lo marca
+    // a él también, y quien sabe qué etiquetas están marcadas es esto.
+    UpdateFernieUseCase(getIt(), visibility: getIt<NsfwVisibility>())
   );
 
   getIt.registerSingleton<DeleteFernieUseCase>(
@@ -727,15 +751,15 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerSingleton<GetRegionsOfMediaUseCase>(
-    GetRegionsOfMediaUseCase(getIt())
+    GetRegionsOfMediaUseCase(getIt(), visibility: getIt<NsfwVisibility>())
   );
 
   getIt.registerSingleton<GetFerniesOfMediaUseCase>(
-    GetFerniesOfMediaUseCase(getIt())
+    GetFerniesOfMediaUseCase(getIt(), visibility: getIt<NsfwVisibility>())
   );
 
   getIt.registerSingleton<GetMediaOfFernieUseCase>(
-    GetMediaOfFernieUseCase(getIt())
+    GetMediaOfFernieUseCase(getIt(), visibility: getIt<NsfwVisibility>())
   );
 
   getIt.registerSingleton<SearchTagsUseCase>(
@@ -888,6 +912,7 @@ Future<void> initializeDependencies() async {
       results: getIt(),
       fernies: getIt(),
       library: getIt(),
+      visibility: getIt<NsfwVisibility>(),
     ),
   );
 
@@ -1170,6 +1195,10 @@ Future<void> initializeDependencies() async {
       MediaBloc(
         shuffle: getIt<ShuffleSeed>(),
         decisions: getIt(),
+        // Se lee al soltar y no ahora: cambiarlo en los ajustes tiene que
+        // notarse en lo siguiente que se suelte, sin reiniciar nada.
+        keepsSelectionOnDrop: () =>
+            getIt<SettingsRepository>().getSettings().keepsSelectionOnDrop,
         getScannedMediaUseCase: getIt(),
         getLastImportUseCase: getIt(),
         jobs: getIt(),
@@ -1216,6 +1245,12 @@ Future<void> initializeDependencies() async {
   getIt<NsfwModeService>().changes.listen((_) {
     getIt<TagsBloc>().add(const LoadTagsEvent());
     getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
+
+    // Los fernies y los modelos también: son pantallas que se quedan montadas,
+    // y cerrar el filtro sin releerlas las dejaría enseñando lo que acaba de
+    // esconderse hasta que el usuario se moviera de sitio.
+    getIt<FerniesBloc>().add(const LoadFerniesEvent());
+    getIt<ModelsBloc>().add(const LoadModelsEvent());
   });
 }
 

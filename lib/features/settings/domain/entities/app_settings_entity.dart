@@ -324,6 +324,16 @@ class AppSettingsEntity extends Equatable {
   /// usuario y no algo que la aplicación haga por su cuenta.
   final bool autoTagRemoteSource;
 
+  /// Lo que se suelta sobre una etiqueta del menú lateral **sigue marcado**
+  /// después de soltarlo.
+  ///
+  /// Apagado de fábrica. Soltar es el final de un trabajo, y dejar treinta
+  /// celdas marcadas sin que nadie lo haya pedido arrastra esa selección a lo
+  /// siguiente que se haga —borrar, confirmar— sin que se note. Encendido es
+  /// para quien pone varias etiquetas seguidas a la misma tanda, que es el otro
+  /// uso de esto y el que obligaba a volver a marcarlo todo cada vez.
+  final bool keepsSelectionOnDrop;
+
   /// La lista de etiquetas del menú lateral enseña el avatar de cada una en vez
   /// del icono de siempre.
   ///
@@ -421,6 +431,7 @@ class AppSettingsEntity extends Equatable {
     this.organization = FileOrganizationCriteria.flat,
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
+    this.keepsSelectionOnDrop = false,
     this.themeMode = AppThemeMode.system,
     this.customTheme = const CustomThemeEntity(),
     this.viewerSaveBehavior = ViewerSaveBehavior.goToNext,
@@ -461,6 +472,7 @@ class AppSettingsEntity extends Equatable {
     FileOrganizationCriteria? organization,
     bool? autoTagRemoteSource,
     bool? showListAvatars,
+    bool? keepsSelectionOnDrop,
     AppThemeMode? themeMode,
     CustomThemeEntity? customTheme,
     ViewerSaveBehavior? viewerSaveBehavior,
@@ -499,6 +511,7 @@ class AppSettingsEntity extends Equatable {
       organization: organization ?? this.organization,
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
+      keepsSelectionOnDrop: keepsSelectionOnDrop ?? this.keepsSelectionOnDrop,
       themeMode: themeMode ?? this.themeMode,
       customTheme: customTheme ?? this.customTheme,
       viewerSaveBehavior: viewerSaveBehavior ?? this.viewerSaveBehavior,
@@ -537,6 +550,7 @@ class AppSettingsEntity extends Equatable {
         organization,
         autoTagRemoteSource,
         showListAvatars,
+        keepsSelectionOnDrop,
         themeMode,
         customTheme,
         viewerSaveBehavior,

@@ -1,7 +1,10 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -76,6 +79,13 @@ class _FernieTile extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Quién sabe si este fernie esconde algo. Se pregunta al pintar, como en la
+  /// celda de contenido: la lista se rehace al marcar, y así no hace falta que
+  /// nadie la avise.
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,11 +119,24 @@ class _FernieTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    fernie.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          fernie.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                      // Con el filtro puesto este fernie ni aparece, así que
+                      // esto sólo se ve sin él: es entonces cuando hace falta
+                      // saber cuál de los que se están usando esconde algo.
+                      if (_visibility.marksFernie(fernie.id)) ...[
+                        const SizedBox(width: AppSpacing.s),
+                        const NsfwTagMark(),
+                      ],
+                    ],
                   ),
                   Text(
                     texts.fernieRegionCount(fernie.regionCount),

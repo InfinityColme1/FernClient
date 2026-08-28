@@ -246,6 +246,9 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     context.read<MediaBloc>().add(SetInfoVisibilityEvent(widget.openInfo));
     _restartHideTimer();
 
+    // Las flechas se atienden antes que el foco: ver [_onArrowKey].
+    HardwareKeyboard.instance.addHandler(_onArrowKey);
+
     // El volumen que el usuario dejo puesto la ultima vez. Se le da al mando
     // antes de que se enganche ningun reproductor, asi que el primer video ya
     // suena como toca en vez de arrancar a tope y bajar despues.
@@ -280,8 +283,59 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // El señalado vive fuera de esta pantalla porque lo enciende el panel, así
     // que apagarlo al salir es cosa de aquí: nadie más sabe que se ha salido.
     _spotlight.release();
+    HardwareKeyboard.instance.removeHandler(_onArrowKey);
     _keyboardFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Las flechas pasan de contenido, **tenga el foco quien lo tenga**.
+  ///
+  /// El resto del teclado del visor va por el foco (ver [_handleKeyEvent]), y
+  /// para las flechas eso no basta: en cuanto se pulsa un botón del panel, una
+  /// píldora de etiqueta o el propio reproductor, el foco se va allí y quien
+  /// decide qué pasa con la flecha es ese widget. El resultado era que pasar de
+  /// contenido dejaba de funcionar hasta volver a pulsar sobre la imagen, sin
+  /// que nada lo explicara.
+  ///
+  /// Atendiéndolas aquí —antes del reparto por foco— pasan siempre. Con tres
+  /// excepciones, que son las tres veces que la flecha significa otra cosa:
+  ///
+  /// - **Hay algo delante.** Un diálogo abierto es otra ruta encima de ésta, y
+  ///   las flechas son suyas. Es lo que dice [ModalRoute.isCurrent].
+  /// - **Se está escribiendo.** En un campo de texto la flecha mueve el cursor,
+  ///   y quitársela sería romper el campo.
+  /// - **El modo fernie está abierto.** Ahí las flechas se comen a propósito:
+  ///   pasar de contenido perdería lo marcado. De eso sigue encargándose
+  ///   [_handleFernieKey], así que aquí sólo hay que no adelantarse.
+  bool _onArrowKey(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
+
+    final key = event.logicalKey;
+    final isLeft = key == LogicalKeyboardKey.arrowLeft;
+    final isRight = key == LogicalKeyboardKey.arrowRight;
+    if (!isLeft && !isRight) return false;
+
+    if (!mounted || _fernieMode.state.isFernieMode) return false;
+    if (ModalRoute.of(context)?.isCurrent != true) return false;
+    if (_isTypingText) return false;
+
+    _goTo(next: isRight);
+
+    return true;
+  }
+
+  /// Si el foco está dentro de un campo de texto.
+  ///
+  /// Se mira el `EditableText` que hay por encima del nodo con el foco, que es
+  /// lo que tienen en común todos los campos de la aplicación: comprobar cada
+  /// clase de campo por su cuenta sería una lista que hay que acordarse de
+  /// ampliar.
+  static bool get _isTypingText {
+    final focused = FocusManager.instance.primaryFocus?.context;
+    if (focused == null) return false;
+
+    return focused.widget is EditableText ||
+        focused.findAncestorWidgetOfExactType<EditableText>() != null;
   }
 
   void _goTo({required bool next}) {
@@ -741,14 +795,10 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       return _handleFernieKey(key, isRepeat: isRepeat);
     }
 
-    if (key == LogicalKeyboardKey.arrowLeft) {
-      _goTo(next: false);
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowRight) {
-      _goTo(next: true);
-      return KeyEventResult.handled;
-    }
+    // Las flechas no están aquí: se atienden antes del reparto por foco, para
+    // que pasar de contenido no dependa de qué se haya pulsado antes. Ver
+    // [_onArrowKey].
+
     // El espacio reproduce y para, como en cualquier reproductor. Con un campo
     // de texto delante ni llega: el campo se lo queda para escribir un espacio y
     // el evento no sube hasta aquí.

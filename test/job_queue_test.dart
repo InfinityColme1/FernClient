@@ -236,6 +236,36 @@ void main() {
     expect(job.progress, isNull);
   });
 
+  test('lo que llega por el flujo es la cola entera, terminados incluidos',
+      () async {
+    // Es la trampa en la que cayó el indicador de la pantalla de importación:
+    // se suscribía a `changes` y contaba los trabajos de su tipo sin mirar el
+    // estado, así que la importación recién terminada —que se queda en la
+    // historia— lo dejaba encendido para siempre. Salir de la pantalla y volver
+    // lo apagaba, porque al entrar se lee `activeJobs`, que sí filtra.
+    //
+    // Quien escuche el flujo tiene que filtrar por su cuenta, y esto es lo que
+    // lo deja dicho.
+    final queue = JobQueue();
+    queue.register(JobType.mediaImport, (context) async {});
+
+    final emissions = <List<Job>>[];
+    final subscription = queue.changes.listen(emissions.add);
+
+    queue.enqueue(type: JobType.mediaImport);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(queue.activeJobs, isEmpty);
+
+    final last = emissions.last;
+    expect(last, hasLength(1));
+    expect(last.single.status, JobStatus.completed);
+    expect(last.any((job) => job.status.isActive), isFalse);
+
+    await subscription.cancel();
+    await queue.dispose();
+  });
+
   test('los terminados se pueden quitar de en medio', () async {
     final queue = JobQueue();
     queue.register(JobType.recognition, (context) async {});

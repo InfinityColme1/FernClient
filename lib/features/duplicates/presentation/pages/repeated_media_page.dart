@@ -6,6 +6,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/duplicates/domain/repositories/duplicate_repository.dart';
 import 'package:Fern/features/duplicates/presentation/blocs/duplicates_bloc.dart';
@@ -41,6 +42,10 @@ class RepeatedMediaPage extends StatelessWidget {
         apply: getIt(),
         dismiss: getIt(),
         lastScan: getIt<PreferencesService>().getLastDuplicateScan,
+        // Poner o quitar el filtro cambia qué grupos se pueden comparar: el
+        // bloc se entera solo, que aquí no hay uno único al que avisar desde
+        // fuera.
+        nsfwChanges: getIt<NsfwModeService>().changes,
       )..add(const LoadDuplicatesEvent()),
       child: const _RepeatedMediaView(),
     );

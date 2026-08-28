@@ -137,7 +137,10 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
     final created = await replaceFernDialog<TagEntity, MediaBloc>(
       context: context,
       bloc: bloc,
-      builder: (_) => const FernCreateDialog.tag(),
+      // Con el contenido que se está viendo delante: desde aquí la etiqueta se
+      // crea mirando justo la imagen que la explica, y ofrecerla como avatar
+      // ahorra ir a buscarla al explorador.
+      builder: (_) => FernCreateDialog.tag(currentMediaPath: media.path),
     );
 
     // Las de encima se piden aquí y no al volver: este estado ya no existe, y
@@ -215,6 +218,11 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
             hintText: texts.tagSearchHint,
             search: _search,
             labelOf: (tag) => tag.name,
+            // Al elegir una, el campo se vacía: aquí se ponen varias etiquetas
+            // seguidas y la elegida ya se ve como píldora en el panel de la
+            // izquierda, así que dejarla escrita sólo obliga a borrarla a mano
+            // antes de buscar la siguiente.
+            clearOnSelected: true,
       // Las marcadas se distinguen al autocompletar: elegir una sin
       // saberlo es esconder contenido sin querer.
       trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,

@@ -1,9 +1,12 @@
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
+import 'package:Fern/features/recognition/data/models/fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
 import 'package:isar/isar.dart';
 
-/// Qué etiquetas y qué contenidos están bloqueados, en memoria.
+/// Qué etiquetas, contenidos, fernies y modelos están bloqueados, en memoria.
 ///
 /// Existe por rendimiento y por corrección, en ese orden de urgencia pero al
 /// revés de importancia:
@@ -40,6 +43,8 @@ class NsfwIndex {
   Set<int> _tags = const {};
   Set<int> _media = const {};
   Set<int> _byHand = const {};
+  Set<int> _fernies = const {};
+  Set<int> _models = const {};
 
   NsfwIndex({
     required Isar database,
@@ -58,11 +63,26 @@ class NsfwIndex {
   /// esas etiquetas.
   Set<int> get media => _media;
 
+  /// Los fernies bloqueados: los marcados y los que proponen una etiqueta
+  /// bloqueada.
+  Set<int> get fernies => _fernies;
+
+  /// Los modelos bloqueados: los marcados y aquellos cuyos fernies **están
+  /// todos** bloqueados.
+  ///
+  /// Todos y no alguno. Un modelo que mezcla clases marcadas y sin marcar sigue
+  /// sirviendo para lo segundo, así que se enseña y lo que se le quita de la
+  /// vista son sus fernies escondidos, uno a uno. Uno cuyas clases estén todas
+  /// escondidas no es más que la lista de esas clases: su nombre, su cara y sus
+  /// recuentos hablan sólo de ellas.
+  Set<int> get models => _models;
+
   /// Si no hay nada marcado, ni etiquetas ni contenido suelto.
   ///
   /// Con nada marcado el filtro no esconde nada y no hay por qué pedir
   /// contraseñas para ver una biblioteca entera.
-  bool get isEmpty => _tags.isEmpty && _media.isEmpty;
+  bool get isEmpty =>
+      _tags.isEmpty && _media.isEmpty && _fernies.isEmpty && _models.isEmpty;
 
   /// Los contenidos marcados **a mano**, sin los que lo están por su etiqueta.
   ///
@@ -76,6 +96,10 @@ class NsfwIndex {
   bool hasTag(int tagId) => _tags.contains(tagId);
 
   bool hasMedia(int mediaId) => _media.contains(mediaId);
+
+  bool hasFernie(int fernieId) => _fernies.contains(fernieId);
+
+  bool hasModel(int modelId) => _models.contains(modelId);
 
   /// Vuelve a mirarlo todo: las etiquetas marcadas, su rama y el contenido que
   /// las lleva.
@@ -94,20 +118,99 @@ class NsfwIndex {
     if (marked.isEmpty) {
       _tags = const {};
       _media = byHand;
+    } else {
+      final rooted = marked.map((tag) => tag.id);
 
-      return;
+      // La rama sólo cuenta si el usuario lo quiere. Apagado, cada etiqueta
+      // responde por lo suyo y una hija de una marcada se ve como cualquier
+      // otra.
+      final branch = _marksChildren()
+          ? await _hierarchy.descendantsOf(rooted)
+          : const <TagModel>[];
+
+      _tags = {...rooted, for (final tag in branch) tag.id};
+      _media = {...byHand, ...await _mediaWithAny(_tags)};
     }
 
-    final rooted = marked.map((tag) => tag.id);
+    // En este orden y no en otro: los fernies heredan de las etiquetas y los
+    // modelos heredan de sus fernies.
+    _fernies = await _blockedFernies(_tags);
+    _models = await _blockedModels(_fernies);
+  }
 
-    // La rama sólo cuenta si el usuario lo quiere. Apagado, cada etiqueta
-    // responde por lo suyo y una hija de una marcada se ve como cualquier otra.
-    final branch = _marksChildren()
-        ? await _hierarchy.descendantsOf(rooted)
-        : const <TagModel>[];
+  /// Los fernies que no se pueden enseñar: los marcados y los que proponen una
+  /// etiqueta que tampoco se puede enseñar.
+  ///
+  /// La herencia del enlace no es un adorno. Un fernie enlazado a una etiqueta
+  /// marcada **es** esa etiqueta dicha con otro nombre: enseñarlo delata lo que
+  /// la marca escondía, y sus regiones son recortes del contenido que la lleva.
+  /// Como con la rama de etiquetas, no se escribe nada: se resuelve al leer, y
+  /// desmarcar la etiqueta devuelve el fernie a la vista sola.
+  Future<Set<int>> _blockedFernies(Set<int> blockedTags) async {
+    final rows =
+        await _database.fernieModels.filter().isNsfwEqualTo(true).findAll();
 
-    _tags = {...rooted, for (final tag in branch) tag.id};
-    _media = {...byHand, ...await _mediaWithAny(_tags)};
+    final blocked = {for (final row in rows) row.id};
+
+    if (blockedTags.isEmpty) return blocked;
+
+    // Se recorren todos y se filtra aquí: los fernies son unas decenas, y
+    // preguntar por cada etiqueta bloqueada sería una consulta por etiqueta
+    // para leer lo mismo.
+    final linked = await _database.fernieModels
+        .filter()
+        .linkedTagIdIsNotNull()
+        .findAll();
+
+    for (final row in linked) {
+      if (blockedTags.contains(row.linkedTagId)) blocked.add(row.id);
+    }
+
+    return blocked;
+  }
+
+  /// Los modelos que no se pueden enseñar: los marcados y los que sólo aprenden
+  /// fernies bloqueados.
+  ///
+  /// Se deriva en vez de escribirse, y por una razón concreta: los fernies de un
+  /// modelo se meten y se sacan a menudo. Una marca guardada se quedaría vieja
+  /// en cuanto alguien le añadiera una clase normal —el modelo seguiría
+  /// escondido sin nada que lo esconda— y al revés, sacar la única clase marcada
+  /// no lo devolvería a la vista. Resuelto al leer, se corrige solo.
+  ///
+  /// El modelo **sin fernies** no se esconde: no habla de nada todavía.
+  Future<Set<int>> _blockedModels(Set<int> blockedFernies) async {
+    final rows = await _database.recognitionModelModels.where().findAll();
+    final blocked = <int>{};
+
+    // Las asignaciones se leen de una vez y se reparten por modelo: preguntar
+    // por modelo sería una consulta por tarjeta de la rejilla.
+    final ferniesOf = <int, List<int>>{};
+
+    for (final assignment in await _database.modelFernieModels.where().findAll()) {
+      await assignment.model.load();
+      await assignment.fernie.load();
+
+      final modelId = assignment.model.value?.id;
+      final fernieId = assignment.fernie.value?.id;
+      if (modelId == null || fernieId == null) continue;
+
+      (ferniesOf[modelId] ??= []).add(fernieId);
+    }
+
+    for (final row in rows) {
+      if (row.isNsfw) {
+        blocked.add(row.id);
+        continue;
+      }
+
+      final fernies = ferniesOf[row.id];
+      if (fernies == null || fernies.isEmpty) continue;
+
+      if (fernies.every(blockedFernies.contains)) blocked.add(row.id);
+    }
+
+    return blocked;
   }
 
   /// Los contenidos que alguien marcó uno a uno.

@@ -59,44 +59,49 @@ const RecognitionModelModelSchema = CollectionSchema(
       name: r'isImportedWeights',
       type: IsarType.bool,
     ),
-    r'isTraining': PropertySchema(
+    r'isNsfw': PropertySchema(
       id: 8,
+      name: r'isNsfw',
+      type: IsarType.bool,
+    ),
+    r'isTraining': PropertySchema(
+      id: 9,
       name: r'isTraining',
       type: IsarType.bool,
     ),
     r'lastError': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'lastError',
       type: IsarType.string,
     ),
     r'lastMetrics': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'lastMetrics',
       type: IsarType.string,
     ),
     r'lastTrainedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'lastTrainedAt',
       type: IsarType.dateTime,
     ),
     r'name': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'name',
       type: IsarType.string,
     ),
     r'picturePath': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'picturePath',
       type: IsarType.string,
     ),
     r'preset': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'preset',
       type: IsarType.string,
       enumMap: _RecognitionModelModelpresetEnumValueMap,
     ),
     r'weightsPath': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'weightsPath',
       type: IsarType.string,
     )
@@ -174,14 +179,15 @@ void _recognitionModelModelSerialize(
   writer.writeString(offsets[5], object.function.name);
   writer.writeLong(offsets[6], object.imgsz);
   writer.writeBool(offsets[7], object.isImportedWeights);
-  writer.writeBool(offsets[8], object.isTraining);
-  writer.writeString(offsets[9], object.lastError);
-  writer.writeString(offsets[10], object.lastMetrics);
-  writer.writeDateTime(offsets[11], object.lastTrainedAt);
-  writer.writeString(offsets[12], object.name);
-  writer.writeString(offsets[13], object.picturePath);
-  writer.writeString(offsets[14], object.preset.name);
-  writer.writeString(offsets[15], object.weightsPath);
+  writer.writeBool(offsets[8], object.isNsfw);
+  writer.writeBool(offsets[9], object.isTraining);
+  writer.writeString(offsets[10], object.lastError);
+  writer.writeString(offsets[11], object.lastMetrics);
+  writer.writeDateTime(offsets[12], object.lastTrainedAt);
+  writer.writeString(offsets[13], object.name);
+  writer.writeString(offsets[14], object.picturePath);
+  writer.writeString(offsets[15], object.preset.name);
+  writer.writeString(offsets[16], object.weightsPath);
 }
 
 RecognitionModelModel _recognitionModelModelDeserialize(
@@ -202,16 +208,17 @@ RecognitionModelModel _recognitionModelModelDeserialize(
   object.id = id;
   object.imgsz = reader.readLong(offsets[6]);
   object.isImportedWeights = reader.readBool(offsets[7]);
-  object.isTraining = reader.readBool(offsets[8]);
-  object.lastError = reader.readStringOrNull(offsets[9]);
-  object.lastMetrics = reader.readStringOrNull(offsets[10]);
-  object.lastTrainedAt = reader.readDateTimeOrNull(offsets[11]);
-  object.name = reader.readString(offsets[12]);
-  object.picturePath = reader.readStringOrNull(offsets[13]);
+  object.isNsfw = reader.readBool(offsets[8]);
+  object.isTraining = reader.readBool(offsets[9]);
+  object.lastError = reader.readStringOrNull(offsets[10]);
+  object.lastMetrics = reader.readStringOrNull(offsets[11]);
+  object.lastTrainedAt = reader.readDateTimeOrNull(offsets[12]);
+  object.name = reader.readString(offsets[13]);
+  object.picturePath = reader.readStringOrNull(offsets[14]);
   object.preset = _RecognitionModelModelpresetValueEnumMap[
-          reader.readStringOrNull(offsets[14])] ??
+          reader.readStringOrNull(offsets[15])] ??
       TrainingPreset.fast;
-  object.weightsPath = reader.readStringOrNull(offsets[15]);
+  object.weightsPath = reader.readStringOrNull(offsets[16]);
   return object;
 }
 
@@ -243,20 +250,22 @@ P _recognitionModelModelDeserializeProp<P>(
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 12:
-      return (reader.readString(offset)) as P;
-    case 13:
       return (reader.readStringOrNull(offset)) as P;
+    case 12:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 13:
+      return (reader.readString(offset)) as P;
     case 14:
+      return (reader.readStringOrNull(offset)) as P;
+    case 15:
       return (_RecognitionModelModelpresetValueEnumMap[
               reader.readStringOrNull(offset)] ??
           TrainingPreset.fast) as P;
-    case 15:
+    case 16:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1010,6 +1019,16 @@ extension RecognitionModelModelQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isImportedWeights',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, RecognitionModelModel,
+      QAfterFilterCondition> isNsfwEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isNsfw',
         value: value,
       ));
     });
@@ -2182,6 +2201,20 @@ extension RecognitionModelModelQuerySortBy
   }
 
   QueryBuilder<RecognitionModelModel, RecognitionModelModel, QAfterSortBy>
+      sortByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, RecognitionModelModel, QAfterSortBy>
+      sortByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, RecognitionModelModel, QAfterSortBy>
       sortByIsTraining() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isTraining', Sort.asc);
@@ -2423,6 +2456,20 @@ extension RecognitionModelModelQuerySortThenBy
   }
 
   QueryBuilder<RecognitionModelModel, RecognitionModelModel, QAfterSortBy>
+      thenByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, RecognitionModelModel, QAfterSortBy>
+      thenByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, RecognitionModelModel, QAfterSortBy>
       thenByIsTraining() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isTraining', Sort.asc);
@@ -2594,6 +2641,13 @@ extension RecognitionModelModelQueryWhereDistinct
   }
 
   QueryBuilder<RecognitionModelModel, RecognitionModelModel, QDistinct>
+      distinctByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isNsfw');
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, RecognitionModelModel, QDistinct>
       distinctByIsTraining() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isTraining');
@@ -2708,6 +2762,12 @@ extension RecognitionModelModelQueryProperty on QueryBuilder<
       isImportedWeightsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isImportedWeights');
+    });
+  }
+
+  QueryBuilder<RecognitionModelModel, bool, QQueryOperations> isNsfwProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isNsfw');
     });
   }
 

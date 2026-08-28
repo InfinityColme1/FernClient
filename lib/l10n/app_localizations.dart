@@ -1614,6 +1614,24 @@ abstract class AppLocalizations {
   /// **'Each tag is drawn with its own picture instead of the shared icon, so you can tell them apart while the menu is collapsed. Tags without a picture keep the icon.'**
   String get showListAvatarsDescription;
 
+  /// No description provided for @keepsSelectionOnDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the selection after dropping it on a tag'**
+  String get keepsSelectionOnDrop;
+
+  /// No description provided for @keepsSelectionOnDropDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Off, dropping content on a tag clears the selection, which calls the job done. On, it stays selected so you can add another tag right away without picking everything again.'**
+  String get keepsSelectionOnDropDescription;
+
+  /// No description provided for @useCurrentImageAsAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the picture you are viewing'**
+  String get useCurrentImageAsAvatar;
+
   /// No description provided for @viewerSaveSectionTitle.
   ///
   /// In en, this message translates to:
@@ -4959,7 +4977,7 @@ abstract class AppLocalizations {
   /// No description provided for @nsfwDisableNote.
   ///
   /// In en, this message translates to:
-  /// **'Turning the filter off for good unmarks every tag and stops hiding anything. Your content is untouched: it was marked, not encrypted.'**
+  /// **'Turning the filter off for good unmarks everything you had marked —tags, content, fernies and models— and stops hiding anything. Nothing is deleted: it was marked, not encrypted.'**
   String get nsfwDisableNote;
 
   /// No description provided for @nsfwDisableAction.
@@ -5219,6 +5237,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark as NSFW'**
   String get tagNsfwOffTooltip;
+
+  /// No description provided for @nsfwMarkOnTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as NSFW · click to unmark'**
+  String get nsfwMarkOnTooltip;
 
   /// No description provided for @mediaNsfwMark.
   ///
