@@ -36,6 +36,14 @@ class MediaPlaybackController extends ChangeNotifier {
   bool _isPlaying = false;
   double? _fps;
 
+  /// Lo alto que suena, de 0 a 1.
+  ///
+  /// **Vive aquí y no en el reproductor** porque el reproductor se crea y se
+  /// destruye con cada contenido: guardado ahí, bajar el volumen duraría hasta
+  /// el vídeo siguiente. Al enganchar uno nuevo se le pone éste, así que lo que
+  /// el usuario eligió una vez vale para todo lo que abra después.
+  double _volume = viewerDefaultVolume;
+
   /// Por dónde va la reproducción.
   Duration get position => _position;
 
@@ -52,6 +60,15 @@ class MediaPlaybackController extends ChangeNotifier {
 
   /// Los fotogramas del GIF que se está conduciendo, si es un GIF.
   GifFrames? get frames => _frames;
+
+  /// Lo alto que suena, de 0 a 1.
+  double get volume => _volume;
+
+  /// Si hay volumen que regular.
+  ///
+  /// Un GIF no suena y una imagen tampoco: ahí el mando del volumen no es que
+  /// esté apagado, es que no pinta nada, y se retira.
+  bool get hasVolume => _player != null;
 
   /// En qué fotograma cae [moment].
   ///
@@ -170,6 +187,11 @@ class MediaPlaybackController extends ChangeNotifier {
 
     detach();
     _player = player;
+
+    // El reproductor nace a todo volumen: se le pone el que hay elegido antes de
+    // que suene nada. Sin esto, cada contenido empezaría a tope y bajarlo no
+    // serviría de una vez para la siguiente.
+    unawaited(player.setVolume(_volume * _playerVolumeScale));
 
     _subscriptions.addAll([
       player.stream.position.listen((value) {
@@ -341,6 +363,24 @@ class MediaPlaybackController extends ChangeNotifier {
 
   Future<void> togglePlay() async =>
       _isPlaying ? await pause() : await play();
+
+  /// El reproductor cuenta el volumen de 0 a 100 y aquí se lleva de 0 a 1.
+  static const double _playerVolumeScale = 100;
+
+  /// Pone el volumen, de 0 a 1.
+  ///
+  /// **No se guarda en `detach`**: el volumen es del usuario, no del contenido,
+  /// así que sobrevive al cambio de vídeo. Lo que hay que guardar entre
+  /// arranques lo hace quien conduce esto, que es quien sabe de preferencias.
+  Future<void> setVolume(double value) async {
+    final clamped = value.clamp(0.0, 1.0);
+    if (_volume == clamped) return;
+
+    _volume = clamped;
+    _notify();
+
+    await _player?.setVolume(clamped * _playerVolumeScale);
+  }
 
   /// Pone o quita la repetición.
   ///

@@ -3714,4 +3714,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get tourModels8Body =>
       'Un hijo sólo se ejecuta cuando el padre detecta el fernie que le hayas puesto a esa unión. Ahí está la gracia: uno general filtra, y sólo lo que encuentra abre los especializados. Sin condición se ejecutan ante cualquier detección, y un padre sin entrenar no abre nada.';
+
+  @override
+  String get viewerVolume => 'Volumen';
 }

@@ -3724,4 +3724,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get tourModels8Body =>
       'Un enfant ne s’exécute que lorsque son parent détecte le fernie que vous avez mis sur ce lien. C’est tout l’intérêt : un modèle général filtre, et seul ce qu’il trouve ouvre les spécialisés. Sans condition, ils s’exécutent à la moindre détection, et un parent non entraîné n’ouvre rien.';
+
+  @override
+  String get viewerVolume => 'Volume';
 }

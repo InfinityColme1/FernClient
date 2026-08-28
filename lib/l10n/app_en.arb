@@ -1353,5 +1353,6 @@
   "tourModels7Title": "Putting them in and hanging them",
   "tourModels7Body": "The panel on the right holds the models that are outside. Pick a node in the tree and whatever you add hangs from it. A model cannot hang from itself or close a loop: the tree would bite its own tail.",
   "tourModels8Title": "Every branch has its condition",
-  "tourModels8Body": "A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing."
+  "tourModels8Body": "A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing.",
+  "viewerVolume": "Volume"
 }

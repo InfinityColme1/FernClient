@@ -11,6 +11,27 @@ class PreferencesService {
   PreferencesService(this._prefs);
 
 
+  /// Lo alto que suena el visor, de 0 a 1.
+  ///
+  /// Lo que este fuera de rango se ignora y vale el de fabrica: es una
+  /// preferencia que puede venir de una version anterior o de un fichero tocado
+  /// a mano, y un volumen de 7 dejaria el visor gritando sin manera de saber por
+  /// que.
+  double getViewerVolume() {
+    final saved = _prefs.getDouble(viewerVolumePreferenceKey);
+    if (saved == null || saved < 0 || saved > 1) return viewerDefaultVolume;
+
+    return saved;
+  }
+
+  Future<bool> setViewerVolume(double value) async {
+    return await _prefs.setDouble(
+      viewerVolumePreferenceKey,
+      value.clamp(0.0, 1.0),
+    );
+  }
+
+
   /// Si el tutorial ya se ha ofrecido alguna vez.
   ///
   /// Sin nada guardado es que no, que es lo que pasa la primera vez que se abre

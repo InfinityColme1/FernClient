@@ -3699,4 +3699,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tourModels8Body =>
       'A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing.';
+
+  @override
+  String get viewerVolume => 'Volume';
 }

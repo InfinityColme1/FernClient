@@ -180,6 +180,12 @@ const schemaVersionPreferenceKey = 'schema_version';
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
 
+/// Lo alto que suena el visor, de 0 a 1.
+///
+/// Se guarda porque el volumen es del usuario y no del contenido: sin esto, cada
+/// arranque volveria a empezar a todo volumen.
+const viewerVolumePreferenceKey = 'viewer_volume';
+
 /// Si ya se ha ofrecido el tutorial alguna vez.
 ///
 /// Se apunta al contestar, se acepte o no: ofrecerlo dos veces es insistir, y
@@ -1360,6 +1366,28 @@ const fernieTimelineHeight = 56.0;
 /// regiones marcadas, y en una barra fina no se distinguirían de la propia
 /// barra.
 const trackHeight = 6.0;
+
+/// Lo alto que suena un video mientras nadie diga otra cosa: todo.
+///
+/// Es tambien lo que vale la primera vez que se abre la aplicacion, antes de que
+/// haya nada guardado.
+const viewerDefaultVolume = 1.0;
+
+/// El panel del volumen: lo ancho que es y lo largo que es su deslizador.
+///
+/// Estrecho y alto a proposito: es un deslizador vertical, asi que lo que hace
+/// falta es recorrido, no anchura.
+const volumePanelWidth = 56.0;
+const volumeSliderLength = 132.0;
+
+/// Lo que el panel del volumen se separa del boton que lo abre.
+const volumePanelGap = 8.0;
+
+/// Por debajo de esto el icono del volumen se pinta como bajo.
+///
+/// Es solo el icono: no hay tres estados de volumen, hay uno continuo. Sirve
+/// para que el boton diga de un vistazo por donde anda sin tener que abrirlo.
+const volumeLowThreshold = 0.5;
 
 /// El salto de los botones de adelantar y retrasar del modo de mirar.
 ///

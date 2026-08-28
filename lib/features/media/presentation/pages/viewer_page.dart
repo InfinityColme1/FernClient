@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/app_icons.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/services/clipboard_service.dart';
 import 'package:Fern/core/services/fullscreen_service.dart';
 import 'package:Fern/core/services/media_preview_service.dart';
@@ -244,6 +245,11 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     super.initState();
     context.read<MediaBloc>().add(SetInfoVisibilityEvent(widget.openInfo));
     _restartHideTimer();
+
+    // El volumen que el usuario dejo puesto la ultima vez. Se le da al mando
+    // antes de que se enganche ningun reproductor, asi que el primer video ya
+    // suena como toca en vez de arrancar a tope y bajar despues.
+    _playback.setVolume(getIt<PreferencesService>().getViewerVolume());
 
     // Al visor se llega con el contenido ya resuelto, así que el aviso de
     // «contenido nuevo» no va a llegar nunca para el primero: se atiende aquí a
@@ -1507,6 +1513,16 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           isDraggingRegions: _isDraggingRegions,
           onToggleDragRegions: () =>
               setState(() => _isDraggingRegions = !_isDraggingRegions),
+          // Se guarda al soltar y no en cada pixel: mientras se arrastra ya se
+          // oye, y esto es solo para el volumen que sobrevive al cierre.
+          onVolumeCommitted: (value) => unawaited(
+            getIt<PreferencesService>().setViewerVolume(value),
+          ),
+          // Con el panel abierto, los mandos del visor no se desvanecen: el
+          // panel vive fuera de ellos y se quedaria flotando sobre un boton que
+          // ya no esta. Es el mismo contador que usa el raton al pasar por
+          // encima, asi que las dos cosas se suman sin pisarse.
+          onVolumePanelChanged: _onControlsHover,
         ),
       ),
     );

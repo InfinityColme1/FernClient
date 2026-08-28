@@ -1209,5 +1209,6 @@
   "tourModels7Title": "Posar-los-hi i penjar-los",
   "tourModels7Body": "El plafó de la dreta són els models que són fora. Tria un node de l’arbre i el que hi posis penjarà d’ell. Un model no pot penjar d’ell mateix ni tancar un cercle: l’arbre es mossegaria la cua.",
   "tourModels8Title": "Cada branca té la seva condició",
-  "tourModels8Body": "Un fill només s’executa quan el pare detecta el fernie que hagis posat a aquella unió. Aquí hi ha la gràcia: un de general filtra, i només el que troba obre els especialitzats. Sense condició s’executen davant de qualsevol detecció, i un pare sense entrenar no obre res."
+  "tourModels8Body": "Un fill només s’executa quan el pare detecta el fernie que hagis posat a aquella unió. Aquí hi ha la gràcia: un de general filtra, i només el que troba obre els especialitzats. Sense condició s’executen davant de qualsevol detecció, i un pare sense entrenar no obre res.",
+  "viewerVolume": "Volum"
 }

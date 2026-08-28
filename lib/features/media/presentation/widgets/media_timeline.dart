@@ -8,6 +8,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/presentation/services/media_playback_controller.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/media/presentation/widgets/volume_control.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -151,6 +152,16 @@ class MediaTimeline extends StatefulWidget {
   /// marcar sobre él, y buscarlo con la reproducción en marcha es perseguirlo.
   final bool pauseOnSeek;
 
+  /// Qué hacer con el volumen elegido al soltar el deslizador: guardarlo.
+  ///
+  /// El volumen ya se oye mientras se arrastra; esto es sólo para el que se
+  /// quede entre arranques, y de eso sabe el visor, no la barra.
+  final ValueChanged<double>? onVolumeCommitted;
+
+  /// Avisa de cuándo el panel del volumen está abierto, para que los mandos del
+  /// visor no se desvanezcan debajo de él.
+  final ValueChanged<bool>? onVolumePanelChanged;
+
   const MediaTimeline({
     super.key,
     required this.playback,
@@ -161,6 +172,8 @@ class MediaTimeline extends StatefulWidget {
     this.isDraggingRegions = false,
     this.onToggleDragRegions,
     this.pauseOnSeek = false,
+    this.onVolumeCommitted,
+    this.onVolumePanelChanged,
   });
 
   @override
@@ -293,6 +306,9 @@ class _MediaTimelineState extends State<MediaTimeline> {
 
     if (!_isMarking) {
       return [
+        // Sólo donde hay algo que oír. Un GIF y una imagen no suenan: ahí el
+        // mando no es que esté apagado, es que no pinta nada.
+        if (widget.playback.hasVolume) _volumeButton(context, texts),
         _button(
           context,
           tooltip: texts.viewerLoop,
@@ -321,6 +337,30 @@ class _MediaTimelineState extends State<MediaTimeline> {
         onPressed: widget.isOnionSkinOn ? widget.onToggleDragRegions : null,
       ),
     ];
+  }
+
+  /// El mando del volumen: el botón de siempre, con el panel colgado de él.
+  ///
+  /// El icono dice por dónde anda sin tener que abrirlo — callado, bajo o alto—,
+  /// que es lo que evita tener que desplegarlo sólo para mirar.
+  Widget _volumeButton(BuildContext context, AppLocalizations texts) {
+    final volume = widget.playback.volume;
+
+    return VolumeControl(
+      playback: widget.playback,
+      onCommitted: widget.onVolumeCommitted,
+      onOpenChanged: widget.onVolumePanelChanged,
+      builder: (context, toggle) => _button(
+        context,
+        tooltip: texts.viewerVolume,
+        icon: volume <= 0
+            ? Symbols.volume_off
+            : (volume < volumeLowThreshold
+                ? Symbols.volume_down
+                : Symbols.volume_up),
+        onPressed: toggle,
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------

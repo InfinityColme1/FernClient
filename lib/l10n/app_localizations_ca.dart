@@ -3716,4 +3716,7 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get tourModels8Body =>
       'Un fill només s’executa quan el pare detecta el fernie que hagis posat a aquella unió. Aquí hi ha la gràcia: un de general filtra, i només el que troba obre els especialitzats. Sense condició s’executen davant de qualsevol detecció, i un pare sense entrenar no obre res.';
+
+  @override
+  String get viewerVolume => 'Volum';
 }

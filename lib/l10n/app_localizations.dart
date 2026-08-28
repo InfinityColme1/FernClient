@@ -5945,6 +5945,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing.'**
   String get tourModels8Body;
+
+  /// No description provided for @viewerVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get viewerVolume;
 }
 
 class _AppLocalizationsDelegate
