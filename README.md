@@ -12,6 +12,27 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.1.2
+
+- **El filtro NSFW ya no se salta por los fernies.** Marcar contenido y luego
+  recortarlo en un fernie lo devolvía a la vista por la pantalla de fernies, con
+  el filtro puesto. Ahora los fernies y los modelos se marcan como las etiquetas,
+  y lo marcado **sigue entrenando y reconociendo igual**: lo que cambia es que no
+  se ve.
+- **Marcar NSFW desde la importación**, sin tener que confirmar el contenido y
+  pasarlo por la biblioteca primero.
+- **La selección puede sobrevivir a soltarla en una etiqueta.** Se enciende en
+  Ajustes → Apariencia; de fábrica se desmarca, como hasta ahora.
+- **Asignar etiquetas de corrido.** Al elegir una del buscador, el campo se vacía
+  y se queda listo para la siguiente.
+- **Crear una etiqueta o un creador desde el visor** ofrece usar de avatar la
+  imagen que se está mirando.
+- **Las flechas pasan de contenido siempre**, se haya pulsado antes lo que se
+  haya pulsado. Antes dejaban de funcionar hasta volver a pulsar sobre la imagen.
+- **El cursor de los campos de texto se ve**, y todos los campos se ven iguales.
+
+---
+
 ## Novedades de la 2.1.1
 
 - **Filtro en los gestores.** Las listas de etiquetas y de creadores traen un
