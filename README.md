@@ -12,6 +12,16 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.1
+
+- **Volumen del visor.** La línea de tiempo de los vídeos trae un botón que abre
+  un deslizador vertical. El volumen elegido se queda puesto para los vídeos que
+  se abran después y entre arranques, así que se toca una vez y se olvida. El
+  botón sólo aparece donde hay algo que oír: en vídeos, no en imágenes ni GIF, y
+  en el modo de mirar, no marcando fernies.
+
+---
+
 ## Novedades de la 2.0
 
 La 2.0 añade tres bloques grandes —reconocimiento de imagen, contenido repetido y filtro NSFW— y
@@ -97,8 +107,8 @@ que llega.
 - **Rejilla de contenido** con imágenes y vídeo, miniaturas, carga progresiva e indicadores de
   espera en consultas y operaciones de ficheros.
 - **Visor** a pantalla completa con reproducción de vídeo (media_kit), transición de carrusel al
-  pasar al contenido siguiente o anterior (flechas de la interfaz o del teclado), marcado de
-  **favoritos** y panel de información editable.
+  pasar al contenido siguiente o anterior (flechas de la interfaz o del teclado), control de
+  volumen, marcado de **favoritos** y panel de información editable.
 - **Favoritos**: la misma rejilla filtrada por lo marcado con el corazón del visor.
 - **Papelera**: el contenido se marca para borrar, se puede restablecer, y lo que lleva más de una
   semana marcado se elimina solo al arrancar la aplicación.
