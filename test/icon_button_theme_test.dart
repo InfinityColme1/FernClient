@@ -7,6 +7,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 Color? _iconColor(WidgetTester tester, IconData icon) {
   final widget = tester.widget<Icon>(find.byIcon(icon));
@@ -21,7 +22,7 @@ Future<void> _pump(WidgetTester tester, {required bool isEnabled}) {
     home: Scaffold(
       body: IconButton(
         onPressed: isEnabled ? () {} : null,
-        icon: const Icon(Icons.refresh),
+        icon: const Icon(Symbols.refresh),
       ),
     ),
   ));
@@ -32,12 +33,12 @@ void main() {
       (tester) async {
     await _pump(tester, isEnabled: true);
 
-    expect(_iconColor(tester, Icons.refresh), AppColors.light.black);
+    expect(_iconColor(tester, Symbols.refresh), AppColors.light.black);
   });
 
   testWidgets('un botón de icono apagado va en gris claro', (tester) async {
     await _pump(tester, isEnabled: false);
 
-    expect(_iconColor(tester, Icons.refresh), AppColors.light.lightgray);
+    expect(_iconColor(tester, Symbols.refresh), AppColors.light.lightgray);
   });
 }

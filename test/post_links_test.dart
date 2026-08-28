@@ -5,6 +5,7 @@
 // sitio donde tiene que entrar el usuario, o a una página que no da nada. Y
 // cuando hay varios a la vez, quien decide es el usuario.
 
+import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/post_link.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,22 +15,38 @@ import 'package:flutter_test/flutter_test.dart';
 class _Answers implements ImportDecisionHandler {
   final LinkChoice answer;
 
+  /// Las publicaciones que se han aparcado como tarea, en orden.
+  final parked = <LinkReviewRequest>[];
+
   int asked = 0;
-  int notices = 0;
+
+  /// Cuantas veces se ha ensenado el resumen del final, y con cuantas
+  /// publicaciones.
+  int summaries = 0;
+  List<PendingLinkPost> shown = const [];
 
   _Answers(this.answer);
 
   @override
-  Future<LinkChoice> chooseLinks(String postTitle, List<PostLink> links) async {
+  void parkLinks(LinkReviewRequest request) {
     asked++;
-    return answer;
+    parked.add(request);
   }
 
   @override
-  Future<void> noticeRepository(String postTitle, List<PostLink> links) async {
-    notices++;
+  Future<void> showPendingLinks(List<PendingLinkPost> posts) async {
+    summaries++;
+    shown = posts;
   }
 }
+
+/// Una publicacion cualquiera con estos enlaces.
+LinkReviewRequest _request(List<PostLink> links) => LinkReviewRequest(
+      postTitle: 'Una',
+      links: links,
+      source: ImportSource.pawchive,
+      namePrefix: 'pawchive_1_link',
+    );
 
 void main() {
   group('de qué es cada enlace', () {
@@ -51,15 +68,75 @@ void main() {
       );
     });
 
-    test('los sitios de descargas son cosa del usuario', () {
+    test('una carpeta de un sitio de descargas es cosa del usuario', () {
+      // Ahi hay que entrar y elegir: son varios ficheros detras de una espera,
+      // un captcha o un listado.
       for (final url in [
         'https://mega.nz/folder/abc',
         'https://pixeldrain.com/l/abc',
         'https://gofile.io/d/abc',
         'https://drive.google.com/drive/folders/abc',
+        'https://www.mediafire.com/folder/abc',
+        'https://bunkr.si/a/abc',
       ]) {
-        expect(classifyPostLink(url).kind, PostLinkKind.repository, reason: url);
+        expect(
+          classifyPostLink(url).kind,
+          PostLinkKind.repositoryFolder,
+          reason: url,
+        );
       }
+    });
+
+    test('un fichero suelto no es una carpeta', () {
+      for (final url in [
+        'https://mega.nz/file/abc#clave',
+        'https://www.mediafire.com/file/abc/foto.png/file',
+        'https://cyberdrop.me/f/abc',
+      ]) {
+        expect(
+          classifyPostLink(url).kind,
+          PostLinkKind.repositoryFile,
+          reason: url,
+        );
+      }
+    });
+
+    test('lo que se puede pedir directo se baja como cualquier otra cosa', () {
+      // Es lo que hace que un enlace a un solo contenido no pare nada ni
+      // pregunte nada: se deduce su direccion de fichero y se descarga.
+      final drive = classifyPostLink(
+        'https://drive.google.com/file/d/ABC123/view?usp=sharing',
+      );
+      expect(drive.kind, PostLinkKind.repositoryFile);
+      expect(drive.isDownloadable, isTrue);
+      expect(drive.needsUser, isFalse);
+      expect(drive.downloadUrl, contains('id=ABC123'));
+
+      final pixeldrain = classifyPostLink('https://pixeldrain.com/u/XYZ');
+      expect(pixeldrain.isDownloadable, isTrue);
+      expect(pixeldrain.downloadUrl, 'https://pixeldrain.com/api/file/XYZ?download');
+
+      final dropbox =
+          classifyPostLink('https://www.dropbox.com/s/abc/foto.png?dl=0');
+      expect(dropbox.downloadUrl, contains('dl=1'));
+    });
+
+    test('lo que no se puede pedir directo sigue necesitando al usuario', () {
+      // Mega cifra en el navegador: ni con la direccion se puede bajar de aqui.
+      final mega = classifyPostLink('https://mega.nz/file/abc#clave');
+
+      expect(mega.isDownloadable, isFalse);
+      expect(mega.needsUser, isTrue);
+      expect(mega.downloadUrl, mega.url);
+    });
+
+    test('una forma que no se reconoce se da por carpeta', () {
+      // Lo prudente: ensenarsela al usuario en vez de bajar a ciegas algo que no
+      // se sabe que es.
+      expect(
+        classifyPostLink('https://gofile.io/algo/raro').kind,
+        PostLinkKind.repositoryFolder,
+      );
     });
 
     test('todo lo demás se pasa por alto', () {
@@ -102,80 +179,164 @@ void main() {
       final answers = _Answers(const LinkChoice.ignore());
       final decisions = ImportDecisions()..handler = answers;
 
-      final choice = await decisions.chooseLinks('Una', unLink);
+      final choice = await decisions.chooseLinks(_request(unLink));
 
       expect(answers.asked, 0);
       expect(choice.accepts(unLink.first), isTrue);
     });
 
-    test('con varios se pregunta', () async {
+    test('con varios se aparca, y la importacion sigue', () async {
       final answers = _Answers(const LinkChoice(kind: LinkChoiceKind.all));
       final decisions = ImportDecisions()..handler = answers;
 
-      await decisions.chooseLinks('Una', dosLinks);
+      final choice = await decisions.chooseLinks(_request(dosLinks));
 
-      expect(answers.asked, 1);
+      // Lo que importa: **no se espera a nadie**. Antes esto se quedaba parado
+      // delante de un dialogo, y ese dialogo se perdia en cuanto alguien se iba
+      // al navegador a mirar uno de los enlaces.
+      expect(answers.parked, hasLength(1));
+      expect(choice.accepts(dosLinks.first), isFalse,
+          reason: 'de esta, nada por ahora: ya se decidira');
     });
 
-    test('una selección sólo deja pasar lo marcado', () async {
-      final decisions = ImportDecisions()
-        ..handler = _Answers(LinkChoice(
-          kind: LinkChoiceKind.selection,
-          selected: {dosLinks.last.url},
-        ));
+    test('lo aparcado lleva de donde salio', () async {
+      // La respuesta llega a destiempo, cuando la importacion ya ha terminado:
+      // si no llevara la fuente y el nombre, no habria a quien preguntarselo.
+      final answers = _Answers(const LinkChoice.ignore());
+      final decisions = ImportDecisions()..handler = answers;
 
-      final choice = await decisions.chooseLinks('Una', dosLinks);
+      await decisions.chooseLinks(_request(dosLinks));
+
+      expect(answers.parked.single.source, ImportSource.pawchive);
+      expect(answers.parked.single.namePrefix, 'pawchive_1_link');
+      expect(answers.parked.single.links, dosLinks);
+    });
+
+    test('una seleccion solo deja pasar lo marcado', () {
+      final choice = LinkChoice(
+        kind: LinkChoiceKind.selection,
+        selected: {dosLinks.last.url},
+      );
 
       expect(choice.accepts(dosLinks.first), isFalse);
       expect(choice.accepts(dosLinks.last), isTrue);
     });
 
-    test('lo que vale para todo no se vuelve a preguntar', () async {
-      final answers = _Answers(
-        const LinkChoice(kind: LinkChoiceKind.all, applyToAll: true),
-      );
+    test('lo que vale para todo deja de aparcar', () async {
+      final answers = _Answers(const LinkChoice.ignore());
       final decisions = ImportDecisions()..handler = answers;
 
-      await decisions.chooseLinks('Una', dosLinks);
-      await decisions.chooseLinks('Otra', dosLinks);
-      await decisions.chooseLinks('Y otra', dosLinks);
+      await decisions.chooseLinks(_request(dosLinks));
 
-      expect(answers.asked, 1);
+      // Es lo que contesta el usuario al abrir la tarea marcando la casilla.
+      decisions.applyToEverything(
+        const LinkChoice(kind: LinkChoiceKind.all, applyToAll: true),
+      );
+
+      final after = await decisions.chooseLinks(_request(dosLinks));
+
+      expect(answers.parked, hasLength(1), reason: 'no se aparca otra vez');
+      expect(after.accepts(dosLinks.first), isTrue);
     });
 
     test('y se olvida al empezar otra importación', () async {
-      final answers = _Answers(
-        const LinkChoice(kind: LinkChoiceKind.all, applyToAll: true),
-      );
+      final answers = _Answers(const LinkChoice.ignore());
       final decisions = ImportDecisions()..handler = answers;
 
-      await decisions.chooseLinks('Una', dosLinks);
+      decisions.applyToEverything(
+        const LinkChoice(kind: LinkChoiceKind.all, applyToAll: true),
+      );
       decisions.reset();
-      await decisions.chooseLinks('Otra', dosLinks);
 
-      expect(answers.asked, 2);
+      await decisions.chooseLinks(_request(dosLinks));
+
+      expect(answers.parked, hasLength(1),
+          reason: 'lo respondido valia para aquella, no para siempre');
     });
 
     test('sin nadie a quien preguntar no se trae nada', () async {
       final decisions = ImportDecisions();
 
-      final choice = await decisions.chooseLinks('Una', dosLinks);
+      final choice = await decisions.chooseLinks(_request(dosLinks));
 
       expect(choice.accepts(dosLinks.first), isFalse);
     });
 
-    test('el aviso de los repositorios no espera respuesta', () {
+  });
+
+  group('lo que queda pendiente', () {
+    const carpeta = PostLink(
+      url: 'https://mega.nz/folder/abc',
+      kind: PostLinkKind.repositoryFolder,
+    );
+
+    test('apuntarlo no ensena nada', () async {
       final answers = _Answers(const LinkChoice.ignore());
       final decisions = ImportDecisions()..handler = answers;
 
-      decisions.noticeRepository('Una', [
-        const PostLink(
-          url: 'https://mega.nz/folder/abc',
-          kind: PostLinkKind.repository,
-        ),
-      ]);
+      decisions.notePendingLinks('Una', [carpeta]);
+      decisions.notePendingLinks('Otra', [carpeta]);
 
-      expect(answers.notices, 1);
+      // Antes cada publicacion abria su propio aviso segun iba llegando, sin
+      // esperar a que se cerrara el anterior.
+      expect(answers.summaries, 0);
+      expect(decisions.pendingCount, 2);
+    });
+
+    test('se ensena una sola vez, al final, con todo dentro', () async {
+      final answers = _Answers(const LinkChoice.ignore());
+      final decisions = ImportDecisions()..handler = answers;
+
+      decisions.notePendingLinks('Una', [carpeta]);
+      decisions.notePendingLinks('Otra', [carpeta]);
+      await decisions.flushPendingLinks();
+
+      expect(answers.summaries, 1);
+      expect(answers.shown, hasLength(2));
+    });
+
+    test('lo que se puede bajar solo no queda pendiente de nadie', () async {
+      final answers = _Answers(const LinkChoice.ignore());
+      final decisions = ImportDecisions()..handler = answers;
+
+      decisions.notePendingLinks('Una', [
+        classifyPostLink('https://pixeldrain.com/u/XYZ'),
+        classifyPostLink('https://cdn.test/una.jpg'),
+      ]);
+      await decisions.flushPendingLinks();
+
+      expect(answers.summaries, 0, reason: 'no hay nada que contar');
+    });
+
+    test('sin nada pendiente no se ensena nada', () async {
+      final answers = _Answers(const LinkChoice.ignore());
+      final decisions = ImportDecisions()..handler = answers;
+
+      await decisions.flushPendingLinks();
+
+      expect(answers.summaries, 0);
+    });
+
+    test('ensenarlo lo olvida: no se cuenta dos veces', () async {
+      final answers = _Answers(const LinkChoice.ignore());
+      final decisions = ImportDecisions()..handler = answers;
+
+      decisions.notePendingLinks('Una', [carpeta]);
+      await decisions.flushPendingLinks();
+      await decisions.flushPendingLinks();
+
+      expect(answers.summaries, 1);
+    });
+
+    test('empezar otra importacion no arrastra lo de la anterior', () async {
+      final answers = _Answers(const LinkChoice.ignore());
+      final decisions = ImportDecisions()..handler = answers;
+
+      decisions.notePendingLinks('Una', [carpeta]);
+      decisions.reset();
+      await decisions.flushPendingLinks();
+
+      expect(answers.summaries, 0);
     });
   });
 }

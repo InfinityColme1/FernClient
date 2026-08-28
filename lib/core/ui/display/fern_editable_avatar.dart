@@ -1,12 +1,17 @@
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// [FernAvatar] pulsable que muestra una capa oscura con un icono de edición
 /// mientras el puntero está encima.
 class FernEditableAvatar extends StatefulWidget {
   final String? imagePath;
   final IconData fallbackIcon;
+
+  /// Icono de reserva en forma de imagen del paquete. Manda sobre
+  /// [fallbackIcon] cuando viene.
+
   final double radius;
   final double? iconSize;
   final VoidCallback? onTap;
@@ -23,7 +28,7 @@ class FernEditableAvatar extends StatefulWidget {
     required this.radius,
     this.iconSize,
     this.onTap,
-    this.overlayIcon = Icons.edit,
+    this.overlayIcon = Symbols.edit,
     this.overlayIconSize = AppSizes.iconLarge,
     this.backgroundColor,
     this.iconColor,

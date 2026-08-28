@@ -16,7 +16,10 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:Fern/features/recognition/data/models/fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:isar/isar.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 /// La jerarquía de etiquetas contra una base de datos de verdad.
 ///
@@ -54,6 +57,10 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        // El borrado definitivo se lleva por delante las regiones de fernie, así
+        // que la base de datos de la prueba tiene que conocerlas.
+        FernieModelSchema,
+        FernieRegionModelSchema,
       ],
       directory: directory.path,
       inspector: false,
@@ -62,6 +69,7 @@ void main() {
     final hierarchy = TagHierarchy(database: isar);
 
     repository = LocalMediaRepositoryImpl(
+      shuffle: ShuffleSeed(),
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: _NoSettings()),
       avatarStorage: AvatarStorageService(settingsRepository: _NoSettings()),

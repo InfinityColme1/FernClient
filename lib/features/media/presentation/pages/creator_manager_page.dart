@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
@@ -69,8 +70,9 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
     final creators = state.creators;
     if (creators.isEmpty) return;
 
-    final isStillThere =
-        creators.any((creator) => creator.id == _selectedCreatorId);
+    final isStillThere = creators.any(
+      (creator) => creator.id == _selectedCreatorId,
+    );
     if (isStillThere) return;
 
     _select(creators.first);
@@ -111,6 +113,8 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
                   ? FernEmptyState(
                       imageAsset: fernEmptyImage,
                       message: AppLocalizations.of(context).noCreatorsYet,
+                      description:
+                          AppLocalizations.of(context).noCreatorsYetHint,
                     )
                   : const Center(child: FernProgressIndicator()),
             );
@@ -118,35 +122,28 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
 
           final selected = _selectedCreator(creators) ?? creators.first;
 
-          return Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
-            child: Row(
-              children: [
-                Expanded(child: _creatorContent(selected)),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    right: AppSpacing.l,
-                    bottom: AppSpacing.l,
-                  ),
-                  child: SizedBox(
-                    width: AppSizes.tagListWidth,
-                    // Al guardar o borrar un creador la lista se vuelve a leer:
-                    // hasta que llegue se queda la de antes, con el indicador
-                    // encima.
-                    child: FernBusyOverlay(
-                      isBusy: state.isBusy,
-                      // La lista va directamente sobre el fondo, sin superficie
-                      // propia de la que copiar el redondeo.
-                      radius: AppSizes.radiusMedium,
-                      child: CreatorList(
-                        creators: creators,
-                        selectedCreatorId: selected.id,
-                        onSelected: _select,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          return FernManagementScreen(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.l,
+              left: AppSpacing.l,
+              right: AppSpacing.l,
+              bottom: AppSpacing.l,
+            ),
+            listWidth: AppSizes.tagListWidth,
+            cardBuilder: (context, space) => _creatorCard(selected, space),
+            grid: _creatorMedia(),
+            // Al guardar o borrar un creador la lista se vuelve a leer: hasta que
+            // llegue se queda la de antes, con el indicador encima.
+            list: FernBusyOverlay(
+              isBusy: state.isBusy,
+              // La lista va directamente sobre el fondo, sin superficie propia
+              // de la que copiar el redondeo.
+              radius: AppSizes.radiusMedium,
+              child: CreatorList(
+                creators: creators,
+                selectedCreatorId: selected.id,
+                onSelected: _select,
+              ),
             ),
           );
         },
@@ -159,62 +156,43 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
   /// La ficha se rehace al cambiar de creador (de eso se encarga la clave): los
   /// campos arrancan con los valores del creador, así que tienen que volver a
   /// nacer con los del nuevo.
-  Widget _creatorContent(CreatorEntity creator) {
-    // El alto de la ficha lo pone la pantalla y no su contenido: así todos los
-    // creadores tienen la misma y la rejilla de debajo no se mueve de sitio al
-    // cambiar de uno a otro ni al añadirle un enlace.
-    //
-    // Se mide aquí, antes de la columna, porque dentro de ella el alto que se le
-    // ofrece a la ficha es ilimitado (es la rejilla la que se queda con lo que
-    // sobra) y no habría con qué repartir.
-    return LayoutBuilder(builder: (context, constraints) {
-      final cardHeight = math.min(
-        creatorCardHeight,
-        // En una ventana baja la ficha cede antes que la rejilla, pero sólo
-        // hasta el mínimo con el que su formulario sigue cabiendo.
-        math.max(
-          constraints.maxHeight - creatorGridMinHeight,
-          creatorCardMinHeight,
-        ),
-      );
+  /// La ficha del creador elegido, con su alto ya repartido.
+  ///
+  /// El alto lo pone la pantalla y no el contenido de la ficha: así todos los
+  /// creadores tienen la misma y la rejilla de debajo no se mueve de sitio al
+  /// cambiar de uno a otro ni al añadirle un enlace.
+  Widget _creatorCard(CreatorEntity creator, BoxConstraints space) {
+    final cardHeight = math.min(
+      creatorCardHeight,
+      // En una ventana baja la ficha cede antes que la rejilla, pero sólo hasta
+      // el mínimo con el que su formulario sigue cabiendo.
+      math.max(space.maxHeight - creatorGridMinHeight, creatorCardMinHeight),
+    );
 
-      return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            right: AppSpacing.l,
-            bottom: AppSpacing.l,
-          ),
-          child: SizedBox(
-            height: cardHeight,
-            child: CreatorCard(
-              key: ValueKey(creator.id),
-              creator: creator,
-            ),
-          ),
-        ),
-        Expanded(
-          child: BlocConsumer<MediaBloc, MediaStates>(
-            listenWhen: (previous, current) =>
-                previous is! DetailedMedia && current is DetailedMedia,
-            listener: (context, state) {
-              // Como en las demás rejillas: el contenido se abre a pantalla
-              // completa y al cerrarlo se vuelve aquí, con el creador elegido tal
-              // y como estaba.
-              if (state is DetailedMedia) context.push(viewerRoute);
-            },
-            builder: (context, state) => MediaGrid(
-              mediaList: state.mediaList ?? const [],
-              columns: creatorManagerGridColumns,
-              isLoading: state.isBusy,
-              // La superficie de esta pantalla es la de la ficha: la rejilla va
-              // directamente sobre el fondo.
-              hasSurface: false,
-            ),
-          ),
-        ),
-      ],
-      );
-    });
+    return SizedBox(
+      height: cardHeight,
+      child: CreatorCard(key: ValueKey(creator.id), creator: creator),
+    );
+  }
+
+  /// El contenido del creador elegido.
+  Widget _creatorMedia() {
+    return BlocConsumer<MediaBloc, MediaStates>(
+      listenWhen: (previous, current) =>
+          previous is! DetailedMedia && current is DetailedMedia,
+      listener: (context, state) {
+        // Como en las demás rejillas: el contenido se abre a pantalla completa y
+        // al cerrarlo se vuelve aquí, con el creador elegido tal y como estaba.
+        if (state is DetailedMedia) context.push(viewerRoute);
+      },
+      builder: (context, state) => MediaGrid(
+        mediaList: state.mediaList ?? const [],
+        columns: tagManagerGridColumns,
+        isLoading: state.isBusy,
+        // La superficie de esta pantalla es la de la ficha: la rejilla va
+        // directamente sobre el fondo.
+        hasSurface: false,
+      ),
+    );
   }
 }

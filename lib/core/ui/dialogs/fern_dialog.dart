@@ -1,7 +1,9 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Estructura común de los diálogos de la aplicación: botón de cierre arriba a
 /// la izquierda, dos columnas de contenido y una acción abajo a la derecha.
@@ -38,8 +40,15 @@ class FernDialog extends StatelessWidget {
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusDialog),
+        // El trazo que lo despega de la pantalla que tiene detrás. Sin él, un
+        // diálogo sobre una superficie del mismo tono se lee como un recorte del
+        // fondo y no como algo que se ha abierto encima.
+        side: BorderSide(
+          color: context.colors.outline,
+          width: AppSizes.borderHairline,
+        ),
       ),
-      backgroundColor: context.colors.white,
+      backgroundColor: context.colors.surfaceRaised,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(
@@ -50,24 +59,30 @@ class FernDialog extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),
+                    tooltip: AppLocalizations.of(context).actionClose,
+                    icon: const Icon(Symbols.close, size: AppSizes.iconExtraLarge),
                     onPressed: onClose,
                   ),
                   const Spacer(),
                   if (trailingAction != null) trailingAction!,
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (leftContent != null)
-                      Expanded(flex: 1, child: leftContent!),
-                    if (hasBothColumns) SizedBox(width: columnSpacing),
-                    if (rightContent != null)
-                      Expanded(flex: 1, child: rightContent!),
-                  ],
+              // Flexible y no fijo: es la parte que tiene que ceder cuando el
+              // diálogo no cabe. La cabecera y el botón de acción ocupan lo que
+              // ocupan y no se pueden encoger.
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (leftContent != null)
+                        Expanded(flex: 1, child: leftContent!),
+                      if (hasBothColumns) SizedBox(width: columnSpacing),
+                      if (rightContent != null)
+                        Expanded(flex: 1, child: rightContent!),
+                    ],
+                  ),
                 ),
               ),
               if (actionButton != null) ...[

@@ -5,8 +5,10 @@ import 'package:Fern/core/services/media_preview_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Cómo se pinta cada tipo de resultado: el texto que lo nombra y el icono con
 /// el que se muestra cuando no hay imagen.
@@ -18,9 +20,9 @@ extension SearchResultTypeVisuals on SearchResultType {
       };
 
   IconData get icon => switch (this) {
-        SearchResultType.media => Icons.image_outlined,
-        SearchResultType.tag => Icons.label,
-        SearchResultType.creator => Icons.person,
+        SearchResultType.media => Symbols.image,
+        SearchResultType.tag => Symbols.label,
+        SearchResultType.creator => Symbols.person,
       };
 }
 
@@ -37,6 +39,9 @@ class SearchResultRow extends StatelessWidget {
   final double radius;
   final VoidCallback? onTap;
 
+  /// La fila es una etiqueta marcada como NSFW y hay que decirlo.
+  final bool isNsfw;
+
   /// Cabecera de grupo: nombre en negrita, avatar más pequeño y sin pulsación.
   final bool _isHeader;
 
@@ -46,6 +51,7 @@ class SearchResultRow extends StatelessWidget {
     required this.type,
     required this.onTap,
     this.imagePath,
+    this.isNsfw = false,
   })  : radius = AppSizes.avatarMedium,
         _isHeader = false;
 
@@ -54,6 +60,7 @@ class SearchResultRow extends StatelessWidget {
     required this.label,
     required this.type,
     this.imagePath,
+    this.isNsfw = false,
   })  : radius = AppSizes.avatarSmall,
         onTap = null,
         _isHeader = true;
@@ -86,6 +93,12 @@ class SearchResultRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.m),
           _isHeader ? Flexible(child: name) : Expanded(child: name),
+          // El distintivo va detrás del nombre y delante del tipo: así no tapa
+          // el avatar, que es con lo que se reconoce la etiqueta.
+          if (isNsfw) ...[
+            const SizedBox(width: AppSpacing.s),
+            const NsfwTagMark(),
+          ],
           const SizedBox(width: AppSpacing.m),
           Text(
             type.label(AppLocalizations.of(context)),
@@ -165,7 +178,7 @@ class _SearchResultAvatarState extends State<SearchResultAvatar> {
   Widget build(BuildContext context) {
     return FernAvatar(
       imagePath: _isVideo ? _thumbnailPath : widget.imagePath,
-      fallbackIcon: _isVideo ? Icons.movie_outlined : widget.type.icon,
+      fallbackIcon: _isVideo ? Symbols.movie : widget.type.icon,
       radius: widget.radius,
       iconSize: widget.radius,
     );

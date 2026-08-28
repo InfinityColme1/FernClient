@@ -17,30 +17,70 @@ const MediaSummaryModelSchema = CollectionSchema(
   name: r'MediaSummaries',
   id: 7435934146651842754,
   properties: {
-    r'deletedAt': PropertySchema(
+    r'dctHash': PropertySchema(
       id: 0,
+      name: r'dctHash',
+      type: IsarType.long,
+    ),
+    r'deletedAt': PropertySchema(
+      id: 1,
       name: r'deletedAt',
       type: IsarType.dateTime,
     ),
+    r'hasPendingSuggestions': PropertySchema(
+      id: 2,
+      name: r'hasPendingSuggestions',
+      type: IsarType.bool,
+    ),
+    r'hashedAt': PropertySchema(
+      id: 3,
+      name: r'hashedAt',
+      type: IsarType.dateTime,
+    ),
     r'importSource': PropertySchema(
-      id: 1,
+      id: 4,
       name: r'importSource',
       type: IsarType.string,
     ),
     r'isDeleted': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'isImported': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'isImported',
       type: IsarType.bool,
     ),
+    r'isNsfw': PropertySchema(
+      id: 7,
+      name: r'isNsfw',
+      type: IsarType.bool,
+    ),
+    r'mediaHeight': PropertySchema(
+      id: 8,
+      name: r'mediaHeight',
+      type: IsarType.long,
+    ),
+    r'mediaWidth': PropertySchema(
+      id: 9,
+      name: r'mediaWidth',
+      type: IsarType.long,
+    ),
     r'path': PropertySchema(
-      id: 4,
+      id: 10,
       name: r'path',
       type: IsarType.string,
+    ),
+    r'perceptualHash': PropertySchema(
+      id: 11,
+      name: r'perceptualHash',
+      type: IsarType.long,
+    ),
+    r'recognizedAt': PropertySchema(
+      id: 12,
+      name: r'recognizedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _mediaSummaryModelEstimateSize,
@@ -72,6 +112,45 @@ const MediaSummaryModelSchema = CollectionSchema(
           name: r'importSource',
           type: IndexType.hash,
           caseSensitive: true,
+        )
+      ],
+    ),
+    r'hasPendingSuggestions': IndexSchema(
+      id: -1682699791791004983,
+      name: r'hasPendingSuggestions',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'hasPendingSuggestions',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'isNsfw': IndexSchema(
+      id: 3014435295683206251,
+      name: r'isNsfw',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'isNsfw',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'perceptualHash': IndexSchema(
+      id: 1103035415456931344,
+      name: r'perceptualHash',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'perceptualHash',
+          type: IndexType.value,
+          caseSensitive: false,
         )
       ],
     )
@@ -108,11 +187,19 @@ void _mediaSummaryModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.deletedAt);
-  writer.writeString(offsets[1], object.importSource);
-  writer.writeBool(offsets[2], object.isDeleted);
-  writer.writeBool(offsets[3], object.isImported);
-  writer.writeString(offsets[4], object.path);
+  writer.writeLong(offsets[0], object.dctHash);
+  writer.writeDateTime(offsets[1], object.deletedAt);
+  writer.writeBool(offsets[2], object.hasPendingSuggestions);
+  writer.writeDateTime(offsets[3], object.hashedAt);
+  writer.writeString(offsets[4], object.importSource);
+  writer.writeBool(offsets[5], object.isDeleted);
+  writer.writeBool(offsets[6], object.isImported);
+  writer.writeBool(offsets[7], object.isNsfw);
+  writer.writeLong(offsets[8], object.mediaHeight);
+  writer.writeLong(offsets[9], object.mediaWidth);
+  writer.writeString(offsets[10], object.path);
+  writer.writeLong(offsets[11], object.perceptualHash);
+  writer.writeDateTime(offsets[12], object.recognizedAt);
 }
 
 MediaSummaryModel _mediaSummaryModelDeserialize(
@@ -122,12 +209,20 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = MediaSummaryModel();
-  object.deletedAt = reader.readDateTimeOrNull(offsets[0]);
+  object.dctHash = reader.readLongOrNull(offsets[0]);
+  object.deletedAt = reader.readDateTimeOrNull(offsets[1]);
+  object.hasPendingSuggestions = reader.readBool(offsets[2]);
+  object.hashedAt = reader.readDateTimeOrNull(offsets[3]);
   object.id = id;
-  object.importSource = reader.readString(offsets[1]);
-  object.isDeleted = reader.readBool(offsets[2]);
-  object.isImported = reader.readBool(offsets[3]);
-  object.path = reader.readString(offsets[4]);
+  object.importSource = reader.readString(offsets[4]);
+  object.isDeleted = reader.readBool(offsets[5]);
+  object.isImported = reader.readBool(offsets[6]);
+  object.isNsfw = reader.readBool(offsets[7]);
+  object.mediaHeight = reader.readLongOrNull(offsets[8]);
+  object.mediaWidth = reader.readLongOrNull(offsets[9]);
+  object.path = reader.readString(offsets[10]);
+  object.perceptualHash = reader.readLongOrNull(offsets[11]);
+  object.recognizedAt = reader.readDateTimeOrNull(offsets[12]);
   return object;
 }
 
@@ -139,15 +234,31 @@ P _mediaSummaryModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readBool(offset)) as P;
+    case 6:
+      return (reader.readBool(offset)) as P;
+    case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
+      return (reader.readLongOrNull(offset)) as P;
+    case 9:
+      return (reader.readLongOrNull(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readLongOrNull(offset)) as P;
+    case 12:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -228,6 +339,32 @@ extension MediaSummaryModelQueryWhereSort
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere>
+      anyHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'hasPendingSuggestions'),
+      );
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere> anyIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'isNsfw'),
+      );
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhere>
+      anyPerceptualHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'perceptualHash'),
+      );
     });
   }
 }
@@ -391,10 +528,289 @@ extension MediaSummaryModelQueryWhere
       }
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      hasPendingSuggestionsEqualTo(bool hasPendingSuggestions) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'hasPendingSuggestions',
+        value: [hasPendingSuggestions],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      hasPendingSuggestionsNotEqualTo(bool hasPendingSuggestions) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [],
+              upper: [hasPendingSuggestions],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [hasPendingSuggestions],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [hasPendingSuggestions],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'hasPendingSuggestions',
+              lower: [],
+              upper: [hasPendingSuggestions],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      isNsfwEqualTo(bool isNsfw) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'isNsfw',
+        value: [isNsfw],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      isNsfwNotEqualTo(bool isNsfw) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [],
+              upper: [isNsfw],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [isNsfw],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [isNsfw],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isNsfw',
+              lower: [],
+              upper: [isNsfw],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'perceptualHash',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'perceptualHash',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashEqualTo(int? perceptualHash) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'perceptualHash',
+        value: [perceptualHash],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashNotEqualTo(int? perceptualHash) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'perceptualHash',
+              lower: [],
+              upper: [perceptualHash],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'perceptualHash',
+              lower: [perceptualHash],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'perceptualHash',
+              lower: [perceptualHash],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'perceptualHash',
+              lower: [],
+              upper: [perceptualHash],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashGreaterThan(
+    int? perceptualHash, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'perceptualHash',
+        lower: [perceptualHash],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashLessThan(
+    int? perceptualHash, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'perceptualHash',
+        lower: [],
+        upper: [perceptualHash],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterWhereClause>
+      perceptualHashBetween(
+    int? lowerPerceptualHash,
+    int? upperPerceptualHash, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'perceptualHash',
+        lower: [lowerPerceptualHash],
+        includeLower: includeLower,
+        upper: [upperPerceptualHash],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension MediaSummaryModelQueryFilter
     on QueryBuilder<MediaSummaryModel, MediaSummaryModel, QFilterCondition> {
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      dctHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'dctHash',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      dctHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'dctHash',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      dctHashEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dctHash',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      dctHashGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dctHash',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      dctHashLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dctHash',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      dctHashBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dctHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       deletedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -461,6 +877,90 @@ extension MediaSummaryModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'deletedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hasPendingSuggestionsEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasPendingSuggestions',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hashedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'hashedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hashedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'hashedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hashedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hashedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hashedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'hashedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hashedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'hashedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      hashedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'hashedAt',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -682,6 +1182,164 @@ extension MediaSummaryModelQueryFilter
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      isNsfwEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isNsfw',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mediaHeight',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mediaHeight',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaHeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mediaHeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mediaHeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaHeightBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mediaHeight',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'mediaWidth',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'mediaWidth',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mediaWidth',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mediaWidth',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mediaWidth',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      mediaWidthBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mediaWidth',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
       pathEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -816,6 +1474,154 @@ extension MediaSummaryModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      perceptualHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'perceptualHash',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      perceptualHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'perceptualHash',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      perceptualHashEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'perceptualHash',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      perceptualHashGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'perceptualHash',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      perceptualHashLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'perceptualHash',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      perceptualHashBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'perceptualHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'recognizedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'recognizedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'recognizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'recognizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'recognizedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      recognizedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'recognizedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension MediaSummaryModelQueryObject
@@ -841,6 +1647,20 @@ extension MediaSummaryModelQueryLinks
 extension MediaSummaryModelQuerySortBy
     on QueryBuilder<MediaSummaryModel, MediaSummaryModel, QSortBy> {
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByDctHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dctHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByDctHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dctHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       sortByDeletedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deletedAt', Sort.asc);
@@ -851,6 +1671,34 @@ extension MediaSummaryModelQuerySortBy
       sortByDeletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deletedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByHasPendingSuggestionsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByHashedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByHashedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashedAt', Sort.desc);
     });
   }
 
@@ -897,6 +1745,48 @@ extension MediaSummaryModelQuerySortBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaHeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaHeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaWidth() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByMediaWidthDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       sortByPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.asc);
@@ -909,10 +1799,52 @@ extension MediaSummaryModelQuerySortBy
       return query.addSortBy(r'path', Sort.desc);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByPerceptualHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'perceptualHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByPerceptualHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'perceptualHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByRecognizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByRecognizedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.desc);
+    });
+  }
 }
 
 extension MediaSummaryModelQuerySortThenBy
     on QueryBuilder<MediaSummaryModel, MediaSummaryModel, QSortThenBy> {
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByDctHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dctHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByDctHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dctHash', Sort.desc);
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       thenByDeletedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -924,6 +1856,34 @@ extension MediaSummaryModelQuerySortThenBy
       thenByDeletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deletedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByHasPendingSuggestionsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPendingSuggestions', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByHashedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByHashedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hashedAt', Sort.desc);
     });
   }
 
@@ -983,6 +1943,48 @@ extension MediaSummaryModelQuerySortThenBy
   }
 
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaHeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaHeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaHeight', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaWidth() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByMediaWidthDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mediaWidth', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
       thenByPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.asc);
@@ -995,14 +1997,63 @@ extension MediaSummaryModelQuerySortThenBy
       return query.addSortBy(r'path', Sort.desc);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByPerceptualHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'perceptualHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByPerceptualHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'perceptualHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByRecognizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByRecognizedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recognizedAt', Sort.desc);
+    });
+  }
 }
 
 extension MediaSummaryModelQueryWhereDistinct
     on QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct> {
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByDctHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'dctHash');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
       distinctByDeletedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'deletedAt');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByHasPendingSuggestions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasPendingSuggestions');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByHashedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hashedAt');
     });
   }
 
@@ -1027,10 +2078,45 @@ extension MediaSummaryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isNsfw');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByMediaHeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mediaHeight');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByMediaWidth() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mediaWidth');
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct> distinctByPath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'path', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByPerceptualHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'perceptualHash');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByRecognizedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'recognizedAt');
     });
   }
 }
@@ -1043,10 +2129,30 @@ extension MediaSummaryModelQueryProperty
     });
   }
 
+  QueryBuilder<MediaSummaryModel, int?, QQueryOperations> dctHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'dctHash');
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, DateTime?, QQueryOperations>
       deletedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'deletedAt');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, bool, QQueryOperations>
+      hasPendingSuggestionsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasPendingSuggestions');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, DateTime?, QQueryOperations>
+      hashedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hashedAt');
     });
   }
 
@@ -1069,9 +2175,42 @@ extension MediaSummaryModelQueryProperty
     });
   }
 
+  QueryBuilder<MediaSummaryModel, bool, QQueryOperations> isNsfwProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isNsfw');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, int?, QQueryOperations>
+      mediaHeightProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mediaHeight');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, int?, QQueryOperations> mediaWidthProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mediaWidth');
+    });
+  }
+
   QueryBuilder<MediaSummaryModel, String, QQueryOperations> pathProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'path');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, int?, QQueryOperations>
+      perceptualHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'perceptualHash');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, DateTime?, QQueryOperations>
+      recognizedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'recognizedAt');
     });
   }
 }

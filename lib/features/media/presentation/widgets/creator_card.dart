@@ -8,18 +8,21 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_source_urls_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_creator_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -50,7 +53,7 @@ class _CreatorCardState extends State<CreatorCard> {
   final _updateCreator = getIt<UpdateCreatorUseCase>();
   final _deleteCreator = getIt<DeleteCreatorUseCase>();
   final _saveCreatorSourceUrls = getIt<SaveCreatorSourceUrlsUseCase>();
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.creator.name);
@@ -150,7 +153,7 @@ class _CreatorCardState extends State<CreatorCard> {
     // ficha en espera. El explorador de ficheros no: allí el tiempo lo pone el
     // usuario.
     await _run(() async {
-      final storedPath = await _avatarStorage.store(path);
+      final storedPath = await _storeAvatar(params: path);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);
@@ -191,7 +194,7 @@ class _CreatorCardState extends State<CreatorCard> {
       showFernToast(
         context,
         AppLocalizations.of(context).creatorNameTaken,
-        icon: Icons.error_outline,
+        icon: Symbols.error,
       );
       return;
     }
@@ -291,11 +294,16 @@ class _CreatorCardState extends State<CreatorCard> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // En la esquina superior derecha, como en la ficha de etiqueta: es la
-            // misma acción y se busca en el mismo sitio.
-            Align(
-              alignment: Alignment.topRight,
-              child: _assignUrlsButton(texts),
+            // Arriba a la derecha, como en la ficha de etiqueta: son las dos
+            // acciones que no editan al creador. Reconocer estaba abajo con las
+            // demás, pero eran cuatro píldoras contadas y la quinta pasaba la
+            // fila a dos líneas, con lo que la ficha ya no cabía en la pantalla.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _recognizeButton(texts),
+                _assignUrlsButton(texts),
+              ],
             ),
             // Con el alto que le den: la ficha lo tiene fijo (lo pone la
             // pantalla) y este bloque es el que se queda con lo que sobre.
@@ -313,7 +321,7 @@ class _CreatorCardState extends State<CreatorCard> {
                     // la pantalla con la rejilla, y el avatar es lo que más ocupa.
                     avatar: FernEditableAvatar(
                       imagePath: _picturePath,
-                      fallbackIcon: Icons.person_outline,
+                      fallbackIcon: Symbols.person,
                       radius: AppSizes.avatarXLarge,
                       iconSize: AppSizes.iconHuge,
                       onTap: _pickImage,
@@ -358,7 +366,7 @@ class _CreatorCardState extends State<CreatorCard> {
               children: [
                 FernPillButton(
                   label: texts.actionDeleteCreator,
-                  icon: Icons.delete_outline,
+                  icon: Symbols.delete,
                   backgroundColor: context.colors.error,
                   foregroundColor: Colors.white,
                   onPressed: _isBusy || _isUnknown ? null : () => _run(_delete),
@@ -366,7 +374,7 @@ class _CreatorCardState extends State<CreatorCard> {
                 _unassignButton(texts),
                 FernPillButton(
                   label: texts.actionSave,
-                  icon: Icons.check,
+                  icon: Symbols.check,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
                   onPressed: _isBusy ? null : () => _run(_save),
@@ -386,8 +394,8 @@ class _CreatorCardState extends State<CreatorCard> {
   Widget _assignUrlsButton(AppLocalizations texts) {
     return IconButton(
       icon: Icon(
-        _sourceUrls.isEmpty ? Icons.add_link : Icons.link,
-        size: AppSizes.iconExtraLarge,
+        _sourceUrls.isEmpty ? Symbols.add_link : Symbols.link,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.assignUrlsCreatorTooltip,
       onPressed: _isBusy ? null : _assignUrls,
@@ -437,7 +445,7 @@ class _CreatorCardState extends State<CreatorCard> {
                 ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        FernInlineAddButton(
+        FernAddButton.compact(
           label: texts.addProfile,
           onTap: _addProfile,
         ),
@@ -466,14 +474,14 @@ class _CreatorCardState extends State<CreatorCard> {
             ),
           ),
           _rowButton(
-            icon: Icons.check,
+            icon: Symbols.check,
             tooltip: texts.doneEditingProfileTooltip,
             // Sólo se sale del modo edición: lo escrito se queda en el campo y
             // se guarda con el resto de la ficha.
             onPressed: () => setState(() => _editingProfiles.remove(index)),
           ),
           _rowButton(
-            icon: Icons.close,
+            icon: Symbols.close,
             tooltip: texts.removeProfileTooltip,
             onPressed: () => _removeProfile(index),
           ),
@@ -498,7 +506,7 @@ class _CreatorCardState extends State<CreatorCard> {
               message: texts.openProfileTooltip,
               child: Row(
                 children: [
-                  const Icon(Icons.open_in_new, size: AppSizes.iconCompact),
+                  const Icon(Symbols.open_in_new, size: AppSizes.iconCompact),
                   const SizedBox(width: AppSpacing.s),
                   Expanded(
                     child: Text(
@@ -514,7 +522,7 @@ class _CreatorCardState extends State<CreatorCard> {
           ),
         ),
         _rowButton(
-          icon: Icons.edit_outlined,
+          icon: Symbols.edit,
           tooltip: texts.editProfileTooltip,
           onPressed: () => setState(() => _editingProfiles.add(index)),
         ),
@@ -546,12 +554,43 @@ class _CreatorCardState extends State<CreatorCard> {
   /// Le quita el creador a lo que esté seleccionado en la rejilla (pasa al
   /// desconocido). Sin nada seleccionado no hay a quién quitárselo, así que queda
   /// atenuado.
+  /// Manda a reconocer todo el contenido de este creador.
+  ///
+  /// Es el cuarto punto de entrada del D16, y el único que no parte de una
+  /// selección: aquí la lista sale de la base de datos. Va por el mismo sitio
+  /// que los otros tres, que es quien mira si hay con qué reconocer y lo
+  /// cuenta.
+  Widget _recognizeButton(AppLocalizations texts) {
+    return IconButton(
+      icon: const Icon(
+        Symbols.auto_awesome,
+        size: AppSizes.iconCardAction,
+      ),
+      tooltip: texts.recognizeCreatorTooltip,
+      onPressed: _isBusy ? null : _recognizeAll,
+    );
+  }
+
+  Future<void> _recognizeAll() async {
+    final found =
+        await getIt<GetMediaByCreatorUseCase>()(params: widget.creator.id);
+    if (!mounted) return;
+
+    await requestRecognition(
+      context,
+      found is DataSuccess
+          ? [for (final one in found.data ?? const []) one.id]
+          : const [],
+      name: widget.creator.name,
+    );
+  }
+
   Widget _unassignButton(AppLocalizations texts) {
     return BlocSelector<MediaBloc, MediaStates, bool>(
       selector: (state) => state.selectedIds.isNotEmpty,
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionUnassignCreator,
-        icon: Icons.person_remove_outlined,
+        icon: Symbols.person_remove,
         backgroundColor: context.colors.secondary,
         foregroundColor: context.colors.black,
         onPressed: hasSelection && !_isUnknown

@@ -7,6 +7,7 @@ import 'package:Fern/features/media/domain/entities/post_link.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
 /// Una publicación trae varios enlaces y hay que decidir qué se hace con ellos.
@@ -43,11 +44,16 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
 
   /// Abre el enlace en el navegador de la aplicación para verlo.
   ///
-  /// Cierra el diálogo con la respuesta más prudente: la importación no puede
-  /// quedarse esperando mientras el usuario mira una página, y de esta
-  /// publicación siempre se puede tirar después desde el navegador.
+  /// **Sin contestar nada.** Ir a mirar un enlace es parte de decidir, no la
+  /// decisión: el diálogo se cierra porque hay que cambiar de pantalla, pero la
+  /// tarea se queda en la lista y se vuelve a ella cuando se haya visto lo que
+  /// había que ver.
+  ///
+  /// Antes se cerraba contestando «de ésta, nada», y eso daba la pregunta por
+  /// resuelta: se iba al navegador a mirar un enlace y al volver ya no quedaba
+  /// ni la tarea ni los demás enlaces de esa publicación.
   void _open(PostLink link) {
-    Navigator.of(context).pop(const LinkChoice.ignore());
+    Navigator.of(context).pop();
     GoRouter.of(context).go(browserRouteWithUrl(link.url));
   }
 
@@ -57,7 +63,9 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
     final theme = Theme.of(context);
 
     return FernDialog(
-      onClose: () => _answer(const LinkChoice.ignore()),
+      // Cerrar tampoco es contestar: la pregunta se queda en la lista de
+      // tareas, que es de donde se quita cuando de verdad no interesa.
+      onClose: () => Navigator.of(context).pop(),
       maxWidth: AppSizes.dialogMaxWidth,
       leftContent: Column(
         mainAxisSize: MainAxisSize.min,
@@ -99,7 +107,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
             children: [
               FernPillButton(
                 label: texts.linkChoiceIgnore,
-                icon: Icons.block,
+                icon: Symbols.block,
                 backgroundColor: context.colors.secondary,
                 foregroundColor: context.colors.black,
                 onPressed: () => _answer(
@@ -109,7 +117,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               const SizedBox(width: AppSpacing.s),
               FernPillButton(
                 label: texts.linkChoiceSelection(_selected.length),
-                icon: Icons.checklist,
+                icon: Symbols.checklist,
                 backgroundColor: context.colors.secondary,
                 foregroundColor: context.colors.black,
                 onPressed: _selected.isEmpty
@@ -123,7 +131,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               const SizedBox(width: AppSpacing.s),
               FernPillButton(
                 label: texts.linkChoiceAll,
-                icon: Icons.download_outlined,
+                icon: Symbols.download,
                 backgroundColor: context.colors.primary,
                 foregroundColor: context.colors.black,
                 onPressed: () => _answer(LinkChoice(
@@ -156,8 +164,8 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
           ),
           Icon(
             link.kind == PostLinkKind.archive
-                ? Icons.folder_zip_outlined
-                : Icons.image_outlined,
+                ? Symbols.folder_zip
+                : Symbols.image,
             size: AppSizes.iconCompact,
             color: context.colors.gray,
           ),
@@ -173,7 +181,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
           IconButton(
             tooltip: texts.linkChoiceOpen,
             onPressed: () => _open(link),
-            icon: const Icon(Icons.open_in_new, size: AppSizes.iconCompact),
+            icon: const Icon(Symbols.open_in_new, size: AppSizes.iconCompact),
           ),
         ],
       ),

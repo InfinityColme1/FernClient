@@ -1,10 +1,17 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 
+/// Los eventos del bloc de contenido.
+///
+/// **No son `Equatable` a propósito.** `bloc` no descarta eventos repetidos, así
+/// que compararlos no decide nada; cuatro de ellos llegaron a declarar un `props`
+/// con `@override` que no sobreescribía nada y no lo leía nadie.
 abstract class MediaEvents {
   const MediaEvents();
 }
@@ -142,6 +149,65 @@ class LoadDeletedMediaEvent extends MediaEvents {
   const LoadDeletedMediaEvent();
 }
 
+/// Pone una etiqueta a unos cuantos contenidos de una vez.
+///
+/// Los identificadores llegan de fuera y no se sacan de la selección: quien
+/// arrastra una celda sin nada marcado está pidiendo etiquetar **esa**, y quien
+/// la arrastra con veinte marcadas está pidiendo etiquetar las veinte. Esa regla
+/// la aplica quien lo dispara, que es el único que sabe cuál de los dos casos es.
+class AddTagToMediaEvent extends MediaEvents {
+  final int tagId;
+  final List<int> mediaIds;
+
+  const AddTagToMediaEvent({required this.tagId, required this.mediaIds});
+}
+
+/// Enciende o apaga una clase de contenido en el filtro de la cabecera.
+/// Trae lo de unos creadores concretos de la fuente que se esté mirando.
+///
+/// Va aparte de [ScanSourceEvent] porque no es lo mismo: aquél recorre la fuente
+/// entera y éste sólo lo de quien se haya elegido en las tarjetas.
+class ScanCreatorsEvent extends MediaEvents {
+  final int limit;
+  final Set<String> creators;
+
+  const ScanCreatorsEvent({required this.limit, required this.creators});
+}
+
+class ToggleTypeFilterEvent extends MediaEvents {
+  final MediaKind kind;
+
+  const ToggleTypeFilterEvent(this.kind);
+}
+
+/// Cambia en qué orden se pinta la biblioteca.
+class MediaSortOrderChangedEvent extends MediaEvents {
+  final MediaSortOrder order;
+
+  const MediaSortOrderChangedEvent(this.order);
+}
+
+/// Marca de golpe todo lo que hay a la vista.
+///
+/// Llegan los identificadores desde la rejilla y no se calculan aquí: lo que se
+/// marca es **lo que se está viendo**, y quién sabe eso es quien lo está
+/// pintando —con sus filtros aplicados y sus grupos de búsqueda—.
+class SelectAllMediaEvent extends MediaEvents {
+  final List<int> ids;
+
+  const SelectAllMediaEvent(this.ids);
+}
+
+/// Vuelve a pedir el listado que se esté enseñando, sea el que sea.
+///
+/// Lo dispara lo que cambia **qué se puede ver** sin cambiar el contenido: hoy,
+/// abrir y cerrar el modo NSFW. Sin esto, la rejilla ya pintada se queda
+/// enseñando lo que acaba de bloquearse hasta que el usuario cambie de pantalla,
+/// que es la peor forma posible de que falle un bloqueo.
+class ReloadCurrentMediaEvent extends MediaEvents {
+  const ReloadCurrentMediaEvent();
+}
+
 /// Carga el contenido marcado como favorito: el de la pantalla de favoritos.
 class LoadFavoriteMediaEvent extends MediaEvents {
   const LoadFavoriteMediaEvent();
@@ -207,6 +273,25 @@ class DeleteSelectedMediaEvent extends MediaEvents {
 /// quitarlo está el corazón del visor, que sí sabe cómo está cada contenido.
 class FavoriteSelectedMediaEvent extends MediaEvents {
   const FavoriteSelectedMediaEvent();
+}
+
+/// Marca o desmarca como NSFW todo lo que esté seleccionado en la rejilla.
+///
+/// Interruptor y no acción, al revés que el de favoritos: aquí las dos
+/// direcciones se piden desde el mismo sitio —la barra de selección— y esconder
+/// doscientas fotos sin poder deshacerlo desde donde se hizo sería una trampa.
+class SetSelectedMediaNsfwEvent extends MediaEvents {
+  final bool isNsfw;
+
+  const SetSelectedMediaNsfwEvent({required this.isNsfw});
+}
+
+/// Marca o desmarca como NSFW un contenido suelto, el que se está mirando.
+class SetMediaNsfwEvent extends MediaEvents {
+  final int mediaId;
+  final bool isNsfw;
+
+  const SetMediaNsfwEvent({required this.mediaId, required this.isNsfw});
 }
 
 /// Quita la marca de borrado de la selección de la rejilla, que vuelve a la
@@ -319,4 +404,16 @@ class UpdateMediaInfoEvent extends MediaEvents {
 class UpdateMediaDescriptionEvent extends MediaEvents {
   final String description;
   const UpdateMediaDescriptionEvent(this.description);
+}
+
+/// Deja en la rejilla una lista de contenidos ya resuelta, sin consultar nada.
+///
+/// Lo usan las pantallas que sacan su contenido de otro sitio y no de una
+/// consulta del repositorio de contenido: la de fernies lo saca de las regiones
+/// de un fernie. Sin esto, abrir el visor desde ahí no tendría lista por la que
+/// pasar con las flechas, y `onMediaClicked` no tendría dónde buscar el índice.
+class SetMediaListEvent extends MediaEvents {
+  final List<MediaSummaryEntity> media;
+
+  const SetMediaListEvent(this.media);
 }

@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Un widget opcional a la izquierda y un texto, en dos variantes:
 ///
@@ -14,6 +15,12 @@ import 'package:flutter/material.dart';
 class FernChip extends StatelessWidget {
   final String label;
   final Widget? leading;
+
+  /// Lo que va detrás del nombre, antes del botón de quitar.
+  ///
+  /// Lo usa el distintivo de las etiquetas NSFW: delante tapaba el avatar, que
+  /// es con lo que se reconoce una etiqueta de un vistazo.
+  final Widget? trailing;
   final VoidCallback? onTap;
 
   /// Si se indica, la píldora lleva a la derecha el botón de quitarla: el mismo
@@ -33,6 +40,7 @@ class FernChip extends StatelessWidget {
     super.key,
     required this.label,
     this.leading,
+    this.trailing,
     this.onTap,
     this.onRemove,
     this.backgroundColor,
@@ -43,6 +51,7 @@ class FernChip extends StatelessWidget {
     super.key,
     required this.label,
     this.leading,
+    this.trailing,
     this.onTap,
     this.onRemove,
     this.labelColor,
@@ -68,6 +77,10 @@ class FernChip extends StatelessWidget {
                 color: labelColor,
               ),
         ),
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.s),
+          trailing!,
+        ],
         if (onRemove != null) ...[
           const SizedBox(width: AppSpacing.s),
           // El botón va dentro de la píldora, así que se pinta a mano en vez de
@@ -78,7 +91,7 @@ class FernChip extends StatelessWidget {
             mouseCursor: WidgetStateMouseCursor.clickable,
             customBorder: const CircleBorder(),
             child: Icon(
-              Icons.cancel,
+              Symbols.cancel,
               size: AppSizes.iconCompact,
               color: labelColor ?? context.colors.black,
             ),

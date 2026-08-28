@@ -53,6 +53,28 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// Bordes, separadores y lo que está desactivado.
   final Color lightgray;
 
+  /// El trazo fino que separa una superficie de lo que tiene al lado.
+  ///
+  /// Más suave que [lightgray], que es el de un separador con intención. Éste no
+  /// se ve: se nota. Es lo que da el escalón entre el fondo y una superficie sin
+  /// recurrir a una sombra, y lo que hace que dos superficies pegadas no parezcan
+  /// una sola mancha de color.
+  final Color outline;
+
+  /// La superficie que se levanta **sobre otra superficie**: un menú abierto
+  /// encima de una ficha, un diálogo encima de la pantalla.
+  ///
+  /// Sin este escalón sólo hay dos niveles —fondo y superficie— y todo lo que se
+  /// abre encima flota sin apoyarse en nada.
+  final Color surfaceRaised;
+
+  /// El velo que se pone encima de algo pulsable cuando el ratón está encima o
+  /// se está pulsando.
+  ///
+  /// Se pinta con transparencia sobre lo que haya debajo, así que vale igual
+  /// sobre un fondo claro que sobre uno oscuro y no hay que tener uno por color.
+  final Color stateLayer;
+
   /// El oscurecido que se pone sobre el contenido (las miniaturas, la barra del
   /// visor, los avisos breves). Siempre oscuro: debajo hay una imagen, no una
   /// superficie de la aplicación.
@@ -70,6 +92,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.gray,
     required this.unremarked,
     required this.lightgray,
+    required this.outline,
+    required this.surfaceRaised,
+    required this.stateLayer,
     required this.scrim,
   });
 
@@ -88,6 +113,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? gray,
     Color? unremarked,
     Color? lightgray,
+    Color? outline,
+    Color? surfaceRaised,
+    Color? stateLayer,
     Color? scrim,
   }) {
     return AppPalette(
@@ -102,6 +130,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       gray: gray ?? this.gray,
       unremarked: unremarked ?? this.unremarked,
       lightgray: lightgray ?? this.lightgray,
+      outline: outline ?? this.outline,
+      surfaceRaised: surfaceRaised ?? this.surfaceRaised,
+      stateLayer: stateLayer ?? this.stateLayer,
       scrim: scrim ?? this.scrim,
     );
   }
@@ -126,6 +157,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       gray: Color.lerp(gray, other.gray, t)!,
       unremarked: Color.lerp(unremarked, other.unremarked, t)!,
       lightgray: Color.lerp(lightgray, other.lightgray, t)!,
+      outline: Color.lerp(outline, other.outline, t)!,
+      surfaceRaised: Color.lerp(surfaceRaised, other.surfaceRaised, t)!,
+      stateLayer: Color.lerp(stateLayer, other.stateLayer, t)!,
       scrim: Color.lerp(scrim, other.scrim, t)!,
     );
   }

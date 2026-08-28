@@ -45,9 +45,10 @@ class RemotePost {
           if (link.isDownloadable) link,
       ];
 
-  /// Los que llevan a un sitio de descargas, que necesitan al usuario.
-  List<PostLink> get repositoryLinks => [
+  /// Los que hacen falta que mire el usuario: una carpeta de un sitio de
+  /// descargas, o un fichero suelto de uno que no deja bajarlo desde fuera.
+  List<PostLink> get linksNeedingUser => [
         for (final link in links)
-          if (link.kind == PostLinkKind.repository) link,
+          if (link.needsUser) link,
       ];
 }

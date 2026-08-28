@@ -13,6 +13,7 @@ import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:Fern/core/widgets/collapsing_list_tile_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
 /// Un PNG de un píxel, para que la ruta del avatar apunte a una imagen que
@@ -51,7 +52,7 @@ void main() {
       home: Scaffold(
         body: CollapsingListTile(
           title: 'Miraculous',
-          icon: Icons.sell_outlined,
+          icon: Symbols.sell,
           avatarPath: avatarPath,
           isExpanded: isExpanded,
           animationController: controller,
@@ -69,7 +70,7 @@ void main() {
   testWidgets('sin avatar el botón se queda con su icono', (tester) async {
     await pumpTile(tester);
 
-    expect(find.byIcon(Icons.sell_outlined), findsOneWidget);
+    expect(find.byIcon(Symbols.sell), findsOneWidget);
     expect(find.byType(FernAvatar), findsNothing);
   });
 
@@ -77,7 +78,7 @@ void main() {
     await pumpTile(tester, avatarPath: picture.path);
 
     expect(find.byType(FernAvatar), findsOneWidget);
-    expect(find.byIcon(Icons.sell_outlined), findsNothing);
+    expect(find.byIcon(Symbols.sell), findsNothing);
   });
 
   testWidgets('el avatar sigue estando con el menú plegado', (tester) async {

@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
+import 'package:Fern/features/media/domain/services/reddit_post_url.dart';
+import 'package:Fern/features/media/domain/services/redgifs_urls.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// Averigua qué ficheros hay detrás de un enlace.
@@ -66,12 +70,23 @@ class ExternalMediaResolver {
     if (uri == null || uri.scheme != 'https') return const [];
 
     // Ya es el fichero: no hay nada que averiguar.
-    if (mediaExtensionOfUrl(url) != null) return [url];
+    //
+    // Y aquí es donde se colaban los vídeos mudos de Redgifs. Cuando la
+    // dirección que llega **ya apunta a un fichero suyo** —y es lo que pasa
+    // siempre que el contenido sale del navegador, porque lo que se rastrea de
+    // la página es el `<video>` que se está reproduciendo— no se pasa por su API
+    // y no hay nada que elegir: se descarga tal cual. Si lo que la página estaba
+    // reproduciendo era la copia sin sonido (la que usan para la
+    // previsualización que se mueve sola al pasar por encima), lo que se guarda
+    // es esa.
+    //
+    // Se arregla aquí, que es el único sitio por el que pasan todas.
+    if (mediaExtensionOfUrl(url) != null) return [_withAudio(url)];
 
-    if (!anyHost && !_isAllowed(uri.host)) return const [];
+    if (!anyHost && !isExternalMediaUrl(url)) return const [];
 
     try {
-      if (_isRedgifs(uri.host)) {
+      if (isRedgifsHost(uri.host)) {
         final gif = await _redgifsUrl(uri);
         return gif == null ? const [] : _playable([gif]);
       }
@@ -80,6 +95,24 @@ class ExternalMediaResolver {
     } on Exception {
       return const [];
     }
+  }
+
+  /// La misma dirección, pero la del fichero con sonido cuando se sabe cuál es.
+  ///
+  /// Hoy sólo Redgifs, que es el único sitio conocido que sirve una copia muda
+  /// con el mismo nombre. No se toca nada de los demás: reescribir direcciones a
+  /// ciegas es la forma de acabar pidiendo ficheros que no existen.
+  String _withAudio(String url) {
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    if (!isRedgifsHost(host)) return url;
+
+    final wanted = withRedgifsAudio(url);
+
+    if (wanted != url) {
+      debugPrint('Redgifs: la dirección era la muda; se pide $wanted');
+    }
+
+    return wanted;
   }
 
   /// Si [url] es algo que la aplicación pueda descargar y enseñar: una
@@ -101,28 +134,43 @@ class ExternalMediaResolver {
     ];
   }
 
-  /// Si [host] es uno de los sitios aceptados o un subdominio suyo.
-  ///
-  /// La comparación es por punto para que `noredgifs.com` no pase por
-  /// `redgifs.com`.
-  bool _isAllowed(String host) {
-    final name = host.toLowerCase();
-
-    return externalMediaHosts.any(
-      (allowed) => name == allowed || name.endsWith('.$allowed'),
-    );
-  }
-
-  bool _isRedgifs(String host) {
-    final name = host.toLowerCase();
-    return name == 'redgifs.com' || name.endsWith('.redgifs.com');
-  }
-
   /// El vídeo de un enlace de Redgifs, preguntándoselo a su API.
   ///
   /// El permiso es temporal y se pide sin cuenta: es el mismo que usa su web
   /// para poder reproducir el vídeo.
   Future<String?> _redgifsUrl(Uri uri) async {
+    final gif = await _redgifsUrlsOf(uri);
+    if (gif == null) return null;
+
+    final chosen = redgifsVideoUrl(gif.urls, hasAudio: gif.hasAudio);
+
+    debugPrint(
+      'Redgifs API: hasAudio=${gif.hasAudio} '
+      'formas=${gif.urls.keys.toList()} elegida=$chosen',
+    );
+
+    return chosen;
+  }
+
+  /// Lo que Redgifs contesta sobre un enlace: sus direcciones y si suena, o
+  /// `null`.
+  ///
+  /// Las dos cosas juntas y de vuelta, y no guardadas en el objeto. Este
+  /// resolvedor es uno solo para toda la aplicación y se le piden hasta cuatro
+  /// descargas a la vez, así que un dato de **esta** petición que viva en un
+  /// campo es un dato que otra puede cambiar mientras tanto.
+  ///
+  /// Hoy no llega a pasar: entre escribirlo y leerlo sólo hay un `await`, y Dart
+  /// vacía las microtareas antes de atender la respuesta siguiente. Pero eso no
+  /// se ve leyendo este método, sino razonando sobre el planificador, y deja de
+  /// ser verdad en cuanto alguien meta una espera más por el camino. Si el dato
+  /// viaja con su petición, la pregunta no hay ni que hacérsela.
+  ///
+  /// El permiso es temporal y se pide sin cuenta: es el mismo que usa su web
+  /// para poder reproducir el vídeo.
+  Future<({Map<String, dynamic> urls, bool hasAudio})?> _redgifsUrlsOf(
+    Uri uri,
+  ) async {
     final id = uri.pathSegments.isEmpty ? null : uri.pathSegments.last;
     if (id == null || id.isEmpty) return null;
 
@@ -143,10 +191,11 @@ class ExternalMediaResolver {
 
     final gif = (jsonDecode(response.body) as Map<String, dynamic>)['gif']
         as Map<String, dynamic>?;
+
     final urls = gif?['urls'] as Map<String, dynamic>?;
     if (urls == null) return null;
 
-    return (urls['hd'] ?? urls['sd']) as String?;
+    return (urls: urls, hasAudio: gif?['hasAudio'] != false);
   }
 
   /// Todo el contenido que hay en una página, en el orden en el que conviene

@@ -1,8 +1,10 @@
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/domain/usecases/migrate_avatars_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/organize_library_files_usecase.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/usecases/get_settings_usecase.dart';
+import 'package:Fern/features/settings/domain/usecases/migrate_recognition_data_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/save_settings_usecase.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,16 +20,29 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   final SaveSettingsUseCase _saveSettings;
   final MigrateAvatarsUseCase _migrateAvatars;
   final OrganizeLibraryFilesUseCase _organizeLibraryFiles;
+  final MigrateRecognitionDataUseCase _migrateRecognitionData;
+
+  /// A quién avisar de que ha cambiado **qué** esconde el filtro NSFW.
+  ///
+  /// Casi ningún ajuste lo mueve: los de vista dicen cómo se pinta lo que ya se
+  /// ha decidido, y se leen al vuelo. Éste sí, porque cambia el conjunto de
+  /// etiquetas marcadas, y ese conjunto está en un índice que hay que rehacer
+  /// antes de que se pinte nada.
+  final Future<void> Function()? _onNsfwScopeChanged;
 
   SettingsBloc({
     required GetSettingsUseCase getSettings,
     required SaveSettingsUseCase saveSettings,
     required MigrateAvatarsUseCase migrateAvatars,
     required OrganizeLibraryFilesUseCase organizeLibraryFiles,
+    required MigrateRecognitionDataUseCase migrateRecognitionData,
+    Future<void> Function()? onNsfwScopeChanged,
   })  : _getSettings = getSettings,
         _saveSettings = saveSettings,
         _migrateAvatars = migrateAvatars,
         _organizeLibraryFiles = organizeLibraryFiles,
+        _migrateRecognitionData = migrateRecognitionData,
+        _onNsfwScopeChanged = onNsfwScopeChanged,
         super(SettingsState(settings: getSettings())) {
     on<LoadSettingsEvent>(onLoadSettings);
     on<LanguageChangedEvent>(onLanguageChanged);
@@ -35,18 +50,32 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<CopyFilesToggledEvent>(onCopyFilesToggled);
     on<LibraryDirectoryChangedEvent>(onLibraryDirectoryChanged);
     on<AvatarsDirectoryChangedEvent>(onAvatarsDirectoryChanged);
+    on<RecognitionDirectoryChangedEvent>(onRecognitionDirectoryChanged);
+    on<NotificationSettingsChangedEvent>(onNotificationSettingsChanged);
     on<FileOrganizationChangedEvent>(onFileOrganizationChanged);
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
+    on<PauseWhenSeekingToggledEvent>(onPauseWhenSeekingToggled);
+    on<ReturnToViewedMediaToggledEvent>(onReturnToViewedMediaToggled);
+    on<RecognizeOnImportToggledEvent>(onRecognizeOnImportToggled);
+    on<ReturnRecognizedToggledEvent>(onReturnRecognizedToggled);
     on<ThemeModeChangedEvent>(onThemeModeChanged);
     on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
+    on<AutomaticDuplicateScanToggledEvent>(onAutomaticDuplicateScanToggled);
+    on<DuplicateScanPeriodChangedEvent>(onDuplicateScanPeriodChanged);
+    on<DuplicateScanMovingToggledEvent>(onDuplicateScanMovingToggled);
+    on<NsfwChildTagsToggledEvent>(onNsfwChildTagsToggled);
+    on<NsfwUnlockedViewChangedEvent>(onNsfwUnlockedViewChanged);
+    on<NsfwLockedViewChangedEvent>(onNsfwLockedViewChanged);
+    on<DuplicateThresholdChangedEvent>(onDuplicateThresholdChanged);
     on<RedditSettingsChangedEvent>(onRedditSettingsChanged);
     on<DanbooruSettingsChangedEvent>(onDanbooruSettingsChanged);
     on<GelbooruSettingsChangedEvent>(onGelbooruSettingsChanged);
     on<PinterestSettingsChangedEvent>(onPinterestSettingsChanged);
     on<PawchiveSettingsChangedEvent>(onPawchiveSettingsChanged);
     on<BrowserHomeChangedEvent>(onBrowserHomeChanged);
+    on<BrowserAsideChangedEvent>(onBrowserAsideChanged);
     on<RemoteSessionCapturedEvent>(onRemoteSessionCaptured);
     on<MigrateLibraryRequestedEvent>(onMigrateLibraryRequested);
   }
@@ -129,6 +158,49 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     ));
   }
 
+  /// Como los avatares: se mueve en el momento, porque los modelos se cargan de
+  /// esta carpeta. Puede tardar bastante (son varios gigas), de ahí el
+  /// [SettingsState.isWorking] mientras dura.
+  Future<void> onRecognitionDirectoryChanged(
+    RecognitionDirectoryChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    final previous = state.settings.recognitionPath;
+    if (previous == event.path) return;
+
+    emit(state.copyWith(isWorking: true));
+
+    final result = await _migrateRecognitionData(
+      params: MigrateRecognitionDataParams(
+        targetDirectory: event.path,
+        previousDirectory: previous,
+      ),
+    );
+
+    final settings = state.settings.copyWith(recognitionPath: event.path);
+    await _saveSettings(params: settings);
+
+    emit(SettingsState(
+      settings: settings,
+      lastResult: result is DataSuccess
+          ? SettingsResult(
+              SettingsStatus.recognitionMigrated,
+              count: result.data ?? 0,
+            )
+          : const SettingsResult(SettingsStatus.recognitionFailed),
+    ));
+  }
+
+  Future<void> onNotificationSettingsChanged(
+    NotificationSettingsChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(notifications: event.notifications),
+      emit,
+    );
+  }
+
   Future<void> onFileOrganizationChanged(
     FileOrganizationChangedEvent event,
     Emitter<SettingsState> emit,
@@ -145,6 +217,46 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(autoTagRemoteSource: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onRecognizeOnImportToggled(
+    RecognizeOnImportToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(recognizeOnImport: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onReturnRecognizedToggled(
+    ReturnRecognizedToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(returnRecognizedToImport: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onPauseWhenSeekingToggled(
+    PauseWhenSeekingToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(pauseWhenSeeking: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onReturnToViewedMediaToggled(
+    ReturnToViewedMediaToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(returnToViewedMedia: event.enabled),
       emit,
     );
   }
@@ -197,6 +309,93 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     );
   }
 
+  Future<void> onAutomaticDuplicateScanToggled(
+    AutomaticDuplicateScanToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(automaticDuplicateScan: event.enabled),
+      emit,
+    );
+  }
+
+  /// Cambia qué esconde el filtro, así que hay que rehacer el índice **antes**
+  /// de que la pantalla vuelva a pintar: si no, la rejilla seguiría enseñando lo
+  /// que acaba de esconderse, o escondiendo lo que acaba de dejar de estarlo.
+  ///
+  /// No reescribe ninguna etiqueta: la rama se resuelve al leerla, así que esto
+  /// se enciende y se apaga sin consecuencias.
+  Future<void> onNsfwChildTagsToggled(
+    NsfwChildTagsToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _apply(
+      state.settings.copyWith(nsfwMarksChildTags: event.marksChildren),
+      emit,
+    );
+
+    await _onNsfwScopeChanged?.call();
+  }
+
+  Future<void> onNsfwUnlockedViewChanged(
+    NsfwUnlockedViewChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(nsfwUnlockedView: event.view),
+      emit,
+    );
+  }
+
+  Future<void> onNsfwLockedViewChanged(
+    NsfwLockedViewChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(nsfwLockedView: event.view),
+      emit,
+    );
+  }
+
+  /// Encenderlo no lanza ningún escaneo: lo que decide es qué se mira en el
+  /// siguiente. Ponerse a abrir vídeos porque alguien acaba de tocar un
+  /// interruptor de los ajustes es justo lo que no espera quien lo toca.
+  Future<void> onDuplicateScanMovingToggled(
+    DuplicateScanMovingToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(duplicateScanIncludesMoving: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onDuplicateScanPeriodChanged(
+    DuplicateScanPeriodChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(duplicateScanPeriod: event.period),
+      emit,
+    );
+  }
+
+  /// Mover el listón no vuelve a agrupar nada por su cuenta: lo ya guardado se
+  /// hizo con el criterio de entonces y rehacerlo aquí tiraría los descartes
+  /// que el usuario ya había decidido. El listón nuevo entra en el escaneo
+  /// siguiente, que es quien lee este ajuste.
+  Future<void> onDuplicateThresholdChanged(
+    DuplicateThresholdChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(
+        duplicateThreshold: event.threshold.clamp(0, maxDuplicateThreshold),
+      ),
+      emit,
+    );
+  }
+
   /// Las credenciales se guardan según se escriben, como el resto de ajustes.
   /// Nadie las comprueba aquí: hasta que no se lanza una importación no hay
   /// forma de saber si son buenas.
@@ -240,6 +439,13 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     return _apply(state.settings.copyWith(browserHome: event.url), emit);
+  }
+
+  Future<void> onBrowserAsideChanged(
+    BrowserAsideChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(state.settings.copyWith(browserAside: event.policy), emit);
   }
 
   Future<void> onRemoteSessionCaptured(

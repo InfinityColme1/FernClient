@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/browser/domain/entities/browser_media.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// El catálogo de lo que se ha encontrado en la página, colgando del botón que
 /// lo buscó.
@@ -78,15 +79,15 @@ class BrowserMediaPanel extends StatelessWidget {
                   onPressed: isBusy ? null : onToggleAll,
                   icon: Icon(
                     selected.length == media.length
-                        ? Icons.deselect
-                        : Icons.select_all,
+                        ? Symbols.deselect
+                        : Symbols.select_all,
                     size: AppSizes.iconMedium,
                   ),
                 ),
                 IconButton(
                   tooltip: texts.browserClose,
                   onPressed: onClose,
-                  icon: const Icon(Icons.close, size: AppSizes.iconMedium),
+                  icon: const Icon(Symbols.close, size: AppSizes.iconMedium),
                 ),
               ],
             ),
@@ -110,7 +111,7 @@ class BrowserMediaPanel extends StatelessWidget {
             ),
             child: FernPillButton(
               label: texts.browserImportAction(selected.length),
-              icon: Icons.download_outlined,
+              icon: Symbols.download,
               backgroundColor: context.colors.primary,
               foregroundColor: context.colors.black,
               onPressed: isBusy || selected.isEmpty ? null : onImport,
@@ -148,8 +149,8 @@ class BrowserMediaPanel extends StatelessWidget {
               ),
               Icon(
                 item.mark == null
-                    ? Icons.local_offer_outlined
-                    : Icons.image_outlined,
+                    ? Symbols.sell
+                    : Symbols.image,
                 size: AppSizes.iconCompact,
                 color: context.colors.gray,
               ),

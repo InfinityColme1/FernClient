@@ -16,6 +16,13 @@ class MediaModel {
 
   late String path;
 
+  /// Cuándo llegó el contenido a la biblioteca.
+  ///
+  /// Indexado porque es por lo que se ordena la rejilla de fábrica. Con el
+  /// índice, Isar recorre las filas **en ese orden** y no tiene que cargarlas
+  /// todas para ordenarlas después, que con una biblioteca de decenas de miles
+  /// es la diferencia entre abrir la pantalla y esperar a que abra.
+  @Index()
   late DateTime downloaded;
 
   late bool isFavorite;

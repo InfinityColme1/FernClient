@@ -20,6 +20,7 @@ void main() {
     repository = SettingsRepositoryImpl(
       preferences: await SharedPreferences.getInstance(),
       defaultAvatarsPath: 'avatars',
+      defaultRecognitionPath: 'recognition',
     );
   });
 

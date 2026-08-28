@@ -1,8 +1,74 @@
+import 'package:flutter/animation.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 
 const appName = "FeRN";
-const appLogo = 'assets/images/Fern_logo.png';
+// Logotipo
+//
+// La marca se dibuja sobre esta reticula y se escala: asi las proporciones son
+// las mismas a cualquier tamano y estos numeros significan algo.
+
+/// Lo alta que es la reticula sobre la que se traza la marca.
+const logoMarkGridHeight = 34.0;
+
+/// Lo ancha que es la marca respecto a su alto.
+const logoMarkAspect = 0.62;
+
+/// Lo alta que se pinta la marca respecto al alto del logotipo.
+///
+/// Menos que el logotipo entero: el nombre no llena su caja —una linea de texto
+/// reserva sitio para las colas de las letras y «FeRN» no tiene ninguna— asi que
+/// una marca a caja completa sobresale por arriba y por abajo.
+const logoMarkHeightRatio = 0.88;
+
+/// Cuanto sube la marca para cuadrar con el nombre.
+///
+/// La caja de una linea de texto reserva sitio para la cola de las letras, y por
+/// eso las mayusculas se apoyan mas arriba que el centro de esa caja. Centrar
+/// las dos cajas deja la marca visiblemente baja: esto es lo que corrige, y es
+/// un ajuste de vista, no de geometria.
+const logoOpticalLift = 0.045;
+
+/// El grosor del trazo, el mismo que el de los iconos de contorno.
+const logoStrokeWidth = 2.0;
+
+/// Donde cae el baston, y hasta donde sube recto antes de enlazar con el rizo.
+///
+/// Corto respecto al rizo: con el baston largo la marca se leia como un alfiler
+/// en vez de como un brote abriendose. Lo que tiene que pesar es la cabeza.
+const logoStaffX = 9.6;
+const logoStaffTopY = 20.0;
+
+/// Cuanto se estira el enlace entre el baston y el rizo. Es lo que hace que no
+/// se vea el codo del empalme.
+const logoJoinReach = 2.4;
+
+/// El centro del rizo.
+const logoCoilCentreX = 12.0;
+const logoCoilCentreY = 10.0;
+
+/// Con que radio empieza el rizo y entre cuanto se divide de principio a fin.
+const logoCoilRadius = 7.0;
+const logoCoilShrink = 5.5;
+
+/// Por donde entra el rizo y cuanto gira: vuelta y media larga, que es lo que
+/// tiene un brote de helecho antes de abrirse.
+const logoCoilStartAngle = 1.9199; // 110 grados: hacia abajo y un poco a la izquierda.
+const logoCoilSweep = 10.0531; // 1,6 vueltas.
+
+/// En cuantos tramos se parte. Suficientes para que a tamano de bienvenida no se
+/// vea ninguna esquina.
+const logoCoilSteps = 96;
+
+/// La gema del baston, en el centro del rizo.
+const logoGemRadius = 1.7;
+
+/// Lo que se separa el nombre de la marca, y lo grande que va, en proporcion al
+/// alto del logotipo.
+const logoGapRatio = 0.18;
+const logoTextRatio = 0.62;
+const logoTrackingRatio = 0.012;
+
 
 // Routes
 /// La pantalla de bienvenida, que es por donde entra la aplicación. Va en la
@@ -15,6 +81,35 @@ const favoritesRoute = '/favorites';
 const deletedRoute = '/deleted';
 const creatorManagerRoute = '/creator-manager';
 const tagManagerRoute = '/tag-manager';
+
+// Reconocimiento. Las pantallas llegan en fases posteriores; las rutas se
+// declaran ya porque los avisos necesitan saber a dónde llevan.
+const fernieManagerRoute = '/fernies';
+
+/// Parámetro de consulta de la pantalla de fernies: cuál llega ya elegido.
+///
+/// Es lo que hace que pulsar el avatar de un fernie en el panel del visor
+/// aterrice en **ese** fernie y no en el primero de la lista.
+const fernieQueryParam = 'fernie';
+
+String fernieManagerRouteWithFernie(int fernieId) =>
+    '$fernieManagerRoute?$fernieQueryParam=$fernieId';
+const repeatedMediaRoute = '/repeated-media';
+const modelsRoute = '/models';
+
+/// El árbol que decide en qué orden se ejecutan los modelos.
+///
+/// Se llega desde el botón de la pantalla de modelos y no desde el menú lateral:
+/// es una vista **de** los modelos, no un sitio aparte de la aplicación.
+const modelTreeRoute = 'tree';
+
+String modelTreePath() => '$modelsRoute/$modelTreeRoute';
+
+/// El detalle de un modelo. Cuelga de la rejilla, así que la flecha de volver
+/// lleva a ella sin tener que decírselo.
+const modelDetailRoute = 'detail/:id';
+
+String modelDetailPath(int id) => '$modelsRoute/detail/$id';
 
 /// El navegador de dentro de la aplicación. Es una prueba: si no convence, se
 /// quita esta ruta, su botón del menú y la carpeta `features/browser`, y la
@@ -39,6 +134,15 @@ const viewerInfoQueryParam = 'info';
 String viewerRouteWithInfo(bool showInfo) =>
     '$viewerRoute?$viewerInfoQueryParam=$showInfo';
 
+/// Parámetro de consulta del visor: qué región hay que resaltar al abrirlo.
+///
+/// Es lo que hace que, al pulsar una celda de la rejilla de fernies (que enseña
+/// sólo el recorte), el contenido se abra entero y el ojo sepa dónde mirar.
+const viewerHighlightQueryParam = 'highlight';
+
+String viewerRouteWithHighlight(int regionId) =>
+    '$viewerRoute?$viewerHighlightQueryParam=$regionId';
+
 /// Cuántas opciones enseña un desplegable antes de desplazarse, y el relleno
 /// que el propio desplegable pone por arriba y por abajo. Con los dos sale el
 /// alto exacto de esas opciones.
@@ -48,28 +152,89 @@ const dropdownMenuPadding = 16.0;
 // Images
 const fernEmptyImage = 'assets/images/fern_empty.png';
 
-// Icons
-const icRight = 'assets/icons/ic_right.png';
-const icLeft = 'assets/icons/ic_left.png';
-
-const icInfo = 'assets/icons/ic_info.png';
-const icShare = 'assets/icons/ic_share.png';
-const icDelete = 'assets/icons/ic_delete.png';
-const icHeart = 'assets/icons/ic_heart.png';
-
 // Unknown creator
 final unknownCreator = CreatorEntity(id: 0, name: "Unknown");
 
 // Unknown tag
 final unknownTag = TagEntity(id: 0, name: "Unknown", children: []);
 
+// Esquema de la base de datos
+/// Por qué versión va el esquema de la base de datos.
+///
+/// La 1 es todo lo anterior a FeRN 2.0, cuando no se llevaba la cuenta: no hay
+/// preferencia guardada y se asume esa. Subir este número obliga a mirar si el
+/// cambio necesita una migración en `schemaMigrations` o si es de los que Isar
+/// resuelve sola.
+const firstSchemaVersion = 1;
+
+/// La 3 añade las colecciones de fernies y de sus regiones; la 4, las de los
+/// modelos de reconocimiento y sus fernies asignados. Son colecciones nuevas,
+/// así que Isar las crea sola y no hay ninguna migración que escribir: el número
+/// sube igual para dejar constancia de que el esquema no es el mismo.
+const currentSchemaVersion = 6;
+
 // Preferences keys
+/// Hasta qué versión se ha puesto al día la base de datos de este equipo.
+const schemaVersionPreferenceKey = 'schema_version';
+
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
+
+/// Si ya se ha ofrecido el tutorial alguna vez.
+///
+/// Se apunta al contestar, se acepte o no: ofrecerlo dos veces es insistir, y
+/// quien lo rechazo lo hizo a proposito. Para volver a verlo esta el boton de
+/// los ajustes.
+const tutorialOfferedPreferenceKey = 'tutorial_offered';
 const syncLocalFilesPreferenceKey = 'sync_local_files';
 const copyFilesPreferenceKey = 'copy_files';
 const libraryPathPreferenceKey = 'library_path';
 const avatarsPathPreferenceKey = 'avatars_path';
+
+/// Dónde vive todo lo del reconocimiento. Como la de avatares, nunca está
+/// vacía: si el usuario no ha elegido ninguna, se usa la que cuelga del
+/// directorio de datos de la aplicación.
+const recognitionPathPreferenceKey = 'recognition_path';
+
+// Avisos
+/// Los avisos, en general: si se dan y si suenan.
+const notificationsEnabledPreferenceKey = 'notifications_enabled';
+const notificationsMutedPreferenceKey = 'notifications_muted';
+const notificationsVolumePreferenceKey = 'notifications_volume';
+const notificationsMaxSecondsPreferenceKey = 'notifications_max_seconds';
+
+/// Prefijos de lo que se guarda por cada clase de aviso. Se completan con el
+/// identificador de [NotificationKind]: `notification_badge_training`, y así.
+const notificationBadgePreferenceKeyPrefix = 'notification_badge_';
+const notificationSoundPreferenceKeyPrefix = 'notification_sound_';
+const notificationSoundPathPreferenceKeyPrefix = 'notification_sound_path_';
+
+/// Cuántos avisos hay sin mirar de cada clase. Se completa igual que los
+/// anteriores.
+const notificationCountPreferenceKeyPrefix = 'notification_count_';
+
+/// A partir de aquí el contador deja de decir el número exacto: lo que importa
+/// es que hay mucho, y un número de tres cifras no cabe en el botón.
+const notificationBadgeMaxCount = 99;
+
+/// Carpeta donde se copian los sonidos que elige el usuario, para que borrar o
+/// mover el original no deje el aviso mudo.
+const notificationSoundsFolderName = 'sounds';
+
+/// Sonidos de fábrica. Son un punto de partida: la idea es que el usuario
+/// ponga los suyos.
+const defaultNotificationSound = 'assets/sounds/fern_notification.wav';
+const successNotificationSound = 'assets/sounds/fern_success.wav';
+const alertNotificationSound = 'assets/sounds/fern_alert.wav';
+
+/// Cuánto se deja sonar un aviso, de fábrica y como mucho.
+///
+/// Un aviso es un toque corto: si el usuario elige una canción, se corta al
+/// llegar aquí en lugar de rechazarla o de tocar su fichero.
+const defaultNotificationSeconds = 5;
+const minNotificationSeconds = 1;
+const maxNotificationSeconds = 15;
+const defaultNotificationVolume = 70;
 const fileOrganizationPreferenceKey = 'file_organization';
 /// Prefijo de la preferencia que guarda cuándo se importó por última vez de una
 /// fuente. Se completa con el identificador de la fuente.
@@ -83,6 +248,7 @@ const autoTagRemoteSourcePreferenceKey = 'auto_tag_remote_source';
 /// Si la lista de etiquetas del menú lateral enseña los avatares. Encendido de
 /// fábrica: es lo que permite reconocerlas con el menú plegado.
 const showListAvatarsPreferenceKey = 'show_list_avatars';
+const pauseWhenSeekingPreferenceKey = 'pause_when_seeking';
 
 /// Con qué colores se pinta la aplicación: el claro, el oscuro, el del sistema
 /// o el del usuario. De fábrica, el del sistema.
@@ -129,6 +295,90 @@ const avatarsFolderName = 'avatars';
 /// ser definitivo.
 const remoteDownloadsFolderName = 'downloads';
 
+// Reconocimiento
+/// Carpeta donde vive todo lo que hace falta para reconocer contenido.
+///
+/// Va aparte de la biblioteca y de los avatares porque no es contenido del
+/// usuario sino maquinaria: el entorno con el que se entrena, los modelos y los
+/// conjuntos de datos que se preparan para entrenarlos. Puede ocupar varios
+/// gigas, así que el usuario puede llevársela a otro disco.
+const recognitionFolderName = 'recognition';
+
+/// Las cuatro subcarpetas de la carpeta de reconocimiento.
+///
+/// [recognitionDatasetsFolderName] es material de usar y tirar: se genera al
+/// entrenar a partir de las regiones guardadas en la base de datos y se puede
+/// borrar sin perder nada. [recognitionWeightsFolderName] son los modelos ya
+/// entrenados, que es lo único que de verdad duele perder.
+/// [recognitionRunsFolderName] es lo que escribe el entrenador (registros,
+/// curvas, matrices de confusión) y [recognitionRuntimeFolderName] el entorno
+/// de Python, que siempre se puede volver a instalar.
+const recognitionDatasetsFolderName = 'datasets';
+const recognitionWeightsFolderName = 'weights';
+const recognitionRunsFolderName = 'runs';
+const recognitionRuntimeFolderName = 'runtime';
+
+const recognitionSubfolderNames = [
+  recognitionDatasetsFolderName,
+  recognitionWeightsFolderName,
+  recognitionRunsFolderName,
+  recognitionRuntimeFolderName,
+];
+
+// El entorno de Python
+/// De dónde se baja `uv`, el binario con el que se monta todo lo demás.
+///
+/// La versión va fijada porque es la que se ha probado; si esa etiqueta ya no
+/// existe se cae a la última publicada, que es preferible a dejar al usuario sin
+/// reconocimiento por un 404. Subirla es un cambio consciente.
+const uvReleaseBaseUrl = 'https://github.com/astral-sh/uv/releases';
+const uvPinnedVersion = '0.5.11';
+
+/// Qué Python instala `uv` para el entorno. Ultralytics y torch publican ruedas
+/// para esta versión en los tres sistemas.
+const sidecarPythonVersion = '3.12';
+
+/// Los paquetes del entorno, con la versión de ultralytics fijada: una versión
+/// mayor podría cambiar la forma de sus resultados, que es justo lo que el
+/// script del sidecar da por supuesto.
+const sidecarUltralyticsPackage = 'ultralytics>=8.3.0,<8.4.0';
+
+/// Índices de ruedas de PyTorch. El de CPU es el de fábrica y pesa una décima
+/// parte que el de CUDA; el de GPU sólo se instala si el usuario lo pide.
+const torchCpuIndexUrl = 'https://download.pytorch.org/whl/cpu';
+const torchCudaIndexUrl = 'https://download.pytorch.org/whl/cu124';
+
+/// El script del sidecar.
+///
+/// Al arrancar se compara la **huella** del que trae la aplicación con la que
+/// haya escrita en disco y se reescribe si no coinciden. Antes esto era un
+/// número a mano, y pasó lo que tenía que pasar: se añadió un método nuevo al
+/// script sin acordarse de subirlo, y todas las instalaciones existentes se
+/// quedaron con el script viejo para siempre. Con la huella no hay nada que
+/// acordarse de hacer.
+const sidecarScriptAsset = 'assets/python/fern_sidecar.py';
+
+/// Cuánto se deja al sidecar sin peticiones antes de cerrarlo. Cargar un modelo
+/// cuesta segundos, así que tampoco conviene cerrarlo en cuanto se calla.
+const sidecarIdleTimeout = Duration(minutes: 10);
+
+/// Cuánto se tiñe de rojo el aviso de que la instalación ha fallado. Es un
+/// fondo, no una alarma: lo que tiene que leerse es el texto de encima.
+const sidecarFailureTint = 0.12;
+
+/// Cada cuánto cambia el texto que dice que la instalación sigue trabajando, y
+/// cuánto tarda en dar paso al siguiente.
+///
+/// El fundido es largo a propósito y dentro de él las dos frases no se cruzan:
+/// primero se va la anterior y luego entra la nueva. Rotar deprisa marea, y es
+/// un texto que sólo está ahí para decir que se sigue trabajando.
+const sidecarActivityRotation = Duration(seconds: 10);
+const sidecarActivityFade = Duration(milliseconds: 900);
+
+/// Lo que baja el texto nuevo mientras aparece, en fracción de su propio alto.
+/// Poco: es un acompañamiento del fundido, no un movimiento en sí.
+const sidecarActivitySlide = 0.25;
+
 // Importación
 /// Hasta dónde llega un escaneo.
 ///
@@ -139,9 +389,39 @@ const remoteDownloadsFolderName = 'downloads';
 /// lugar de la cuenta entera.
 const unlimitedImportLimit = 0;
 const untilLastImportLimit = -1;
+
+/// Con cuánto se llega a la pantalla de importación la primera vez.
+///
+/// Diez, y no «todo». Traerse una cuenta entera es una descarga de horas y
+/// gigas, y era lo que pasaba con sólo pulsar el botón sin haber mirado el
+/// desplegable. Diez es una muestra: se ve qué llega de esa fuente y se decide
+/// con eso delante.
+const defaultImportLimit = 10;
+
+/// Dónde se recuerda el último tope elegido.
+///
+/// Se recuerda porque quien importa de una fuente suele querer lo mismo cada
+/// vez, y tener que cambiarlo en cada visita convierte el valor de fábrica en
+/// una molestia diaria en vez de en una red de seguridad.
+const importLimitPreferenceKey = 'import_limit';
+
+/// En qué orden se pinta la biblioteca.
+const mediaSortOrderPreferenceKey = 'media_sort_order';
+
+/// Y en qué orden se pinta lo pendiente de revisar, que es otro ajuste.
+const importSortOrderPreferenceKey = 'import_sort_order';
+/// Los topes que se ofrecen al importar.
+///
+/// Empieza en uno a propósito: probar una fuente recién configurada, o mirar qué
+/// pinta tiene lo que va a llegar, es lo primero que se hace y para eso diez ya
+/// son muchos. Los tres primeros son para asomarse; los demás, para traerse de
+/// verdad.
 const importLimitOptions = [
   unlimitedImportLimit,
   untilLastImportLimit,
+  1,
+  2,
+  5,
   10,
   25,
   50,
@@ -208,7 +488,60 @@ const remoteMediaContentTypes = ['image/', 'video/'];
 const redgifsTokenUrl = 'https://api.redgifs.com/v2/auth/temporary';
 const redgifsGifUrl = 'https://api.redgifs.com/v2/gifs/';
 
+/// Su sitio, y el servidor del que salen los ficheros.
+const redgifsSiteUrl = 'https://www.redgifs.com';
+const redgifsMediaHost = 'media.redgifs.com';
+
+/// Lo que hay que mandar para bajarse un fichero suyo.
+///
+/// Su servidor de contenidos mira de dónde dice venir la petición, igual que el
+/// de Pixiv. Sin esto puede contestar con algo que no es lo que se pidió — y es
+/// uno de los sospechosos de que los vídeos llegaran sin sonido.
+const Map<String, String> redgifsDownloadHeaders = {
+  'Referer': '$redgifsSiteUrl/',
+  'Origin': redgifsSiteUrl,
+};
+
 // Reddit
+/// Donde se registran las aplicaciones de Reddit.
+///
+/// Registrarla es cosa de Reddit y no hay forma de saltárselo desde aquí; lo que
+/// sí se puede es llevar al usuario directo al sitio, y con su sesión ya puesta
+/// porque el navegador es el de la propia aplicación.
+/// Cuánto se deja a la vista del navegador destruirse antes de montar otra.
+///
+/// Suficiente para que el motor de debajo se cierre del todo. Montar la nueva
+/// en el mismo fotograma la hace nacer sobre uno a medio morir.
+const browserResetPause = Duration(milliseconds: 400);
+
+/// Dónde se recuerda cuándo hay que apartar el navegador.
+const browserAsidePreferenceKey = 'browser_aside_policy';
+
+/// A partir de cuántos contenidos una importación se considera grande.
+///
+/// El número sale de lo que se ha visto romper el navegador: traerse diez no lo
+/// rompe nunca y traerse mil sí. Cincuenta es donde una importación deja de ser
+/// asomarse y pasa a tener a la máquina descargando y descodificando un buen
+/// rato seguido.
+const browserAsideLargeImport = 50;
+
+/// Cuánto puede tardar una página antes de que se dé por atascada.
+///
+/// Generoso a propósito: hay sitios lentos y conexiones peores. Lo que se busca
+/// no es cortar nada, es que una carga que no va a terminar nunca lo diga en vez
+/// de dejar la barra dando vueltas para siempre.
+const browserBlankTimeout = Duration(seconds: 15);
+
+const redditAppsUrl = 'https://www.reddit.com/prefs/apps';
+
+/// La dirección de redirección que pide el formulario de Reddit.
+///
+/// Es obligatoria y **no se usa para nada** en una aplicación de tipo script:
+/// nadie va a volver a ella. Se fija una y se ofrece copiada porque equivocarse
+/// ahí deja la aplicación creada y sin funcionar, y el error no se ve por
+/// ninguna parte.
+const redditRedirectUri = 'http://localhost:8080';
+
 /// La dirección con la que se nombra lo que hay en Reddit (una comunidad, un
 /// autor, una publicación). No es por donde se habla con su API: es lo que el
 /// usuario ve en la barra del navegador, y por tanto lo que escribiría al
@@ -284,6 +617,9 @@ const pixivSourceTagName = 'Pixiv';
 /// donde responde su API: es pública y se pide a las mismas direcciones que se
 /// ven en el navegador, añadiéndoles `.json`.
 const danbooruSiteUrl = 'https://danbooru.donmai.us';
+
+/// La ficha de usuario, que es donde vive la clave de API.
+const danbooruAccountUrl = 'https://danbooru.donmai.us/profile';
 const danbooruApiHost = 'danbooru.donmai.us';
 
 /// Cuántas publicaciones se piden por página. Es el máximo que admite su
@@ -314,6 +650,9 @@ const danbooruApiKeyPreferenceKey = 'danbooru_api_key';
 /// La dirección con la que se nombra lo que hay en Gelbooru, y por donde
 /// responde su API: todo cuelga de la misma página, distinguida por parámetros.
 const gelbooruSiteUrl = 'https://gelbooru.com';
+
+/// Las opciones de la cuenta, donde está el enlace de las credenciales de API.
+const gelbooruOptionsUrl = 'https://gelbooru.com/index.php?page=account&s=options';
 const gelbooruApiHost = 'gelbooru.com';
 const gelbooruApiPath = '/index.php';
 
@@ -424,6 +763,40 @@ String pawchiveCreatorCollection({
 /// único que dice en qué orden se marcaron.
 const pawchiveFavoriteSequence = 'faved_seq';
 
+/// El avatar de un creador de Pawchive.
+///
+/// Se arma con la dirección y no se pide a la API porque la API no lo da: es una
+/// ruta fija del sitio. Si no hay avatar, la petición falla y la tarjeta enseña
+/// la inicial, que es lo que hace la aplicación con todo lo demás.
+String pawchiveCreatorAvatar({required String service, required String id}) =>
+    '$pawchiveSiteUrl/icons/$service/$id';
+
+/// Cuántos creadores se miran a la vez al contar sus publicaciones nuevas.
+///
+/// Contar obliga a una petición por creador, y con cincuenta marcados hacerlas
+/// todas de golpe es pedirle al sitio que corte. De cuatro en cuatro la lista se
+/// va llenando en unos segundos sin que nadie se queje.
+const remoteCreatorCountConcurrency = 4;
+
+/// Lo que mide una tarjeta de creador, y su proporción.
+///
+/// Por ancho máximo y no por número de columnas: son tarjetas pequeñas y lo que
+/// importa es que quepan las que quepan, no que sean siempre cuatro como en la
+/// rejilla de contenido.
+const remoteCreatorCardWidth = 200.0;
+
+/// Y lo que mide de alto.
+///
+/// Fijo y no una proporción: lo que ocupa una tarjeta lo deciden su avatar y sus
+/// tres líneas de texto, no lo ancha que sea la ventana. Con una proporción, una
+/// columna estrecha dejaba la tarjeta más baja que su contenido y éste se salía
+/// por abajo.
+/// El número sale de sumar lo que hay dentro con todo puesto: el avatar, el
+/// nombre, la plataforma, la cuenta de publicaciones nuevas y la marca de «ya lo
+/// tienes». La prueba de la tarjeta lo sostiene: si alguien le añade una línea,
+/// se entera ahí y no en una captura del usuario.
+const remoteCreatorCardHeight = 215.0;
+
 /// Si de Pawchive se importa lo de los creadores marcados en lugar de las
 /// publicaciones marcadas.
 const pawchiveByCreatorsPreferenceKey = 'pawchive_by_creators';
@@ -460,6 +833,19 @@ const fileRepositoryHosts = {
 ///
 /// Sólo la primera: las demás se reconocen para no darlas por contenido, pero
 /// no se descomprimen (harían falta más librerías, y son mucho menos comunes).
+/// Cuántas publicaciones con enlaces pendientes se recuerdan de una importación.
+///
+/// El resumen del final es para mirarlo: una lista de mil no la lee nadie, y
+/// arrastrarla en memoria durante una importación de horas no aporta nada.
+const pendingLinkPostsLimit = 100;
+
+/// Dónde se guardan las preguntas de enlaces que quedan sin contestar.
+///
+/// Se guardan porque aparcar una es decir «esto lo miro otro día», y otro día
+/// suele ser después de cerrar la aplicación. Perderlas al cerrar convertiría
+/// aparcar en tirar.
+const pendingLinkReviewsPreferenceKey = 'pending_link_reviews';
+
 const archiveExtensions = {'.zip', '.rar', '.7z'};
 const extractableArchiveExtensions = {'.zip'};
 
@@ -542,8 +928,106 @@ const disabledOptionOpacity = 0.4;
 /// vuelve a poner el contador a cero (deja de estar marcado).
 const deletedRetention = Duration(days: 7);
 
+/// Cuánto se guarda un rechazo antes de tirarlo.
+///
+/// Noventa días. Bastante más que la papelera porque no estorba a nadie —no se
+/// ve en ninguna pantalla— y porque lo que mide tarda en cambiar: el acierto de
+/// un modelo se juzga sobre meses de uso, no sobre una tarde. Y bastante menos
+/// que para siempre, porque un rechazo de hace tres meses es de un modelo que se
+/// ha entrenado dos veces desde entonces y ya no habla de él.
+const rejectionRetention = Duration(days: 90);
+
+/// A partir de qué distancia dos contenidos dejan de ser el mismo.
+///
+/// De 0 a 64 bits distintos. Cero es idéntico; de uno a cinco es casi seguro la
+/// misma imagen recomprimida o con una marca de agua pequeña; hasta diez son
+/// recortes leves o cambios de color. Ocho es el punto donde todavía se agrupa lo
+/// que de verdad sobra sin empezar a juntar cosas que no.
+///
+/// Es un listón deliberadamente prudente: agrupar de más manda a la papelera
+/// contenido que no sobra, y eso es peor que dejar un duplicado sin encontrar.
+const defaultDuplicateThreshold = 8;
+
+/// Hasta dónde se puede mover ese listón desde los ajustes.
+const maxDuplicateThreshold = 16;
+
+/// Cada cuanto se coloca el video mientras se arrastra por la linea de tiempo.
+///
+/// Colocarlo en cada movimiento del raton es pedirle al descodificador un
+/// fotograma cada pocos milisegundos, y no llega: el tirador se queda esperando.
+/// A este ritmo se ve por donde se va sin ahogarlo, y al soltar se coloca en el
+/// sitio exacto.
+const scrubSeekInterval = Duration(milliseconds: 90);
+
+/// Lo que se espera antes de sacar el aviso de un boton.
+///
+/// En un escritorio el cursor pasa por encima de muchas cosas de camino a otra.
+/// Sin espera, cruzar una fila de botones es un parpadeo detras de otro.
+const tooltipWait = Duration(milliseconds: 450);
+
+// Tutorial
+/// Lo que se abre el foco alrededor de lo que senala, para que se vea entero y
+/// con aire en vez de recortado justo por su borde.
+const tutorialSpotlightPadding = 8.0;
+
+/// El redondeo del foco. Generoso: lo que se senala casi nunca es un rectangulo
+/// exacto, y una esquina viva delata el recorte.
+const tutorialSpotlightRadius = 12.0;
+
+/// Lo ancho que es el cartel que cuenta el paso. Fijo: un cartel que cambia de
+/// ancho en cada paso hace que el tutorial parezca que da saltos.
+const tutorialCardWidth = 340.0;
+
+/// Lo que se separa el cartel de lo que se esta senalando.
+const tutorialCardGap = 16.0;
+
+/// Cuantos fotogramas se sigue a lo que un paso senala antes de darlo por
+/// perdido.
+///
+/// Da para la animacion de entrada de una pantalla entera y le sobra: se deja de
+/// mirar en cuanto lo senalado se queda quieto, asi que en el caso normal son
+/// dos fotogramas. Este tope solo lo gasta lo que no llega a aparecer nunca.
+const tutorialMeasureAttempts = 45;
+
+/// Lo oscuro que se pone todo lo que no es el paso en curso.
+const tutorialScrimOpacity = 0.72;
+
 // Animations
-const hoverAnimationDuration = Duration(milliseconds: 150);
+//
+// **Los tres tiempos y las dos curvas de los que tira todo lo que se mueve.**
+//
+// Antes cada sitio elegía los suyos: había seis curvas distintas repartidas por
+// la aplicación y una duración por widget. Cada una era razonable por su cuenta y
+// el conjunto no se leía como una sola cosa, que es de lo que va esto: un menú
+// que se abre y un diálogo que aparece tienen que sentirse hechos por la misma
+// mano aunque no se vean nunca a la vez.
+
+/// Lo que se resuelve en el sitio: un velo de hover, una marca que aparece, un
+/// color que cambia. Tan corto que no se percibe como animación, sólo evita el
+/// salto.
+const motionFast = Duration(milliseconds: 120);
+
+/// Lo normal: una pantalla que entra, un diálogo que se abre, un panel que se
+/// despliega. Es el tiempo por defecto de cualquier cosa que no tenga motivo
+/// para ser otra.
+const motionStandard = Duration(milliseconds: 220);
+
+/// Lo que recorre una distancia y conviene seguir con la vista: algo que se mete
+/// dentro de otra cosa, un panel que cruza media pantalla.
+const motionEmphasized = Duration(milliseconds: 320);
+
+/// La curva de lo que entra.
+///
+/// Arranca deprisa y frena al final, que es lo que hace que algo parezca que
+/// llega en vez de que aparece. Es la de Material 3 para lo enfatizado, y no la
+/// `easeOut` de fábrica: aquélla frena antes y se queda muerta el último tramo.
+const motionEnterCurve = Cubic(0.05, 0.7, 0.1, 1.0);
+
+/// La curva de lo que se va. Al revés: sale despacio y se acelera al final, así
+/// que no se queda colgando en la pantalla.
+const motionExitCurve = Curves.easeInCubic;
+
+const hoverAnimationDuration = motionFast;
 const drawerAnimationDuration = Duration(milliseconds: 300);
 const viewerTransitionDuration = Duration(milliseconds: 250);
 const infoPanelAnimationDuration = Duration(milliseconds: 300);
@@ -553,10 +1037,69 @@ const infoPanelAnimationDuration = Duration(milliseconds: 300);
 /// animación que haya que mirar.
 const pageTransitionDuration = Duration(milliseconds: 220);
 
+/// Lo que dura cambiar de una forma de pantalla a otra.
+///
+/// Bastante más que cualquier otra animación de la aplicación, y a propósito: en
+/// esa transición se mueven cuatro piezas por caminos distintos, y hay que dar
+/// tiempo a verlo. Con la duración normal se percibía como un golpe — pasaba
+/// algo, pero no se llegaba a ver el qué.
+///
+/// Además va partida en dos mitades que no se solapan, así que cada pieza
+/// dispone de la mitad de esto para su recorrido.
+const screenTransitionDuration = Duration(milliseconds: 540);
+
+/// Lo que dura cambiar entre dos pantallas de la misma forma.
+///
+/// Menos, porque hay menos que contar: la maquetación es idéntica a los dos
+/// lados y lo único que cambia es el contenido de cada hueco. Pero no tan poco
+/// como para que sea un parpadeo, que es lo que era.
+const screenCrossfadeDuration = Duration(milliseconds: 400);
+
+/// Las dos curvas del fundido cruzado, y por qué no son una y su inversa.
+///
+/// **El problema del fundido cruzado ingenuo.** Las dos pantallas van una encima
+/// de otra, así que lo que se ve es la de arriba compuesta sobre la de abajo
+/// compuesta sobre el fondo. Con opacidades complementarias —una a `t` y la otra
+/// a `1 - t`— a mitad de camino las dos están al 50 %, y por las dos se cuela el
+/// fondo: queda un 25 % de fondo desnudo justo en el centro de la transición. Eso
+/// es el lavado que se ve como un salto, y no se arregla dándole más tiempo.
+///
+/// La solución es que **las dos suban rápido y bajen tarde**. La que entra usa
+/// una curva que gana opacidad enseguida y la que sale una que la conserva hasta
+/// el final; a mitad de camino las dos rondan el 87 %, así que lo que se cuela
+/// del fondo es un 1,5 % en vez de un 25 %. La pantalla nunca se destapa.
+const crossfadeInCurve = Curves.easeOutCubic;
+const crossfadeOutCurve = Curves.easeInCubic;
+
+/// En qué punto de la transición se pasa el relevo de una pantalla a otra.
+///
+/// Antes de esto, la que sale se está retirando; después, la que entra llega.
+/// Nunca a la vez: **es lo que garantiza que no se crucen**, y no una
+/// casualidad de las trayectorias. Con cuatro piezas moviéndose por su lado, la
+/// única forma segura de que ninguna choque con otra es que no coincidan en el
+/// tiempo.
+const screenExitSplit = 0.45;
+
+/// En qué punto de la transición entre pantallas hermanas se pasa el relevo.
+///
+/// Antes de esto, la que sale se está apagando; después, la que entra aparece.
+/// Nunca a la vez: solaparlas es lo que hacía que se viera una rejilla llena
+/// asomando por debajo de una pantalla vacía.
+const fadeThroughSplit = 0.35;
+
 /// Tamaño con el que arranca la pantalla que entra, antes de asentarse en el
 /// suyo. Es un efecto de pintado, no de maquetación: nada se recoloca por él, así
 /// que no puede provocar desbordes mientras la transición está en marcha.
 const pageTransitionScale = 0.98;
+
+/// Con cuánto empieza un diálogo antes de asentarse en su tamaño.
+///
+/// Cerca de uno a propósito: lo justo para que se vea que se abre. Con menos
+/// parece que salta hacia la cara.
+const dialogEnterScale = 0.96;
+
+/// Lo que oscurece el velo de detrás de un diálogo.
+const dialogBarrierOpacity = 0.45;
 
 // Pantalla de bienvenida
 /// Lo que dura la animación del logo.
@@ -566,8 +1109,8 @@ const pageTransitionScale = 0.98;
 /// punto lo único que hace es retrasar la entrada a la biblioteca.
 const splashDuration = Duration(milliseconds: 1600);
 
-/// Ancho al que se pinta el logo.
-const splashLogoWidth = 260.0;
+/// Lo alto que se pinta el logotipo en la bienvenida.
+const splashLogoHeight = 84.0;
 
 /// Tamaño con el que aparece el logo, antes de asentarse en el suyo. Entra
 /// creciendo, que es lo que le da el rebote del final.
@@ -581,7 +1124,51 @@ const splashHaloMinScale = 0.4;
 const splashHaloMaxScale = 2.2;
 const splashHaloOpacity = 0.55;
 
+/// La etiqueta con la que un contenido vuela de la rejilla al visor.
+///
+/// Se hace con la ruta del fichero y no con su identificador porque el visor
+/// sabe la ruta y no siempre el identificador, y porque la ruta es unica dentro
+/// de una rejilla — que es lo que Flutter exige: dos vuelos con la misma
+/// etiqueta en la misma pantalla revientan.
+///
+/// **Y por eso la vista por grupos no vuela.** Ahi el mismo contenido puede
+/// salir en dos grupos a la vez (una etiqueta y un creador), y serian dos
+/// etiquetas iguales en la misma pantalla. Sin vuelo se abre igual, solo que sin
+/// la animacion.
+String mediaHeroTag(String path) => 'media-$path';
+
+// Esqueletos de carga
+/// Lo que tarda el hueco en latir de un extremo al otro.
+///
+/// Lento a propósito: un latido rápido pide atención, y lo que se quiere es
+/// justo lo contrario — que se note que aquello está vivo y esperando, sin
+/// llamar.
+const skeletonPulseDuration = Duration(milliseconds: 900);
+
+/// Lo más apagado que llega a ponerse el hueco.
+const skeletonMinOpacity = 0.45;
+
+/// Cuántos huecos se pintan mientras llega el contenido. Los justos para llenar
+/// lo que se ve: pintar más es trabajo que nadie va a mirar.
+const skeletonGridCount = 12;
+
+/// Las alturas que se van turnando en la rejilla de huecos, para que se parezca
+/// a la de mampostería y no a una cuadrícula.
+const skeletonCellHeights = [180.0, 240.0, 150.0, 210.0];
+
 // Indicador de progreso
+/// Lo que se espera antes de enseñar el velo de ocupado.
+///
+/// **Una espera que no se llega a ver no existe.** Leer la biblioteca de disco o
+/// escribir una etiqueta tarda unas decenas de milisegundos: enseñar un velo
+/// para eso no informa de nada y en cambio se ve —se levanta y cae en un
+/// suspiro—, que es justo lo que se percibe como un parpadeo sobre la rejilla.
+///
+/// Pasado este tiempo la cosa ya se está haciendo esperar de verdad, y entonces
+/// sí conviene decirlo. Por debajo, el resultado llega antes de que a nadie le
+/// dé tiempo a preguntarse si ha pasado algo.
+const busyOverlayDelay = Duration(milliseconds: 180);
+
 /// Lo que tarda el velo de ocupado en aparecer y en irse. Bastante más corto que
 /// la transición de pantalla: lo que se quiere es que no parpadee, no que se note.
 const busyOverlayFadeDuration = Duration(milliseconds: 150);
@@ -610,6 +1197,15 @@ const sidebarDepthIndent = 20.0;
 /// indicador de jerarquía en lugar de seguir estrechando el botón.
 const sidebarMaxIndentDepth = 2;
 
+/// Lo que mide un botón del menú desplegado y plegado, y el hueco entre su
+/// icono y su título, que desaparece al plegarse.
+///
+/// Estaban sueltos dentro del propio botón; se suben aquí porque el contador de
+/// avisos tiene que caber en las dos anchuras.
+const sidebarTileExpandedWidth = 200.0;
+const sidebarTileCollapsedWidth = 70.0;
+const sidebarTileGap = 10.0;
+
 // Media info
 const mediaDescriptionMaxLines = 10;
 
@@ -635,6 +1231,10 @@ const unsavedId = 0;
 /// Atenuado de los botones de píldora cuando están desactivados.
 const pillButtonDisabledOpacity = 0.35;
 
+/// Lo que se encoge el botón de añadir mientras se pulsa. Poco: es un acuse de
+/// recibo, no un rebote.
+const addButtonPressedScale = 0.92;
+
 // Create dialog
 const createDialogSocialFieldsMaxHeight = 160.0;
 
@@ -653,6 +1253,377 @@ const tagManagerGridColumns = 5;
 /// en la de etiquetas: las dos pantallas reparten el hueco igual (ficha arriba,
 /// rejilla debajo y lista al lado).
 const creatorManagerGridColumns = tagManagerGridColumns;
+
+// Gestión de fernies
+/// La rejilla de fernies reparte el hueco igual que las de etiquetas y
+/// creadores, así que lleva las mismas columnas.
+const fernieManagerGridColumns = tagManagerGridColumns;
+
+/// Umbrales con los que se avisa de que un fernie da poco de sí para entrenar.
+///
+/// YOLO necesita muchas más muestras de las que uno intuye, y un fernie con
+/// cuatro regiones no va a reconocer nada. Sin decirlo en la propia ficha, la
+/// conclusión al entrenar sería que la función no funciona, cuando lo que pasa
+/// es que no hay con qué. Los tres números son de partida y se pueden mover con
+/// lo que se vea al entrenar de verdad (fase 3).
+const fernieMinRegions = 20;
+const fernieRecommendedRegions = 50;
+const fernieMinDistinctMedia = 5;
+
+/// Área mínima, en tanto por uno del contenido, para que un arrastre cuente como
+/// región.
+///
+/// Es lo que evita que un clic suelto o un temblor de la mano abran el menú de
+/// asignación. Medio por ciento de lado en cada eje: lo bastante pequeño para
+/// marcar una cara al fondo de una foto, y lo bastante grande para que un clic
+/// no cuele.
+const fernieMinRegionFraction = 0.0025;
+
+/// Por debajo de esta parte del contenido se avisa de que la región es muy
+/// pequeña. No impide guardarla: el aviso es informativo.
+const fernieTinyRegionFraction = 0.02;
+
+/// Radio en el que un tirador de región responde al ratón.
+///
+/// Algo más grande que el tirador que se pinta: agarrar una esquina no puede
+/// exigir puntería de cirujano.
+const regionHandleReach = 12.0;
+
+/// La pestaña de acciones que sale de la región elegida.
+const regionTabWidth = 132.0;
+const regionTabHeight = 36.0;
+
+/// Cuánto se aclara la región elegida respecto a las demás. Es lo que la
+/// distingue de un vistazo sin cambiarle el color.
+const regionSelectedTint = 0.55;
+
+/// Cuánto se puede alejar el visor. Es el que ya tenía, sacado de donde estaba
+/// escrito a mano.
+const viewerMinZoomScale = 0.5;
+
+/// Cuánto se puede acercar el visor en modo fernie.
+///
+/// Se sube por encima del zoom de siempre porque marcar una región pequeña con
+/// precisión pide acercarse más de lo que hace falta sólo para mirar.
+const fernieMaxZoomScale = 8.0;
+
+/// El resaltado con el que el visor señala una región al llegar desde la
+/// pantalla de fernies: se oscurece todo menos la región, se queda así un
+/// momento y se vuelve a la normalidad.
+///
+/// Va de una sola pasada y sin parpadeos a propósito. Encender y apagar varias
+/// veces una imagen a pantalla completa marea y, en vez de llevar el ojo a la
+/// región, lo obliga a perseguirla.
+const fernieHighlightFadeDuration = Duration(milliseconds: 600);
+const fernieHighlightHoldDuration = Duration(milliseconds: 1500);
+
+/// Lo que tardan las regiones en aparecer y en irse al entrar y salir del modo
+/// fernie.
+///
+/// Fuera del modo no se ven: el visor es para mirar el contenido, no para
+/// mirarlo lleno de rectángulos. Aparecer de golpe se leería como un fallo de
+/// pintado, así que entran y salen con un desvanecido corto.
+const fernieRegionsFadeDuration = Duration(milliseconds: 220);
+
+/// Alto máximo del menú contextual con el que se asigna una región: lo justo
+/// para el buscador y unos cuantos resultados sin comerse la pantalla.
+const contextMenuMaxHeight = 320.0;
+
+/// La sombra que separa el menú contextual del contenido que tiene debajo.
+///
+/// Es más marcada que la de un panel de cabecera porque aquí lo de detrás es una
+/// imagen a pantalla completa, no el fondo liso de la aplicación.
+const contextMenuElevation = 8.0;
+
+/// Salto de fotograma cuando el reproductor no sabe a cuántos va el contenido.
+///
+/// Treinta por segundo es lo más común y, sobre todo, es mejor que un botón que
+/// no hace nada: en un GIF de dos fotogramas o en un contenedor raro mpv no
+/// siempre los declara.
+const defaultFrameStep = Duration(microseconds: 33333);
+
+/// Cuántas copias como mucho deja poner el arrastre de una región por los
+/// fotogramas de en medio.
+///
+/// Arrastrar entre dos puntos muy separados de un vídeo largo son miles de
+/// regiones de una tacada, y eso no es lo que nadie quiere: se corta aquí y se
+/// vuelve a arrastrar si de verdad hacían falta más.
+const maxDraggedFrames = 300;
+
+/// La línea de tiempo del modo fernie: lo que ocupa y cuánto se separa del borde
+/// de abajo del visor.
+const fernieTimelineHeight = 56.0;
+
+/// Lo alto que es la barra de reproducción del visor.
+///
+/// Más gruesa que la de fábrica: dentro se pintan los tramos que ya tienen
+/// regiones marcadas, y en una barra fina no se distinguirían de la propia
+/// barra.
+const trackHeight = 6.0;
+
+/// El salto de los botones de adelantar y retrasar del modo de mirar.
+///
+/// Cinco segundos es lo que lleva cualquier reproductor y sirve para buscar por
+/// encima. Nada que ver con el salto de fotograma del modo fernie, que es para
+/// pararse en uno.
+const viewerSkipStep = Duration(seconds: 5);
+
+/// El mando de la barra de reproducción y el halo que se le enciende debajo.
+///
+/// Se fijan en vez de dejar los de fábrica porque de su tamaño sale el hueco que
+/// el recorrido deja a los lados, y de ese hueco dependen tres cosas que
+/// **tienen que coincidir**: dónde se pintan los tramos ya marcados, dónde se
+/// busca la muesca que hay bajo el cursor y a qué instante lleva pulsarla. Con
+/// los de fábrica el tamaño lo pone el tema por dentro y desde fuera no se sabe.
+const trackThumbRadius = 8.0;
+const trackOverlayRadius = 16.0;
+
+/// Lo que mide la nube que sale al pasar el cursor por una muesca de la línea
+/// de tiempo.
+///
+/// Va fijo y no lo pone su contenido: la nube se abre y se cierra siguiendo al
+/// cursor, y una que cambiara de ancho con el nombre más largo de cada muesca
+/// daría un salto en cada una.
+const fernieMarkBubbleWidth = 220.0;
+
+/// Hasta dónde se dan por seguidos dos fotogramas marcados de un mismo vídeo.
+///
+/// Es lo que decide qué se junta en una sola celda de la pantalla de fernies.
+/// La rejilla no sabe a cuántos fotogramas por segundo va cada contenido, así
+/// que el corte va en tiempo: por debajo de una décima de segundo lo que hay
+/// seguido se lee como una sola escena, y por encima, como dos momentos.
+const fernieRegionGroupGap = Duration(milliseconds: 100);
+
+/// Cuántos fotogramas como mucho se pasan en una de esas celdas.
+///
+/// Sacar un fotograma de un vídeo abre un reproductor entero, así que un tramo
+/// de trescientos fotogramas sería inaguantable. De un tramo más largo se cogen
+/// repartidos: lo que hace falta es que se vea el movimiento, no tenerlos todos.
+const fernieRegionGroupMaxFrames = 12;
+
+/// Lo que dura cada fotograma en el pase de una de esas celdas.
+///
+/// No es la velocidad del vídeo: de un tramo largo se cogen fotogramas
+/// repartidos, así que pasarlos a la velocidad original sería un parpadeo. A
+/// diez por segundo se lee el movimiento.
+const fernieRegionFlipbookStep = Duration(milliseconds: 100);
+
+/// Cuántos fernies enseña esa nube a la vez. El resto se desplazan.
+///
+/// El corte es a propósito: una nube que crece con veinte nombres tapa el
+/// contenido, que es justo lo que se está mirando.
+const fernieMarkMaxNames = 3;
+
+/// Tolerancia de partida para dar por bueno que una región es de este
+/// fotograma, cuando todavía no se sabe a cuántos va el contenido.
+///
+/// Lo normal es que la ponga el propio mando
+/// (`MediaPlaybackController.frameTolerance`, medio fotograma): esto es sólo el
+/// respaldo de mientras.
+const fernieFrameTolerance = Duration(milliseconds: 20);
+
+/// La barra con la que se reparte lo marcado de un fernie entre entrenar,
+/// validar y probar.
+const splitBarHeight = 10.0;
+
+/// Cuándo avisar de que un fernie no da para entrenar.
+///
+/// Por debajo de [minRegionsPerClass] no hay con qué: el entrenamiento arranca y
+/// no aprende nada. Por debajo de [lowRegionsPerClass] aprende poco. Y con menos
+/// de [minMediaPerClass] contenidos distintos aprende **el fondo** en vez del
+/// objeto, que es el aviso más importante de los tres porque no se ve en las
+/// métricas: salen bien y luego falla con todo lo demás.
+const minRegionsPerClass = 10;
+
+/// Los límites de los mandos de dentro del entrenamiento.
+///
+/// No son caprichos: por debajo de diez épocas no aprende nada y por encima de
+/// mil se está tirando el tiempo; el tamaño de imagen va de treinta y dos en
+/// treinta y dos porque es con lo que trabaja YOLO, y un número cualquiera lo
+/// redondearía por su cuenta.
+const minTrainingEpochs = 10;
+const maxTrainingEpochs = 1000;
+const minTrainingImageSize = 320;
+const maxTrainingImageSize = 1280;
+const maxTrainingBatch = 64;
+
+/// A partir de cuántas veces se da por desequilibrado un modelo.
+///
+/// Con diez a uno entre el fernie que más tiene y el que menos, el modelo
+/// aprende a contestar siempre el mayoritario: acierta el noventa por ciento de
+/// las veces sin haber aprendido nada, y las métricas le dan la razón.
+const maxClassImbalance = 10;
+
+const lowRegionsPerClass = 50;
+const minMediaPerClass = 5;
+
+/// Por debajo de qué acierto se avisa de que una clase ha salido mal.
+///
+/// No es un aprobado: es el punto a partir del cual el fernie va a fallar tanto
+/// que se nota usándolo, aunque la media del modelo sea buena.
+const weakClassThreshold = 0.5;
+
+/// Lo oscuro que va el disco de detrás de las flechas a pantalla completa.
+///
+/// Sobre una imagen clara, un icono blanco sin nada detrás no se ve; y a
+/// pantalla completa no hay margen gris que haga de fondo, como sí lo hay en la
+/// ventana. Lo justo para separarlo de la foto sin taparla.
+const fullscreenArrowScrimOpacity = 0.35;
+
+/// Lo transparente que va lo que se arrastra, y el hueco que deja atrás.
+///
+/// El hueco atenuado y no invisible: se ve de dónde salió, y si se suelta en un
+/// sitio que no lo acepta, el ojo ya sabe a dónde vuelve.
+const draggingFeedbackOpacity = 0.9;
+const draggingGhostOpacity = 0.35;
+
+/// Cuantas siluetas asoman por detras de la miniatura al arrastrar varios.
+///
+/// Dos, y no una por contenido: lo que se quiere decir es «van varios», y para
+/// eso con dos basta. Cuantas son exactamente lo dice el numero.
+const dragStackDepth = 2;
+
+/// Lo que se corre cada silueta respecto a la de delante.
+const dragStackOffset = 6.0;
+
+/// Lo que encoge cada silueta respecto a la de delante.
+const dragStackScaleStep = 0.06;
+
+/// Lo que se separa del cursor la miniatura que se arrastra.
+///
+/// Cuelga abajo y a la derecha en lugar de ir centrada: centrada taparia
+/// justamente lo que hay debajo del cursor, que es la etiqueta a la que se
+/// apunta.
+const dragFeedbackCursorGap = 14.0;
+
+/// Lo que encoge la miniatura al ponerse sobre un sitio donde se puede soltar.
+///
+/// Encoger y oscurecer dice «esto entra aqui» sin escribirlo, y de paso destapa
+/// lo que hay debajo justo cuando hace falta verlo.
+const dragOverTargetScale = 0.72;
+
+/// Lo pequeno que se queda lo que se ha soltado justo antes de desaparecer
+/// dentro de su destino.
+const dropAbsorbEndScale = 0.2;
+
+/// Lo que se oscurece encima de un sitio donde se puede soltar.
+const dragOverTargetShade = 0.35;
+
+/// Hasta dónde se puede acercar y alejar el lienzo del árbol, y de cuánto en
+/// cuánto.
+///
+/// El mismo reparto de gestos que el modo fernie: rueda para el zoom, arrastre
+/// para desplazar. Dos convenciones distintas en la misma aplicación es lo que
+/// hace que ninguna se recuerde.
+const treeMinZoom = 0.3;
+const treeMaxZoom = 2.0;
+const treeZoomStep = 1.25;
+
+/// Por debajo de qué zoom las tarjetas dejan el detalle y se quedan con el
+/// nombre. A ese tamaño lo demás no se lee y sólo emborrona.
+const treeSimplifyBelow = 0.5;
+
+/// El grosor de las aristas del árbol de modelos, y el tamaño de su punta.
+///
+/// La punta no es adorno: dos nodos unidos por una línea a secas no dicen en qué
+/// orden se ejecutan, y el orden es lo único que el árbol decide.
+const treeEdgeWidth = 2.0;
+const treeArrowSize = 10.0;
+
+/// Con qué clave se guarda si lo reconocido vuelve a importación.
+const returnRecognizedPreferenceKey = 'recognition_return_to_import';
+
+/// Si al salir del visor la rejilla se coloca donde está lo que se ha mirado.
+const returnToViewedMediaPreferenceKey = 'viewer_return_to_media';
+const recognizeOnImportPreferenceKey = 'recognition_on_import';
+const duplicateThresholdPreferenceKey = 'duplicates_threshold';
+
+/// Con qué clave se guarda si la aplicación busca repetidos por su cuenta.
+const automaticDuplicateScanPreferenceKey = 'duplicates_auto_scan';
+
+/// Con qué clave se guarda cada cuánto lo hace.
+const duplicateScanPeriodPreferenceKey = 'duplicates_scan_period';
+
+/// Qué se ve con el modo NSFW abierto.
+const nsfwUnlockedViewPreferenceKey = 'nsfw_unlocked_view';
+
+/// Qué se ve con el modo NSFW cerrado.
+const nsfwLockedViewPreferenceKey = 'nsfw_locked_view';
+
+/// Si marcar una etiqueta arrastra a las que cuelgan de ella.
+const nsfwChildTagsPreferenceKey = 'nsfw_marks_child_tags';
+
+/// Con qué clave se guarda de qué fuente se estuvo importando la última vez.
+const lastImportSourcePreferenceKey = 'import_last_source';
+
+/// Si el escaneo mira también vídeos y GIF.
+const duplicateScanMovingPreferenceKey = 'duplicates_scan_moving';
+
+/// Con qué clave se guarda cuándo terminó el último escaneo, en ISO 8601.
+///
+/// La escribe el escaneo al acabar bien, venga de donde venga: si el usuario
+/// acaba de buscar repetidos a mano, que la aplicación lo repita sola al día
+/// siguiente es trabajo tirado.
+const lastDuplicateScanPreferenceKey = 'duplicates_last_scan_at';
+
+/// Cuánto se espera desde el último contenido importado antes de mandarlo
+/// todo a reconocer de una vez.
+///
+/// Una importación va soltando ficheros de uno en uno durante minutos.
+/// Encolar un trabajo por cada uno llenaría la lista de tareas con
+/// trescientas entradas de un segundo; esperar a que la importación se calme
+/// deja **un** trabajo con todo dentro, que es lo que el usuario entiende
+/// como «reconocer lo que acaba de llegar».
+const recognitionImportDebounce = Duration(seconds: 3);
+
+/// Cuántos contenidos se dejan acumular antes de mandarlos sin esperar más.
+///
+/// Sin tope, una importación de miles de ficheros que dure media hora no
+/// reconocería nada hasta el final. Con él, el trabajo va saliendo por
+/// tandas y se puede ir revisando mientras lo demás sigue llegando.
+const recognitionImportBatchMax = 200;
+
+/// Con qué clave se guarda cuántos fotogramas se miran de un vídeo.
+const frameSamplesPreferenceKey = 'recognition_frame_samples';
+
+/// Cuántos fotogramas se miran de un contenido que se mueve, al reconocer.
+///
+/// Cinco de fábrica: mirarlo entero es pagar una predicción por fotograma
+/// —treinta por segundo— para responder algo que casi siempre se decide con
+/// cinco. Es el ajuste que más afecta al tiempo total de reconocer una
+/// biblioteca.
+const defaultFrameSamples = 5;
+const minFrameSamples = 1;
+const maxFrameSamples = 20;
+
+/// En qué punto del trazo va la etiqueta de una arista, de padre a hijo.
+///
+/// Cerca del hijo: en mitad del trazo, todas las aristas de un mismo padre caen
+/// casi encima unas de otras, y con cinco hijos no hay forma de pulsar la que se
+/// quiere. Junto al hijo se separan solas.
+const treeEdgeLabelAt = 0.78;
+
+/// Lo ancha que puede ser la etiqueta de una arista antes de cortarse.
+///
+/// Es el nombre de un fernie: más allá de esto tapa la tarjeta de al lado, y lo
+/// que hace falta saber es cuál, no leerlo entero.
+const treeEdgeLabelMaxWidth = 140.0;
+
+/// A partir de qué ancho las filas de fernie de un modelo van de dos en dos.
+///
+/// Una fila es alta —nombre, recuentos, aviso y barra de reparto—, así que en
+/// una ventana ancha a una sola columna sobra la mitad del papel. Por debajo de
+/// esta cifra la barra de reparto se queda sin sitio para arrastrarla.
+const fernieRowsTwoColumnsWidth = 900.0;
+
+/// Lo que ocupa una tarjeta de la rejilla de modelos.
+///
+/// La rejilla se reparte por ancho máximo y no por número de columnas: la
+/// ventana cambia de tamaño, y con un número fijo las tarjetas salen enormes en
+/// pantalla ancha y espachurradas en estrecha. El alto va fijo porque todas
+/// llevan lo mismo: cara, nombre, función, recuentos y estado.
+const modelCardWidth = 220.0;
+const modelCardHeight = 280.0;
 
 /// Alto de la ficha de la pantalla de gestión de creadores.
 ///
@@ -687,6 +1658,14 @@ const creatorProfileRowHeight = 32.0;
 /// Lo que se queda a la vista un aviso breve, y lo que tarda en aparecer y en
 /// irse. Lo justo para leer una línea sin que estorbe.
 const toastDuration = Duration(seconds: 3);
+
+/// Cuánto dura el aviso que **lleva a algún sitio**.
+///
+/// Más que los otros porque hay que leerlo y además decidir si se pulsa, y tres
+/// segundos no dan para las dos cosas. Pero se va igual: antes se quedaba hasta
+/// que alguien lo pulsara, y como no tenía forma de cerrarse, quien no quería ir
+/// se lo encontraba clavado en la pantalla para siempre.
+const toastActionDuration = Duration(seconds: 12);
 const toastFadeDuration = Duration(milliseconds: 200);
 
 /// Desde dónde entra, en alturas suyas, y cuánto tapa lo que hay detrás.
@@ -706,6 +1685,14 @@ const viewerControlsFadeDuration = Duration(milliseconds: 200);
 /// carrusel. Algo más largo que el desvanecido de la barra: aquí sí hay un
 /// recorrido que seguir, y es lo que dice hacia qué lado se está yendo.
 const viewerSlideDuration = Duration(milliseconds: 300);
+
+/// Grosor del trazo de los iconos de la aplicación.
+///
+/// Es la ventaja de fondo de Material Symbols sobre los iconos clásicos, que van
+/// a un grosor fijo: aquí se pide. Un pelo por debajo del de fábrica (400)
+/// porque a los tamaños a los que se usan —de 16 a 24— el trazo normal engorda y
+/// arrastra la vista antes que el texto que acompaña.
+const appIconWeight = 350.0;
 
 /// Grosor del trazo de los iconos de la barra del visor.
 ///
@@ -734,6 +1721,93 @@ const mediaFallbackAspectRatio = 1.0;
 /// reescalar la ventana, y más resolución de sobra se guarda de más.
 const mediaDecodeWidthStep = 64;
 const mediaVideoPreviewLength = Duration(seconds: 10);
+
+/// Cuánto tiene que quedarse el ratón encima de un vídeo antes de que empiece a
+/// reproducirse.
+///
+/// Sacar la previsualización cuesta abrir un reproductor de verdad, con su
+/// memoria nativa. Sin esta espera, cruzar la rejilla de lado a lado abría uno
+/// por cada celda que tocaba el cursor —decenas en un segundo— y ésa es la
+/// causa principal del atasco al desplazarse deprisa.
+///
+/// Tres décimas: lo bastante para que pasar de largo no cuente y lo bastante
+/// poco para que pararse encima se sienta inmediato.
+const mediaVideoPreviewDelay = Duration(milliseconds: 300);
+
+/// Cuántas previsualizaciones de fichero se recuerdan en memoria.
+///
+/// Son objetos pequeños —cuatro campos— pero una biblioteca de decenas de miles
+/// los acumula todos, y el fotograma de cada vídeo sigue en el disco de todas
+/// formas: volver a pedir uno olvidado es leer una entrada de caché, no abrir
+/// el vídeo otra vez.
+const mediaPreviewCacheLimit = 2000;
+
+/// Techo de la caché de imágenes decodificadas de Flutter.
+///
+/// De fábrica son 100 MB, que con imágenes de veinte megapíxeles se agotan en
+/// una pantalla de rejilla. Lo que pasa al agotarse no es un error: es que la
+/// aplicación empieza a decodificar y tirar sin parar, y ahí se va el
+/// rendimiento del desplazamiento.
+const imageCacheMaxBytes = 200 << 20;
+
+/// Cuánto se construye por delante y por detrás de lo que se ve en la rejilla.
+///
+/// Un poco más de una pantalla: bastante para que desplazarse no vaya a
+/// tirones, y no tanto como para tener cientos de celdas montadas fuera de la
+/// vista pidiendo cada una su miniatura.
+const mediaGridCacheExtent = 600.0;
+
+/// A partir de qué velocidad se considera que la rejilla va lanzada.
+///
+/// En píxeles por segundo. El número sale de separar dos cosas que hay que
+/// distinguir bien: una rueda de ratón usada con ganas se queda en torno a mil o
+/// mil quinientos, y un lanzamiento con el dedo o un tirón de la barra empieza
+/// por encima de tres mil. El listón está donde no molesta a lo primero y coge
+/// lo segundo.
+const fastScrollVelocity = 3500.0;
+
+/// Sobre cuánto tiempo se mide esa velocidad.
+///
+/// Por ventanas y no entre dos avisos seguidos: la rueda del ratón salta de
+/// golpe y sin animación, así que entre dos avisos suyos la velocidad sale
+/// enorme aunque se esté yendo despacio.
+const fastScrollWindow = Duration(milliseconds: 90);
+
+/// Cuánto se espera sin noticias antes de dar el desplazamiento por terminado.
+///
+/// Es un seguro: lo normal es que avise de que ha parado. Si ese aviso no
+/// llegara, sin esto la rejilla se quedaría sin cargar nada para siempre.
+const fastScrollIdleTimeout = Duration(milliseconds: 250);
+
+/// De cuántos en cuántos se guardan los tamaños que la rejilla va descubriendo.
+///
+/// Al desplazarse se descubren decenas por segundo: una transacción por cada uno
+/// sería peor que el problema que resuelve.
+const mediaSizeBatchSize = 60;
+
+/// Cuánto se espera antes de guardar una tanda a medias.
+///
+/// Lo justo para que una rejilla que se queda quieta acabe guardando lo suyo sin
+/// que nadie note la escritura.
+const mediaSizeBatchDelay = Duration(seconds: 2);
+
+/// Cuántas columnas tiene la rejilla de contenido.
+///
+/// Una sola cuenta para las cinco rejillas que hay (biblioteca, importación,
+/// favoritos, papelera y los resultados de una búsqueda): estaba repetida en
+/// cada pantalla, y con el número suelto en cinco sitios cualquier cambio se
+/// deja alguno por el camino y las pantallas dejan de parecerse entre sí.
+const mediaGridColumns = 4;
+
+/// Lo que mide la miniatura que va pegada al cursor al arrastrar contenido.
+///
+/// Pequeña a propósito: lo que hace falta es reconocer qué se está arrastrando
+/// y ver cuántos van, no mirar la imagen.
+const dragFeedbackSize = 96.0;
+
+/// Cuánto se enciende una fila del menú cuando hay algo a punto de soltarse
+/// encima. Lo justo para que se vea cuál es sin taparla.
+const dropTargetHighlight = 0.35;
 const mediaEmptyDurationLabel = '--:--';
 
 // Video preview extraction
@@ -743,3 +1817,125 @@ const videoProbeTimeout = Duration(seconds: 12);
 const videoScreenshotAttempts = 10;
 const videoScreenshotRetryDelay = Duration(milliseconds: 120);
 const maxConcurrentVideoJobs = 2;
+
+/// Cuántas cabeceras de imagen se leen a la vez.
+///
+/// Averiguar lo que mide una imagen obliga a **cargar el fichero entero en
+/// memoria** (`ImmutableBuffer.fromFilePath`), aunque después sólo se lea su
+/// cabecera. Sin tope, desplazarse deprisa por una biblioteca grande lanzaba una
+/// lectura por celda construida —cientos en unos segundos, cada una con su
+/// fichero entero dentro—, y con imágenes de veinte o treinta megas eso son
+/// gigabytes a la vez. Es la causa más probable de que la aplicación se cayera
+/// al bajar de golpe.
+///
+/// Seis, y no dos como los vídeos: leer una cabecera son milisegundos y abrir un
+/// vídeo son segundos.
+const maxConcurrentImageJobs = 6;
+
+/// Cuánto se lee de una imagen para saber lo que mide.
+///
+/// El tamaño vive en los primeros cien bytes de todos los formatos que se
+/// entienden; el margen es para el JPEG, que puede llevar delante metadatos y
+/// hasta una miniatura entera antes de decir cuánto mide. Con esto no hace falta
+/// leer el fichero entero, que era lo que encarecía tanto la importación como la
+/// primera vuelta por la biblioteca.
+const imageHeaderProbeBytes = 128 * 1024;
+
+/// Cuánto se espera a que un salto dentro de un vídeo ya abierto llegue a su
+/// sitio.
+///
+/// Mucho más corto que [videoProbeTimeout], que es lo que cuesta **abrir** un
+/// fichero: con el vídeo abierto y decodificando, un salto es cuestión de
+/// décimas. Con el mismo listón de doce segundos, cinco saltos que fallen
+/// convierten un vídeo en un minuto de espera.
+const videoSeekTimeout = Duration(seconds: 3);
+
+/// Margen para que el fotograma del salto acabe de pintarse.
+///
+/// La posición llega antes que la imagen; sin esta pausa la captura sale con el
+/// fotograma de antes del salto, y lo que se reconoce no es lo que se dice
+/// haber mirado.
+const videoSeekSettle = Duration(milliseconds: 150);
+
+/// A partir de qué confianza una sugerencia se pinta como buena.
+///
+/// Es el mismo listón que el de la aceptación masiva: lo que se enseña de una
+/// forma tiene que ser lo mismo que «aceptar todo lo que esté por encima»
+/// aceptaría, o el color estaría prometiendo algo distinto de lo que el botón
+/// hace.
+const suggestionHighConfidence = 0.8;
+
+/// Lo desvaído que va el porcentaje de una sugerencia poco fiable.
+///
+/// El tercer tramo se distingue con opacidad y no con otro color porque la
+/// paleta no da para tres: la elige el usuario, y en la clara el gris de los
+/// textos secundarios y el de lo apagado son exactamente el mismo. Además
+/// «cuanto menos seguro, más tenue» se entiende sin que nadie lo explique.
+const suggestionLowOpacity = 0.55;
+
+/// Por debajo de esto una sugerencia se pinta como poco fiable.
+///
+/// No se esconde: media docena de aciertos raros al año salen de aquí, y lo que
+/// hace falta es que se note de un vistazo cuáles hay que mirar con calma.
+const suggestionLowConfidence = 0.5;
+
+/// Con qué confianza mínima se le pregunta al motor al reconocer.
+///
+/// Muy por debajo del listón de cualquier modelo, y a propósito: lo que queda
+/// entre esta cifra y el listón del modelo **no se propone**, pero se apunta.
+/// Es lo que permite contestar «lo vio al 27 %, y tu listón está en el 35 %» en
+/// vez de «no ha detectado nada», que es lo mismo dicho de una forma que no deja
+/// arreglar nada.
+///
+/// Por debajo de esto sí se tira: son cajas al azar sobre el fondo.
+const recognitionFloor = 0.05;
+
+/// Cuántas imágenes se le mandan al motor en una sola petición.
+///
+/// Reconocer una biblioteca con un árbol de tres modelos eran tres peticiones
+/// por contenido; en lote son tres por nivel, y el motor deja de ir y volver
+/// entre unos pesos y otros. El tope existe porque una petición sin límite es
+/// una petición que no se puede parar hasta que acabe: con este corte, parar
+/// tarda como mucho lo que tarden estas imágenes.
+///
+/// Sesenta y cuatro salen de lo que hay: veinte fotogramas por vídeo, así que
+/// cabe algo más de tres vídeos por petición, y con imágenes sueltas son
+/// sesenta y cuatro de golpe.
+const recognitionImagesPerCall = 64;
+
+/// Cuántos contenidos recorren el árbol juntos, como mucho.
+///
+/// El recorrido en lote poda por contenido, pero el lote entero baja de nivel a
+/// la vez: lo que se puede contar es cuántos han terminado, no por dónde va el
+/// que se está mirando. De ahí el tope, y de ahí que el tamaño de verdad lo
+/// decida [recognitionProgressSteps].
+const recognitionMediaPerBatch = 25;
+
+/// En cuántos tramos se quiere que avance la barra, como mínimo.
+///
+/// Es lo que ata el tamaño del lote a lo que el usuario ve: reconocer cuatro
+/// contenidos los mira de uno en uno y la barra los cuenta uno a uno —que es
+/// donde se nota—, y reconocer la biblioteca entera los agrupa, porque ahí una
+/// barra de doce tramos se entiende igual de bien y el motor deja de ir y volver
+/// entre unos pesos y otros.
+const recognitionProgressSteps = 12;
+
+/// Lo grueso del marco con el que se señala un contenido del último aviso.
+///
+/// Un marco y no un tinte por encima: el tinte cambiaría los colores del propio
+/// contenido, que es justo lo que el usuario ha venido a mirar.
+const mediaHighlightBorderWidth = 3.0;
+
+/// Lo que miden las marcas del scroll que señalan lo del último aviso.
+///
+/// Estrechas y cortas a propósito: son una pista de hacia dónde desplazarse, no
+/// un elemento con el que se interactúe. Anchas competirían con la propia barra.
+const highlightMarkWidth = 4.0;
+const highlightMarkHeight = 10.0;
+
+/// A partir de cuántos contenidos se avisa de que van a salir de la biblioteca.
+///
+/// Con uno o dos el efecto se ve y se deshace en un momento; con veinte, quien
+/// lo lanzó vuelve a la rejilla y se encuentra media biblioteca vacía sin saber
+/// por qué. El aviso es para eso, no para pedir permiso en cada pulsación.
+const recognitionReturnWarningCount = 5;

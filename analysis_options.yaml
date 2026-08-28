@@ -21,6 +21,13 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
+    # Apagada a proposito: la sintaxis que sugiere (`?elemento` dentro de una
+    # lista) es mas corta, pero **rompe la generacion de codigo**. isar_generator
+    # 3.1 clava analyzer 5.x, y esa version no la sabe leer: build_runner falla
+    # al parsear el fichero entero y no se puede regenerar ningun esquema.
+    #
+    # Se puede volver a encender el dia que se pueda subir de Isar 3.
+    use_null_aware_elements: false
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
 

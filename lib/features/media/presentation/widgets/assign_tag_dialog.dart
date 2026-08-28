@@ -8,8 +8,10 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -168,12 +170,14 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
       onRemove: () => _removeTag(tag),
       leading: FernAvatar(
         imagePath: tag.picturePath,
-        fallbackIcon: Icons.label,
+        fallbackIcon: Symbols.label,
         radius: AppSizes.avatarSmall,
         iconSize: AppSizes.iconCompact,
-        backgroundColor: isPending ? context.colors.lightgray : context.colors.secondary,
+        backgroundColor:
+            isPending ? context.colors.lightgray : context.colors.secondary,
         iconColor: isPending ? context.colors.gray : context.colors.primary,
       ),
+      trailing: tag.isUnderNsfw ? const NsfwTagMark() : null,
     );
   }
 
@@ -187,7 +191,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
       onClose: () => context.pop(),
       leftContent: FernDialogSidePanel.list(
         header: FernSectionHeader(
-          icon: Icons.label_outline,
+          icon: Symbols.label,
           title: texts.tagsTitle,
         ),
         items: chips.isNotEmpty
@@ -211,11 +215,17 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
             hintText: texts.tagSearchHint,
             search: _search,
             labelOf: (tag) => tag.name,
+      // Las marcadas se distinguen al autocompletar: elegir una sin
+      // saberlo es esconder contenido sin querer.
+      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
             onSelected: _addTag,
             debounce: searchDebounceDuration,
           ),
           const SizedBox(height: AppSpacing.xl),
           FernAddButton(
+            // Aquí el botón va suelto bajo un buscador, no en una fila de
+            // avatares: se queda con el círculo pequeño.
+            radius: AppSizes.addButtonRadius,
             label: texts.createTag,
             onTap: () => _openCreateTagDialog(context),
           ),

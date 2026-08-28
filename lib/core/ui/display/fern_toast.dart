@@ -5,6 +5,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Aviso breve que aparece abajo, dice lo que acaba de pasar y se va solo.
 ///
@@ -12,11 +13,16 @@ import 'package:flutter/material.dart';
 /// normal, sobre un diálogo o con la aplicación a pantalla completa. Sólo hay
 /// uno a la vez: si llega otro, sustituye al que hubiera, que es lo que se
 /// espera cuando se repite una acción varias veces seguidas.
-void showFernToast(BuildContext context, String message, {IconData? icon}) {
+void showFernToast(
+  BuildContext context,
+  String message, {
+  IconData? icon,
+  VoidCallback? onTap,
+}) {
   final overlay = Overlay.maybeOf(context, rootOverlay: true);
   if (overlay == null) return;
 
-  _FernToastHost.show(overlay, message: message, icon: icon);
+  _FernToastHost.show(overlay, message: message, icon: icon, onTap: onTap);
 }
 
 class _FernToastHost {
@@ -26,6 +32,7 @@ class _FernToastHost {
     OverlayState overlay, {
     required String message,
     IconData? icon,
+    VoidCallback? onTap,
   }) {
     _current?.remove();
     _current = null;
@@ -35,6 +42,7 @@ class _FernToastHost {
       builder: (context) => _FernToast(
         message: message,
         icon: icon,
+        onTap: onTap,
         onDismissed: () {
           if (!identical(_current, entry)) return;
           entry.remove();
@@ -53,10 +61,23 @@ class _FernToast extends StatefulWidget {
   final IconData? icon;
   final VoidCallback onDismissed;
 
+  /// Qué pasa al pulsarlo, si es de los que llevan a algún sitio.
+  ///
+  /// Sin esto el aviso no atiende a las pulsaciones —lo que hay debajo es la
+  /// pantalla, y un mensaje que se va solo no puede quedarse con los clics que
+  /// van a ella—. Con esto sí, y además dura más: un aviso que lleva a un sitio
+  /// y se desvanece en tres segundos es una puerta que se cierra en las narices.
+  ///
+  /// Más, pero no para siempre. Antes se quedaba hasta que alguien lo pulsara y
+  /// no había forma de cerrarlo, así que a quien no le interesaba se le quedaba
+  /// clavado en la pantalla. Ahora se va solo y además lleva un aspa.
+  final VoidCallback? onTap;
+
   const _FernToast({
     required this.message,
     required this.icon,
     required this.onDismissed,
+    this.onTap,
   });
 
   @override
@@ -76,7 +97,13 @@ class _FernToastState extends State<_FernToast>
   void initState() {
     super.initState();
     _controller.forward();
-    _dismissTimer = Timer(toastDuration, _dismiss);
+
+    // Siempre, también el que lleva a algún sitio: ése dura más, porque hay que
+    // leerlo y decidir, pero se va igual.
+    _dismissTimer = Timer(
+      widget.onTap == null ? toastDuration : toastActionDuration,
+      _dismiss,
+    );
   }
 
   @override
@@ -104,6 +131,9 @@ class _FernToastState extends State<_FernToast>
       right: 0,
       bottom: AppSpacing.xxl,
       child: IgnorePointer(
+        // El que lleva a algún sitio sí atiende a las pulsaciones; el resto no,
+        // porque lo que hay debajo es la pantalla.
+        ignoring: widget.onTap == null,
         child: FadeTransition(
           opacity: animation,
           child: SlideTransition(
@@ -113,14 +143,32 @@ class _FernToastState extends State<_FernToast>
               begin: const Offset(0, toastSlideOffset),
               end: Offset.zero,
             ).animate(animation),
-            child: Center(child: _buildBubble(context)),
+            child: Center(
+              child: widget.onTap == null
+                  ? _buildBubble(context)
+                  : _tappable(context),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBubble(BuildContext context) {
+  /// La misma burbuja, pero que se puede pulsar y cerrar.
+  Widget _tappable(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          widget.onTap?.call();
+          _dismiss();
+        },
+        child: _buildBubble(context, canClose: true),
+      ),
+    );
+  }
+
+  Widget _buildBubble(BuildContext context, {bool canClose = false}) {
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -150,7 +198,40 @@ class _FernToastState extends State<_FernToast>
                   .bodyMedium
                   ?.copyWith(color: Colors.white),
             ),
+            // Sólo el que lleva a algún sitio: el resto se va en tres segundos y
+            // un aspa ahí sería un botón para adelantar lo que ya iba a pasar.
+            if (canClose) ...[
+              const SizedBox(width: AppSpacing.s),
+              _CloseButton(onPressed: _dismiss),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// El aspa del aviso.
+///
+/// A mano y no un `IconButton`: el hueco que ése reserva alrededor deformaría la
+/// burbuja, que es una píldora ajustada a su texto.
+class _CloseButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _CloseButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        // Se traga la pulsación para que no llegue a la burbuja: pulsar el aspa
+        // es cerrar, no ir a donde el aviso lleva.
+        onTap: onPressed,
+        child: const Icon(
+          Symbols.close,
+          color: Colors.white,
+          size: AppSizes.iconSmall,
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Campo de texto con su etiqueta en negrita encima.
 class FernLabeledTextField extends StatefulWidget {
@@ -80,8 +81,8 @@ class _FernLabeledTextFieldState extends State<FernLabeledTextField> {
                         : texts.hidePassword,
                     icon: Icon(
                       _isObscured
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                          ? Symbols.visibility
+                          : Symbols.visibility_off,
                       size: AppSizes.iconMedium,
                     ),
                     onPressed: () =>

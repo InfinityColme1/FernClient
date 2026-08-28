@@ -6,6 +6,7 @@ import 'package:Fern/features/browser/domain/entities/browser_session_source.dar
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// La plataforma ha rechazado lo que la aplicación le daba para entrar.
 ///
@@ -63,7 +64,7 @@ class SessionExpiredDialog extends StatelessWidget {
         label: isBrowserSession
             ? texts.sourceLogIn(name)
             : texts.actionOpenRemoteSettings,
-        icon: isBrowserSession ? Icons.login : Icons.settings,
+        icon: isBrowserSession ? Symbols.login : Symbols.settings,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: () => Navigator.of(context).pop(true),

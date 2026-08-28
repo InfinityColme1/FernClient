@@ -16,18 +16,35 @@ import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/recognition/domain/usecases/save_fernie_usecase.dart';
+import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
+import 'package:Fern/features/recognition/domain/usecases/save_model_usecase.dart';
+import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/models_events.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
+import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
-/// Las dos variantes del diálogo de creación. El panel izquierdo es el mismo
+/// Las variantes del diálogo de creación. El panel izquierdo es el mismo
 /// (avatar editable y nombre); lo que cambia es el formulario de la derecha,
 /// y [secondaryLabel] nombra ese segundo bloque en cada caso.
+///
+/// El fernie no tiene segundo bloque: se crea con nombre y avatar, y a qué se
+/// enlaza se decide luego en su ficha. Aquí sólo estorbaría, porque lo normal
+/// es crearlo al vuelo mientras se está marcando una región.
 enum CreateDialogType {
-  tag(icon: Icons.label_outline),
-  creator(icon: Icons.person_outline);
+  tag(icon: Symbols.label),
+  creator(icon: Symbols.person),
+  fernie(icon: Symbols.face_retouching_natural),
+  model(icon: Symbols.hub);
 
   const CreateDialogType({required this.icon});
 
@@ -36,16 +53,22 @@ enum CreateDialogType {
   String title(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.newTagTitle,
         CreateDialogType.creator => texts.newCreatorTitle,
+        CreateDialogType.fernie => texts.newFernieTitle,
+        CreateDialogType.model => texts.newModelTitle,
       };
 
   String nameLabel(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.tagNameLabel,
         CreateDialogType.creator => texts.creatorNameLabel,
+        CreateDialogType.fernie => texts.fernieNameLabel,
+        CreateDialogType.model => texts.modelNameLabel,
       };
 
   String secondaryLabel(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.parentTagLabel,
         CreateDialogType.creator => texts.socialProfilesLabel,
+        CreateDialogType.fernie => '',
+        CreateDialogType.model => texts.modelFunctionLabel,
       };
 }
 
@@ -77,10 +100,28 @@ enum CreateDialogType {
 class FernCreateDialog extends StatefulWidget {
   final CreateDialogType type;
 
-  const FernCreateDialog.tag({super.key}) : type = CreateDialogType.tag;
+  /// Con qué nombre llega el campo relleno.
+  ///
+  /// Lo usa quien abre el diálogo desde un sitio donde el nombre ya está
+  /// escrito: la ficha de etiqueta, cuando el padre que se ha tecleado no
+  /// existe y se ofrece crearlo. Volver a escribirlo sería pedir dos veces lo
+  /// mismo.
+  final String initialName;
+
+  const FernCreateDialog.tag({super.key, this.initialName = ''})
+      : type = CreateDialogType.tag;
 
   const FernCreateDialog.creator({super.key})
-      : type = CreateDialogType.creator;
+      : type = CreateDialogType.creator,
+        initialName = '';
+
+  const FernCreateDialog.fernie({super.key})
+      : type = CreateDialogType.fernie,
+        initialName = '';
+
+  const FernCreateDialog.model({super.key})
+      : type = CreateDialogType.model,
+        initialName = '';
 
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
@@ -90,9 +131,17 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   final _searchTags = getIt<SearchTagsUseCase>();
   final _saveTag = getIt<SaveTagUseCase>();
   final _saveCreator = getIt<SaveCreatorUseCase>();
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _saveFernie = getIt<SaveFernieUseCase>();
+  final _saveModel = getIt<SaveModelUseCase>();
 
-  final TextEditingController _nameController = TextEditingController();
+  /// Qué pregunta va a responder el modelo. De fábrica, la más simple: los dos
+  /// son detección, y quien no sepa cuál quiere casi siempre quiere saber si
+  /// algo está o no está.
+  ModelFunction _function = ModelFunction.boolean;
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
+
+  late final TextEditingController _nameController =
+      TextEditingController(text: widget.initialName);
 
   /// Un campo por enlace de red social. Siempre hay al menos uno.
   final List<TextEditingController> _socialControllers = [
@@ -100,6 +149,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   ];
 
   String? _selectedImagePath;
+
+  /// La etiqueta nace marcada como NSFW.
+  bool _isNsfw = false;
   TagEntity? _parentTag;
 
   /// Direcciones vinculadas a la etiqueta que se está creando.
@@ -139,7 +191,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     // diálogo en espera. El explorador de ficheros no: allí el tiempo lo pone el
     // usuario.
     await _run(() async {
-      final storedPath = await _avatarStorage.store(path);
+      final storedPath = await _storeAvatar(params: path);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);
@@ -204,6 +256,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
               picturePath: _selectedImagePath,
               children: const [],
               sourceUrls: _sourceUrls,
+              isNsfw: _isNsfw,
             ),
             parent: _parentTag,
           ),
@@ -237,7 +290,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           showFernToast(
             context,
             AppLocalizations.of(context).creatorNameTaken,
-            icon: Icons.error_outline,
+            icon: Symbols.error,
           );
           return;
         }
@@ -250,6 +303,39 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
 
         navigator.pop(creator);
+
+      case CreateDialogType.fernie:
+        final result = await _saveFernie(
+          params: FernieEntity(id: unsavedId, name: name, picturePath: _selectedImagePath),
+        );
+
+        final fernie = result.data;
+        if (!mounted || result is! DataSuccess || fernie == null) return;
+
+        // El fernie nuevo tiene que salir en su pantalla y en el buscador del
+        // menú de asignación sin tener que reiniciar.
+        getIt<FerniesBloc>().add(const LoadFerniesEvent());
+
+        navigator.pop(fernie);
+
+      case CreateDialogType.model:
+        final result = await _saveModel(
+          params: RecognitionModelEntity(
+            id: unsavedId,
+            name: name,
+            picturePath: _selectedImagePath,
+            function: _function,
+            createdAt: DateTime.now(),
+          ),
+        );
+
+        final model = result.data;
+        if (!mounted || result is! DataSuccess || model == null) return;
+
+        // El modelo nuevo tiene que salir en su rejilla sin tener que reiniciar.
+        getIt<ModelsBloc>().add(const LoadModelsEvent());
+
+        navigator.pop(model);
     }
   }
 
@@ -271,8 +357,18 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       onClose: () => context.pop(),
       // Sólo las etiquetas se vinculan con direcciones: un creador se relaciona
       // con el contenido de otra manera.
+      // Las dos acciones que no son el formulario, juntas arriba: vincular
+      // direcciones y marcar la etiqueta. Estaba al lado del campo de la madre
+      // y ahí parecía parte de él, cuando no tiene nada que ver con de quién
+      // cuelga la etiqueta.
       trailingAction: widget.type == CreateDialogType.tag
-          ? _assignUrlsButton(texts)
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _nsfwToggle(texts),
+                _assignUrlsButton(texts),
+              ],
+            )
           : null,
       leftContent: FernDialogSidePanel(
         // Mientras no haya nombre se enseña el título de la variante, en tono
@@ -302,6 +398,10 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           switch (widget.type) {
             CreateDialogType.tag => _parentTagField(),
             CreateDialogType.creator => _socialProfilesField(),
+            // Un fernie nace sin nada más: sin regiones, que se le marcan desde
+            // el visor, y sin enlace, que se le pone en su ficha.
+            CreateDialogType.fernie => _fernieHint(texts),
+            CreateDialogType.model => _functionField(texts),
           },
         ],
       ),
@@ -322,7 +422,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
     return IconButton(
       icon: Icon(
-        hasUrls ? Icons.link : Icons.add_link,
+        hasUrls ? Symbols.link : Symbols.add_link,
         size: AppSizes.iconExtraLarge,
       ),
       tooltip: texts.assignUrlsTooltip,
@@ -330,7 +430,82 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     );
   }
 
+  /// Qué pregunta va a responder el modelo.
+  ///
+  /// Se elige al crearlo porque cambia con qué se entrena, no sólo cómo se lee
+  /// la salida; y se puede cambiar luego en su ficha, avisando de que hay que
+  /// volver a entrenar.
+  Widget _functionField(AppLocalizations texts) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.type.secondaryLabel(texts),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: AppSpacing.s),
+        for (final function in ModelFunction.values)
+          FernRadioTile<ModelFunction>(
+            value: function,
+            groupValue: _function,
+            label: switch (function) {
+              ModelFunction.boolean => texts.modelFunctionBoolean,
+              ModelFunction.classification => texts.modelFunctionClassification,
+            },
+            description: switch (function) {
+              ModelFunction.boolean => texts.modelFunctionBooleanDescription,
+              ModelFunction.classification =>
+                texts.modelFunctionClassificationDescription,
+            },
+            onChanged: _isBusy
+                ? null
+                : (value) => setState(() => _function = value),
+          ),
+      ],
+    );
+  }
+
+  /// Lo que le falta a un fernie recién creado.
+  ///
+  /// Se dice porque el diálogo se queda muy vacío y, sin explicación, un fernie
+  /// sin regiones parece algo a medio hacer en lugar de un contenedor esperando
+  /// a que le marquen contenido.
+  Widget _fernieHint(AppLocalizations texts) {
+    return Text(
+      texts.fernieNoRegions,
+      style: Theme.of(context)
+          .textTheme
+          .bodyMedium
+          ?.copyWith(color: context.colors.unremarked),
+    );
+  }
+
   /// Buscador de la etiqueta padre, para armar la jerarquía de etiquetas.
+  /// Marcar la etiqueta como NSFW ya al crearla.
+  ///
+  /// Un icono más arriba, junto al de las direcciones: las dos son cosas que se
+  /// le hacen a la etiqueta y que no forman parte de rellenar su ficha. Lo que
+  /// hace lo cuenta su tooltip; un bloque con explicación empujaría el diálogo
+  /// entero por algo que la mayoría no va a tocar.
+  ///
+  /// Sólo con contraseña puesta: sin ella, marcar no escondería nada.
+  Widget _nsfwToggle(AppLocalizations texts) {
+    if (!getIt<NsfwModeService>().isConfigured) {
+      return const SizedBox.shrink();
+    }
+
+    return Tooltip(
+      message: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
+      child: IconButton(
+        icon: Icon(
+          _isNsfw ? Symbols.visibility_off : Symbols.visibility_off,
+          color: _isNsfw ? context.colors.terciary : null,
+        ),
+        onPressed: () => setState(() => _isNsfw = !_isNsfw),
+      ),
+    );
+  }
+
   Widget _parentTagField() {
     final texts = AppLocalizations.of(context);
 
@@ -339,6 +514,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       hintText: texts.searchEllipsisHint,
       search: _searchParentTags,
       labelOf: (tag) => tag.name,
+      // Las marcadas se distinguen al autocompletar: elegir una sin
+      // saberlo es esconder contenido sin querer.
+      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
       onSelected: (tag) => setState(() => _parentTag = tag),
       debounce: searchDebounceDuration,
     );
@@ -377,7 +555,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           ),
         ),
         const SizedBox(height: AppSpacing.s),
-        FernInlineAddButton(
+        FernAddButton.compact(
           label: texts.addProfile,
           onTap: _addSocialField,
         ),

@@ -30,6 +30,46 @@ http.Response _html(String body) => http.Response(
 
 void main() {
   group('el resolvedor de enlaces externos', () {
+    test('una direccion muda de Redgifs se cambia por la que tiene sonido',
+        () async {
+      // Es por donde se colaban los videos sin sonido. Cuando la direccion ya
+      // apunta a un fichero suyo no se pasa por su API y no hay nada que
+      // elegir: se descarga tal cual. Y lo que el navegador rastrea de una
+      // pagina de Redgifs es el `<video>` que se esta reproduciendo, que en la
+      // previsualizacion es la copia muda.
+      final recorder = _Recorder((_) => _html(''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      final url = await resolver.resolve(
+        'https://media.redgifs.com/AlgoAlgo-silent.mp4',
+      );
+
+      expect(url, 'https://media.redgifs.com/AlgoAlgo.mp4');
+      expect(recorder.requests, isEmpty, reason: 'sigue sin pedir nada');
+    });
+
+    test('y una que ya tiene sonido no se toca', () async {
+      final recorder = _Recorder((_) => _html(''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      final url = await resolver.resolve(
+        'https://media.redgifs.com/AlgoAlgo-mobile.mp4',
+      );
+
+      expect(url, 'https://media.redgifs.com/AlgoAlgo-mobile.mp4');
+    });
+
+    test('lo de otros sitios no se reescribe nunca', () async {
+      // Reescribir direcciones a ciegas es la forma de acabar pidiendo ficheros
+      // que no existen.
+      final recorder = _Recorder((_) => _html(''));
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      final url = await resolver.resolve('https://cdn.test/algo-silent.mp4');
+
+      expect(url, 'https://cdn.test/algo-silent.mp4');
+    });
+
     test('devuelve tal cual lo que ya es un fichero, sin pedir nada',
         () async {
       final recorder = _Recorder((_) => _html(''));
@@ -132,6 +172,66 @@ void main() {
 
       expect(url, 'https://media.redgifs.com/Abc.mp4');
       expect(recorder.requests.last.path, endsWith('/dodgerbluedunlin'));
+    });
+
+    test('un video que nunca tuvo sonido se pide tal cual', () async {
+      // Pedir la copia con sonido de algo que no lo tiene da un fichero que no
+      // existe, asi que ese contenido se perderia entero.
+      final recorder = _Recorder((request) {
+        if (request.url.path.contains('auth/temporary')) {
+          return http.Response('{"token":"t"}', 200);
+        }
+        return http.Response(
+          '{"gif":{"hasAudio":false,'
+          '"urls":{"hd":"https://media.redgifs.com/Mudo-silent.mp4"}}}',
+          200,
+        );
+      });
+      final resolver = ExternalMediaResolver(client: recorder.client);
+
+      expect(
+        await resolver.resolve('https://www.redgifs.com/watch/mudo'),
+        'https://media.redgifs.com/Mudo-silent.mp4',
+      );
+    });
+
+    test('y dos resoluciones a la vez no se pisan el sonido', () async {
+      // El resolvedor es uno solo para toda la aplicacion y se le piden hasta
+      // cuatro descargas a la vez. Lo que Redgifs dice de cada video tiene que
+      // viajar con su peticion: si viviera en el objeto, otra descarga podria
+      // cambiarlo por el camino y al mudo se le pediria una copia con sonido que
+      // no existe.
+      //
+      // Esta prueba no cazo esa version —el planificador de Dart la salvaba— y
+      // por eso esta escrita al reves: fija la invariante de que cada resolucion
+      // se queda con su respuesta, sin depender de en que orden lleguen.
+      final resolver = ExternalMediaResolver(
+        client: MockClient((request) async {
+          if (request.url.path.contains('auth/temporary')) {
+            return http.Response('{"token":"t"}', 200);
+          }
+
+          final suena = request.url.path.endsWith('suena');
+
+          return http.Response(
+            '{"gif":{"hasAudio":$suena,"urls":{"hd":'
+            '"https://media.redgifs.com/${suena ? 'Suena' : 'Mudo'}-silent.mp4"'
+            '}}}',
+            200,
+          );
+        }),
+      );
+
+      // A la vez de verdad: las dos empiezan antes de que ninguna termine.
+      final both = await Future.wait([
+        resolver.resolve('https://www.redgifs.com/watch/mudo'),
+        resolver.resolve('https://www.redgifs.com/watch/suena'),
+      ]);
+
+      expect(both, [
+        'https://media.redgifs.com/Mudo-silent.mp4',
+        'https://media.redgifs.com/Suena.mp4',
+      ]);
     });
 
     test('un fallo del sitio deja el contenido sin resolver', () async {

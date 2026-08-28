@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 /// Cabecera de sección: icono + título en color atenuado.
 class FernSectionHeader extends StatelessWidget {
   final IconData icon;
+
+  /// Icono en forma de imagen del paquete, para lo que no tiene glifo propio.
+  /// Manda sobre [icon] cuando viene.
+
   final String title;
   final Widget? trailing;
 

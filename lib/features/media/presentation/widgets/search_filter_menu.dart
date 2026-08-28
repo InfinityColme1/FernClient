@@ -1,12 +1,14 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Cómo se nombra cada tipo de resultado en el filtro: en plural, porque lo que
@@ -30,8 +32,17 @@ extension _ImportSourceFilterLabel on ImportSource {
       };
 }
 
+/// Cómo se nombra cada clase de contenido en el filtro.
+extension _MediaKindFilterLabel on MediaKind {
+  String filterLabel(AppLocalizations texts) => switch (this) {
+        MediaKind.image => texts.filterImages,
+        MediaKind.gif => texts.filterGifs,
+        MediaKind.video => texts.filterVideos,
+      };
+}
+
 /// Botón "Filters" de la cabecera de la pantalla de media con su panel de
-/// casillas, en dos grupos:
+/// casillas, en tres grupos:
 ///
 /// - **de dónde salen los resultados**: una casilla por tipo (contenidos,
 ///   etiquetas y creadores). Recorta lo que ya se ha buscado, así que sin
@@ -51,15 +62,27 @@ class SearchFilterMenu extends StatelessWidget {
   /// Fuentes de las que se está viendo contenido.
   final Set<ImportSource> sourceFilters;
 
+  /// Clases de contenido que se están viendo.
+  final Set<MediaKind> typeFilters;
+
   /// Si hay una búsqueda en marcha, que es lo único que el filtro de tipos puede
   /// recortar.
   final bool hasSearch;
+
+  /// Si se enseña el grupo de «de dónde salen los resultados».
+  ///
+  /// Ese grupo sólo recorta una búsqueda, así que en una pantalla que no tiene
+  /// buscador —favoritos— no pinta nada: enseñarlo atenuado explicaría un filtro
+  /// que ahí no puede existir nunca.
+  final bool showResultTypes;
 
   const SearchFilterMenu({
     super.key,
     required this.filters,
     required this.sourceFilters,
+    required this.typeFilters,
     required this.hasSearch,
+    this.showResultTypes = true,
   });
 
   @override
@@ -74,19 +97,21 @@ class SearchFilterMenu extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _groupTitle(context, texts.filtersResultsFrom),
-              for (final type in SearchResultType.values)
-                FernCheckboxTile(
-                  label: type.filterLabel(texts),
-                  value: filters.contains(type),
-                  // Sin búsqueda no hay nada que recortar: la casilla se queda
-                  // atenuada en lugar de desaparecer, que así se entiende que el
-                  // filtro existe y por qué no hace nada.
-                  onChanged: hasSearch
-                      ? (_) => bloc.add(ToggleSearchFilterEvent(type))
-                      : null,
-                ),
-              const SizedBox(height: AppSpacing.m),
+              if (showResultTypes) ...[
+                _groupTitle(context, texts.filtersResultsFrom),
+                for (final type in SearchResultType.values)
+                  FernCheckboxTile(
+                    label: type.filterLabel(texts),
+                    value: filters.contains(type),
+                    // Sin búsqueda no hay nada que recortar: la casilla se queda
+                    // atenuada en lugar de desaparecer, que así se entiende que
+                    // el filtro existe y por qué no hace nada.
+                    onChanged: hasSearch
+                        ? (_) => bloc.add(ToggleSearchFilterEvent(type))
+                        : null,
+                  ),
+                const SizedBox(height: AppSpacing.m),
+              ],
               _groupTitle(context, texts.filtersSource),
               for (final source in ImportSource.listed)
                 FernCheckboxTile(
@@ -94,13 +119,23 @@ class SearchFilterMenu extends StatelessWidget {
                   value: sourceFilters.contains(source),
                   onChanged: (_) => bloc.add(ToggleSourceFilterEvent(source)),
                 ),
+              const SizedBox(height: AppSpacing.m),
+              // De qué tipo es un fichero es un dato suyo, así que esto vale
+              // con búsqueda y sin ella, igual que la fuente.
+              _groupTitle(context, texts.filtersType),
+              for (final kind in MediaKind.values)
+                FernCheckboxTile(
+                  label: kind.filterLabel(texts),
+                  value: typeFilters.contains(kind),
+                  onChanged: (_) => bloc.add(ToggleTypeFilterEvent(kind)),
+                ),
             ],
           ),
         ),
       ],
       builder: (context, toggle) => FernPillButton(
         label: texts.filters,
-        icon: Icons.tune,
+        icon: Symbols.tune,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: toggle,

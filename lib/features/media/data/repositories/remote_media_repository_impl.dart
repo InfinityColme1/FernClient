@@ -14,7 +14,7 @@ import 'package:Fern/features/media/data/services/download_pool.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
-import 'package:Fern/features/media/data/datasources/remote_post.dart';
+import 'package:Fern/features/media/domain/entities/remote_creator.dart';
 import 'package:Fern/features/media/domain/entities/empty_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/post_link.dart';
@@ -73,6 +73,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   Stream<DataState<MediaSummaryEntity>> scanRemoteSource(
     ImportSource source, {
     bool untilLastImport = false,
+    Set<String> creators = const {},
   }) async* {
     switch (source) {
       case ImportSource.reddit:
@@ -86,7 +87,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
       case ImportSource.pinterest:
         yield* _scanPinterest(untilLastImport: untilLastImport);
       case ImportSource.pawchive:
-        yield* _scanPawchive(untilLastImport: untilLastImport);
+        yield* _scanPawchive(
+          untilLastImport: untilLastImport,
+          creators: creators,
+        );
       case ImportSource.all:
       case ImportSource.local:
       // El navegador tampoco: de él no se puede pedir nada, es el usuario quien
@@ -534,8 +538,60 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   /// un comprimido) sí se hace en su turno: preguntarle dos cosas a la vez al
   /// usuario no tendría sentido, y abrir comprimidos a la vez sólo pelearía por
   /// el disco.
+  @override
+  Future<DataState<List<RemoteCreator>>> remoteCreators(
+    ImportSource source,
+  ) async {
+    // Hoy sólo Pawchive. Las demás necesitan que se compruebe su camino de red
+    // con una sesión de verdad, y escribirlo a ciegas sería un camino que nunca
+    // se ha visto funcionar.
+    if (source != ImportSource.pawchive) return const DataSuccess([]);
+
+    final credentials = _settingsRepository.getSettings().pawchive;
+    if (!credentials.isComplete) {
+      return DataException(Exception('Pawchive is not configured'));
+    }
+
+    try {
+      // La fecha va desde el primer momento: sale de esta máquina, no cuesta ni
+      // una petición, y es lo que evita que cincuenta tarjetas se queden
+      // diciendo «contando…» mientras se pregunta por ellas de una en una.
+      final dates = _preferencesService.importDates(ImportSource.pawchive);
+
+      return DataSuccess([
+        for (final creator in await _pawchive.favoriteCreators(credentials))
+          creator.copyWith(lastImport: dates[creator.id]),
+      ]);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
+  Future<int?> countNewPosts(ImportSource source, RemoteCreator creator) async {
+    if (source != ImportSource.pawchive) return null;
+
+    final credentials = _settingsRepository.getSettings().pawchive;
+    if (!credentials.isComplete) return null;
+
+    // La clave de colección lleva dentro el servicio y el identificador, que es
+    // lo que la API pide por separado.
+    final user = creator.id.startsWith('${creator.service}-')
+        ? creator.id.substring(creator.service.length + 1)
+        : creator.id;
+
+    return _pawchive.newPostCount(
+      credentials,
+      service: creator.service,
+      user: user,
+      stopAt: _preferencesService
+          .importMarkers(ImportSource.pawchive)[creator.id],
+    );
+  }
+
   Stream<DataState<MediaSummaryEntity>> _scanPawchive({
     required bool untilLastImport,
+    Set<String> creators = const {},
   }) {
     // El recorrido va por su cuenta y va soltando lo que sale, en lugar de
     // producir y consumir al mismo paso: es lo que permite que unas descargas
@@ -549,6 +605,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
       _pawchiveInto(
         out,
         untilLastImport: untilLastImport,
+        creators: creators,
         isCancelled: () => isCancelled,
       ).whenComplete(out.close),
     );
@@ -560,6 +617,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   Future<void> _pawchiveInto(
     StreamController<DataState<MediaSummaryEntity>> out, {
     required bool untilLastImport,
+    required Set<String> creators,
     required bool Function() isCancelled,
   }) async {
     final settings = _settingsRepository.getSettings();
@@ -569,7 +627,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
       return;
     }
 
-    final byCreators = credentials.byFavoriteCreators;
+    // Haber elegido creadores manda sobre el ajuste: quien pulsa unas tarjetas
+    // está pidiendo lo de ésos, tenga puesto lo que tenga puesto.
+    final byCreators = creators.isNotEmpty || credentials.byFavoriteCreators;
 
     // La marca es una por autor cuando se va por creadores, y una sola cuando
     // se buscan las publicaciones marcadas.
@@ -585,6 +645,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
     final newest = <String, String>{};
     String? newestPost;
+
+    // A quién se le ha mirado, que no es lo mismo que de quién ha salido algo:
+    // el que no ha publicado nada nuevo no suelta ni una publicación, y aun así
+    // se le ha mirado.
+    final visited = <String>{};
     var imported = 0;
     var failed = 0;
 
@@ -624,7 +689,12 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
     try {
       final posts = byCreators
-          ? _pawchive.creatorPosts(credentials, stopAt: markers)
+          ? _pawchive.postsOfCreators(
+              credentials,
+              only: creators,
+              stopAt: markers,
+              onCreator: visited.add,
+            )
           : _pawchive.favoritePosts(credentials, stopAt: marker);
 
       await for (final post in posts) {
@@ -644,17 +714,21 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           );
         }
 
-        // El aviso de los sitios de descargas no espera a nadie.
-        _decisions.noticeRepository(post.title, post.repositoryLinks);
+        // Lo que hace falta que mire el usuario se apunta y se cuenta al final,
+        // todo junto. Antes cada publicación abría su propio aviso sin esperar
+        // a que se cerrara el anterior.
+        _decisions.notePendingLinks(post.title, post.linksNeedingUser);
 
         final links = post.downloadableLinks;
         if (links.isEmpty) continue;
 
         // Un solo enlace a un fichero es contenido sin más: no hay nada que
-        // preguntar ni que abrir, así que se descarga como lo adjunto.
-        if (links.length == 1 && links.single.kind == PostLinkKind.media) {
+        // preguntar ni que abrir, así que se descarga como lo adjunto. Cuenta
+        // también el de un sitio de descargas cuya dirección directa se deduce:
+        // ahí tampoco hay nada que elegir, es un fichero.
+        if (links.length == 1 && links.single.kind != PostLinkKind.archive) {
           await pool.add(() => bring(
-                links.single.url,
+                links.single.downloadUrl,
                 'pawchive_${post.id}_link0',
                 post.title,
                 post.sourceUrls,
@@ -662,8 +736,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           continue;
         }
 
-        // Y lo que hay que decidir o abrir, en su turno.
-        final choice = await _decisions.chooseLinks(post.title, links);
+        // Y lo que hay que decidir se aparca: la importación no espera a
+        // nadie. Lo que el usuario elija se traerá en su propia tarea.
+        final choice = await _decisions.chooseLinks(LinkReviewRequest(
+          postTitle: post.title,
+          links: links,
+          source: ImportSource.pawchive,
+          namePrefix: 'pawchive_${post.id}_link',
+          sourceUrls: post.sourceUrls,
+        ));
 
         for (final (index, link) in links.indexed) {
           if (isCancelled()) break;
@@ -671,7 +752,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
           if (link.kind != PostLinkKind.archive) {
             await pool.add(() => bring(
-                  link.url,
+                  link.downloadUrl,
                   'pawchive_${post.id}_link$index',
                   post.title,
                   post.sourceUrls,
@@ -729,6 +810,22 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         ImportSource.pawchive,
         entry.value,
         collection: entry.key,
+      );
+    }
+
+    // Y cuándo se miró, que va por **todos** los que se han mirado y no sólo por
+    // los que han traído algo. La marca dice «de aquí para atrás ya está» y por
+    // eso sólo se mueve cuando llega algo nuevo; la fecha dice «te he mirado», y
+    // eso pasa aunque no hubiera nada. Sin esta diferencia, el creador que no
+    // publica se queda con la fecha de la última vez que sí publicó, y su tarjeta
+    // sigue diciendo que tiene novedades para siempre.
+    final at = DateTime.now();
+
+    for (final collection in visited) {
+      await _preferencesService.setLastImport(
+        ImportSource.pawchive,
+        at,
+        collection: collection,
       );
     }
 

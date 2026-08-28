@@ -1,25 +1,33 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
-import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_source_urls_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
+import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
-import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/media/presentation/widgets/tag_relations_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Ficha de la etiqueta elegida en la pantalla de gestión de etiquetas.
@@ -55,7 +63,9 @@ class _TagCardState extends State<TagCard> {
   final _updateTag = getIt<UpdateTagUseCase>();
   final _deleteTag = getIt<DeleteTagUseCase>();
   final _saveTagSourceUrls = getIt<SaveTagSourceUrlsUseCase>();
-  final _avatarStorage = getIt<AvatarStorageService>();
+  final _setTagNsfw = getIt<SetTagNsfwUseCase>();
+  final _saveTagSiblings = getIt<SaveTagSiblingsUseCase>();
+  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.tag.name);
@@ -69,16 +79,25 @@ class _TagCardState extends State<TagCard> {
   /// con cuáles abrirlo y para no perderlas al guardar el formulario.
   late List<String> _sourceUrls = widget.tag.sourceUrls;
 
-  /// Lo que hay escrito en el buscador de etiqueta padre.
-  ///
-  /// Se guarda aparte de [_parent] porque lo que manda al guardar es el campo: si
-  /// está vacío, la etiqueta se queda sin padre, aunque tuviera uno al entrar.
-  late String _parentQuery = widget.parent?.name ?? '';
 
-  /// Clave del buscador de etiqueta padre. Cambiarla lo hace nacer de nuevo, que
-  /// es la forma de vaciarlo desde fuera: el texto escrito lo lleva el propio
-  /// campo, y arranca con el valor que se le pasa.
-  Key _parentFieldKey = UniqueKey();
+
+
+  /// La etiqueta está marcada como contenido no apto.
+  ///
+  /// Se guarda en el momento de tocar el interruptor y no con el botón de
+  /// guardar: es una decisión que hace desaparecer contenido de la vista, y
+  /// dejarla a medias —marcada en pantalla, sin marcar en la base de datos—
+  /// sería la peor forma de contarlo.
+  late bool _isNsfw = widget.tag.isNsfw;
+
+  /// A cuántos contenidos afecta la marca, cuando se acaba de tocar.
+  /// Las etiquetas relacionadas, tal y como se están editando.
+  ///
+  /// Se guardan en el momento de tocarlas y no con el botón de guardar: son una
+  /// relación entre dos etiquetas, no un campo de ésta, y la otra tiene que
+  /// enterarse aunque esta ficha se cierre sin guardar.
+  late List<TagEntity> _siblings = widget.tag.siblings;
+
 
   /// La etiqueta y todo lo que cuelga de ella, por identificador.
   late final Set<int> _ownBranch = _branchIds(widget.tag);
@@ -133,7 +152,7 @@ class _TagCardState extends State<TagCard> {
     // ficha en espera. El explorador de ficheros no: allí el tiempo lo pone el
     // usuario.
     await _run(() async {
-      final storedPath = await _avatarStorage.store(path);
+      final storedPath = await _storeAvatar(params: path);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);
@@ -153,8 +172,6 @@ class _TagCardState extends State<TagCard> {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
-    final parent = _parentQuery.trim().isEmpty ? null : _parent;
-
     final result = await _updateTag(
       params: UpdateTagParams(
         tag: TagEntity(
@@ -166,13 +183,43 @@ class _TagCardState extends State<TagCard> {
           // lo que le llega: sin ellas, guardar el nombre las borraría.
           sourceUrls: _sourceUrls,
         ),
-        parent: parent,
+        parent: _parent,
       ),
     );
     if (result is! DataSuccess || !mounted) return;
 
     getIt<TagsBloc>().add(const LoadTagsEvent());
     context.read<MediaBloc>().add(LoadMediaByTagEvent(widget.tag.id));
+  }
+
+  /// Marca o desmarca la etiqueta, y dice a cuánto afecta.
+  ///
+  /// Con el bloqueo cerrado, marcarla hace que la ficha y su contenido
+  /// desaparezcan de la pantalla en cuanto se relea: por eso el número se
+  /// enseña aquí y ahora, que es el único momento en el que se puede leer.
+  Future<void> _setNsfw(bool value) async {
+    final texts = AppLocalizations.of(context);
+
+    final result = await _setTagNsfw(
+      params: SetTagNsfwParams(tagId: widget.tag.id, isNsfw: value),
+    );
+
+    if (result is! DataSuccess<int> || !mounted) return;
+
+    setState(() => _isNsfw = value);
+
+    // Cuánto contenido acaba de esconderse, dicho al pulsar y no como texto fijo
+    // en la ficha: es la respuesta a lo que se acaba de hacer, y sólo hace falta
+    // ese momento. Con el filtro puesto, además, ese contenido desaparece de la
+    // rejilla de abajo, y sin decir cuánto era parecería que se ha perdido.
+    showFernToast(
+      context,
+      texts.tagNsfwAffected(result.data ?? 0),
+      icon: value ? Symbols.visibility_off : Symbols.visibility,
+    );
+
+    getIt<TagsBloc>().add(const LoadTagsEvent());
+    getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
   }
 
   /// Abre el diálogo de las direcciones de la etiqueta y guarda lo que se
@@ -206,19 +253,6 @@ class _TagCardState extends State<TagCard> {
     });
   }
 
-  /// Suelta la etiqueta de su padre: deja de estar entre las hijas de aquél.
-  ///
-  /// Aquí sólo se vacía el buscador de etiqueta padre. El cambio se escribe al
-  /// guardar, que es cuando el campo vacío se manda como «sin padre»: es entonces
-  /// cuando la etiqueta pasa a verse como raíz en la lista de al lado y en el
-  /// menú lateral.
-  void _removeParent() {
-    setState(() {
-      _parent = null;
-      _parentQuery = '';
-      _parentFieldKey = UniqueKey();
-    });
-  }
 
   /// Borra la etiqueta de la base de datos.
   ///
@@ -259,9 +293,18 @@ class _TagCardState extends State<TagCard> {
           children: [
             // En la esquina superior derecha, como en el diálogo de creación: es
             // la misma acción y se busca en el mismo sitio.
-            Align(
-              alignment: Alignment.topRight,
-              child: _assignUrlsButton(texts),
+            // Arriba a la derecha, junto a las direcciones: son las dos
+            // acciones que no editan la etiqueta. Reconocer estaba abajo con las
+            // demás, pero eran cuatro píldoras contadas y la quinta pasaba la
+            // fila a dos líneas, con lo que la ficha ya no cabía en la pantalla.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _nsfwButton(texts),
+                _relationsButton(texts),
+                _recognizeButton(texts),
+                _assignUrlsButton(texts),
+              ],
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -276,7 +319,7 @@ class _TagCardState extends State<TagCard> {
                     // la pantalla con la rejilla, y el avatar es lo que más ocupa.
                     avatar: FernEditableAvatar(
                       imagePath: _picturePath,
-                      fallbackIcon: Icons.label_outline,
+                      fallbackIcon: Symbols.label,
                       radius: AppSizes.avatarXLarge,
                       iconSize: AppSizes.iconHuge,
                       onTap: _pickImage,
@@ -298,7 +341,11 @@ class _TagCardState extends State<TagCard> {
                         onChanged: (_) => setState(() {}),
                       ),
                       const SizedBox(height: AppSpacing.l),
-                      _parentTagField(texts),
+                      // De quién cuelga y con quién va, en una línea: el detalle
+                      // se ve y se cambia en su árbol. Los dos buscadores y la
+                      // lista de relacionadas ocupaban tanto aquí que la rejilla
+                      // de contenido de debajo se salía de la pantalla.
+                      _relationsSummary(texts),
                     ],
                   ),
                 ),
@@ -320,19 +367,23 @@ class _TagCardState extends State<TagCard> {
               children: [
                 FernPillButton(
                   label: texts.actionDeleteTag,
-                  icon: Icons.delete_outline,
+                  icon: Symbols.delete,
                   backgroundColor: context.colors.error,
                   foregroundColor: Colors.white,
                   onPressed: _isBusy ? null : () => _run(_delete),
                 ),
-                _removeParentButton(texts),
                 _unassignButton(texts),
                 FernPillButton(
                   label: texts.actionSave,
-                  icon: Icons.check,
+                  icon: Symbols.check,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
-                  onPressed: _isBusy ? null : () => _run(_save),
+                  // Con el padre en error no se guarda: guardar a medias —el
+                  // nombre sí, el padre no— es lo que hacía que el fallo pasara
+                  // desapercibido.
+                  onPressed: _isBusy
+                      ? null
+                      : () => _run(_save),
                 ),
               ],
             ),
@@ -346,11 +397,37 @@ class _TagCardState extends State<TagCard> {
   ///
   /// Cambia de icono cuando ya hay alguna: es la única señal de que la etiqueta
   /// etiqueta sola, porque las direcciones no se ven en el formulario.
+  /// El interruptor de NSFW, hecho un icono más de la fila de arriba.
+  ///
+  /// Era un bloque con título, descripción y recuento, y ocupaba tanto que la
+  /// rejilla de contenido de debajo se salía de la pantalla. Aquí no añade una
+  /// sola línea de alto: reaprovecha la fila que ya estaba, y lo que hay que
+  /// saber —cuánto contenido afecta— se dice al pulsarlo, que es cuando importa,
+  /// y no permanentemente.
+  ///
+  /// Sólo con contraseña puesta. Sin ella, marcar no escondería nada (ver
+  /// `NsfwVisibility`) y el botón prometería algo que no va a pasar.
+  Widget _nsfwButton(AppLocalizations texts) {
+    if (!getIt<NsfwModeService>().isConfigured) return const SizedBox.shrink();
+
+    return IconButton(
+      icon: Icon(
+        _isNsfw ? Symbols.visibility_off : Symbols.visibility_off,
+        size: AppSizes.iconCardAction,
+        // Encendido, con el color con el que la aplicación marca lo que hay que
+        // mirar dos veces. Apagado se queda como los demás iconos de la fila.
+        color: _isNsfw ? context.colors.terciary : null,
+      ),
+      tooltip: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
+      onPressed: _isBusy ? null : () => _run(() => _setNsfw(!_isNsfw)),
+    );
+  }
+
   Widget _assignUrlsButton(AppLocalizations texts) {
     return IconButton(
       icon: Icon(
-        _sourceUrls.isEmpty ? Icons.add_link : Icons.link,
-        size: AppSizes.iconExtraLarge,
+        _sourceUrls.isEmpty ? Symbols.add_link : Symbols.link,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
@@ -360,31 +437,158 @@ class _TagCardState extends State<TagCard> {
   /// Buscador de la etiqueta padre, con la que ya tiene escrita.
   ///
   /// Vaciar el campo es soltarla: la etiqueta se queda como raíz al guardar.
-  Widget _parentTagField(AppLocalizations texts) {
-    return FernEntitySearchField<TagEntity>(
-      key: _parentFieldKey,
-      label: texts.parentTagLabel,
-      hintText: texts.searchEllipsisHint,
-      initialValue: _parentQuery,
-      search: _searchParentTags,
-      labelOf: (tag) => tag.name,
-      onSelected: (tag) => setState(() => _parent = tag),
-      // Con `setState` para que el botón de quitar el padre siga al campo: sin
-      // nada escrito no hay padre del que soltarse.
-      onChanged: (query) => setState(() => _parentQuery = query),
-      debounce: searchDebounceDuration,
+  /// De quién cuelga y con cuántas va, en una línea.
+  ///
+  /// Sólo el resumen: la forma que tienen las relaciones se ve en su árbol, y
+  /// repetirla aquí devolvería a la ficha el sitio que se le acaba de quitar.
+  Widget _relationsSummary(AppLocalizations texts) {
+    final parent = _parent;
+
+    return Row(
+      children: [
+        Icon(
+          Symbols.account_tree,
+          size: AppSizes.iconSmall,
+          color: context.colors.unremarked,
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Expanded(
+          child: Text(
+            [
+              if (parent == null)
+                texts.tagRelationsNoParent
+              else
+                texts.tagRelationsParentIs(parent.name),
+              if (_siblings.isNotEmpty)
+                texts.tagRelationsSiblingCount(_siblings.length),
+            ].join(' · '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: context.colors.gray),
+          ),
+        ),
+      ],
     );
   }
 
-  /// Suelta la etiqueta de su padre. Sin padre escrito no hay de quién soltarla,
-  /// así que queda atenuado.
-  Widget _removeParentButton(AppLocalizations texts) {
-    return FernPillButton(
-      label: texts.actionRemoveParentTag,
-      icon: Icons.link_off,
-      backgroundColor: context.colors.secondary,
-      foregroundColor: context.colors.black,
-      onPressed: _parentQuery.trim().isEmpty ? null : _removeParent,
+  /// Abre el árbol de relaciones.
+  Widget _relationsButton(AppLocalizations texts) {
+    return IconButton(
+      icon: const Icon(
+        Symbols.account_tree,
+        size: AppSizes.iconCardAction,
+      ),
+      tooltip: texts.tagRelationsTooltip,
+      onPressed: _isBusy ? null : _editRelations,
+    );
+  }
+
+  /// Enseña el árbol y aplica lo que se decida en él.
+  ///
+  /// La madre se queda pendiente de guardar, como estaba: es un cambio del
+  /// formulario. Las relacionadas se escriben en el momento, también como
+  /// estaba: no son un campo de la etiqueta sino un enlace entre dos, y quien
+  /// las añade espera verlas puestas.
+  Future<void> _editRelations() async {
+    final result = await showFernDialog<TagRelations, Never>(
+      context: context,
+      builder: (_) => TagRelationsDialog(
+        tag: widget.tag,
+        parent: _parent,
+        siblings: _siblings,
+        searchParents: _searchParentTags,
+        searchSiblings: _searchSiblings,
+        createTag: () => showFernDialog<TagEntity, Never>(
+          context: context,
+          builder: (_) => const FernCreateDialog.tag(),
+        ),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() => _parent = result.parent);
+
+    final before = {for (final one in _siblings) one.id};
+    final after = {for (final one in result.siblings) one.id};
+
+    if (!setEquals(before, after)) {
+      await _run(() => _saveSiblings(result.siblings));
+    }
+  }
+
+
+
+  /// Las candidatas a hermana: ni ella misma, ni su rama, ni las que ya lo son.
+  ///
+  /// Su rama fuera porque madres e hijas ya están relacionadas por la jerarquía:
+  /// añadirlas además como hermanas no cambiaría nada y haría dudar de si son
+  /// dos cosas distintas.
+  Future<List<TagEntity>> _searchSiblings(String query) async {
+    final result = await _searchTags(params: query);
+    if (result is! DataSuccess) return const [];
+
+    final already = {for (final sibling in _siblings) sibling.id};
+
+    return [
+      for (final tag in result.data ?? const <TagEntity>[])
+        if (!_ownBranch.contains(tag.id) && !already.contains(tag.id)) tag,
+    ];
+  }
+
+
+
+  /// Guarda la lista y rehace el campo de búsqueda para que se vacíe.
+  Future<void> _saveSiblings(List<TagEntity> siblings) async {
+    final result = await _saveTagSiblings(
+      params: SaveTagSiblingsParams(
+        tagId: widget.tag.id,
+        siblingIds: [for (final one in siblings) one.id],
+      ),
+    );
+
+    if (result is! DataSuccess<TagEntity> || !mounted) return;
+
+    setState(() {
+      _siblings = result.data?.siblings ?? siblings;
+    });
+
+    // El menú lateral no cambia —las hermanas no salen ahí— pero la ficha de la
+    // otra etiqueta sí: acaba de ganar o perder una relación.
+    getIt<TagsBloc>().add(const LoadTagsEvent());
+  }
+
+
+
+
+  /// Manda a reconocer todo el contenido de esta etiqueta.
+  ///
+  /// Es el cuarto punto de entrada del D16, y el único que no parte de una
+  /// selección: aquí la lista sale de la base de datos. Va por el mismo sitio
+  /// que los otros tres, que es quien mira si hay con qué reconocer y lo
+  /// cuenta.
+  Widget _recognizeButton(AppLocalizations texts) {
+    return IconButton(
+      icon: const Icon(
+        Symbols.auto_awesome,
+        size: AppSizes.iconCardAction,
+      ),
+      tooltip: texts.recognizeTagTooltip,
+      onPressed: _isBusy ? null : _recognizeAll,
+    );
+  }
+
+  Future<void> _recognizeAll() async {
+    final found = await getIt<GetMediaByTagUseCase>()(params: widget.tag.id);
+    if (!mounted) return;
+
+    await requestRecognition(
+      context,
+      found is DataSuccess ? [for (final one in found.data ?? const []) one.id] : const [],
+      name: widget.tag.name,
     );
   }
 
@@ -395,7 +599,7 @@ class _TagCardState extends State<TagCard> {
       selector: (state) => state.selectedIds.isNotEmpty,
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionUnassignTag,
-        icon: Icons.label_off_outlined,
+        icon: Symbols.label_off,
         backgroundColor: context.colors.secondary,
         foregroundColor: context.colors.black,
         onPressed: hasSelection

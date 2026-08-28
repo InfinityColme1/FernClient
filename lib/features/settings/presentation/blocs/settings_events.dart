@@ -1,6 +1,7 @@
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/danbooru_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/gelbooru_settings_entity.dart';
+import 'package:Fern/features/settings/domain/entities/notification_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pinterest_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/reddit_settings_entity.dart';
@@ -67,6 +68,29 @@ class AvatarsDirectoryChangedEvent extends SettingsEvents {
   List<Object?> get props => [path];
 }
 
+/// Cambiar la carpeta de reconocimiento se lleva consigo lo que ya hubiera
+/// dentro: la aplicación carga los modelos de ahí, así que dejarlos atrás sería
+/// quedarse sin ellos.
+class RecognitionDirectoryChangedEvent extends SettingsEvents {
+  final String path;
+
+  const RecognitionDirectoryChangedEvent(this.path);
+
+  @override
+  List<Object?> get props => [path];
+}
+
+/// Cambia cómo avisa la aplicación: el interruptor general, el silencio, el
+/// volumen, el corte o cualquiera de las vías de un aviso concreto.
+class NotificationSettingsChangedEvent extends SettingsEvents {
+  final NotificationSettingsEntity notifications;
+
+  const NotificationSettingsChangedEvent(this.notifications);
+
+  @override
+  List<Object?> get props => [notifications];
+}
+
 class FileOrganizationChangedEvent extends SettingsEvents {
   final FileOrganizationCriteria criteria;
 
@@ -86,6 +110,48 @@ class AutoTagRemoteSourceToggledEvent extends SettingsEvents {
   final bool enabled;
 
   const AutoTagRemoteSourceToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Enciende o apaga que lo reconocido vuelva a la pantalla de importación.
+class RecognizeOnImportToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const RecognizeOnImportToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class ReturnRecognizedToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ReturnRecognizedToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Enciende o apaga que coger la barra de un vídeo lo pare.
+///
+/// Sólo en el modo de mirar: marcando regiones se para siempre, porque una
+/// región se marca sobre un fotograma quieto.
+/// Al salir del visor, ¿la rejilla va a buscar lo que se acaba de mirar?
+class ReturnToViewedMediaToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ReturnToViewedMediaToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class PauseWhenSeekingToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const PauseWhenSeekingToggledEvent(this.enabled);
 
   @override
   List<Object?> get props => [enabled];
@@ -140,6 +206,76 @@ class ViewerSaveBehaviorChangedEvent extends SettingsEvents {
 
   @override
   List<Object?> get props => [behavior];
+}
+
+/// Enciende o apaga la búsqueda automática de contenido repetido.
+class AutomaticDuplicateScanToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const AutomaticDuplicateScanToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Cambia qué se ve con el modo NSFW abierto.
+/// Enciende o apaga que marcar una etiqueta arrastre a las que cuelgan de ella.
+class NsfwChildTagsToggledEvent extends SettingsEvents {
+  final bool marksChildren;
+
+  const NsfwChildTagsToggledEvent(this.marksChildren);
+
+  @override
+  List<Object?> get props => [marksChildren];
+}
+
+class NsfwUnlockedViewChangedEvent extends SettingsEvents {
+  final NsfwUnlockedView view;
+
+  const NsfwUnlockedViewChangedEvent(this.view);
+
+  @override
+  List<Object?> get props => [view];
+}
+
+/// Cambia qué se ve con el modo NSFW cerrado.
+class NsfwLockedViewChangedEvent extends SettingsEvents {
+  final NsfwLockedView view;
+
+  const NsfwLockedViewChangedEvent(this.view);
+
+  @override
+  List<Object?> get props => [view];
+}
+
+/// Enciende o apaga el mirar vídeos y GIF al buscar repetidos.
+class DuplicateScanMovingToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const DuplicateScanMovingToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Cambia cada cuánto se busca contenido repetido por cuenta propia.
+class DuplicateScanPeriodChangedEvent extends SettingsEvents {
+  final DuplicateScanPeriod period;
+
+  const DuplicateScanPeriodChangedEvent(this.period);
+
+  @override
+  List<Object?> get props => [period];
+}
+
+/// Mueve el listón a partir del cual dos contenidos dejan de ser el mismo.
+class DuplicateThresholdChangedEvent extends SettingsEvents {
+  final int threshold;
+
+  const DuplicateThresholdChangedEvent(this.threshold);
+
+  @override
+  List<Object?> get props => [threshold];
 }
 
 /// Credenciales de Reddit tal y como han quedado tras tocar uno de sus campos.
@@ -202,6 +338,16 @@ class PawchiveSettingsChangedEvent extends SettingsEvents {
 
 /// Página de inicio del navegador de la aplicación, tal y como ha quedado tras
 /// tocar su campo.
+/// Cuándo hay que apartar el navegador mientras se importa.
+class BrowserAsideChangedEvent extends SettingsEvents {
+  final BrowserAsidePolicy policy;
+
+  const BrowserAsideChangedEvent(this.policy);
+
+  @override
+  List<Object?> get props => [policy];
+}
+
 class BrowserHomeChangedEvent extends SettingsEvents {
   final String url;
 

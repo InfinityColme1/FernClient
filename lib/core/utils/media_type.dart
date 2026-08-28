@@ -25,6 +25,28 @@ class MediaExtensions {
   static const gif = ['.gif'];
 }
 
+/// Las tres clases de contenido que la aplicación distingue.
+///
+/// Sale de aquí y no de cada pantalla porque la discriminación por extensión ya
+/// vive en este fichero: tenerla en dos sitios es tener dos respuestas distintas
+/// a la misma pregunta en cuanto alguien añada una extensión.
+enum MediaKind {
+  image,
+  gif,
+  video;
+
+  /// De qué clase es el fichero de [path].
+  static MediaKind of(String path) {
+    if (path.isVideoPath) return MediaKind.video;
+    if (path.isGifPath) return MediaKind.gif;
+
+    return MediaKind.image;
+  }
+}
+
+/// Las tres, que es la biblioteca entera.
+const allMediaKinds = {MediaKind.image, MediaKind.gif, MediaKind.video};
+
 extension MediaPathX on String {
   bool _hasAnyExtension(List<String> extensions) {
     final path = toLowerCase();

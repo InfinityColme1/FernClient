@@ -10,6 +10,9 @@ class FernMenuOption<T> {
   final String label;
   final IconData icon;
 
+  /// Icono en forma de imagen del paquete, para lo que no tiene glifo propio.
+  /// Manda sobre [icon] cuando viene.
+
   const FernMenuOption({
     required this.value,
     required this.label,
@@ -30,11 +33,11 @@ class FernMenuOption<T> {
 /// ```dart
 /// FernPopupMenu<CreateOption>(
 ///   options: const [
-///     FernMenuOption(value: CreateOption.tag, label: "Tag", icon: Icons.label_outline),
+///     FernMenuOption(value: CreateOption.tag, label: "Tag", icon: Symbols.label),
 ///   ],
 ///   onSelected: _create,
 ///   builder: (context, toggle) =>
-///       IconButton(onPressed: toggle, icon: const Icon(Icons.add)),
+///       IconButton(onPressed: toggle, icon: const Icon(Symbols.add)),
 /// );
 /// ```
 class FernPopupMenu<T> extends StatelessWidget {

@@ -1,43 +1,30 @@
+import 'dart:math' as math;
+
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
+import 'package:Fern/features/settings/presentation/widgets/duplicates_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/nsfw_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/appearance_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/browser_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/help_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/settings_section_list.dart';
+import 'package:Fern/features/settings/presentation/widgets/database_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/notification_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/recognition_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/remote_sources_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/viewer_settings_section.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-/// Las secciones de la pantalla de ajustes, en el orden en el que se listan.
-enum SettingsSection {
-  language(icon: Icons.language),
-  appearance(icon: Icons.palette_outlined),
-  viewer(icon: Icons.slideshow_outlined),
-  files(icon: Icons.folder_outlined),
-  remoteSources(icon: Icons.cloud_download_outlined),
-
-  /// Experimental: los ajustes del navegador de dentro de la aplicación.
-  browser(icon: Icons.travel_explore_outlined);
-
-  const SettingsSection({required this.icon});
-
-  final IconData icon;
-
-  String title(AppLocalizations texts) => switch (this) {
-        SettingsSection.language => texts.settingsLanguage,
-        SettingsSection.appearance => texts.settingsAppearance,
-        SettingsSection.viewer => texts.settingsViewer,
-        SettingsSection.files => texts.settingsFiles,
-        SettingsSection.remoteSources => texts.settingsRemoteSources,
-        SettingsSection.browser => texts.settingsBrowser,
-      };
-}
 
 /// Pantalla de ajustes: la lista de secciones a la izquierda y las opciones de
 /// la sección elegida a la derecha.
@@ -75,91 +62,28 @@ class _SettingsDialogState extends State<SettingsDialog> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusDialog),
         ),
-        child: SizedBox(
-          width: AppSizes.settingsDialogWidth,
-          height: AppSizes.settingsDialogHeight,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _sectionList(context),
-              Expanded(child: _sectionContent(context)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Columna izquierda: título y una fila por sección.
-  Widget _sectionList(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: AppSizes.settingsNavWidth,
-      color: context.colors.secondary,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.xl,
-        horizontal: AppSpacing.l,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.m,
-              bottom: AppSpacing.xl,
+        // El tamaño que pide, o el que quepa. Era fijo, y en una ventana más
+        // baja que el diálogo lo que sobraba se salía por abajo en vez de
+        // encogerse: la aplicación se puede reescalar y esto tiene que
+        // acompañar.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SizedBox(
+            width: math.min(
+              AppSizes.settingsDialogWidth,
+              constraints.maxWidth,
             ),
-            child: Text(
-              AppLocalizations.of(context).settingsTitle,
-              style: theme.textTheme.headlineMedium,
-            ),
-          ),
-          for (final section in SettingsSection.values)
-            _sectionTile(context, section),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionTile(BuildContext context, SettingsSection section) {
-    final theme = Theme.of(context);
-    final isSelected = section == _section;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Material(
-        color: isSelected ? context.colors.primary : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-          // La fila de una sección es un botón, y como tal tiene que decirlo al
-          // pasar el ratón: sin fondo ni borde propios, el cursor es lo único
-          // que la distingue de un rótulo.
-          mouseCursor: WidgetStateMouseCursor.clickable,
-          onTap: () => setState(() => _section = section),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.m,
-              vertical: AppSpacing.m,
+            height: math.min(
+              AppSizes.settingsDialogHeight,
+              constraints.maxHeight,
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(section.icon, size: AppSizes.iconMedium),
-                const SizedBox(width: AppSpacing.m),
-                // El nombre de una sección se recorta antes que desbordar la
-                // columna: la columna tiene un ancho fijo y los nombres cambian
-                // con el idioma.
-                Expanded(
-                  child: Text(
-                    section.title(AppLocalizations.of(context)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
+                SettingsSectionList(
+                  selected: _section,
+                  onSelected: (section) => setState(() => _section = section),
                 ),
+                Expanded(child: _sectionContent(context)),
               ],
             ),
           ),
@@ -168,7 +92,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
-  /// Columna derecha: cabecera con el nombre de la sección y sus opciones.
   Widget _sectionContent(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -192,7 +115,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),
+                tooltip: AppLocalizations.of(context).actionClose,
+                icon: const Icon(Symbols.close, size: AppSizes.iconExtraLarge),
                 onPressed: () => context.pop(),
               ),
             ],
@@ -214,7 +138,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
               SettingsSection.files => const FilesSettingsSection(),
               SettingsSection.remoteSources =>
                 const RemoteSourcesSettingsSection(),
+              SettingsSection.recognition =>
+                const RecognitionSettingsSection(),
+              SettingsSection.duplicates =>
+                const DuplicatesSettingsSection(),
+              SettingsSection.nsfw => const NsfwSettingsSection(),
+              SettingsSection.notifications =>
+                const NotificationSettingsSection(),
               SettingsSection.browser => const BrowserSettingsSection(),
+              SettingsSection.help => const HelpSettingsSection(),
+              SettingsSection.database => const DatabaseSettingsSection(),
             },
           ),
         ),

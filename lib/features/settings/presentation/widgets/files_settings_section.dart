@@ -6,9 +6,11 @@ import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart'
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
+import 'package:Fern/features/settings/presentation/settings_status_labels.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Cómo se nombra cada criterio de ordenación en la pantalla. El criterio en sí
@@ -125,7 +127,7 @@ class FilesSettingsSection extends StatelessWidget {
               children: [
                 FernPillButton(
                   label: texts.migrateFiles,
-                  icon: Icons.drive_file_move_outline,
+                  icon: Symbols.drive_file_move,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
                   onPressed: settings.managesFiles && !state.isWorking
@@ -139,10 +141,11 @@ class FilesSettingsSection extends StatelessWidget {
                     height: AppSizes.iconMedium,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                else if (state.lastResult != null)
+                else if (state.lastResult case final result?
+                    when result.status.isFiles)
                   Expanded(
                     child: Text(
-                      _resultMessage(texts, state.lastResult!),
+                      result.message(texts),
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -155,17 +158,6 @@ class FilesSettingsSection extends StatelessWidget {
         );
       },
     );
-  }
-
-  /// El resultado se guarda en datos y se traduce aquí, así que cambiar de
-  /// idioma reescribe también el aviso de la última migración.
-  String _resultMessage(AppLocalizations texts, SettingsResult result) {
-    return switch (result.status) {
-      SettingsStatus.avatarsMigrated => texts.avatarsMoved(result.count),
-      SettingsStatus.avatarsFailed => texts.avatarsMoveFailed,
-      SettingsStatus.filesOrganized => texts.filesOrganized(result.count),
-      SettingsStatus.filesFailed => texts.filesOrganizeFailed,
-    };
   }
 
   Widget _title(BuildContext context, String text) {

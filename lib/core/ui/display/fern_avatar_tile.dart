@@ -3,6 +3,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Avatar con su etiqueta debajo, para listados horizontales de personas,
 /// colecciones o etiquetas.
@@ -10,6 +11,10 @@ class FernAvatarTile extends StatelessWidget {
   final String label;
   final String? imagePath;
   final IconData fallbackIcon;
+
+  /// Icono de reserva en forma de imagen del paquete. Manda sobre
+  /// [fallbackIcon] cuando viene.
+
   final double radius;
   final VoidCallback? onTap;
 
@@ -17,7 +22,7 @@ class FernAvatarTile extends StatelessWidget {
     super.key,
     required this.label,
     this.imagePath,
-    this.fallbackIcon = Icons.person,
+    this.fallbackIcon = Symbols.person,
     this.radius = AppSizes.avatarLarge,
     this.onTap,
   });

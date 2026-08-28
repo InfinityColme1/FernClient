@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/core/ui/display/fern_progress_indicator.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Botón de confirmación de los diálogos.
 ///
@@ -20,7 +21,7 @@ class FernConfirmButton extends StatelessWidget {
     super.key,
     this.onPressed,
     this.label,
-    this.icon = Icons.check,
+    this.icon = Symbols.check,
     this.isBusy = false,
   });
 

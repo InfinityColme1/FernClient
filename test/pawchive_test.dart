@@ -185,13 +185,13 @@ void main() {
         [
           PostLinkKind.archive,
           PostLinkKind.media,
-          PostLinkKind.repository,
+          PostLinkKind.repositoryFolder,
           // La plataforma de pago no da el contenido: se queda fuera.
           PostLinkKind.other,
         ],
       );
       expect(posts.single.downloadableLinks, hasLength(2));
-      expect(posts.single.repositoryLinks, hasLength(1));
+      expect(posts.single.linksNeedingUser, hasLength(1));
     });
 
     test('se pide el cuerpo sólo cuando el listado no lo trae', () async {

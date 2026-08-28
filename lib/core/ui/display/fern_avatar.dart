@@ -12,6 +12,9 @@ class FernAvatar extends StatelessWidget {
   /// Ruta a la imagen en disco. Si es `null` se muestra [fallbackIcon].
   final String? imagePath;
   final IconData fallbackIcon;
+
+  /// Icono de reserva en forma de imagen del paquete, para lo que no tiene
+  /// glifo propio. Manda sobre [fallbackIcon] cuando viene.
   final double radius;
 
   /// Tamaño del icono de reserva. Por defecto igual al radio.

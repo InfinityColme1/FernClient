@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/buttons/fern_action_button.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Pide un color y devuelve el elegido, o `null` si se cierra sin elegir.
 Future<Color?> showFernColorPicker(
@@ -101,7 +102,8 @@ class _FernColorPickerDialogState extends State<FernColorPickerDialog> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: AppSizes.iconLarge),
+                    tooltip: AppLocalizations.of(context).actionClose,
+                    icon: const Icon(Symbols.close, size: AppSizes.iconLarge),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],

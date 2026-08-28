@@ -10,6 +10,7 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -106,7 +107,7 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
         titleColor: isPending ? context.colors.unremarked : null,
         avatar: FernAvatar(
           imagePath: creator.picturePath,
-          fallbackIcon: Icons.person,
+          fallbackIcon: Symbols.person,
           radius: AppSizes.avatarHuge,
           backgroundColor:
               isPending ? context.colors.lightgray : context.colors.secondary,
@@ -128,6 +129,9 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
           ),
           const SizedBox(height: AppSpacing.xl),
           FernAddButton(
+            // Aquí el botón va suelto bajo un buscador, no en una fila de
+            // avatares: se queda con el círculo pequeño.
+            radius: AppSizes.addButtonRadius,
             label: texts.createCreator,
             onTap: () => _openCreateCreatorDialog(context),
           ),

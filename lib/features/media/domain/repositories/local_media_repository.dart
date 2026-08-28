@@ -1,6 +1,8 @@
+import 'package:Fern/core/services/media_size_store.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
@@ -15,6 +17,13 @@ abstract class LocalMediaRepository {
   Stream<DataState<MediaSummaryEntity>> scanDirectory(String rootPath);
 
   Future<DataState> saveScannedMedia(List<MediaEntity> mediaList);
+
+  /// Apunta lo que mide cada contenido, de una vez.
+  ///
+  /// Lo que entró antes de que el tamaño se guardara lo va descubriendo la
+  /// rejilla al pintarlo; esto es donde se queda, para no volver a abrir el
+  /// fichero nunca más sólo para saber cómo colocarlo.
+  Future<DataState<int>> rememberSizes(Map<int, MediaSize> sizes);
   
   /// Guarda el contenido y lo marca como definitivo.
   ///
@@ -22,7 +31,44 @@ abstract class LocalMediaRepository {
   /// que cambie de carpeta, y `null` si se ha quedado donde estaba.
   Future<DataState> saveMedia(MediaEntity media);
 
-  Future<DataState<List<MediaSummaryEntity>>> getMediaList();
+  /// El contenido definitivo de la biblioteca, en el orden pedido.
+  Future<DataState<List<MediaSummaryEntity>>> getMediaList({
+    MediaSortOrder order,
+  });
+
+  /// Los identificadores del contenido que se puede mandar a reconocer.
+  ///
+  /// Sólo identificadores y no los contenidos enteros: reconocer la biblioteca
+  /// son decenas de miles de filas, y traerlas con sus etiquetas y su creador
+  /// para quedarse con el número es llenar la memoria de lo que nadie va a
+  /// mirar.
+  ///
+  /// Con [onlyUnrecognized] se deja fuera lo que ya se miró alguna vez. Es lo
+  /// que hace usable «reconocer toda la biblioteca» la segunda vez: sin ello,
+  /// cada pulsación vuelve a pagar por todo lo que ya está hecho.
+  ///
+  /// Lo que está en la papelera nunca sale: reconocerlo sería gastar horas en
+  /// contenido que se va a borrar solo en una semana.
+  /// Le añade estas etiquetas a un contenido, sin tocar nada más.
+  ///
+  /// Existe aparte de [saveMedia] porque aquél **da el contenido por
+  /// definitivo**, y eso es una decisión del usuario, no un efecto de aceptar
+  /// una sugerencia: en la pantalla de importación hay un botón de confirmar
+  /// justo al lado, y aceptar etiquetas en masa no puede hacer su trabajo por
+  /// él.
+  ///
+  /// Las que ya tenga se quedan: esto suma, no reemplaza.
+  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds);
+
+  /// Le pone este creador a un contenido, sin tocar nada más.
+  ///
+  /// Por lo mismo que lo anterior: poner un creador no es dar el contenido por
+  /// revisado.
+  Future<DataState<bool>> setMediaCreator(int mediaId, int creatorId);
+
+  Future<DataState<List<int>>> getRecognizableMediaIds({
+    bool onlyUnrecognized = true,
+  });
 
   /// Contenido pendiente de revisar, el de la pantalla de importación.
   ///
@@ -30,6 +76,7 @@ abstract class LocalMediaRepository {
   /// devuelve el de todas.
   Future<DataState<List<MediaSummaryEntity>>> getScannedMedia({
     ImportSource source,
+    MediaSortOrder order,
   });
 
   /// Contenido marcado para borrar, el de la pantalla de eliminados.
@@ -150,6 +197,43 @@ abstract class LocalMediaRepository {
   /// quedan como raíces.
   Future<DataState> deleteTag(int tagId);
 
+  /// Deja en la etiqueta [tagId] las hermanas indicadas.
+  ///
+  /// La relación es **simétrica**: las que entran reciben a [tagId] entre las
+  /// suyas y las que salen la sueltan. Lo fuerza el repositorio, no la pantalla.
+  Future<DataState<TagEntity>> saveTagSiblings(int tagId, List<int> siblingIds);
+
+  /// Marca o desmarca una etiqueta como contenido no apto, y devuelve a cuántos
+  /// contenidos afecta la decisión —los suyos y los de toda su rama de hijas—.
+  ///
+  /// La marca se guarda sólo en la etiqueta donde se pone: lo que cuelga de ella
+  /// queda bloqueado al resolverse la rama, no porque se le escriba nada.
+  Future<DataState<int>> setTagNsfw(int tagId, {required bool isNsfw});
+
+  /// Marca o desmarca contenido como NSFW, uno o muchos de una vez.
+  ///
+  /// Es una marca **propia** del contenido, aparte de la que le venga de sus
+  /// etiquetas: quitarla no lo saca de la rama de una etiqueta marcada, y
+  /// ponerla no depende de que tenga ninguna. Devuelve a cuántos ha cambiado de
+  /// verdad, que no son todos los que se piden: los que ya estaban como se pide
+  /// no cuentan.
+  Future<DataState<int>> setMediaNsfw(
+    List<int> mediaIds, {
+    required bool isNsfw,
+  });
+
+  /// Quita **todas** las marcas NSFW: las de las etiquetas y las que se
+  /// pusieron a mano sobre contenido suelto. Devuelve cuántas etiquetas había.
+  ///
+  /// Es la salida de quien ha perdido la contraseña y el código de
+  /// recuperación: se pierde el marcado, nunca el contenido.
+  ///
+  /// Las dos, y no sólo las etiquetas: dejar el contenido marcado con el filtro
+  /// desactivado no se nota —sin contraseña no se esconde nada— hasta que
+  /// alguien vuelve a poner una, y entonces desaparece de golpe contenido que
+  /// nadie ha marcado esta vez y que no hay forma de saber cuál era.
+  Future<DataState<int>> clearNsfwMarks();
+
   /// Contenido definitivo que tiene la etiqueta [tagId].
   ///
   /// Es lo que enseña la rejilla de la pantalla de gestión de etiquetas. Como en
@@ -204,6 +288,17 @@ abstract class LocalMediaRepository {
   Future<DataState> removeCreatorFromMedia(int creatorId, List<int> mediaIds);
 
   Future<DataState<List<TagEntity>>> getTags();
+
+  /// Una etiqueta por su identificador, o `null` si ya no existe.
+  ///
+  /// Que no exista no es un fallo: los enlaces que guardan otras cosas —los de
+  /// los fernies, sin ir más lejos— apuntan por identificador y sobreviven a que
+  /// alguien borre la etiqueta. Quien pregunta necesita poder distinguir «no
+  /// está» de «no se ha podido leer».
+  Future<DataState<TagEntity?>> getTag(int id);
+
+  /// Un creador por su identificador, o `null` si ya no existe.
+  Future<DataState<CreatorEntity?>> getCreator(int id);
 
   /// Las etiquetas en forma de árbol: sólo las que no cuelgan de ninguna otra,
   /// cada una con sus descendientes ya cargados.

@@ -1,3 +1,4 @@
+import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
@@ -119,6 +120,8 @@ class _TagManagerPageState extends State<TagManagerPage> {
                   ? FernEmptyState(
                       imageAsset: fernEmptyImage,
                       message: AppLocalizations.of(context).noTagsYet,
+                      description:
+                          AppLocalizations.of(context).noTagsYetHint,
                     )
                   : const Center(child: FernProgressIndicator()),
             );
@@ -126,35 +129,35 @@ class _TagManagerPageState extends State<TagManagerPage> {
 
           final selected = _selectedTag(rows) ?? rows.first.tag;
 
-          return Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
-            child: Row(
-              children: [
-                Expanded(child: _tagContent(selected, state.tags)),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    right: AppSpacing.l,
-                    bottom: AppSpacing.l,
-                  ),
-                  child: SizedBox(
-                    width: AppSizes.tagListWidth,
-                    // Al guardar o borrar una etiqueta la lista se vuelve a leer:
-                    // hasta que llegue se queda la de antes, con el indicador
-                    // encima.
-                    child: FernBusyOverlay(
-                      isBusy: state.isBusy,
-                      // La lista va directamente sobre el fondo, sin superficie
-                      // propia de la que copiar el redondeo.
-                      radius: AppSizes.radiusMedium,
-                      child: TagList(
-                        tags: state.tags,
-                        selectedTagId: selected.id,
-                        onSelected: _select,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          return FernManagementScreen(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.l,
+              left: AppSpacing.l,
+              right: AppSpacing.l,
+              bottom: AppSpacing.l,
+            ),
+            listWidth: AppSizes.tagListWidth,
+            cardBuilder: (context, _) => TagCard(
+              // La ficha se rehace al cambiar de etiqueta: sus campos arrancan
+              // con los valores de la etiqueta, así que tienen que volver a
+              // nacer con los de la nueva.
+              key: ValueKey(selected.id),
+              tag: selected,
+              parent: _parentOf(state.tags, selected.id),
+            ),
+            grid: _tagMedia(),
+            // Al guardar o borrar una etiqueta la lista se vuelve a leer: hasta
+            // que llegue se queda la de antes, con el indicador encima.
+            list: FernBusyOverlay(
+              isBusy: state.isBusy,
+              // La lista va directamente sobre el fondo, sin superficie propia
+              // de la que copiar el redondeo.
+              radius: AppSizes.radiusMedium,
+              child: TagList(
+                tags: state.tags,
+                selectedTagId: selected.id,
+                onSelected: _select,
+              ),
             ),
           );
         },
@@ -162,46 +165,25 @@ class _TagManagerPageState extends State<TagManagerPage> {
     );
   }
 
-  /// La columna de la etiqueta elegida: su ficha arriba y su contenido debajo.
-  ///
-  /// La ficha se rehace al cambiar de etiqueta (de eso se encarga la clave): los
-  /// campos arrancan con los valores de la etiqueta, así que tienen que volver a
-  /// nacer con los de la nueva.
-  Widget _tagContent(TagEntity tag, List<TagEntity> tags) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            right: AppSpacing.l,
-            bottom: AppSpacing.l,
-          ),
-          child: TagCard(
-            key: ValueKey(tag.id),
-            tag: tag,
-            parent: _parentOf(tags, tag.id),
-          ),
-        ),
-        Expanded(
-          child: BlocConsumer<MediaBloc, MediaStates>(
-            listenWhen: (previous, current) =>
-                previous is! DetailedMedia && current is DetailedMedia,
-            listener: (context, state) {
-              // Como en las demás rejillas: el contenido se abre a pantalla
-              // completa y al cerrarlo se vuelve aquí, con la etiqueta elegida
-              // tal y como estaba.
-              if (state is DetailedMedia) context.push(viewerRoute);
-            },
-            builder: (context, state) => MediaGrid(
-              mediaList: state.mediaList ?? const [],
-              columns: tagManagerGridColumns,
-              isLoading: state.isBusy,
-              // La superficie de esta pantalla es la de la ficha: la rejilla va
-              // directamente sobre el fondo.
-              hasSurface: false,
-            ),
-          ),
-        ),
-      ],
+  /// El contenido de la etiqueta elegida.
+  Widget _tagMedia() {
+    return BlocConsumer<MediaBloc, MediaStates>(
+      listenWhen: (previous, current) =>
+          previous is! DetailedMedia && current is DetailedMedia,
+      listener: (context, state) {
+        // Como en las demás rejillas: el contenido se abre a pantalla completa
+        // y al cerrarlo se vuelve aquí, con la etiqueta elegida tal y como
+        // estaba.
+        if (state is DetailedMedia) context.push(viewerRoute);
+      },
+      builder: (context, state) => MediaGrid(
+        mediaList: state.mediaList ?? const [],
+        columns: tagManagerGridColumns,
+        isLoading: state.isBusy,
+        // La superficie de esta pantalla es la de la ficha: la rejilla va
+        // directamente sobre el fondo.
+        hasSurface: false,
+      ),
     );
   }
 }

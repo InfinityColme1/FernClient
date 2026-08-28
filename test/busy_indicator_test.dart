@@ -23,12 +23,14 @@ Future<void> _pump(WidgetTester tester, Widget child) {
 
 void main() {
   group('la rejilla sin contenido', () {
-    testWidgets('espera con el indicador mientras se está leyendo',
-        (tester) async {
+    testWidgets('espera con el hueco de lo que va a llegar', (tester) async {
+      // Y no con un circulo dando vueltas: el hueco dice ademas que viene y
+      // cuanto va a ocupar, asi que al llegar el contenido no se recoloca la
+      // pantalla entera de golpe.
       await _pump(tester, const MediaGrid(mediaList: [], columns: 4, isLoading: true));
       await tester.pump();
 
-      expect(find.byType(FernProgressIndicator), findsOneWidget);
+      expect(find.byType(FernSkeletonGrid), findsOneWidget);
       expect(find.byType(FernEmptyState), findsNothing);
     });
 
@@ -37,7 +39,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(FernEmptyState), findsOneWidget);
-      expect(find.byType(FernProgressIndicator), findsNothing);
+      expect(find.byType(FernSkeletonGrid), findsNothing);
     });
   });
 
@@ -45,12 +47,59 @@ void main() {
     testWidgets('sin espera no pinta nada encima', (tester) async {
       await _pump(
         tester,
-        const FernBusyOverlay(isBusy: false, child: Text('contenido')),
+        const FernBusyOverlay(
+          isBusy: false,
+          child: SizedBox(width: 300, height: 300, child: Text('contenido')),
+        ),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('contenido'), findsOneWidget);
       expect(find.byType(FernProgressIndicator), findsNothing);
+    });
+
+    testWidgets('una espera corta no llega a enseñarse', (tester) async {
+      // **Es lo que se veía como un parpadeo.** Escribir una etiqueta y releer la
+      // biblioteca se resuelve en unas decenas de milisegundos: un velo que se
+      // levanta y cae en ese tiempo no informa de nada, sólo se ve.
+      await _pump(
+        tester,
+        const FernBusyOverlay(
+          isBusy: true,
+          child: SizedBox(width: 300, height: 300, child: Text('contenido')),
+        ),
+      );
+
+      // Justo antes de cumplirse el margen: todavía nada.
+      await tester.pump(busyOverlayDelay - const Duration(milliseconds: 20));
+      expect(find.byType(FernProgressIndicator), findsNothing);
+
+      // Y se acaba antes de llegar: no se ha enseñado en ningún momento.
+      await _pump(
+        tester,
+        const FernBusyOverlay(
+          isBusy: false,
+          child: SizedBox(width: 300, height: 300, child: Text('contenido')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FernProgressIndicator), findsNothing);
+    });
+
+    testWidgets('y una larga sí', (tester) async {
+      await _pump(
+        tester,
+        const FernBusyOverlay(
+          isBusy: true,
+          child: SizedBox(width: 300, height: 300, child: Text('contenido')),
+        ),
+      );
+
+      await tester.pump(busyOverlayDelay);
+      await tester.pump(busyOverlayFadeDuration);
+
+      expect(find.byType(FernProgressIndicator), findsOneWidget);
     });
 
     testWidgets('deja ver el contenido anterior pero no pulsarlo',
@@ -67,8 +116,13 @@ void main() {
           ),
         ),
       );
-      // Con el velo puesto no se puede esperar a que todo se asiente: el
-      // indicador gira sin parar. Basta con dejar que el velo acabe de aparecer.
+      // El velo no sale en el acto: una espera corta no llega a enseñarse, que
+      // es lo que evita el parpadeo. Se deja pasar el margen y después lo que
+      // tarda en aparecer.
+      //
+      // Y con el velo puesto no se puede esperar a que todo se asiente: el
+      // indicador gira sin parar.
+      await tester.pump(busyOverlayDelay);
       await tester.pump(busyOverlayFadeDuration);
 
       expect(find.text('guardar'), findsOneWidget);

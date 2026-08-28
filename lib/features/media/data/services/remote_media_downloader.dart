@@ -94,6 +94,10 @@ class RemoteMediaDownloader {
 
       final request = http.Request('GET', Uri.parse(fileUrl))
         ..headers['User-Agent'] = remoteUserAgent.replaceFirst('%s', 'fern')
+        // Lo que pida el servidor del que sale el fichero, y no el de la fuente
+        // que lo enlazó: un vídeo de Redgifs enlazado desde otra plataforma se
+        // baja de Redgifs, y es Redgifs quien mira de dónde dice venir.
+        ..headers.addAll(_hostHeaders(fileUrl))
         ..headers.addAll(headers);
       final response = await _client.send(request).timeout(remoteRequestTimeout);
       if (response.statusCode != 200) return null;
@@ -113,6 +117,22 @@ class RemoteMediaDownloader {
       // está: la importación sigue con el siguiente.
       return null;
     }
+  }
+
+  /// Lo que pide el servidor del que sale [url], si es que pide algo.
+  ///
+  /// Hay servidores de contenidos que sólo dan el fichero a quien dice venir de
+  /// su web, y alguno que da **otra cosa** en vez de negarse — que es la forma
+  /// más difícil de diagnosticar, porque la descarga funciona y lo que llega no
+  /// es lo que se pidió.
+  Map<String, String> _hostHeaders(String url) {
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+
+    if (host == redgifsMediaHost || host.endsWith('.$redgifsMediaHost')) {
+      return redgifsDownloadHeaders;
+    }
+
+    return const {};
   }
 
   /// Se trae un fichero comprimido tal cual.

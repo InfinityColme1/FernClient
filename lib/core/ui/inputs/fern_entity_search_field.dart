@@ -23,6 +23,10 @@ class FernEntitySearchField<T> extends StatefulWidget {
   /// Nombre con el que se muestra cada elemento en el desplegable.
   final String Function(T item) labelOf;
 
+  /// Qué va detrás de cada resultado. Lo usan los buscadores de etiquetas para
+  /// marcar las NSFW.
+  final Widget? Function(T item)? trailingOf;
+
   final ValueChanged<T> onSelected;
 
   /// Cada pulsación, con el texto que hay escrito. Hace falta para saber cuándo
@@ -36,6 +40,7 @@ class FernEntitySearchField<T> extends StatefulWidget {
     required this.label,
     required this.search,
     required this.labelOf,
+    this.trailingOf,
     required this.onSelected,
     this.onChanged,
     this.hintText = '',
@@ -142,6 +147,13 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
       filterSuggestions: false,
       isSearching: _isSearching,
       suggestions: _results.map(widget.labelOf).toList(),
+      trailingOf: widget.trailingOf == null
+          ? null
+          : (suggestion) {
+              final item = _matching(suggestion);
+
+              return item == null ? null : widget.trailingOf!(item);
+            },
       onChanged: _onQueryChanged,
       onSelected: _onSuggestionSelected,
     );
