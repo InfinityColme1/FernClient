@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Una etiqueta de la lista y el nivel que ocupa en la jerarquía.
 typedef TagRow = ({TagEntity tag, int depth});
@@ -61,14 +62,17 @@ class TagList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.s),
           child: FernSectionHeader(
-            icon: Icons.label_outline,
+            icon: Symbols.label,
             title: texts.tagsTitle,
           ),
         ),
         Expanded(
           // Las filas se pintan bajo demanda: las etiquetas pueden ser muchas.
           child: ListView.builder(
-            padding: EdgeInsets.zero,
+            // Apartado por la derecha lo que ocupa la barra de
+            // desplazamiento: sin ese carril la pastilla queda pegada al borde
+            // de las fichas y parece parte de ellas.
+            padding: const EdgeInsets.only(right: AppSizes.scrollbarLane),
             itemCount: rows.length,
             itemBuilder: (context, index) => _TagTile(
               row: rows[index],
@@ -125,7 +129,7 @@ class _TagTile extends StatelessWidget {
           children: [
             FernAvatar(
               imagePath: tag.picturePath,
-              fallbackIcon: Icons.label,
+              fallbackIcon: Symbols.label,
               radius: AppSizes.avatarMedium,
               iconSize: AppSizes.iconMedium,
               backgroundColor: context.colors.secondary,

@@ -10,6 +10,7 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Borra el contenido que se está viendo, avisando cuando haga falta.
@@ -136,7 +137,7 @@ class _ConfirmDeleteDialogState extends State<ConfirmDeleteDialog> {
       ),
       actionButton: FernPillButton(
         label: texts.actionDelete,
-        icon: Icons.delete_outline,
+        icon: Symbols.delete,
         backgroundColor: context.colors.error,
         foregroundColor: Colors.white,
         onPressed: () => _confirm(context),

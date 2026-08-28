@@ -5,6 +5,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Aviso breve que aparece abajo, dice lo que acaba de pasar y se va solo.
 ///
@@ -228,7 +229,7 @@ class _CloseButton extends StatelessWidget {
         // es cerrar, no ir a donde el aviso lleva.
         onTap: onPressed,
         child: const Icon(
-          Icons.close,
+          Symbols.close,
           color: Colors.white,
           size: AppSizes.iconSmall,
         ),

@@ -13,6 +13,7 @@ import 'package:Fern/features/recognition/domain/usecases/search_fernies_usecase
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Lo que va dentro del menú contextual que se abre al soltar una región: buscar
 /// un fernie, elegirlo de la lista o crear uno nuevo al vuelo.
@@ -178,8 +179,7 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
               children: [
                 FernAvatar(
                   imagePath: fernie.picturePath,
-                  fallbackIcon: Icons.face_retouching_natural,
-                  fallbackAsset: icFernie,
+                  fallbackIcon: Symbols.face_retouching_natural,
                   radius: AppSizes.avatarMedium,
                   iconSize: AppSizes.iconMedium,
                   backgroundColor: context.colors.secondary,

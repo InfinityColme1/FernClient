@@ -10,6 +10,7 @@ import 'package:Fern/features/media/presentation/widgets/select_all_button.dart'
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 MediaSummaryEntity _media(int id) =>
     MediaSummaryEntity(id: id, path: 'C:/$id.jpg');
@@ -77,7 +78,7 @@ void main() {
         selectedIds: {1, 2},
       );
 
-      expect(find.byIcon(Icons.deselect), findsOneWidget);
+      expect(find.byIcon(Symbols.deselect), findsOneWidget);
     });
 
     testWidgets('y con parte marcada, que va a marcarlo', (tester) async {
@@ -87,7 +88,7 @@ void main() {
         selectedIds: {1},
       );
 
-      expect(find.byIcon(Icons.select_all), findsOneWidget);
+      expect(find.byIcon(Symbols.select_all), findsOneWidget);
     });
   });
 }

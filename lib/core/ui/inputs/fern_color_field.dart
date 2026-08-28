@@ -5,6 +5,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/dialogs/fern_color_picker_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Fila de un color que se puede cambiar: la muestra, cómo se llama, su código
 /// y el botón de devolverlo a como estaba.
@@ -87,7 +88,7 @@ class FernColorField extends StatelessWidget {
               // usuario; el heredado ya es el de fábrica.
               IconButton(
                 tooltip: texts.customColorReset,
-                icon: const Icon(Icons.restart_alt, size: AppSizes.iconMedium),
+                icon: const Icon(Symbols.restart_alt, size: AppSizes.iconMedium),
                 onPressed: isEnabled && isCustom ? onReset : null,
               ),
             ],

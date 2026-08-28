@@ -28,6 +28,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 JobQueue? openQueue;
 JobsBloc? openBloc;
@@ -136,8 +137,8 @@ void main() {
       findsOneWidget,
     );
 
-    // El aspa de la fila para ese trabajo.
-    await tester.tap(find.widgetWithIcon(IconButton, Icons.close));
+    // El boton de la fila para ese trabajo.
+    await tester.tap(find.widgetWithIcon(IconButton, Symbols.stop_circle));
     await settleQueue(tester);
 
     expect(
@@ -164,7 +165,7 @@ void main() {
     await settleQueue(tester);
 
     expect(canOpen(tester), isTrue);
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.byIcon(Symbols.error), findsOneWidget);
   });
 
   // El panel rehecho con la forma de un gestor de descargas: se distingue una
@@ -253,9 +254,9 @@ void main() {
       await settleQueue(tester);
       await openPanel(tester);
 
-      expect(find.byIcon(Icons.clear), findsNWidgets(2));
+      expect(find.byIcon(Symbols.close), findsNWidgets(2));
 
-      await tester.tap(find.byIcon(Icons.clear).first);
+      await tester.tap(find.byIcon(Symbols.close).first);
       await settleQueue(tester);
 
       // Antes sólo estaba «vaciar terminadas»: para hacer desaparecer un fallo
@@ -281,8 +282,11 @@ void main() {
 
       // Quitar de la lista algo que sigue corriendo lo dejaría trabajando sin
       // que nadie pudiera pararlo ya.
-      expect(find.byIcon(Icons.clear), findsNothing);
-      expect(find.widgetWithIcon(IconButton, Icons.close), findsOneWidget);
+      expect(find.byIcon(Symbols.close), findsNothing);
+      expect(
+        find.widgetWithIcon(IconButton, Symbols.stop_circle),
+        findsOneWidget,
+      );
 
       gate.complete();
       await settleQueue(tester);

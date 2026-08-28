@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/main_layout.dart';
 import 'package:Fern/core/navigation/page_transitions.dart';
+import 'package:Fern/core/navigation/screen_choreography.dart';
 import 'package:Fern/features/browser/presentation/pages/browser_page.dart';
 import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
 import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
@@ -60,50 +61,68 @@ final appRouter = GoRouter(
           child: MainLayout(child: child),
         );
       },
-      // Las pantallas del armazón se cambian sin transición: se pasa de una a
-      // otra por el menú lateral, tantas veces como haga falta, y cualquier
-      // animación por corta que sea se interpone entre pulsar y ver. El armazón
-      // no se mueve, así que lo único que cambia es lo de dentro.
+      // Las pantallas del armazón entran con un fundido corto y nada más.
+      //
+      // Estaban sin transición, y el motivo escrito era bueno: se pasa de una a
+      // otra por el menú lateral tantas veces al día que cualquier cosa que se
+      // interponga entre pulsar y ver molesta. Lo que no es cierto es que un
+      // fundido se interponga: la pantalla nueva está maquetada en su sitio
+      // desde el primer fotograma y lo único que pasa es que se hace visible.
+      // Lo que sí se notaba era el corte seco.
+      //
+      // El armazón no se mueve: lo único que cambia es lo de dentro.
       routes: [
         GoRoute(
             path: mediaRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: mediaRoute,
+              family: ScreenFamily.grid,
               child: const MediaPage(),
             ),
         ),
         GoRoute(
             path: importRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: importRoute,
+              family: ScreenFamily.grid,
               child: const ImportPage(),
             ),
         ),
         GoRoute(
             path: deletedRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: deletedRoute,
+              family: ScreenFamily.grid,
               child: const DeletePage(),
             ),
         ),
         GoRoute(
             path: favoritesRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: favoritesRoute,
+              family: ScreenFamily.grid,
               child: const FavoritesPage(),
             ),
         ),
         GoRoute(
             path: creatorManagerRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: creatorManagerRoute,
+              family: ScreenFamily.management,
               child: const CreatorManagerPage(),
             ),
         ),
         GoRoute(
             path: tagManagerRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: tagManagerRoute,
+              family: ScreenFamily.management,
               child: const TagManagerPage(),
             ),
         ),
@@ -112,8 +131,9 @@ final appRouter = GoRouter(
         // hasta que lleguen sus fases.
         GoRoute(
             path: fernieManagerRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: fernieManagerRoute,
               child: FerniesPage(
                 // Se llega así al pulsar un fernie en el panel del visor: la
                 // pantalla se abre con ése elegido y no con el primero.
@@ -125,15 +145,19 @@ final appRouter = GoRouter(
         ),
         GoRoute(
             path: repeatedMediaRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: repeatedMediaRoute,
+              family: ScreenFamily.repeated,
               child: const RepeatedMediaPage(),
             ),
         ),
         GoRoute(
             path: modelsRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: modelsRoute,
+              family: ScreenFamily.grid,
               child: const ModelsPage(),
             ),
             routes: [
@@ -142,8 +166,9 @@ final appRouter = GoRouter(
               // en el menú lateral.
               GoRoute(
                 path: modelTreeRoute,
-                pageBuilder: (context, state) => NoTransitionPage(
+                pageBuilder: (context, state) => fernShellPage(
                   key: state.pageKey,
+                  location: modelTreeRoute,
                   child: const ModelTreePage(),
                 ),
               ),
@@ -151,8 +176,9 @@ final appRouter = GoRouter(
               // ella aunque se haya llegado desde otro sitio.
               GoRoute(
                 path: modelDetailRoute,
-                pageBuilder: (context, state) => NoTransitionPage(
+                pageBuilder: (context, state) => fernShellPage(
                   key: state.pageKey,
+                  location: modelDetailRoute,
                   child: ModelDetailPage(
                     modelId:
                         int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
@@ -165,8 +191,12 @@ final appRouter = GoRouter(
         // aquí y del menú lateral, y la aplicación se queda como estaba.
         GoRoute(
             path: browserRoute,
-            pageBuilder: (context, state) => NoTransitionPage(
+            pageBuilder: (context, state) => fernShellPage(
               key: state.pageKey,
+              location: browserRoute,
+              // Sin animación: lo que ocupa esta pantalla es el motor de
+              // navegación del sistema, no algo que pinte Flutter.
+              family: ScreenFamily.instant,
               child: BrowserPage(
                 initialUrl: state.uri.queryParameters[browserUrlQueryParam],
               ),

@@ -9,6 +9,7 @@ import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/settings/presentation/widgets/wipe_database_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// La base de datos: por ahora, vaciarla.
 ///
@@ -76,7 +77,7 @@ class DatabaseSettingsSection extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: FernPillButton(
             label: texts.databaseWipeAction,
-            icon: Icons.delete_forever_outlined,
+            icon: Symbols.delete_forever,
             backgroundColor: context.colors.error,
             foregroundColor: context.colors.white,
             onPressed: () => _wipe(context),

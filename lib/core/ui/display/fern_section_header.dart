@@ -1,7 +1,6 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
-import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:flutter/material.dart';
 
 /// Cabecera de sección: icono + título en color atenuado.
@@ -10,7 +9,6 @@ class FernSectionHeader extends StatelessWidget {
 
   /// Icono en forma de imagen del paquete, para lo que no tiene glifo propio.
   /// Manda sobre [icon] cuando viene.
-  final String? iconAsset;
 
   final String title;
   final Widget? trailing;
@@ -18,7 +16,6 @@ class FernSectionHeader extends StatelessWidget {
   const FernSectionHeader({
     super.key,
     required this.icon,
-    this.iconAsset,
     required this.title,
     this.trailing,
   });
@@ -27,13 +24,7 @@ class FernSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        fernFallbackIcon(
-          context,
-          icon: icon,
-          asset: iconAsset,
-          size: AppSizes.iconMedium,
-          color: context.colors.gray,
-        ),
+        Icon(icon, size: AppSizes.iconMedium, color: context.colors.gray),
         const SizedBox(width: AppSpacing.s),
         Text(
           title,

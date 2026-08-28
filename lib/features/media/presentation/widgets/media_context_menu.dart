@@ -11,6 +11,7 @@ import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Lo que se puede hacer con el contenido sin abrirlo, al pulsar con el botón
@@ -81,14 +82,14 @@ class MediaContextMenu extends StatelessWidget {
         ),
         _entry(
           context,
-          icon: Icons.favorite_border,
+          icon: Symbols.favorite,
           label: texts.favoriteSelectedTooltip,
           onTap: () =>
               _runOnSelection(context, const FavoriteSelectedMediaEvent()),
         ),
         _entry(
           context,
-          icon: Icons.auto_awesome_outlined,
+          icon: Symbols.auto_awesome,
           label: texts.recognizeSelectedTooltip,
           onTap: () {
             requestRecognition(
@@ -102,7 +103,7 @@ class MediaContextMenu extends StatelessWidget {
         if (getIt<NsfwModeService>().isConfigured)
           _entry(
             context,
-            icon: Icons.visibility_off_outlined,
+            icon: Symbols.visibility_off,
             label: texts.mediaNsfwMark,
             onTap: () => _runOnSelection(
               context,
@@ -115,7 +116,7 @@ class MediaContextMenu extends StatelessWidget {
         if (!_isBulk && const FileExplorerService().isSupported)
           _entry(
             context,
-            icon: Icons.folder_open_outlined,
+            icon: Symbols.folder_open,
             label: texts.actionRevealInExplorer,
             onTap: () async {
               final revealed =
@@ -126,7 +127,7 @@ class MediaContextMenu extends StatelessWidget {
                 showFernToast(
                   context,
                   texts.revealInExplorerFailed,
-                  icon: Icons.error_outline,
+                  icon: Symbols.error,
                 );
               }
 
@@ -136,7 +137,7 @@ class MediaContextMenu extends StatelessWidget {
         const Divider(),
         _entry(
           context,
-          icon: Icons.delete_outline,
+          icon: Symbols.delete,
           label: texts.deleteSelectedTooltip,
           color: context.colors.error,
           onTap: () =>

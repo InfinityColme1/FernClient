@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/media_suggestion_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Una sugerencia en el panel de información.
 ///
@@ -55,7 +56,7 @@ class SuggestionRow extends StatelessWidget {
   const SuggestionRow({
     super.key,
     required this.suggestion,
-    this.fallbackIcon = Icons.label,
+    this.fallbackIcon = Symbols.label,
     this.onAccept,
     this.onReject,
     this.onMarkRegion,
@@ -146,7 +147,7 @@ class SuggestionRow extends StatelessWidget {
               tooltip: texts.suggestionMarkRegion,
               visualDensity: VisualDensity.compact,
               icon: const Icon(
-                Icons.crop_free_rounded,
+                Symbols.crop_free,
                 size: AppSizes.iconSmall,
               ),
               onPressed: onMarkRegion,
@@ -155,7 +156,7 @@ class SuggestionRow extends StatelessWidget {
             IconButton(
               tooltip: texts.actionReject,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.close, size: AppSizes.iconSmall),
+              icon: const Icon(Symbols.close, size: AppSizes.iconSmall),
               onPressed: onReject,
             ),
           if (onAccept != null)
@@ -166,7 +167,7 @@ class SuggestionRow extends StatelessWidget {
               // siempre: decir que no es lo que se hace sin pensar, y no
               // necesita que nada tire de la vista hacia él.
               color: context.colors.terciary,
-              icon: const Icon(Icons.check, size: AppSizes.iconSmall),
+              icon: const Icon(Symbols.check, size: AppSizes.iconSmall),
               onPressed: onAccept,
             ),
         ],

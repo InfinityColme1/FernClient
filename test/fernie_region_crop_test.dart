@@ -13,6 +13,7 @@ import 'package:Fern/features/media/presentation/widgets/media_item.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 const _media = MediaSummaryEntity(id: 1, path: 'no_existe.jpg');
 
@@ -113,7 +114,7 @@ void main() {
       warning: message,
     );
 
-    expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+    expect(find.byIcon(Symbols.warning_amber), findsOneWidget);
 
     // El aviso se lee al pasar el ratón, así que va en un tooltip y no en un
     // texto suelto: la celda es pequeña y una frase entera no cabría.
@@ -121,7 +122,7 @@ void main() {
     // Se busca el del icono de aviso: el botón de seleccionar tiene el suyo.
     final tooltip = tester.widget<Tooltip>(
       find.ancestor(
-        of: find.byIcon(Icons.warning_amber_rounded),
+        of: find.byIcon(Symbols.warning_amber),
         matching: find.byType(Tooltip),
       ),
     );
@@ -135,7 +136,7 @@ void main() {
       crop: const RegionCrop(x: 0.1, y: 0.1, w: 0.3, h: 0.3),
     );
 
-    expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
+    expect(find.byIcon(Symbols.warning_amber), findsNothing);
   });
 
   testWidgets('una región degenerada no revienta la celda', (tester) async {

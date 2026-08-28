@@ -3,6 +3,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Cómo se coloca la etiqueta respecto al círculo, y con qué peso.
 enum _AddButtonLayout { stacked, inline, compact }
@@ -42,7 +43,7 @@ class FernAddButton extends StatefulWidget {
     super.key,
     required this.label,
     this.onTap,
-    this.icon = Icons.add,
+    this.icon = Symbols.add,
     this.radius = AppSizes.avatarLarge,
   }) : _layout = _AddButtonLayout.stacked;
 
@@ -50,7 +51,7 @@ class FernAddButton extends StatefulWidget {
     super.key,
     required this.label,
     this.onTap,
-    this.icon = Icons.add,
+    this.icon = Symbols.add,
   })  : radius = AppSizes.addButtonRadius,
         _layout = _AddButtonLayout.inline;
 
@@ -58,7 +59,7 @@ class FernAddButton extends StatefulWidget {
     super.key,
     required this.label,
     this.onTap,
-    this.icon = Icons.add,
+    this.icon = Symbols.add,
   })  : radius = AppSizes.addButtonRadius,
         _layout = _AddButtonLayout.compact;
 

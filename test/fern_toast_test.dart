@@ -10,6 +10,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   /// Monta una pantalla con un botón que saca el aviso.
@@ -49,7 +50,7 @@ void main() {
         (tester) async {
       await pump(tester);
 
-      expect(find.byIcon(Icons.close), findsNothing);
+      expect(find.byIcon(Symbols.close), findsNothing);
 
       await tester.pump(toastDuration);
       await tester.pumpAndSettle();
@@ -86,7 +87,7 @@ void main() {
 
       await pump(tester, onTap: () => wentSomewhere = true);
 
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byIcon(Symbols.close));
       await tester.pumpAndSettle();
 
       expect(find.text('lo que ha pasado'), findsNothing);

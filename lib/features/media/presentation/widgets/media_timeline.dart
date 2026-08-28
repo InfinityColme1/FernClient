@@ -375,21 +375,33 @@ class _MediaTimelineState extends State<MediaTimeline> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Slider(
+                  // El tirador va con el raton y el video se coloca **de
+                  // cuando en cuando**, no en cada pixel arrastrado: pedirle al
+                  // descodificador un fotograma por cada movimiento del raton es
+                  // pedirle mas de lo que puede dar, y lo que se veia era un
+                  // tirador a trompicones que ademas iba por detras.
+                  //
+                  // Al soltar se coloca en el sitio exacto, que es el unico
+                  // fotograma que de verdad importa.
+                  FernSlider(
                     value: current,
                     max: total <= 0 ? 1 : total,
-                    onChangeStart: (_) {
+                    previewThrottle: scrubSeekInterval,
+                    onStart: (_) {
                       if (_isMarking || widget.pauseOnSeek) {
                         widget.playback.pause();
                       }
                       _valueChanges = 0;
                     },
-                    onChanged: (value) {
-                      _valueChanges++;
-                      widget.playback
-                          .seekTo(Duration(milliseconds: value.round()));
-                    },
-                    onChangeEnd: (value) => _snapToMark(value, track),
+                    // Contar los movimientos va aparte de colocar el vídeo: lo
+                    // que distingue un arrastre de un clic son **todos** los
+                    // movimientos, y colocar el vídeo va acotado. Contándolo con
+                    // lo acotado, un arrastre corto pasaría por clic y la barra
+                    // tiraría hacia la muesca más cercana al soltar.
+                    onDrag: (_) => _valueChanges++,
+                    onPreview: (value) => widget.playback
+                        .seekTo(Duration(milliseconds: value.round())),
+                    onCommitted: (value) => _snapToMark(value, track),
                   ),
                   OverlayPortal(
                     controller: _portal,
@@ -795,8 +807,7 @@ class _MarkBubbleState extends State<_MarkBubble> {
       children: [
         FernAvatar(
           imagePath: fernie.picturePath,
-          fallbackIcon: Icons.face_retouching_natural,
-          fallbackAsset: icFernie,
+          fallbackIcon: Symbols.face_retouching_natural,
           radius: AppSizes.avatarSmall,
           iconSize: AppSizes.iconSmall,
         ),

@@ -21,6 +21,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 MediaSuggestionEntity _suggestion({
   double confidence = 0.9,
@@ -178,8 +179,8 @@ void main() {
       await _pump(tester, _suggestion());
 
       // Es la fila del paso anterior: se puede mirar, no contestar.
-      expect(find.byIcon(Icons.check), findsNothing);
-      expect(find.byIcon(Icons.close), findsNothing);
+      expect(find.byIcon(Symbols.check), findsNothing);
+      expect(find.byIcon(Symbols.close), findsNothing);
     });
 
     testWidgets('con qué proponer, aparecen los dos', (tester) async {
@@ -190,8 +191,8 @@ void main() {
         onReject: () {},
       );
 
-      expect(find.byIcon(Icons.check), findsOneWidget);
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byIcon(Symbols.check), findsOneWidget);
+      expect(find.byIcon(Symbols.close), findsOneWidget);
     });
 
     testWidgets('sin nada que poner, sólo se puede rechazar', (tester) async {
@@ -200,8 +201,8 @@ void main() {
       // enseñarlo.
       await _pump(tester, _suggestion(), onReject: () {});
 
-      expect(find.byIcon(Icons.check), findsNothing);
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      expect(find.byIcon(Symbols.check), findsNothing);
+      expect(find.byIcon(Symbols.close), findsOneWidget);
     });
 
     testWidgets('aceptar avisa a quien lo pidió', (tester) async {
@@ -214,7 +215,7 @@ void main() {
         onReject: () {},
       );
 
-      await tester.tap(find.byIcon(Icons.check));
+      await tester.tap(find.byIcon(Symbols.check));
       await tester.pump();
 
       expect(accepted, 1);
@@ -230,7 +231,7 @@ void main() {
         onReject: () => rejected++,
       );
 
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byIcon(Symbols.close));
       await tester.pump();
 
       expect(rejected, 1);
@@ -247,7 +248,7 @@ void main() {
         onMarkRegion: () => marked++,
       );
 
-      await tester.tap(find.byIcon(Icons.crop_free_rounded));
+      await tester.tap(find.byIcon(Symbols.crop_free));
 
       // Es lo que cierra el círculo: sin esto, cada acierto del modelo se pierde
       // y hay que volver a marcar a mano lo que ya estaba bien marcado.
@@ -258,7 +259,7 @@ void main() {
       await _pump(tester, _suggestion(), onMarkRegion: () {});
 
       // No hay sitio que guardar: una región sin rectángulo no es una región.
-      expect(find.byIcon(Icons.crop_free_rounded), findsNothing);
+      expect(find.byIcon(Symbols.crop_free), findsNothing);
     });
 
     testWidgets('pasar por encima avisa con la sugerencia', (tester) async {

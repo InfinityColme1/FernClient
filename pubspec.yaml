@@ -36,7 +36,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences:
   intl:
-  flutter_svg:
   flutter_bloc:
   path_provider: 
   get_it:
@@ -104,11 +103,9 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/fonts/
-    - assets/icons/
     - assets/images/
     - assets/python/
     - assets/sounds/
-    - assets/vectors/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -121,14 +118,18 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   #example:
+  # Cada fichero, con el peso que de verdad lleva dentro (su `usWeightClass`).
+  # Regular y Medium estaban cruzados: todo lo que la aplicacion pedia como 400
+  # —que es casi todo el texto— se pintaba en Medium, y lo que pedia 500 salia en
+  # Regular. La jerarquia estaba al reves y el conjunto pesaba de mas.
   fonts:
     - family: Google Sans Flex
       fonts:
         - asset: assets/fonts/GoogleSansFlex_24pt-Light.ttf
           weight: 300
-        - asset: assets/fonts/GoogleSansFlex_24pt-Medium.ttf
-          weight: 400
         - asset: assets/fonts/GoogleSansFlex_24pt-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/GoogleSansFlex_24pt-Medium.ttf
           weight: 500
         - asset: assets/fonts/GoogleSansFlex_24pt-SemiBold.ttf
           weight: 600

@@ -22,6 +22,7 @@ import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 void main() {
   late Directory directory;
@@ -57,6 +58,7 @@ void main() {
     );
 
     repository = LocalMediaRepositoryImpl(
+      shuffle: ShuffleSeed(),
       appDatabase: isar,
       fileOrganizer: _NoFiles(),
       avatarStorage: _NoAvatars(),

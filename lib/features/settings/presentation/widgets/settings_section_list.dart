@@ -28,15 +28,20 @@ class SettingsSectionList extends StatelessWidget {
     return Container(
       width: AppSizes.settingsNavWidth,
       color: context.colors.secondary,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.xl,
-        horizontal: AppSpacing.l,
+      // Por la derecha no lleva relleno: ahi va la barra de desplazamiento,
+      // pegada al canto de la columna. El hueco que la separa de las filas lo
+      // pone la lista de dentro, porque la barra se pinta encima de ellas.
+      padding: const EdgeInsets.only(
+        top: AppSpacing.xl,
+        bottom: AppSpacing.xl,
+        left: AppSpacing.l,
       ),
       // Desplazable: las secciones se van añadiendo y el diálogo tiene el alto
       // que le deje la ventana. Con una columna a secas, la última sección se
       // desbordaba por abajo en cuanto la ventana era baja, y encima sin poder
       // llegar a ella.
       child: SingleChildScrollView(
+        padding: const EdgeInsets.only(right: AppSizes.scrollbarLane),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

@@ -10,11 +10,12 @@ import 'package:Fern/core/widgets/collapsing_navigation_drawer_widget.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 SidebarItem _item(String title, {int depth = 0}) => SidebarItem(
       id: title,
       title: title,
-      icon: Icons.sell_outlined,
+      icon: Symbols.sell,
       depth: depth,
       onTap: () {},
     );
@@ -79,7 +80,7 @@ void main() {
 
     // De ahí para abajo no se estrecha más el botón: la jerarquía se marca con
     // una flecha, que además desplaza el título dentro del propio botón.
-    expect(find.byIcon(Icons.subdirectory_arrow_right), findsOneWidget);
+    expect(find.byIcon(Symbols.subdirectory_arrow_right), findsOneWidget);
     expect(_left(tester, 'Bisnieta'), greaterThan(grandchild));
   });
 

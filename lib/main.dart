@@ -20,6 +20,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'config/theme/app_theme.dart';
@@ -104,7 +105,7 @@ class StartupErrorApp extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        Icons.error_outline,
+                        Symbols.error,
                         size: AppSizes.iconHuge,
                         color: context.colors.error,
                       ),

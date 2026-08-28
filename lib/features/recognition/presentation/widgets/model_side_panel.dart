@@ -6,6 +6,7 @@ import 'package:Fern/features/recognition/domain/entities/recognition_model_enti
 import 'package:Fern/features/recognition/presentation/widgets/tree_drag_payload.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Los modelos que todavía no están en el árbol, para meterlos.
 ///
@@ -156,7 +157,7 @@ class _ModelSidePanelState extends State<ModelSidePanel> {
 
       return FernPillButton(
         label: label,
-        icon: isOn ? Icons.check_circle_outline : Icons.circle_outlined,
+        icon: isOn ? Symbols.check_circle : Symbols.circle,
         backgroundColor:
             isOn ? context.colors.primary : context.colors.secondary,
         foregroundColor: context.colors.black,
@@ -204,7 +205,7 @@ class _ModelSidePanelState extends State<ModelSidePanel> {
           children: [
             FernAvatar(
               imagePath: model.picturePath,
-              fallbackIcon: Icons.hub_outlined,
+              fallbackIcon: Symbols.hub,
               radius: AppSizes.avatarSmall,
               iconSize: AppSizes.iconSmall,
             ),
@@ -233,7 +234,7 @@ class _ModelSidePanelState extends State<ModelSidePanel> {
               ),
             ),
             Icon(
-              Icons.add,
+              Symbols.add,
               size: AppSizes.iconSmall,
               color: context.colors.unremarked,
             ),

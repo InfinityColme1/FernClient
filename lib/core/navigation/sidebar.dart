@@ -14,8 +14,10 @@ import 'package:Fern/features/media/presentation/blocs/tags_states.dart';
 import 'package:Fern/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -74,7 +76,7 @@ class _SidebarState extends State<Sidebar> {
     showFernToast(
       context,
       AppLocalizations.of(context).tagDropped(mediaIds.length, tag.name),
-      icon: Icons.sell_outlined,
+      icon: Symbols.sell,
     );
   }
 
@@ -114,7 +116,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
         id: mediaRoute,
         title: texts.navMedia,
-        icon: Icons.photo_outlined,
+        icon: Symbols.photo,
         onTap: () {
           GoRouter.of(context).go(mediaRoute);
         },
@@ -122,7 +124,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
           id: importRoute,
           title: texts.navImport,
-          icon: Icons.file_download_outlined,
+          icon: Symbols.download,
           badgeCount: showBadges ? notifications.badgeFor(importRoute) : 0,
           onTap: () {
             GoRouter.of(context).go(importRoute);
@@ -133,7 +135,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
           id: browserRoute,
           title: texts.navBrowser,
-          icon: Icons.travel_explore_outlined,
+          icon: Symbols.travel_explore,
           onTap: () {
             context.go(browserRoute);
           }
@@ -141,7 +143,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
           id: favoritesRoute,
           title: texts.navFavorites,
-          icon: Icons.favorite_border_outlined,
+          icon: Symbols.favorite,
           onTap: () {
             context.go(favoritesRoute);
           }
@@ -149,7 +151,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
           id: creatorManagerRoute,
           title: texts.navCreatorManager,
-          icon: Icons.person_outline,
+          icon: Symbols.person,
           onTap: () {
             context.go(creatorManagerRoute);
           }
@@ -157,7 +159,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
           id: tagManagerRoute,
           title: texts.navTagManager,
-          icon: Icons.sell_outlined,
+          icon: Symbols.sell,
           onTap: () {
             context.go(tagManagerRoute);
           }
@@ -165,7 +167,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
           id: deletedRoute,
           title: texts.navDeleted,
-          icon: Icons.delete_outline_outlined,
+          icon: Symbols.delete,
           onTap: () {
             context.go(deletedRoute);
           }
@@ -187,8 +189,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
         id: fernieManagerRoute,
         title: texts.navFernies,
-        icon: Icons.face_retouching_natural_outlined,
-        iconAsset: icFernie,
+        icon: Symbols.face_retouching_natural,
         onTap: () {
           context.go(fernieManagerRoute);
         },
@@ -196,7 +197,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
         id: repeatedMediaRoute,
         title: texts.navRepeatedMedia,
-        icon: Icons.copy_all_outlined,
+        icon: Symbols.copy_all,
         badgeCount:
             showBadges ? notifications.badgeFor(repeatedMediaRoute) : 0,
         onTap: () {
@@ -206,7 +207,7 @@ class _SidebarState extends State<Sidebar> {
       SidebarItem(
         id: modelsRoute,
         title: texts.navModels,
-        icon: Icons.hub_outlined,
+        icon: Symbols.hub,
         badgeCount: showBadges ? notifications.badgeFor(modelsRoute) : 0,
         onTap: () {
           context.go(modelsRoute);
@@ -232,7 +233,7 @@ class _SidebarState extends State<Sidebar> {
         SidebarItem(
           id: 'tag:${tag.id}',
           title: tag.name,
-          icon: Icons.sell_outlined,
+          icon: Symbols.sell,
           // Con el filtro quitado, una etiqueta NSFW se veía en el menú igual
           // que las demás y no había forma de saber cuál escondía contenido.
           isNsfw: tag.isUnderNsfw,
@@ -309,6 +310,9 @@ class _SidebarState extends State<Sidebar> {
               ),
               SidebarSection(
                 title: texts.navTags,
+                // Donde señala el tutorial al contar que las etiquetas también
+                // son sitios donde soltar contenido.
+                anchorId: TutorialAnchorId.sidebarTags,
                 items: _tagItems(
                   state.tags,
                   showAvatars: settings.settings.showListAvatars,

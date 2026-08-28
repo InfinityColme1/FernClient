@@ -17,6 +17,7 @@ import 'package:Fern/features/settings/domain/entities/notification_settings_ent
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Settings implements SettingsRepository {
@@ -75,7 +76,7 @@ Future<void> pumpBadge(WidgetTester tester, int count) {
         child: FernBadge(
           count: count,
           maxCount: notificationBadgeMaxCount,
-          child: const Icon(Icons.folder),
+          child: const Icon(Symbols.folder),
         ),
       ),
     ),
@@ -212,7 +213,7 @@ void main() {
     testWidgets('con cero no se pinta', (tester) async {
       await pumpBadge(tester, 0);
 
-      expect(find.byIcon(Icons.folder), findsOneWidget);
+      expect(find.byIcon(Symbols.folder), findsOneWidget);
       expect(find.textContaining('0'), findsNothing);
     });
 

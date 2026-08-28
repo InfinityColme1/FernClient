@@ -8,6 +8,7 @@ import 'package:Fern/config/theme/app_theme.dart';
 import 'package:Fern/core/ui/display/fern_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 Future<void> _pumpChip(WidgetTester tester, {VoidCallback? onRemove}) {
   return tester.pumpWidget(MaterialApp(
@@ -23,16 +24,16 @@ void main() {
     await _pumpChip(tester);
 
     expect(find.text('Miraculous'), findsOneWidget);
-    expect(find.byIcon(Icons.cancel), findsNothing);
+    expect(find.byIcon(Symbols.cancel), findsNothing);
   });
 
   testWidgets('el botón de quitar avisa al pulsarlo', (tester) async {
     var removed = 0;
     await _pumpChip(tester, onRemove: () => removed++);
 
-    expect(find.byIcon(Icons.cancel), findsOneWidget);
+    expect(find.byIcon(Symbols.cancel), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.cancel));
+    await tester.tap(find.byIcon(Symbols.cancel));
     await tester.pump();
 
     expect(removed, 1);

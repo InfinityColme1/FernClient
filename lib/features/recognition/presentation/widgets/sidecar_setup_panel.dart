@@ -11,6 +11,7 @@ import 'package:Fern/features/recognition/presentation/widgets/confirm_gpu_dialo
 import 'package:Fern/features/recognition/presentation/widgets/sidecar_activity_text.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Con qué se instala el entorno desde cero.
 enum _InstallTarget { cpu, gpu }
@@ -190,12 +191,12 @@ class _SidecarSetupPanelState extends State<SidecarSetupPanel> {
                     FernMenuOption(
                       value: _InstallTarget.cpu,
                       label: texts.sidecarInstallCpu,
-                      icon: Icons.memory,
+                      icon: Symbols.memory,
                     ),
                     FernMenuOption(
                       value: _InstallTarget.gpu,
                       label: texts.sidecarInstallGpu,
-                      icon: Icons.bolt,
+                      icon: Symbols.bolt,
                     ),
                   ],
                   onSelected: _onInstallSelected,
@@ -203,7 +204,7 @@ class _SidecarSetupPanelState extends State<SidecarSetupPanel> {
                     label: stage == SidecarSetupStage.ready
                         ? texts.sidecarReinstall
                         : texts.sidecarInstall,
-                    icon: Icons.download,
+                    icon: Symbols.download,
                     backgroundColor: context.colors.primary,
                     foregroundColor: context.colors.black,
                     onPressed: stage.isWorking ? null : toggle,
@@ -214,7 +215,7 @@ class _SidecarSetupPanelState extends State<SidecarSetupPanel> {
                 if (stage == SidecarSetupStage.ready && _isOnCpu)
                   FernPillButton(
                     label: texts.sidecarEnableGpu,
-                    icon: Icons.bolt,
+                    icon: Symbols.bolt,
                     backgroundColor: context.colors.secondary,
                     foregroundColor: context.colors.black,
                     onPressed: stage.isWorking ? null : _askAndEnableGpu,
@@ -222,7 +223,7 @@ class _SidecarSetupPanelState extends State<SidecarSetupPanel> {
                 if (stage == SidecarSetupStage.ready && _isOnGpu)
                   FernPillButton(
                     label: texts.sidecarEnableCpu,
-                    icon: Icons.memory,
+                    icon: Symbols.memory,
                     backgroundColor: context.colors.secondary,
                     foregroundColor: context.colors.black,
                     onPressed: stage.isWorking
@@ -231,7 +232,7 @@ class _SidecarSetupPanelState extends State<SidecarSetupPanel> {
                   ),
                 FernPillButton(
                   label: texts.sidecarUninstall,
-                  icon: Icons.delete_outline,
+                  icon: Symbols.delete,
                   backgroundColor: context.colors.error,
                   foregroundColor: context.colors.white,
                   onPressed: stage.isWorking ? null : _reset,
@@ -363,9 +364,9 @@ class _SidecarSetupPanelState extends State<SidecarSetupPanel> {
     SidecarSetupStage stage,
   ) {
     final (icon, color) = switch (stage) {
-      SidecarSetupStage.ready => (Icons.check_circle, context.colors.terciary),
-      SidecarSetupStage.error => (Icons.error_outline, context.colors.error),
-      _ => (Icons.info_outline, context.colors.gray),
+      SidecarSetupStage.ready => (Symbols.check_circle, context.colors.terciary),
+      SidecarSetupStage.error => (Symbols.error, context.colors.error),
+      _ => (Symbols.info, context.colors.gray),
     };
 
     return Row(

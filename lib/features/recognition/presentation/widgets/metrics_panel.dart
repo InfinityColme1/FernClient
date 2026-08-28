@@ -8,6 +8,7 @@ import 'package:Fern/features/recognition/domain/services/training_failure.dart'
 import 'package:Fern/features/recognition/domain/services/training_metrics.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Qué tal salió el último entrenamiento, y qué tal va de verdad.
 ///
@@ -183,7 +184,7 @@ class MetricsPanel extends StatelessWidget {
                 label: '${entry.key} ${entry.value.toStringAsFixed(2)}',
                 leading: entry.value < weakClassThreshold
                     ? Icon(
-                        Icons.warning_amber_rounded,
+                        Symbols.warning_amber,
                         size: AppSizes.iconSmall,
                         color: context.colors.error,
                       )
@@ -216,7 +217,7 @@ class MetricsPanel extends StatelessWidget {
           backgroundColor: context.colors.secondary,
           foregroundColor: context.colors.black,
           label: texts.metricsConfusionMatrix,
-          icon: Icons.grid_on,
+          icon: Symbols.grid_on,
           onPressed: onShowImages == null
               ? null
               : () => onShowImages!(directory, RunImageKind.confusion),
@@ -225,7 +226,7 @@ class MetricsPanel extends StatelessWidget {
           backgroundColor: context.colors.secondary,
           foregroundColor: context.colors.black,
           label: texts.metricsCurves,
-          icon: Icons.show_chart,
+          icon: Symbols.show_chart,
           onPressed: onShowImages == null
               ? null
               : () => onShowImages!(directory, RunImageKind.curves),
@@ -234,7 +235,7 @@ class MetricsPanel extends StatelessWidget {
           backgroundColor: context.colors.secondary,
           foregroundColor: context.colors.black,
           label: texts.metricsOpenRunFolder,
-          icon: Icons.folder_open,
+          icon: Symbols.folder_open,
           onPressed:
               onOpenFolder == null ? null : () => onOpenFolder!(directory),
         ),
@@ -256,7 +257,7 @@ class MetricsPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              Icons.error_outline,
+              Symbols.error,
               size: AppSizes.iconSmall,
               color: context.colors.error,
             ),
@@ -290,7 +291,7 @@ class MetricsPanel extends StatelessWidget {
             backgroundColor: context.colors.secondary,
             foregroundColor: context.colors.black,
             label: texts.metricsRetry,
-            icon: Icons.refresh,
+            icon: Symbols.refresh,
             onPressed: onRetry,
           ),
         ],

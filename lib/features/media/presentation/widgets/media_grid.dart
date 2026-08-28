@@ -16,6 +16,7 @@ import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -130,6 +131,10 @@ class MediaGrid extends StatelessWidget {
   /// biblioteca está vacía, que es lo que toca en casi todas las pantallas.
   final String? emptyMessage;
 
+  /// Lo que se dice debajo del mensaje cuando no hay nada: por qué está vacío o
+  /// qué hacer. Sin él, la rejilla de la biblioteca pone el suyo.
+  final String? emptyDescription;
+
   const MediaGrid({
     super.key,
     required this.mediaList,
@@ -147,7 +152,8 @@ class MediaGrid extends StatelessWidget {
         onCropRangeSelectionRequested = null,
         onCropLoadFailed = null,
         pendingWarning = null,
-        emptyMessage = null;
+        emptyMessage = null,
+        emptyDescription = null;
 
   /// Rejilla de recortes: cada celda es una región de un contenido y se pinta
   /// con la proporción de la región, no con la del fichero.
@@ -174,6 +180,7 @@ class MediaGrid extends StatelessWidget {
     this.hasSurface = true,
     this.isLoading = false,
     this.emptyMessage,
+    this.emptyDescription,
   })  : mediaList = const [],
         isImporting = false,
         sections = null,
@@ -185,6 +192,7 @@ class MediaGrid extends StatelessWidget {
   /// uno.
   const MediaGrid.sections({
     super.key,
+    this.emptyDescription,
     required List<MediaSearchSectionEntity> this.sections,
     required this.columns,
     this.hasSurface = true,
@@ -229,22 +237,29 @@ class MediaGrid extends StatelessWidget {
     if (isEmpty) {
       // Mientras se está leyendo, el indicador de espera; sólo cuando ya se sabe
       // que no hay nada se dice que la rejilla está vacía.
+      // Esperando se pinta el hueco de lo que va a llegar, no un círculo dando
+      // vueltas: dice además **qué** viene y cuánto va a ocupar, así que al
+      // llegar el contenido no se recoloca la pantalla de golpe.
+      //
+      // El botón de parar va encima, que es lo único que se puede hacer mientras.
       final Widget placeholder = isLoading
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_stopButton(context) case final stop?) ...[
-                    stop,
-                    const SizedBox(height: AppSpacing.s),
-                  ],
-                  const FernProgressIndicator(),
-                ],
-              ),
+          ? Stack(
+              children: [
+                Positioned.fill(child: FernSkeletonGrid(columns: columns)),
+                if (_stopButton(context) case final stop?)
+                  Positioned.fill(child: Center(child: stop)),
+              ],
             )
           : FernEmptyState(
               imageAsset: fernEmptyImage,
               message: emptyMessage ?? AppLocalizations.of(context).emptyLibrary,
+              // Sin mensaje propio, la rejilla es la de la biblioteca y se
+              // explica sola. Con uno puesto, quien lo puso dirá si hace falta
+              // decir algo más: `emptyDescription`.
+              description: emptyDescription ??
+                  (emptyMessage == null
+                      ? AppLocalizations.of(context).emptyLibraryHint
+                      : null),
             );
 
       return Padding(
@@ -354,7 +369,7 @@ class MediaGrid extends StatelessWidget {
     return IconButton(
       tooltip: AppLocalizations.of(context).actionStopImport,
       onPressed: onStop,
-      icon: Icon(Icons.stop_circle_outlined, color: color),
+      icon: Icon(Symbols.stop_circle, color: color),
       iconSize: AppSizes.iconLarge,
     );
   }
@@ -366,9 +381,22 @@ class MediaGrid extends StatelessWidget {
   /// pantallas de gestión, donde la rejilla llega hasta el borde a propósito.
   double get _inset => hasSurface ? AppSpacing.gridInset : AppSpacing.s;
 
+  /// El relleno de la rejilla, con sitio a la derecha para la barra.
+  ///
+  /// El carril va **sumado** al margen de siempre, no en su lugar: el margen es
+  /// lo que separa las miniaturas del borde y el carril es lo que ocupa la barra.
+  /// Quedandose con el mayor de los dos, la barra se comia el margen y la
+  /// pastilla acababa rozando la esquina de la ultima miniatura de cada fila.
+  EdgeInsets get _gridPadding => EdgeInsets.fromLTRB(
+        _inset,
+        _inset,
+        _inset + AppSizes.scrollbarLane,
+        _inset,
+      );
+
   Widget _buildGrid(List<int> orderedIds, RequestMediaMenu requestMenu) {
     return ReturningMasonryGrid(
-      padding: EdgeInsets.all(_inset),
+      padding: _gridPadding,
       // Lo justo para que desplazarse no vaya construyendo a tirones, y no
       // tanto como para tener cientos de celdas montadas fuera de la pantalla:
       // cada una pide su miniatura y decodifica su imagen.
@@ -381,7 +409,14 @@ class MediaGrid extends StatelessWidget {
       fallbackRatio: mediaFallbackAspectRatio,
       focusIndex: _returnIndex,
       itemBuilder: (context, index) =>
-          _buildItem(mediaList[index], orderedIds, requestMenu),
+          _buildItem(
+            mediaList[index],
+            orderedIds,
+            requestMenu,
+            // Solo la rejilla llana vuela: aqui cada contenido sale una vez, asi
+            // que su etiqueta es unica. En la vista por grupos no.
+            fliesToViewer: true,
+          ),
     );
   }
 
@@ -452,7 +487,12 @@ class MediaGrid extends StatelessWidget {
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: _inset),
+            // Mismo carril para la barra que en la rejilla normal: esto se
+            // desplaza igual y esta dentro de la misma superficie.
+            padding: EdgeInsets.only(
+              left: _inset,
+              right: _inset + AppSizes.scrollbarLane,
+            ),
             sliver: SliverMasonryGrid.count(
               crossAxisCount: columns,
               mainAxisSpacing: AppSpacing.s,
@@ -472,7 +512,7 @@ class MediaGrid extends StatelessWidget {
   /// cambia es que cada celda lleva su región y su propia selección.
   Widget _buildCropGrid(List<MediaCrop> crops) {
     return ReturningMasonryGrid(
-      padding: EdgeInsets.all(_inset),
+      padding: _gridPadding,
       cacheExtent: mediaGridCacheExtent,
       columns: columns,
       spacing: AppSpacing.s,
@@ -509,8 +549,9 @@ class MediaGrid extends StatelessWidget {
   Widget _buildItem(
     MediaSummaryEntity media,
     List<int> orderedIds,
-    RequestMediaMenu requestMenu,
-  ) {
+    RequestMediaMenu requestMenu, {
+    bool fliesToViewer = false,
+  }) {
     final highlight = getIt<RecognitionHighlight>();
 
     return BlocSelector<MediaBloc, MediaStates, Set<int>>(
@@ -526,6 +567,7 @@ class MediaGrid extends StatelessWidget {
           builder: (context, _) => MediaItem(
             media: media,
             isSelected: isSelected,
+            fliesToViewer: fliesToViewer,
             isHighlighted: highlight.contains(media.id),
             // La regla del arrastre: con selección, la selección entera; sin
             // ella, sólo ésta. Arrastrar una celda que no está marcada teniendo

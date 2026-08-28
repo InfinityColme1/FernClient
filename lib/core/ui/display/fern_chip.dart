@@ -2,6 +2,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Un widget opcional a la izquierda y un texto, en dos variantes:
 ///
@@ -90,7 +91,7 @@ class FernChip extends StatelessWidget {
             mouseCursor: WidgetStateMouseCursor.clickable,
             customBorder: const CircleBorder(),
             child: Icon(
-              Icons.cancel,
+              Symbols.cancel,
               size: AppSizes.iconCompact,
               color: labelColor ?? context.colors.black,
             ),

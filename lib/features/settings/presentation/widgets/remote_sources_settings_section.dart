@@ -13,6 +13,7 @@ import 'package:Fern/features/settings/domain/entities/source_guide.dart';
 import 'package:Fern/features/settings/presentation/widgets/source_guide_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Configuración de las plataformas de las que la aplicación puede traerse
@@ -286,7 +287,7 @@ class _RemoteSourcesSettingsSectionState
         alignment: Alignment.centerLeft,
         child: FernPillButton(
           label: texts.redditGuideAction,
-          icon: Icons.help_outline,
+          icon: Symbols.help,
           backgroundColor: context.colors.secondary,
           foregroundColor: context.colors.black,
           onPressed: () => showFernDialog<void, Never>(

@@ -10,6 +10,7 @@ import 'package:Fern/features/settings/presentation/settings_status_labels.dart'
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Cómo se nombra cada criterio de ordenación en la pantalla. El criterio en sí
@@ -126,7 +127,7 @@ class FilesSettingsSection extends StatelessWidget {
               children: [
                 FernPillButton(
                   label: texts.migrateFiles,
-                  icon: Icons.drive_file_move_outline,
+                  icon: Symbols.drive_file_move,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
                   onPressed: settings.managesFiles && !state.isWorking

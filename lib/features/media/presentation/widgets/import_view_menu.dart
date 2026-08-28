@@ -5,6 +5,7 @@ import 'package:Fern/features/media/domain/entities/media/suggestion_filter.dart
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Cómo se está mirando lo pendiente de revisar: qué parte y en qué orden.
 ///
@@ -102,7 +103,7 @@ class ImportViewMenu extends StatelessWidget {
       ],
       builder: (context, toggle) => FernPillButton(
         label: texts.importShowLabel,
-        icon: Icons.tune,
+        icon: Symbols.tune,
         backgroundColor: context.colors.secondary,
         foregroundColor: context.colors.black,
         onPressed: toggle,

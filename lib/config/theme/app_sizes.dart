@@ -55,9 +55,20 @@ class AppSizes {
   static const double dialogChromeHeight = 180.0;
   static const double radiusMedium = 12.0;
   static const double radiusLarge = 16.0;
-  static const double radiusExtraLarge = 25.0; 
-  static const double radiusDialog = 28.0;
-  static const double radiusSurface = 43.0;
+
+  /// El radio de una píldora: un desplegable, un chip, un botón de la cabecera.
+  static const double radiusExtraLarge = 18.0;
+
+  static const double radiusDialog = 24.0;
+
+  /// El radio de las superficies grandes (la rejilla, los paneles).
+  ///
+  /// Era 43, que a este tamaño de superficie no se lee como una esquina
+  /// redondeada sino como un óvalo: le comía las celdas de las esquinas —de ahí
+  /// [AppSpacing.gridInset]— y hacía que todo pareciera más blando y más grande
+  /// de lo que es.
+  static const double radiusSurface = 28.0;
+
   static const double radiusFull = 100.0;
 
   // Icon Sizes
@@ -67,6 +78,14 @@ class AppSizes {
   static const double iconLarge = 24.0;
   static const double iconExtraLarge = 32.0;
   static const double iconHuge = 48.0;
+
+  /// Los botones que se ponen en la esquina de una ficha.
+  ///
+  /// Al tamaño grande (32) pesaban más que el nombre que tienen al lado: un
+  /// icono de contorno engorda su trazo con el tamaño, así que grande es también
+  /// grueso, y en una esquina eso se lee antes que el contenido de la ficha. Van
+  /// al mismo tamaño que los de una cabecera, que es lo que son.
+  static const double iconCardAction = iconMedium;
 
   /// Radio del círculo del botón de añadir cuando va suelto en un formulario y
   /// no acompaña a ninguna rejilla de avatares.
@@ -83,9 +102,19 @@ class AppSizes {
   static const double avatarHuge = 80.0;
 
   // Button Heights
-  static const double buttonHeightSmall = 40.0;
-  static const double buttonHeight = 50.0;
-  static const double buttonHeightLarge = 54.0;
+  //
+  // Un escalón por debajo de lo que había (40/50/54). A 50 un botón normal
+  // ocupaba más que una fila de texto y medio, que es lo que hacía que la
+  // aplicación se sintiera grande incluso donde no sobraba nada.
+  static const double buttonHeightSmall = 34.0;
+  static const double buttonHeight = 42.0;
+  static const double buttonHeightLarge = 46.0;
+
+  /// Lo alta que es la barra de arriba.
+  ///
+  /// Es la primera franja de la ventana y no lleva nada más que el buscador y
+  /// tres botones: a 80 era una banda de aire con cosas sueltas dentro.
+  static const double toolbarHeight = 64.0;
   
   // Panel Widths
   static const double infoPanelWidth = 350.0;
@@ -107,7 +136,7 @@ class AppSizes {
   /// selección hecha y todos sus botones) deja de caber con el menú lateral
   /// plegado: medido en `test/layout_breakpoints_test.dart`, que falla si
   /// alguna cabecera crece y este número se queda corto.
-  static const double largeScreenMinWidth = 1200.0;
+  static const double largeScreenMinWidth = 1180.0;
 
   /// Ancho por debajo del cual el menú lateral se pliega solo.
   ///
@@ -116,7 +145,7 @@ class AppSizes {
   /// importación deja de caber con el menú desplegado, así que en pantallas
   /// cuya mitad es mayor que este número el menú se pliega aquí para que no
   /// desborde antes de llegar a [largeScreenMinWidth].
-  static const double sidebarAutoCollapseMinWidth = 1340.0;
+  static const double sidebarAutoCollapseMinWidth = 1320.0;
 
   // Grosores de borde
   /// El trazo de los contornos dibujados a mano (el círculo del botón de
@@ -124,11 +153,33 @@ class AppSizes {
   static const double borderThin = 1.5;
   static const double borderRegular = 2.0;
 
+  /// El trazo que separa una superficie de lo que tiene al lado.
+  ///
+  /// Un píxel y no más: no es un borde que se mire, es el escalón que hace que
+  /// dos superficies pegadas no parezcan la misma mancha de color. Se pinta con
+  /// `AppPalette.outline`.
+  static const double borderHairline = 1.0;
+
   /// Lo que mide de ancho, como mínimo, la bolita con el contador de avisos.
   /// Con una cifra queda redonda y con tres se estira.
   static const double badgeMinWidth = 18.0;
 
-  static const double logoWidth = 150.0;
+  /// Lo alto que va el logotipo en la barra de arriba.
+  ///
+  /// El ancho lo decide él: la marca y el nombre crecen juntos desde el alto,
+  /// así que las proporciones son las mismas en la barra y en la bienvenida.
+  static const double logoHeight = 30.0;
+
+  /// Lo ancha que puede ser la explicación de un estado vacío.
+  ///
+  /// Acotada: una línea que cruza la pantalla entera no se lee, se sobrevuela.
+  static const double emptyStateTextWidth = 380.0;
+
+  /// Lo que ocupa la ilustración de un estado vacío.
+  ///
+  /// Aquí y no dentro del widget: era el único número a pelo que quedaba en la
+  /// capa de UI compartida.
+  static const double emptyStateImage = 132.0;
 
   /// Ancho máximo del aviso de arranque fallido. Es una columna de texto y no
   /// una pantalla: pasado ese ancho las líneas se hacen incómodas de leer.
@@ -180,7 +231,72 @@ class AppSizes {
 
   // Buscador de la barra superior
   static const double searchBarWidth = 420.0;
-  static const double searchBarHeight = 48.0;
+  static const double searchBarHeight = 40.0;
+
+  /// Lo ancha que es la marca de la fila elegida del menú lateral.
+  static const double sidebarMarkWidth = 3.0;
+
+  /// Lo alta que es, en proporción a la fila.
+  ///
+  /// Más corta que la fila a propósito: una barra de borde a borde se lee como
+  /// un separador entre filas, y lo que tiene que decir es «ésta».
+  static const double sidebarMarkHeightFactor = 0.5;
+
+  /// El carril que se le reserva a la izquierda de la píldora.
+  ///
+  /// La marca vive **fuera** de la píldora: dentro se pisaba con el teñido del
+  /// fondo, que es del mismo color, y quedaba pegada al icono.
+  static const double sidebarMarkGutter = 10.0;
+
+  /// El redondeo de una casilla de verificar. Poco: una casilla muy redonda se
+  /// confunde con un interruptor.
+  static const double checkboxRadius = 4.0;
+
+  /// El carril y el tirador de un deslizador.
+  static const double sliderTrack = 4.0;
+  static const double sliderThumb = 7.0;
+
+  // Barra de desplazamiento
+  /// Lo gorda que es. Fina a propósito: es una referencia, no un mando que se
+  /// mire.
+  static const double scrollbarThickness = 6.0;
+
+  /// Lo gorda que se pone con el raton encima, y arrastrandola.
+  ///
+  /// Crece al acercarse porque en reposo es una referencia —dice por donde va el
+  /// contenido— y bajo el cursor es un mando: hay que poder cogerla sin apuntar.
+  static const double scrollbarThicknessHover = 9.0;
+  static const double scrollbarThicknessDragged = 11.0;
+
+  /// Lo que se separa del canto de lo que desplaza.
+  ///
+  /// **Poco a proposito.** Este hueco no aparta la pastilla del contenido: la
+  /// aparta del borde, o sea que la mete hacia dentro, que es justo hacia el
+  /// contenido. Subirlo para «darle aire» la empuja encima de lo que hay debajo,
+  /// y en un panel estrecho —el menu lateral, la columna de los ajustes— eso se
+  /// ve al momento. El aire se da por el otro lado, con [scrollbarLane].
+  static const double scrollbarMargin = 4.0;
+
+  /// Lo que tiene que apartarse el contenido por la derecha para dejarle sitio.
+  ///
+  /// La barra se pinta **encima** de lo que desplaza, asi que el hueco entre la
+  /// pastilla y el contenido no lo pone la barra: lo pone el contenido, o no lo
+  /// pone nadie. Da para el hueco del canto, para lo gorda que llega a ponerse
+  /// con el raton encima y para un margen que se vea.
+  static const double scrollbarLane = 24.0;
+
+  /// Lo que se acorta por arriba y por abajo.
+  ///
+  /// Es lo que arregla que la barra saliera **mordida**: la rejilla de contenido
+  /// va dentro de una superficie de esquinas redondeadas y recortada, y una barra
+  /// pegada al canto entra en la curva justo en sus dos extremos. Con este hueco
+  /// empieza y acaba ya dentro de la parte recta, asi que no hay curva que la
+  /// alcance. Sale de [radiusSurface], que es el redondeo mas grande que se usa.
+  static const double scrollbarEndInset = 16.0;
+
+  /// Lo más corto que se deja al pulgar. Con muchas opciones se encoge tanto que
+  /// deja de ser algo que se pueda agarrar.
+  static const double scrollbarMinThumb = 32.0;
 
   // Indicador de progreso
   /// Tamaño del indicador de progreso cuando ocupa el sitio de lo que se está

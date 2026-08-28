@@ -1,4 +1,6 @@
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/usecases/add_tag_to_media_usecase.dart';
 import 'package:Fern/features/notifications/data/services/notification_service.dart';
@@ -104,6 +106,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// lanza y se desatiende, así que al acabar se pone el contador en el menú.
   final NotificationService _notifications;
 
+  /// Con qué se baraja al pedir el contenido al azar.
+  final ShuffleSeed _shuffle;
+
   /// La señal con la que se para una importación en marcha. La levanta el botón
   /// de la rejilla y la miran los recorridos de las fuentes.
 
@@ -147,6 +152,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SearchMediaUseCase searchMediaUseCase,
     required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
     required PreferencesService preferences,
+    required ShuffleSeed shuffle,
     required NotificationService notifications,
     required ImportDecisions decisions,
   })  : _selectImportDirectoryUsecase = selectImportDirectoryUsecase,
@@ -179,6 +185,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _searchMediaUseCase = searchMediaUseCase,
         _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
         _preferences = preferences,
+        _shuffle = shuffle,
         _notifications = notifications,
         _decisions = decisions,
         super(const MediaLoading()) {
@@ -375,7 +382,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final sourceFilters = state.sourceFilters;
     final typeFilters = state.typeFilters;
 
+    // Lo mismo que en la biblioteca: lo que ya está puesto se queda mientras se
+    // relee, con el velo de ocupado encima. Vaciarlo hace que la rejilla
+    // desaparezca y vuelva, y eso se ve como un temblor.
     emit(MediaLoading(
+      mediaList: state.mediaList,
       favoritesOnly: true,
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
@@ -549,7 +560,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final sourceFilters = state.sourceFilters;
     final typeFilters = state.typeFilters;
 
+    // **Con lo que ya hay puesto.** Volver a leer la biblioteca no cambia lo que
+    // se está mirando, así que vaciarla mientras tanto sólo consigue que la
+    // rejilla desaparezca y vuelva: dos fotogramas de hueco de carga —con celdas
+    // de otras alturas— que se ven como un temblor. Se nota sobre todo al soltar
+    // contenido en una etiqueta, que recarga.
+    //
+    // El velo de ocupado ya dice que se está leyendo, y para eso está.
     emit(MediaLoading(
+      mediaList: state.mediaList,
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
       isBusy: true,
@@ -610,6 +629,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     MediaSortOrderChangedEvent event,
     Emitter<MediaStates> emit,
   ) async {
+    // «Al azar» se baraja aquí, al pulsarlo, y no al leer.
+    //
+    // La rejilla vuelve a pedir el contenido al desplazarse y al volver del
+    // visor: barajando en cada lectura se recolocaría sola por el camino, y se
+    // acabaría viendo lo mismo dos veces y contenido ninguna. Barajando sólo
+    // aquí, el orden es estable hasta la siguiente pulsación — y pulsarlo
+    // estando ya en «al azar» vuelve a barajar, que es lo que se espera.
+    if (event.order == MediaSortOrder.random) _shuffle.renew();
+
     // Dos ajustes distintos y no uno: lo pendiente de revisar y la biblioteca
     // se miran para cosas distintas —una tanda se repasa por tipo o por nombre,
     // y la biblioteca se mira por lo último que llegó—, así que cada pantalla
@@ -1188,7 +1216,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       ),
     );
 
-    emit(state.copyWith(isBusy: false));
+    // **Sin apagar el ocupado por el camino.** Justo después se relee, que lo
+    // vuelve a encender: apagarlo aquí hace que el velo se levante y caiga otra
+    // vez en unos milisegundos, y eso es lo que se ve como un parpadeo sobre la
+    // rejilla al soltar contenido en una etiqueta. Se queda encendido hasta que
+    // la lectura termina, que es cuando de verdad se ha acabado.
     add(const ReloadCurrentMediaEvent());
   }
 
@@ -1219,7 +1251,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       return;
     }
 
-    emit(state.copyWith(selectedIds: const {}, isBusy: false));
+    // El ocupado se queda encendido hasta que la relectura termina: apagarlo
+    // aquí levanta y baja el velo en unos milisegundos, y eso parpadea.
+    emit(state.copyWith(selectedIds: const {}));
     add(const ReloadCurrentMediaEvent());
   }
 

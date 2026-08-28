@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Lo que se decide en el diálogo: con qué se dispara el hijo, o descolgarlo.
 class EdgeConditionResult {
@@ -109,7 +110,7 @@ class _EdgeConditionDialogState extends State<EdgeConditionDialog> {
               const Spacer(),
               FernPillButton(
                 label: texts.actionConfirm,
-                icon: Icons.check,
+                icon: Symbols.check,
                 backgroundColor: context.colors.primary,
                 foregroundColor: context.colors.black,
                 onPressed: () => Navigator.of(context).pop(

@@ -15,7 +15,6 @@ class SidebarItem {
 
   /// Icono en forma de imagen del paquete, para lo que no tiene glifo propio.
   /// Manda sobre [icon] cuando viene.
-  final String? iconAsset;
 
   /// Imagen con la que se pinta el botón en lugar del icono.
   ///
@@ -52,7 +51,6 @@ class SidebarItem {
     required this.id,
     required this.title,
     required this.icon,
-    this.iconAsset,
     required this.onTap,
     this.avatarPath,
     this.depth = 0,
@@ -74,9 +72,18 @@ class SidebarSection {
   /// no se haya creado ninguna). Sin texto, la sección vacía no se pinta.
   final String? emptyMessage;
 
+  /// Con qué nombre puede señalar aquí el tutorial, si es que puede.
+  ///
+  /// Lo lleva el **rótulo** de la sección y no la sección entera: los botones se
+  /// pintan uno a uno según se ven —las etiquetas pueden ser cientos— y meterlos
+  /// todos en un mismo widget para poder medirlo obligaría a construirlos todos
+  /// siempre.
+  final String? anchorId;
+
   const SidebarSection({
     required this.title,
     required this.items,
     this.emptyMessage,
+    this.anchorId,
   });
 }

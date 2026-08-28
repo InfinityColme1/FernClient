@@ -8,6 +8,7 @@ import 'package:Fern/features/media/domain/entities/search/search_result_type.da
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Cómo se pinta cada tipo de resultado: el texto que lo nombra y el icono con
 /// el que se muestra cuando no hay imagen.
@@ -19,9 +20,9 @@ extension SearchResultTypeVisuals on SearchResultType {
       };
 
   IconData get icon => switch (this) {
-        SearchResultType.media => Icons.image_outlined,
-        SearchResultType.tag => Icons.label,
-        SearchResultType.creator => Icons.person,
+        SearchResultType.media => Symbols.image,
+        SearchResultType.tag => Symbols.label,
+        SearchResultType.creator => Symbols.person,
       };
 }
 
@@ -177,7 +178,7 @@ class _SearchResultAvatarState extends State<SearchResultAvatar> {
   Widget build(BuildContext context) {
     return FernAvatar(
       imagePath: _isVideo ? _thumbnailPath : widget.imagePath,
-      fallbackIcon: _isVideo ? Icons.movie_outlined : widget.type.icon,
+      fallbackIcon: _isVideo ? Symbols.movie : widget.type.icon,
       radius: widget.radius,
       iconSize: widget.radius,
     );

@@ -28,6 +28,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Anchos del menú lateral, que son los de [CollapsingNavigationDrawer].
 const _sidebarExpandedWidth = 210.0;
@@ -66,9 +67,12 @@ Widget _harness({
       appBar: AppBar(
         title: Row(
           children: const [
+            // El logotipo de verdad y no un hueco de su medida: ahora su ancho
+            // sale del nombre y de la tipografia, asi que un numero escrito a
+            // mano dejaria de ser cierto en cuanto cambie cualquiera de los dos.
             Padding(
               padding: EdgeInsets.only(right: AppSpacing.xxxl),
-              child: SizedBox(width: AppSizes.logoWidth, height: AppSizes.searchBarHeight),
+              child: FernLogo(height: AppSizes.logoHeight),
             ),
             SizedBox(
               width: AppSizes.searchBarWidth,
@@ -77,8 +81,8 @@ Widget _harness({
           ],
         ),
         actions: const [
-          IconButton(onPressed: null, icon: Icon(Icons.add)),
-          IconButton(onPressed: null, icon: Icon(Icons.settings)),
+          IconButton(onPressed: null, icon: Icon(Symbols.add)),
+          IconButton(onPressed: null, icon: Icon(Symbols.settings)),
           SizedBox(width: AppSpacing.l),
         ],
       ),
@@ -123,7 +127,7 @@ Widget _countAndFiltersHeader(BuildContext context, String count) {
       const Spacer(),
       FernPillButton(
         label: AppLocalizations.of(context).filters,
-        icon: Icons.tune,
+        icon: Symbols.tune,
         backgroundColor: AppColors.light.primary,
         foregroundColor: AppColors.light.black,
         onPressed: () {},
@@ -135,8 +139,55 @@ Widget _countAndFiltersHeader(BuildContext context, String count) {
 /// Los recuentos se prueban con cinco cifras: es el ancho que llegan a ocupar.
 const _sampleCount = 99999;
 
-Widget _mediaHeader(BuildContext context, AppLocalizations texts) =>
-    _countAndFiltersHeader(context, texts.mediaCount(_sampleCount));
+/// La cabecera de la biblioteca **con seleccion**, que es su estado mas ancho.
+///
+/// Sin seleccion lleva la cuenta y los tres controles de la derecha y sobra
+/// sitio; con ella aparecen ademas la cuenta de lo marcado y sus cuatro
+/// acciones. Se mide el caso malo, que es el unico que puede desbordar.
+Widget _mediaHeader(BuildContext context, AppLocalizations texts) {
+  final theme = Theme.of(context);
+
+  return Row(
+    children: [
+      Text(
+        texts.mediaCount(_sampleCount),
+        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(width: AppSpacing.l),
+      Text(
+        texts.selectedCount(_sampleCount),
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: AppColors.light.terciary,
+        ),
+      ),
+      const SizedBox(width: AppSpacing.s),
+      IconButton(onPressed: () {}, icon: const Icon(Symbols.favorite)),
+      IconButton(onPressed: () {}, icon: const Icon(Symbols.visibility_off)),
+      const SizedBox(width: AppSpacing.s),
+      IconButton(onPressed: () {}, icon: const Icon(Symbols.auto_awesome)),
+      const SizedBox(width: AppSpacing.l),
+      IconButton(onPressed: () {}, icon: const Icon(Symbols.delete)),
+      const SizedBox(width: AppSpacing.l),
+      const Spacer(),
+      IconButton(onPressed: () {}, icon: const Icon(Symbols.select_all)),
+      const SizedBox(width: AppSpacing.s),
+      FernDropdownPill<int>(
+        value: 0,
+        items: const [0],
+        labelBuilder: (_) => texts.sortNewestFirst,
+        onChanged: (_) {},
+      ),
+      FernPillButton(
+        label: texts.filters,
+        icon: Symbols.tune,
+        backgroundColor: AppColors.light.primary,
+        foregroundColor: AppColors.light.black,
+        onPressed: () {},
+      ),
+    ],
+  );
+}
 
 Widget _favoritesHeader(BuildContext context, AppLocalizations texts) =>
     _countAndFiltersHeader(context, texts.favoritesCount(_sampleCount));
@@ -165,12 +216,12 @@ Widget _deletedHeader(BuildContext context, AppLocalizations texts) {
       IconButton(
         color: AppColors.light.black,
         onPressed: () {},
-        icon: const Icon(Icons.delete_forever_outlined),
+        icon: const Icon(Symbols.delete_forever),
       ),
       const SizedBox(width: AppSpacing.s),
       FernPillButton(
         label: texts.actionRestore,
-        icon: Icons.restore_from_trash_outlined,
+        icon: Symbols.restore_from_trash,
         backgroundColor: AppColors.light.primary,
         foregroundColor: AppColors.light.black,
         onPressed: () {},
@@ -207,7 +258,7 @@ Widget _importHeader(BuildContext context, AppLocalizations texts) {
       Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.history,
+          Icon(Symbols.history,
               size: AppSizes.iconCompact, color: AppColors.light.gray),
           const SizedBox(width: AppSpacing.xs),
           // El aviso más largo de los que puede pintar la cabecera: es el que
@@ -235,14 +286,14 @@ Widget _importHeader(BuildContext context, AppLocalizations texts) {
       const SizedBox(width: AppSpacing.s),
       IconButton(
           onPressed: () {},
-          icon: Icon(Icons.refresh, color: AppColors.light.black)),
+          icon: Icon(Symbols.refresh, color: AppColors.light.black)),
       IconButton(
           onPressed: () {},
-          icon: Icon(Icons.folder_open_outlined, color: AppColors.light.black)),
+          icon: Icon(Symbols.folder_open, color: AppColors.light.black)),
       const SizedBox(width: AppSpacing.s),
       FernPillButton(
         label: texts.actionDelete,
-        icon: Icons.delete_outline,
+        icon: Symbols.delete,
         backgroundColor: AppColors.light.terciary,
         foregroundColor: AppColors.light.white,
         onPressed: () {},
@@ -250,7 +301,7 @@ Widget _importHeader(BuildContext context, AppLocalizations texts) {
       const SizedBox(width: AppSpacing.s),
       FernPillButton(
         label: texts.actionConfirm,
-        icon: Icons.check,
+        icon: Symbols.check,
         backgroundColor: AppColors.light.primary,
         foregroundColor: AppColors.light.black,
         onPressed: () {},
@@ -324,7 +375,7 @@ Future<void> _expectNoOverflow(
 SidebarItem _item(String title) => SidebarItem(
       id: title,
       title: title,
-      icon: Icons.sell_outlined,
+      icon: Symbols.sell,
       onTap: () {},
     );
 

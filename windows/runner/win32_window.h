@@ -17,7 +17,7 @@
 // kMinimumWindowWidth es el mismo numero que AppSizes.largeScreenMinWidth, que
 // mide test/layout_breakpoints_test.dart: si crece alli, tiene que crecer aqui.
 // La prueba lee este fichero y falla si los dos se separan.
-constexpr int kMinimumWindowWidth = 1200;
+constexpr int kMinimumWindowWidth = 1180;
 
 // El alto no lo manda ninguna cabecera (todo lo alto se desplaza), pero por
 // debajo de esto no cabe la barra superior con una rejilla utilizable debajo.

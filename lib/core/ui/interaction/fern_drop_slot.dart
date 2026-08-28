@@ -1,5 +1,6 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/core/ui/interaction/fern_drag_watch.dart';
 import 'package:flutter/material.dart';
 
 /// En qué estado está una zona donde se puede soltar algo.
@@ -56,8 +57,20 @@ class FernDropSlot<T extends Object> extends StatelessWidget {
     if (!isEnabled) return builder(context, FernDropState.idle);
 
     return DragTarget<T>(
-      onWillAcceptWithDetails: (details) => canAccept(details.data),
-      onAcceptWithDetails: (details) => onAccept(details.data),
+      onWillAcceptWithDetails: (details) {
+        final acepta = canAccept(details.data);
+        // Se avisa a la miniatura que va pegada al cursor, que no tiene otra
+        // forma de enterarse: la pinta `Draggable` en la capa de encima, fuera
+        // de este arbol.
+        if (acepta) fernDragIsOverTarget.value = true;
+
+        return acepta;
+      },
+      onLeave: (_) => fernDragIsOverTarget.value = false,
+      onAcceptWithDetails: (details) {
+        fernDragIsOverTarget.value = false;
+        onAccept(details.data);
+      },
       builder: (context, candidates, rejected) {
         final state = candidates.isNotEmpty
             ? FernDropState.accepting

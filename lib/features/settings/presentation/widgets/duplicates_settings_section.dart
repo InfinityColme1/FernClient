@@ -153,37 +153,20 @@ class _DuplicatesSettingsSectionState extends State<DuplicatesSettingsSection> {
             const SizedBox(height: AppSpacing.s),
             _note(context, texts.duplicatesThresholdSectionNote),
             const SizedBox(height: AppSpacing.l),
-            Row(
-              children: [
-                SizedBox(
-                  width: AppSizes.settingsLabelWidth,
-                  child: Text(
-                    texts.duplicatesThresholdLabel,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: settings.duplicateThreshold
-                        .clamp(0, maxDuplicateThreshold)
-                        .toDouble(),
-                    max: maxDuplicateThreshold.toDouble(),
-                    divisions: maxDuplicateThreshold,
-                    onChanged: (value) => context
-                        .read<SettingsBloc>()
-                        .add(DuplicateThresholdChangedEvent(value.round())),
-                  ),
-                ),
-                SizedBox(
-                  width: AppSizes.settingsValueWidth,
-                  child: Text(
-                    '${settings.duplicateThreshold}',
-                    textAlign: TextAlign.end,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: context.colors.gray),
-                  ),
-                ),
-              ],
+            // El ajuste se guarda al soltar, no en cada pixel arrastrado:
+            // escribirlo en disco y esperar a que el bloc lo devolviera era lo
+            // que hacia que el tirador fuera dando saltos.
+            FernSliderRow(
+              label: texts.duplicatesThresholdLabel,
+              value: settings.duplicateThreshold
+                  .clamp(0, maxDuplicateThreshold)
+                  .toDouble(),
+              max: maxDuplicateThreshold.toDouble(),
+              divisions: maxDuplicateThreshold,
+              valueLabel: (value) => '${value.round()}',
+              onCommitted: (value) => context
+                  .read<SettingsBloc>()
+                  .add(DuplicateThresholdChangedEvent(value.round())),
             ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),

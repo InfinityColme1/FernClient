@@ -7,6 +7,7 @@ import 'package:Fern/features/settings/domain/entities/source_guide.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
 /// Cómo conectar Fern con una fuente remota, paso a paso.
@@ -71,7 +72,7 @@ class SourceGuideDialog extends StatelessWidget {
       ),
       actionButton: FernPillButton(
         label: guide.openLabel,
-        icon: Icons.travel_explore_outlined,
+        icon: Symbols.travel_explore,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: () {
@@ -166,7 +167,7 @@ class SourceGuideDialog extends StatelessWidget {
             if (!context.mounted) return;
             showFernToast(context, texts.redditGuideCopied);
           },
-          icon: const Icon(Icons.copy_outlined, size: AppSizes.iconCompact),
+          icon: const Icon(Symbols.content_copy, size: AppSizes.iconCompact),
         ),
       ],
     );
@@ -179,7 +180,7 @@ class SourceGuideDialog extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          Icons.info_outline,
+          Symbols.info,
           size: AppSizes.iconSmall,
           color: context.colors.gray,
         ),

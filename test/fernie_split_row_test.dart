@@ -17,6 +17,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 ModelFernieEntity _assignment({
   int regionCount = 200,
@@ -107,7 +108,7 @@ void main() {
     testWidgets('y tampoco se saca del modelo', (tester) async {
       await _pump(tester, _assignment());
 
-      expect(find.byIcon(Icons.close), findsNothing);
+      expect(find.byIcon(Symbols.close), findsNothing);
     });
   });
 
@@ -115,7 +116,7 @@ void main() {
     testWidgets('con material de sobra no hay ninguno', (tester) async {
       await _pump(tester, _assignment(regionCount: 200, mediaCount: 20));
 
-      expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
+      expect(find.byIcon(Symbols.warning_amber), findsNothing);
     });
 
     testWidgets('con muy pocas regiones no da ni para entrenar',
@@ -260,7 +261,7 @@ void main() {
     var removed = 0;
     await _pump(tester, _assignment(), onRemove: () => removed++);
 
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(find.byIcon(Symbols.close));
     await tester.pump();
 
     expect(removed, 1);

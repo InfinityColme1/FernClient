@@ -1,8 +1,74 @@
+import 'package:flutter/animation.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 
 const appName = "FeRN";
-const appLogo = 'assets/images/Fern_logo.png';
+// Logotipo
+//
+// La marca se dibuja sobre esta reticula y se escala: asi las proporciones son
+// las mismas a cualquier tamano y estos numeros significan algo.
+
+/// Lo alta que es la reticula sobre la que se traza la marca.
+const logoMarkGridHeight = 34.0;
+
+/// Lo ancha que es la marca respecto a su alto.
+const logoMarkAspect = 0.62;
+
+/// Lo alta que se pinta la marca respecto al alto del logotipo.
+///
+/// Menos que el logotipo entero: el nombre no llena su caja —una linea de texto
+/// reserva sitio para las colas de las letras y «FeRN» no tiene ninguna— asi que
+/// una marca a caja completa sobresale por arriba y por abajo.
+const logoMarkHeightRatio = 0.88;
+
+/// Cuanto sube la marca para cuadrar con el nombre.
+///
+/// La caja de una linea de texto reserva sitio para la cola de las letras, y por
+/// eso las mayusculas se apoyan mas arriba que el centro de esa caja. Centrar
+/// las dos cajas deja la marca visiblemente baja: esto es lo que corrige, y es
+/// un ajuste de vista, no de geometria.
+const logoOpticalLift = 0.045;
+
+/// El grosor del trazo, el mismo que el de los iconos de contorno.
+const logoStrokeWidth = 2.0;
+
+/// Donde cae el baston, y hasta donde sube recto antes de enlazar con el rizo.
+///
+/// Corto respecto al rizo: con el baston largo la marca se leia como un alfiler
+/// en vez de como un brote abriendose. Lo que tiene que pesar es la cabeza.
+const logoStaffX = 9.6;
+const logoStaffTopY = 20.0;
+
+/// Cuanto se estira el enlace entre el baston y el rizo. Es lo que hace que no
+/// se vea el codo del empalme.
+const logoJoinReach = 2.4;
+
+/// El centro del rizo.
+const logoCoilCentreX = 12.0;
+const logoCoilCentreY = 10.0;
+
+/// Con que radio empieza el rizo y entre cuanto se divide de principio a fin.
+const logoCoilRadius = 7.0;
+const logoCoilShrink = 5.5;
+
+/// Por donde entra el rizo y cuanto gira: vuelta y media larga, que es lo que
+/// tiene un brote de helecho antes de abrirse.
+const logoCoilStartAngle = 1.9199; // 110 grados: hacia abajo y un poco a la izquierda.
+const logoCoilSweep = 10.0531; // 1,6 vueltas.
+
+/// En cuantos tramos se parte. Suficientes para que a tamano de bienvenida no se
+/// vea ninguna esquina.
+const logoCoilSteps = 96;
+
+/// La gema del baston, en el centro del rizo.
+const logoGemRadius = 1.7;
+
+/// Lo que se separa el nombre de la marca, y lo grande que va, en proporcion al
+/// alto del logotipo.
+const logoGapRatio = 0.18;
+const logoTextRatio = 0.62;
+const logoTrackingRatio = 0.012;
+
 
 // Routes
 /// La pantalla de bienvenida, que es por donde entra la aplicación. Va en la
@@ -86,20 +152,6 @@ const dropdownMenuPadding = 16.0;
 // Images
 const fernEmptyImage = 'assets/images/fern_empty.png';
 
-// Icons
-const icRight = 'assets/icons/ic_right.png';
-const icLeft = 'assets/icons/ic_left.png';
-
-/// El icono de los fernies. Es una imagen y no un glifo del juego de iconos
-/// porque no hay ninguno que valga: un fernie no es una cara, ni una
-/// etiqueta, ni un recorte.
-const icFernie = 'assets/icons/ic_fernie.png';
-
-const icInfo = 'assets/icons/ic_info.png';
-const icShare = 'assets/icons/ic_share.png';
-const icDelete = 'assets/icons/ic_delete.png';
-const icHeart = 'assets/icons/ic_heart.png';
-
 // Unknown creator
 final unknownCreator = CreatorEntity(id: 0, name: "Unknown");
 
@@ -127,6 +179,13 @@ const schemaVersionPreferenceKey = 'schema_version';
 
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
+
+/// Si ya se ha ofrecido el tutorial alguna vez.
+///
+/// Se apunta al contestar, se acepte o no: ofrecerlo dos veces es insistir, y
+/// quien lo rechazo lo hizo a proposito. Para volver a verlo esta el boton de
+/// los ajustes.
+const tutorialOfferedPreferenceKey = 'tutorial_offered';
 const syncLocalFilesPreferenceKey = 'sync_local_files';
 const copyFilesPreferenceKey = 'copy_files';
 const libraryPathPreferenceKey = 'library_path';
@@ -892,8 +951,83 @@ const defaultDuplicateThreshold = 8;
 /// Hasta dónde se puede mover ese listón desde los ajustes.
 const maxDuplicateThreshold = 16;
 
+/// Cada cuanto se coloca el video mientras se arrastra por la linea de tiempo.
+///
+/// Colocarlo en cada movimiento del raton es pedirle al descodificador un
+/// fotograma cada pocos milisegundos, y no llega: el tirador se queda esperando.
+/// A este ritmo se ve por donde se va sin ahogarlo, y al soltar se coloca en el
+/// sitio exacto.
+const scrubSeekInterval = Duration(milliseconds: 90);
+
+/// Lo que se espera antes de sacar el aviso de un boton.
+///
+/// En un escritorio el cursor pasa por encima de muchas cosas de camino a otra.
+/// Sin espera, cruzar una fila de botones es un parpadeo detras de otro.
+const tooltipWait = Duration(milliseconds: 450);
+
+// Tutorial
+/// Lo que se abre el foco alrededor de lo que senala, para que se vea entero y
+/// con aire en vez de recortado justo por su borde.
+const tutorialSpotlightPadding = 8.0;
+
+/// El redondeo del foco. Generoso: lo que se senala casi nunca es un rectangulo
+/// exacto, y una esquina viva delata el recorte.
+const tutorialSpotlightRadius = 12.0;
+
+/// Lo ancho que es el cartel que cuenta el paso. Fijo: un cartel que cambia de
+/// ancho en cada paso hace que el tutorial parezca que da saltos.
+const tutorialCardWidth = 340.0;
+
+/// Lo que se separa el cartel de lo que se esta senalando.
+const tutorialCardGap = 16.0;
+
+/// Cuantos fotogramas se sigue a lo que un paso senala antes de darlo por
+/// perdido.
+///
+/// Da para la animacion de entrada de una pantalla entera y le sobra: se deja de
+/// mirar en cuanto lo senalado se queda quieto, asi que en el caso normal son
+/// dos fotogramas. Este tope solo lo gasta lo que no llega a aparecer nunca.
+const tutorialMeasureAttempts = 45;
+
+/// Lo oscuro que se pone todo lo que no es el paso en curso.
+const tutorialScrimOpacity = 0.72;
+
 // Animations
-const hoverAnimationDuration = Duration(milliseconds: 150);
+//
+// **Los tres tiempos y las dos curvas de los que tira todo lo que se mueve.**
+//
+// Antes cada sitio elegía los suyos: había seis curvas distintas repartidas por
+// la aplicación y una duración por widget. Cada una era razonable por su cuenta y
+// el conjunto no se leía como una sola cosa, que es de lo que va esto: un menú
+// que se abre y un diálogo que aparece tienen que sentirse hechos por la misma
+// mano aunque no se vean nunca a la vez.
+
+/// Lo que se resuelve en el sitio: un velo de hover, una marca que aparece, un
+/// color que cambia. Tan corto que no se percibe como animación, sólo evita el
+/// salto.
+const motionFast = Duration(milliseconds: 120);
+
+/// Lo normal: una pantalla que entra, un diálogo que se abre, un panel que se
+/// despliega. Es el tiempo por defecto de cualquier cosa que no tenga motivo
+/// para ser otra.
+const motionStandard = Duration(milliseconds: 220);
+
+/// Lo que recorre una distancia y conviene seguir con la vista: algo que se mete
+/// dentro de otra cosa, un panel que cruza media pantalla.
+const motionEmphasized = Duration(milliseconds: 320);
+
+/// La curva de lo que entra.
+///
+/// Arranca deprisa y frena al final, que es lo que hace que algo parezca que
+/// llega en vez de que aparece. Es la de Material 3 para lo enfatizado, y no la
+/// `easeOut` de fábrica: aquélla frena antes y se queda muerta el último tramo.
+const motionEnterCurve = Cubic(0.05, 0.7, 0.1, 1.0);
+
+/// La curva de lo que se va. Al revés: sale despacio y se acelera al final, así
+/// que no se queda colgando en la pantalla.
+const motionExitCurve = Curves.easeInCubic;
+
+const hoverAnimationDuration = motionFast;
 const drawerAnimationDuration = Duration(milliseconds: 300);
 const viewerTransitionDuration = Duration(milliseconds: 250);
 const infoPanelAnimationDuration = Duration(milliseconds: 300);
@@ -903,10 +1037,69 @@ const infoPanelAnimationDuration = Duration(milliseconds: 300);
 /// animación que haya que mirar.
 const pageTransitionDuration = Duration(milliseconds: 220);
 
+/// Lo que dura cambiar de una forma de pantalla a otra.
+///
+/// Bastante más que cualquier otra animación de la aplicación, y a propósito: en
+/// esa transición se mueven cuatro piezas por caminos distintos, y hay que dar
+/// tiempo a verlo. Con la duración normal se percibía como un golpe — pasaba
+/// algo, pero no se llegaba a ver el qué.
+///
+/// Además va partida en dos mitades que no se solapan, así que cada pieza
+/// dispone de la mitad de esto para su recorrido.
+const screenTransitionDuration = Duration(milliseconds: 540);
+
+/// Lo que dura cambiar entre dos pantallas de la misma forma.
+///
+/// Menos, porque hay menos que contar: la maquetación es idéntica a los dos
+/// lados y lo único que cambia es el contenido de cada hueco. Pero no tan poco
+/// como para que sea un parpadeo, que es lo que era.
+const screenCrossfadeDuration = Duration(milliseconds: 400);
+
+/// Las dos curvas del fundido cruzado, y por qué no son una y su inversa.
+///
+/// **El problema del fundido cruzado ingenuo.** Las dos pantallas van una encima
+/// de otra, así que lo que se ve es la de arriba compuesta sobre la de abajo
+/// compuesta sobre el fondo. Con opacidades complementarias —una a `t` y la otra
+/// a `1 - t`— a mitad de camino las dos están al 50 %, y por las dos se cuela el
+/// fondo: queda un 25 % de fondo desnudo justo en el centro de la transición. Eso
+/// es el lavado que se ve como un salto, y no se arregla dándole más tiempo.
+///
+/// La solución es que **las dos suban rápido y bajen tarde**. La que entra usa
+/// una curva que gana opacidad enseguida y la que sale una que la conserva hasta
+/// el final; a mitad de camino las dos rondan el 87 %, así que lo que se cuela
+/// del fondo es un 1,5 % en vez de un 25 %. La pantalla nunca se destapa.
+const crossfadeInCurve = Curves.easeOutCubic;
+const crossfadeOutCurve = Curves.easeInCubic;
+
+/// En qué punto de la transición se pasa el relevo de una pantalla a otra.
+///
+/// Antes de esto, la que sale se está retirando; después, la que entra llega.
+/// Nunca a la vez: **es lo que garantiza que no se crucen**, y no una
+/// casualidad de las trayectorias. Con cuatro piezas moviéndose por su lado, la
+/// única forma segura de que ninguna choque con otra es que no coincidan en el
+/// tiempo.
+const screenExitSplit = 0.45;
+
+/// En qué punto de la transición entre pantallas hermanas se pasa el relevo.
+///
+/// Antes de esto, la que sale se está apagando; después, la que entra aparece.
+/// Nunca a la vez: solaparlas es lo que hacía que se viera una rejilla llena
+/// asomando por debajo de una pantalla vacía.
+const fadeThroughSplit = 0.35;
+
 /// Tamaño con el que arranca la pantalla que entra, antes de asentarse en el
 /// suyo. Es un efecto de pintado, no de maquetación: nada se recoloca por él, así
 /// que no puede provocar desbordes mientras la transición está en marcha.
 const pageTransitionScale = 0.98;
+
+/// Con cuánto empieza un diálogo antes de asentarse en su tamaño.
+///
+/// Cerca de uno a propósito: lo justo para que se vea que se abre. Con menos
+/// parece que salta hacia la cara.
+const dialogEnterScale = 0.96;
+
+/// Lo que oscurece el velo de detrás de un diálogo.
+const dialogBarrierOpacity = 0.45;
 
 // Pantalla de bienvenida
 /// Lo que dura la animación del logo.
@@ -916,8 +1109,8 @@ const pageTransitionScale = 0.98;
 /// punto lo único que hace es retrasar la entrada a la biblioteca.
 const splashDuration = Duration(milliseconds: 1600);
 
-/// Ancho al que se pinta el logo.
-const splashLogoWidth = 260.0;
+/// Lo alto que se pinta el logotipo en la bienvenida.
+const splashLogoHeight = 84.0;
 
 /// Tamaño con el que aparece el logo, antes de asentarse en el suyo. Entra
 /// creciendo, que es lo que le da el rebote del final.
@@ -931,7 +1124,51 @@ const splashHaloMinScale = 0.4;
 const splashHaloMaxScale = 2.2;
 const splashHaloOpacity = 0.55;
 
+/// La etiqueta con la que un contenido vuela de la rejilla al visor.
+///
+/// Se hace con la ruta del fichero y no con su identificador porque el visor
+/// sabe la ruta y no siempre el identificador, y porque la ruta es unica dentro
+/// de una rejilla — que es lo que Flutter exige: dos vuelos con la misma
+/// etiqueta en la misma pantalla revientan.
+///
+/// **Y por eso la vista por grupos no vuela.** Ahi el mismo contenido puede
+/// salir en dos grupos a la vez (una etiqueta y un creador), y serian dos
+/// etiquetas iguales en la misma pantalla. Sin vuelo se abre igual, solo que sin
+/// la animacion.
+String mediaHeroTag(String path) => 'media-$path';
+
+// Esqueletos de carga
+/// Lo que tarda el hueco en latir de un extremo al otro.
+///
+/// Lento a propósito: un latido rápido pide atención, y lo que se quiere es
+/// justo lo contrario — que se note que aquello está vivo y esperando, sin
+/// llamar.
+const skeletonPulseDuration = Duration(milliseconds: 900);
+
+/// Lo más apagado que llega a ponerse el hueco.
+const skeletonMinOpacity = 0.45;
+
+/// Cuántos huecos se pintan mientras llega el contenido. Los justos para llenar
+/// lo que se ve: pintar más es trabajo que nadie va a mirar.
+const skeletonGridCount = 12;
+
+/// Las alturas que se van turnando en la rejilla de huecos, para que se parezca
+/// a la de mampostería y no a una cuadrícula.
+const skeletonCellHeights = [180.0, 240.0, 150.0, 210.0];
+
 // Indicador de progreso
+/// Lo que se espera antes de enseñar el velo de ocupado.
+///
+/// **Una espera que no se llega a ver no existe.** Leer la biblioteca de disco o
+/// escribir una etiqueta tarda unas decenas de milisegundos: enseñar un velo
+/// para eso no informa de nada y en cambio se ve —se levanta y cae en un
+/// suspiro—, que es justo lo que se percibe como un parpadeo sobre la rejilla.
+///
+/// Pasado este tiempo la cosa ya se está haciendo esperar de verdad, y entonces
+/// sí conviene decirlo. Por debajo, el resultado llega antes de que a nadie le
+/// dé tiempo a preguntarse si ha pasado algo.
+const busyOverlayDelay = Duration(milliseconds: 180);
+
 /// Lo que tarda el velo de ocupado en aparecer y en irse. Bastante más corto que
 /// la transición de pantalla: lo que se quiere es que no parpadee, no que se note.
 const busyOverlayFadeDuration = Duration(milliseconds: 150);
@@ -1240,6 +1477,38 @@ const fullscreenArrowScrimOpacity = 0.35;
 const draggingFeedbackOpacity = 0.9;
 const draggingGhostOpacity = 0.35;
 
+/// Cuantas siluetas asoman por detras de la miniatura al arrastrar varios.
+///
+/// Dos, y no una por contenido: lo que se quiere decir es «van varios», y para
+/// eso con dos basta. Cuantas son exactamente lo dice el numero.
+const dragStackDepth = 2;
+
+/// Lo que se corre cada silueta respecto a la de delante.
+const dragStackOffset = 6.0;
+
+/// Lo que encoge cada silueta respecto a la de delante.
+const dragStackScaleStep = 0.06;
+
+/// Lo que se separa del cursor la miniatura que se arrastra.
+///
+/// Cuelga abajo y a la derecha en lugar de ir centrada: centrada taparia
+/// justamente lo que hay debajo del cursor, que es la etiqueta a la que se
+/// apunta.
+const dragFeedbackCursorGap = 14.0;
+
+/// Lo que encoge la miniatura al ponerse sobre un sitio donde se puede soltar.
+///
+/// Encoger y oscurecer dice «esto entra aqui» sin escribirlo, y de paso destapa
+/// lo que hay debajo justo cuando hace falta verlo.
+const dragOverTargetScale = 0.72;
+
+/// Lo pequeno que se queda lo que se ha soltado justo antes de desaparecer
+/// dentro de su destino.
+const dropAbsorbEndScale = 0.2;
+
+/// Lo que se oscurece encima de un sitio donde se puede soltar.
+const dragOverTargetShade = 0.35;
+
 /// Hasta dónde se puede acercar y alejar el lienzo del árbol, y de cuánto en
 /// cuánto.
 ///
@@ -1416,6 +1685,14 @@ const viewerControlsFadeDuration = Duration(milliseconds: 200);
 /// carrusel. Algo más largo que el desvanecido de la barra: aquí sí hay un
 /// recorrido que seguir, y es lo que dice hacia qué lado se está yendo.
 const viewerSlideDuration = Duration(milliseconds: 300);
+
+/// Grosor del trazo de los iconos de la aplicación.
+///
+/// Es la ventaja de fondo de Material Symbols sobre los iconos clásicos, que van
+/// a un grosor fijo: aquí se pide. Un pelo por debajo del de fábrica (400)
+/// porque a los tamaños a los que se usan —de 16 a 24— el trazo normal engorda y
+/// arrastra la vista antes que el texto que acompaña.
+const appIconWeight = 350.0;
 
 /// Grosor del trazo de los iconos de la barra del visor.
 ///

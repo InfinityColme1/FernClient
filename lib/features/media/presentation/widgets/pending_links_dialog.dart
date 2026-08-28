@@ -7,6 +7,7 @@ import 'package:Fern/features/media/domain/entities/post_link.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
 /// Lo que una importación ha dejado sin traerse porque hacía falta el usuario.
@@ -97,7 +98,7 @@ class PendingLinksDialog extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isFolder ? Icons.folder_open_outlined : Icons.insert_drive_file_outlined,
+            isFolder ? Symbols.folder_open : Symbols.insert_drive_file,
             size: AppSizes.iconCompact,
             color: context.colors.gray,
           ),
@@ -123,7 +124,7 @@ class PendingLinksDialog extends StatelessWidget {
               Navigator.of(context).pop();
               router.go(browserRouteWithUrl(link.url));
             },
-            icon: const Icon(Icons.open_in_new, size: AppSizes.iconCompact),
+            icon: const Icon(Symbols.open_in_new, size: AppSizes.iconCompact),
           ),
         ],
       ),

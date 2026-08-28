@@ -23,6 +23,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 /// El navegador de dentro de la aplicación. **Es una prueba.**
@@ -561,7 +562,7 @@ class _BrowserPageState extends State<BrowserPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.downloading_outlined,
+                Symbols.downloading,
                 size: AppSizes.iconExtraLarge,
                 color: context.colors.gray,
               ),
@@ -583,7 +584,7 @@ class _BrowserPageState extends State<BrowserPage> {
               const SizedBox(height: AppSpacing.l),
               FernPillButton(
                 label: texts.browserAsideAnyway,
-                icon: Icons.public,
+                icon: Symbols.public,
                 backgroundColor: context.colors.secondary,
                 foregroundColor: context.colors.black,
                 onPressed: () => setState(() => _keepDespiteImport = true),
@@ -790,27 +791,31 @@ class _BrowserPageState extends State<BrowserPage> {
         IconButton(
           tooltip: texts.browserBack,
           onPressed: _canGoBack ? () => _webView?.goBack() : null,
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Symbols.arrow_back),
         ),
         IconButton(
           tooltip: texts.browserForward,
           onPressed: _canGoForward ? () => _webView?.goForward() : null,
-          icon: const Icon(Icons.arrow_forward),
+          icon: const Icon(Symbols.arrow_forward),
         ),
         IconButton(
           tooltip: texts.browserReload,
           onPressed: () => _webView?.reload(),
-          icon: const Icon(Icons.refresh),
-        ),
-        IconButton(
-          tooltip: texts.browserReset,
-          onPressed: _isBusy ? null : _reset,
-          icon: const Icon(Icons.restart_alt),
+          icon: const Icon(Symbols.refresh),
         ),
         IconButton(
           tooltip: texts.browserHome,
           onPressed: _goHome,
-          icon: const Icon(Icons.home_outlined),
+          icon: const Icon(Symbols.home),
+        ),
+        // Empezar de cero no es navegar: tira la vista entera y monta otra, y
+        // sólo sirve cuando la que hay se ha quedado en blanco. Estaba en medio
+        // de las flechas y la casa, que es donde se pulsa sin mirar.
+        const SizedBox(width: AppSpacing.m),
+        IconButton(
+          tooltip: texts.browserReset,
+          onPressed: _isBusy ? null : _reset,
+          icon: const Icon(Symbols.restart_alt),
         ),
         const SizedBox(width: AppSpacing.s),
         Expanded(
@@ -820,7 +825,7 @@ class _BrowserPageState extends State<BrowserPage> {
             decoration: InputDecoration(
               hintText: texts.browserAddressHint,
               isDense: true,
-              prefixIcon: const Icon(Icons.public, size: AppSizes.iconMedium),
+              prefixIcon: const Icon(Symbols.public, size: AppSizes.iconMedium),
             ),
           ),
         ),
@@ -828,12 +833,12 @@ class _BrowserPageState extends State<BrowserPage> {
         IconButton(
           tooltip: texts.browserSaveSessionHint,
           onPressed: _isBusy ? null : _captureSession,
-          icon: const Icon(Icons.key_outlined),
+          icon: const Icon(Symbols.key),
         ),
         IconButton(
           tooltip: texts.browserFindMediaHint,
           onPressed: _isBusy ? null : _findMedia,
-          icon: const Icon(Icons.image_search_outlined),
+          icon: const Icon(Symbols.image_search),
         ),
       ],
     );

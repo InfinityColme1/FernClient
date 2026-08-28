@@ -3,6 +3,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Opción única de un grupo: círculo marcado o vacío, etiqueta y, si hace
 /// falta, una línea de explicación.
@@ -47,8 +48,8 @@ class FernRadioTile<T> extends StatelessWidget {
             children: [
               Icon(
                 isSelected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
+                    ? Symbols.radio_button_checked
+                    : Symbols.radio_button_unchecked,
                 size: AppSizes.iconMedium,
                 color: isSelected ? context.colors.black : context.colors.lightgray,
               ),

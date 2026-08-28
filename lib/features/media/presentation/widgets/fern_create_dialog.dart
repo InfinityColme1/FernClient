@@ -30,6 +30,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
 /// Las variantes del diálogo de creación. El panel izquierdo es el mismo
@@ -40,17 +41,14 @@ import 'package:go_router/go_router.dart';
 /// enlaza se decide luego en su ficha. Aquí sólo estorbaría, porque lo normal
 /// es crearlo al vuelo mientras se está marcando una región.
 enum CreateDialogType {
-  tag(icon: Icons.label_outline),
-  creator(icon: Icons.person_outline),
-  fernie(icon: Icons.face_retouching_natural, iconAsset: icFernie),
-  model(icon: Icons.hub_outlined);
+  tag(icon: Symbols.label),
+  creator(icon: Symbols.person),
+  fernie(icon: Symbols.face_retouching_natural),
+  model(icon: Symbols.hub);
 
-  const CreateDialogType({required this.icon, this.iconAsset});
+  const CreateDialogType({required this.icon});
 
   final IconData icon;
-
-  /// Icono en forma de imagen, para la variante que no tiene glifo propio.
-  final String? iconAsset;
 
   String title(AppLocalizations texts) => switch (this) {
         CreateDialogType.tag => texts.newTagTitle,
@@ -292,7 +290,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           showFernToast(
             context,
             AppLocalizations.of(context).creatorNameTaken,
-            icon: Icons.error_outline,
+            icon: Symbols.error,
           );
           return;
         }
@@ -380,7 +378,6 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         avatar: FernEditableAvatar(
           imagePath: _selectedImagePath,
           fallbackIcon: widget.type.icon,
-          fallbackAsset: widget.type.iconAsset,
           radius: AppSizes.avatarHuge,
           iconSize: AppSizes.iconHuge,
           onTap: _pickImage,
@@ -425,7 +422,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
     return IconButton(
       icon: Icon(
-        hasUrls ? Icons.link : Icons.add_link,
+        hasUrls ? Symbols.link : Symbols.add_link,
         size: AppSizes.iconExtraLarge,
       ),
       tooltip: texts.assignUrlsTooltip,
@@ -501,7 +498,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       message: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
       child: IconButton(
         icon: Icon(
-          _isNsfw ? Icons.visibility_off : Icons.visibility_off_outlined,
+          _isNsfw ? Symbols.visibility_off : Symbols.visibility_off,
           color: _isNsfw ? context.colors.terciary : null,
         ),
         onPressed: () => setState(() => _isNsfw = !_isNsfw),

@@ -1,3 +1,5 @@
+import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/ui/display/fern_motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,15 +24,54 @@ Future<T?> showFernDialog<T, B extends StateStreamableSource<Object?>>({
 }) {
   final blocValue = bloc;
 
-  return showDialog<T>(
+  return showGeneralDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    builder: (dialogContext) => blocValue == null
+    // `showGeneralDialog` no lo saca del tema como hace `showDialog`, así que hay
+    // que decirlo: sin esto el velo sale negro opaco de fábrica.
+    barrierColor: Theme.of(context).colorScheme.scrim.withValues(
+          alpha: dialogBarrierOpacity,
+        ),
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    transitionDuration: context.motion(motionStandard),
+    transitionBuilder: _fernDialogTransition,
+    pageBuilder: (dialogContext, _, _) => blocValue == null
         ? builder(dialogContext)
         : BlocProvider<B>.value(
             value: blocValue,
             child: builder(dialogContext),
           ),
+  );
+}
+
+/// Cómo aparece y cómo se va un diálogo.
+///
+/// **Aparece creciendo un poco, no cayendo.** Un diálogo no viene de ninguna
+/// parte: se abre donde está. Escalar desde casi su tamaño dice eso; deslizarlo
+/// desde un borde diría que estaba fuera de la pantalla esperando, que no es lo
+/// que pasa.
+///
+/// Se anima sólo cómo se pinta —opacidad y escala—, así que la maquetación está
+/// en su sitio definitivo desde el primer fotograma y nada puede desbordar a
+/// mitad de camino.
+Widget _fernDialogTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondary,
+  Widget child,
+) {
+  final curved = CurvedAnimation(
+    parent: animation,
+    curve: motionEnterCurve,
+    reverseCurve: motionExitCurve,
+  );
+
+  return FadeTransition(
+    opacity: curved,
+    child: ScaleTransition(
+      scale: Tween<double>(begin: dialogEnterScale, end: 1.0).animate(curved),
+      child: child,
+    ),
   );
 }
 

@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:Fern/config/theme/app_colors.dart';
-import 'package:Fern/config/theme/app_sizes.dart';
+import 'package:Fern/core/ui/display/fern_broken_media.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/data/services/gif_frames.dart';
@@ -284,19 +283,26 @@ class _MediaViewerState extends State<MediaViewer> {
 
   Widget _buildImageViewer() {
     return _buildInteractive(
-      Image.file(
-        File(widget.path),
-        fit: BoxFit.contain,
-        alignment: Alignment.center,
-        filterQuality: FilterQuality.high,
-        errorBuilder: (_, _, _) {
-          _reportLoadFailure();
-          return Icon(
-            Icons.broken_image_outlined,
-            color: context.colors.lightgray,
-            size: AppSizes.iconExtraLarge,
-          );
-        },
+      // El otro extremo del vuelo desde la rejilla: la miniatura crece hasta
+      // aquí en vez de aparecer de golpe, que es el gesto más repetido de la
+      // aplicación y era un corte seco.
+      //
+      // Sólo las imágenes. Un vídeo llega aquí como reproductor y allí es una
+      // miniatura, así que lo que volaría no es lo mismo que aterriza; y un GIF
+      // se pinta fotograma a fotograma desde memoria. Sin pareja al otro lado
+      // simplemente no hay vuelo, que es la forma de no volar sin romper nada.
+      Hero(
+        tag: mediaHeroTag(widget.path),
+        child: Image.file(
+          File(widget.path),
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (_, _, _) {
+            _reportLoadFailure();
+            return const FernBrokenMedia();
+          },
+        ),
       ),
     );
   }

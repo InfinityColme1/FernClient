@@ -8,6 +8,7 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Cómo se nombra cada tipo de resultado en el filtro: en plural, porque lo que
@@ -134,7 +135,7 @@ class SearchFilterMenu extends StatelessWidget {
       ],
       builder: (context, toggle) => FernPillButton(
         label: texts.filters,
-        icon: Icons.tune,
+        icon: Symbols.tune,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: toggle,

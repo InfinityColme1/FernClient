@@ -15,6 +15,7 @@ import 'package:Fern/features/recognition/presentation/blocs/fernies_states.dart
 import 'package:Fern/features/recognition/presentation/services/region_cells.dart';
 import 'package:Fern/features/recognition/presentation/widgets/fernie_card.dart';
 import 'package:Fern/features/recognition/presentation/widgets/fernie_list.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -196,6 +197,7 @@ class _FerniesPageState extends State<FerniesPage> {
             ? FernEmptyState(
                 imageAsset: fernEmptyImage,
                 message: texts.noFerniesYet,
+                description: texts.noFerniesYetHint,
               )
             : const Center(child: FernProgressIndicator()),
       );
@@ -217,16 +219,19 @@ class _FerniesPageState extends State<FerniesPage> {
               width: AppSizes.tagListWidth,
               // Al guardar o borrar un fernie la lista se vuelve a leer: hasta
               // que llegue se queda la de antes, con el indicador encima.
-              child: FernBusyOverlay(
-                isBusy: state.isBusy,
-                // La lista va directamente sobre el fondo, sin superficie propia
-                // de la que copiar el redondeo.
-                radius: AppSizes.radiusMedium,
-                child: FernieList(
-                  fernies: state.fernies,
-                  selectedFernieId: selected.id,
-                  onSelected: (fernie) =>
-                      _ferniesBloc.add(FernieSelectedEvent(fernie.id)),
+              child: TutorialAnchor(
+                id: TutorialAnchorId.screenList,
+                child: FernBusyOverlay(
+                  isBusy: state.isBusy,
+                  // La lista va directamente sobre el fondo, sin superficie propia
+                  // de la que copiar el redondeo.
+                  radius: AppSizes.radiusMedium,
+                  child: FernieList(
+                    fernies: state.fernies,
+                    selectedFernieId: selected.id,
+                    onSelected: (fernie) =>
+                        _ferniesBloc.add(FernieSelectedEvent(fernie.id)),
+                  ),
                 ),
               ),
             ),
@@ -255,41 +260,47 @@ class _FerniesPageState extends State<FerniesPage> {
             right: AppSpacing.l,
             bottom: AppSpacing.l,
           ),
-          child: FernieCard(key: ValueKey(fernie.id), fernie: fernie),
+          child: TutorialAnchor(
+            id: TutorialAnchorId.screenCard,
+            child: FernieCard(key: ValueKey(fernie.id), fernie: fernie),
+          ),
         ),
         Expanded(
-          child: MediaGrid.crops(
-            crops: cells,
-            columns: fernieManagerGridColumns,
-            selectedCropIds: state.selectedRegionIds,
-            onCropTap: _openRegion,
-            // Mayúsculas + clic: la selección se estira hasta aquí desde la
-            // última celda tocada, igual que en la rejilla de contenido.
-            onCropRangeSelectionRequested: (crop) => _ferniesBloc.add(
-              SelectRegionRangeEvent(
-                regionIds: crop.ids,
-                orderedCells: [for (final cell in cells) cell.ids],
+          child: TutorialAnchor(
+            id: TutorialAnchorId.screenBody,
+            child: MediaGrid.crops(
+              crops: cells,
+              columns: fernieManagerGridColumns,
+              selectedCropIds: state.selectedRegionIds,
+              onCropTap: _openRegion,
+              // Mayúsculas + clic: la selección se estira hasta aquí desde la
+              // última celda tocada, igual que en la rejilla de contenido.
+              onCropRangeSelectionRequested: (crop) => _ferniesBloc.add(
+                SelectRegionRangeEvent(
+                  regionIds: crop.ids,
+                  orderedCells: [for (final cell in cells) cell.ids],
+                ),
               ),
-            ),
-            onCropSelectionToggled: (crop) => _ferniesBloc.add(
-              // El tramo entero y no sólo su primer fotograma: la celda es una
-              // escena, y borrar media escena no es lo que nadie pide.
-              ToggleRegionSelectionEvent(
-                crop.id,
-                alsoRegionIds: crop.ids.skip(1).toList(),
+              onCropSelectionToggled: (crop) => _ferniesBloc.add(
+                // El tramo entero y no sólo su primer fotograma: la celda es una
+                // escena, y borrar media escena no es lo que nadie pide.
+                ToggleRegionSelectionEvent(
+                  crop.id,
+                  alsoRegionIds: crop.ids.skip(1).toList(),
+                ),
               ),
+              pendingWarning: texts.fernieRegionPending,
+              // Si el fichero de una región ya no está, su fila sale de la base de
+              // datos y con ella se van sus regiones: no puede quedar contenido
+              // fuera de la base que siga contando para entrenar.
+              onCropLoadFailed: (crop) =>
+                  _mediaBloc.add(MediaLoadFailedEvent(crop.media.id)),
+              isLoading: state.areRegionsBusy,
+              emptyMessage: texts.fernieNoRegions,
+              // La superficie de esta pantalla es la de la ficha: la rejilla va
+              // directamente sobre el fondo.
+              hasSurface: false,
             ),
-            pendingWarning: texts.fernieRegionPending,
-            // Si el fichero de una región ya no está, su fila sale de la base de
-            // datos y con ella se van sus regiones: no puede quedar contenido
-            // fuera de la base que siga contando para entrenar.
-            onCropLoadFailed: (crop) =>
-                _mediaBloc.add(MediaLoadFailedEvent(crop.media.id)),
-            isLoading: state.areRegionsBusy,
-            emptyMessage: texts.fernieNoRegions,
-            // La superficie de esta pantalla es la de la ficha: la rejilla va
-            // directamente sobre el fondo.
-            hasSurface: false,
           ),
         ),
       ],

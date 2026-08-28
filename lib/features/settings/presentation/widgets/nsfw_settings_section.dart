@@ -19,6 +19,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// El bloqueo de contenido no apto: ponerlo, abrirlo, cerrarlo y quitarlo.
@@ -121,7 +122,7 @@ class _NsfwSettingsSectionState extends State<NsfwSettingsSection> {
               Row(
                 children: [
                   Icon(
-                    isUnlocked ? Icons.lock_open_outlined : Icons.lock_outline,
+                    isUnlocked ? Symbols.lock_open : Symbols.lock,
                     color: isUnlocked
                         ? context.colors.terciary
                         : context.colors.unremarked,

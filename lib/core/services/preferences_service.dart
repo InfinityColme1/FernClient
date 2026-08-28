@@ -11,6 +11,18 @@ class PreferencesService {
   PreferencesService(this._prefs);
 
 
+  /// Si el tutorial ya se ha ofrecido alguna vez.
+  ///
+  /// Sin nada guardado es que no, que es lo que pasa la primera vez que se abre
+  /// la aplicacion — el unico momento en el que se ofrece solo.
+  bool hasBeenOfferedTutorial() =>
+      _prefs.getBool(tutorialOfferedPreferenceKey) ?? false;
+
+  Future<bool> setTutorialOffered() async {
+    return await _prefs.setBool(tutorialOfferedPreferenceKey, true);
+  }
+
+
   Future<bool> setRootPath(String path) async {
     return await _prefs.setString(rootPathPreferenceKey, path);
   }

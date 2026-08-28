@@ -18,12 +18,14 @@ import 'package:Fern/features/recognition/presentation/widgets/edge_condition_di
 import 'package:Fern/features/recognition/presentation/widgets/model_side_panel.dart';
 import 'package:Fern/features/recognition/presentation/widgets/tree_canvas.dart';
 import 'package:Fern/features/recognition/presentation/widgets/tree_drag_payload.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -149,27 +151,38 @@ class _ModelTreePageState extends State<ModelTreePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _header(context, texts, state),
+                TutorialAnchor(
+                  id: TutorialAnchorId.screenHeader,
+                  child: _header(context, texts, state),
+                ),
                 const SizedBox(height: AppSpacing.l),
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: _canvas(context, texts, state)),
+                      Expanded(
+                        child: TutorialAnchor(
+                          id: TutorialAnchorId.screenBody,
+                          child: _canvas(context, texts, state),
+                        ),
+                      ),
                       const SizedBox(width: AppSpacing.l),
                       SizedBox(
                         width: AppSizes.treeSidePanelWidth,
-                        child: ModelSidePanel(
-                          models: state.modelsOutside,
-                          selectedName: _selectedName(state),
-                          onPlace: (model) => _bloc.add(PlaceModelEvent(
-                            modelId: model.id,
-                            parentNodeId: state.selectedNodeId,
-                          )),
-                          onClearSelection: () =>
-                              _bloc.add(const SelectTreeNodeEvent(null)),
-                          onRemoveNode: (nodeId) =>
-                              _bloc.add(RemoveTreeNodeEvent(nodeId)),
+                        child: TutorialAnchor(
+                          id: TutorialAnchorId.screenList,
+                          child: ModelSidePanel(
+                            models: state.modelsOutside,
+                            selectedName: _selectedName(state),
+                            onPlace: (model) => _bloc.add(PlaceModelEvent(
+                              modelId: model.id,
+                              parentNodeId: state.selectedNodeId,
+                            )),
+                            onClearSelection: () =>
+                                _bloc.add(const SelectTreeNodeEvent(null)),
+                            onRemoveNode: (nodeId) =>
+                                _bloc.add(RemoveTreeNodeEvent(nodeId)),
+                          ),
                         ),
                       ),
                     ],
@@ -208,7 +221,7 @@ class _ModelTreePageState extends State<ModelTreePage> {
           IconButton(
             tooltip: texts.viewerBack,
             onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Symbols.arrow_back),
           ),
           const SizedBox(width: AppSpacing.s),
           Text(texts.treeTitle, style: Theme.of(context).textTheme.titleMedium),
@@ -231,7 +244,7 @@ class _ModelTreePageState extends State<ModelTreePage> {
           // mirando.
           FernPillButton(
             label: texts.recognizeLibrary,
-            icon: Icons.auto_awesome_outlined,
+            icon: Symbols.auto_awesome,
             backgroundColor: context.colors.secondary,
             foregroundColor: context.colors.black,
             onPressed: _recognizeLibrary,
@@ -286,7 +299,7 @@ class _ModelTreePageState extends State<ModelTreePage> {
         IconButton(
           tooltip: texts.treeZoomOut,
           onPressed: () => _zoomBy(1 / treeZoomStep),
-          icon: const Icon(Icons.remove),
+          icon: const Icon(Symbols.remove),
         ),
         SizedBox(
           width: AppSizes.avatarXLarge,
@@ -299,12 +312,12 @@ class _ModelTreePageState extends State<ModelTreePage> {
         IconButton(
           tooltip: texts.treeZoomIn,
           onPressed: () => _zoomBy(treeZoomStep),
-          icon: const Icon(Icons.add),
+          icon: const Icon(Symbols.add),
         ),
         IconButton(
           tooltip: texts.treeFitToView,
           onPressed: _fitToView,
-          icon: const Icon(Icons.fit_screen_outlined),
+          icon: const Icon(Symbols.fit_screen),
         ),
       ],
     );

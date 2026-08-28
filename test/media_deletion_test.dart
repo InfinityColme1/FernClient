@@ -30,6 +30,7 @@ import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 void main() {
   late Directory directory;
@@ -78,6 +79,7 @@ void main() {
     final hierarchy = TagHierarchy(database: isar);
 
     repository = LocalMediaRepositoryImpl(
+      shuffle: ShuffleSeed(),
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: settings),
       avatarStorage: AvatarStorageService(settingsRepository: settings),

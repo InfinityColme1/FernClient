@@ -13,6 +13,7 @@ import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
 /// Buscador de la barra superior: busca sobre todo el contenido de la base de
@@ -228,7 +229,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
             child: Row(
               children: [
-                Icon(Icons.search, color: context.colors.black),
+                Icon(Symbols.search, color: context.colors.black),
                 const SizedBox(width: AppSpacing.m),
                 Expanded(
                   child: TextField(
@@ -260,10 +261,11 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                   )
                 else if (_controller.text.isNotEmpty)
                   IconButton(
+                    tooltip: AppLocalizations.of(context).actionClearSearch,
                     onPressed: _clear,
                     visualDensity: VisualDensity.compact,
                     iconSize: AppSizes.iconMedium,
-                    icon: Icon(Icons.cancel, color: context.colors.black),
+                    icon: Icon(Symbols.cancel, color: context.colors.black),
                   ),
               ],
             ),

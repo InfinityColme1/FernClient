@@ -1,3 +1,4 @@
+import 'package:Fern/core/ui/display/fern_logo.dart';
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
@@ -96,7 +97,7 @@ class _SplashPageState extends State<SplashPage>
           animation: _controller,
           // El logo se pasa como `child` para que no se reconstruya en cada
           // fotograma: lo único que cambia por fotograma es cómo se pinta.
-          child: Image.asset(appLogo, width: splashLogoWidth),
+          child: const FernLogo(height: splashLogoHeight),
           builder: (context, child) {
             return Stack(
               alignment: Alignment.center,

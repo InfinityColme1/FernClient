@@ -2,7 +2,10 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/widgets/sidebar_item.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
 import 'package:Fern/core/navigation/sidebar_selection.dart';
+import 'package:Fern/core/ui/interaction/fern_drag_watch.dart';
+import 'package:Fern/core/ui/interaction/fern_drop_absorb.dart';
 import 'package:flutter/material.dart';
 import 'collapsing_list_tile_widget.dart';
 
@@ -132,10 +135,23 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
           // las etiquetas pueden ser muchas.
           final content = _sectionsContent(context);
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
-            itemCount: content.length,
-            itemBuilder: (context, index) => content[index],
+          // **El menú es el único sitio sin carril para la barra, y va pegada
+          // al canto.**
+          //
+          // En cualquier otra lista el contenido se aparta y la barra corre por
+          // el hueco. Aquí no cabe: la fila es un rótulo que ya viene justo —los
+          // nombres largos se cortan con puntos suspensivos en cuanto se les
+          // quita ancho— y plegado el menú la fila es un icono del ancho del
+          // menú entero, así que no hay nada que quitarle. Entre una barra que
+          // pasa por encima del borde de la fila y un menú que corta «Gestor de
+          // creadores», pasa la barra.
+          return ScrollbarTheme(
+            data: ScrollbarTheme.of(context).copyWith(crossAxisMargin: 0),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+              itemCount: content.length,
+              itemBuilder: (context, index) => content[index],
+            ),
           );
         }),
       ),
@@ -170,14 +186,26 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         ));
       }
 
-      if (_isExpanded) content.add(_sectionTitle(context, section.title));
+      if (_isExpanded) {
+        final title = _sectionTitle(context, section.title);
+        final anchorId = section.anchorId;
+
+        content.add(anchorId == null
+            ? title
+            : TutorialAnchor(id: anchorId, child: title));
+      }
 
       if (isEmpty) {
         content.add(_sectionMessage(section.emptyMessage!));
         continue;
       }
 
-      content.addAll(section.items.map((item) => _dropTarget(
+      // Cada fila se apunta con su propio identificador, que es la pantalla a la
+      // que lleva: así el tutorial puede señalar cualquiera de ellas sin que
+      // haya que preparar aquí nada por cada paso que se añada.
+      content.addAll(section.items.map((item) => TutorialAnchor(
+            id: item.id,
+            child: _dropTarget(
             item,
             CollapsingListTile(
             onTap: () {
@@ -194,7 +222,6 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             title: item.title,
             icon: item.icon,
             isNsfw: item.isNsfw,
-            iconAsset: item.iconAsset,
             avatarPath: item.avatarPath,
             depth: item.depth,
             badgeCount: item.badgeCount,
@@ -205,6 +232,7 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             unselectedColor: widget.unselectedColor,
             textUnselectedColor: widget.textUnselectedColor,
             iconSize: widget.iconSize,
+          ),
           ),
           )));
     }
@@ -221,10 +249,37 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
     final onDropped = item.onMediaDropped;
     if (onDropped == null) return tile;
 
+    // El contexto **de esta fila**, que es lo que dice dónde tiene que aterrizar
+    // lo que se suelta. El del método es el del menú entero, y con él la
+    // miniatura viajaba al centro del menú en vez de a la etiqueta.
+    BuildContext? fila;
+
     return DragTarget<List<int>>(
-      onWillAcceptWithDetails: (details) => details.data.isNotEmpty,
-      onAcceptWithDetails: (details) => onDropped(details.data),
-      builder: (context, candidate, _) => DecoratedBox(
+      onWillAcceptWithDetails: (details) {
+        final acepta = details.data.isNotEmpty;
+        // Estas filas no van por `FernDropSlot` —montar uno por cada fila del
+        // menú sería pagar por nada en las que no aceptan contenido—, así que el
+        // aviso a la miniatura hay que darlo aquí. Sin esto, encoger y
+        // oscurecerse al llegar a una etiqueta no ocurría **justo en las
+        // etiquetas**, que es donde se suelta.
+        if (acepta) fernDragIsOverTarget.value = true;
+
+        return acepta;
+      },
+      onLeave: (_) => fernDragIsOverTarget.value = false,
+      onAcceptWithDetails: (details) {
+        fernDragIsOverTarget.value = false;
+        // Se ve entrar dentro de la fila. Es la confirmación de que ha ido a
+        // donde se quería, y llega antes que cualquier aviso escrito.
+        if (fila case final destino? when destino.mounted) {
+          playFernDropAbsorb(context: destino, pointer: details.offset);
+        }
+        onDropped(details.data);
+      },
+      builder: (context, candidate, _) {
+        fila = context;
+
+        return DecoratedBox(
         // Encendida sólo mientras algo está encima: es lo que dice dónde se va
         // a soltar, que con veinte etiquetas en fila no se adivina.
         decoration: BoxDecoration(
@@ -233,8 +288,9 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
               : widget.selectedColor.withValues(alpha: dropTargetHighlight),
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         ),
-        child: tile,
-      ),
+          child: tile,
+        );
+      },
     );
   }
 

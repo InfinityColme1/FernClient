@@ -5,7 +5,9 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:Fern/core/ui/display/fern_badge.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
+import 'package:Fern/core/ui/display/fern_motion.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'dart:math' as math;
 
 class CollapsingListTile extends StatefulWidget {
@@ -13,7 +15,6 @@ class CollapsingListTile extends StatefulWidget {
   final IconData icon;
 
   /// Icono en forma de imagen del paquete. Manda sobre [icon] cuando viene.
-  final String? iconAsset;
 
   /// Imagen con la que se pinta el botón en lugar del icono. Es lo que deja
   /// reconocer una etiqueta con el menú plegado, cuando el icono es el único que
@@ -53,7 +54,6 @@ class CollapsingListTile extends StatefulWidget {
     super.key,
     required this.title,
     required this.icon,
-    this.iconAsset,
     this.avatarPath,
     required this.animationController,
     this.isSelected = false,
@@ -136,17 +136,14 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     final avatarPath = widget.avatarPath;
 
     final leading = avatarPath == null
-        ? fernFallbackIcon(
-            context,
-            icon: widget.icon,
-            asset: widget.iconAsset,
+        ? Icon(
+            widget.icon,
             size: widget.iconSize,
             color: context.colors.black,
           )
         : FernAvatar(
             imagePath: avatarPath,
             fallbackIcon: widget.icon,
-            fallbackAsset: widget.iconAsset,
             radius: widget.iconSize / 2,
             iconSize: widget.iconSize,
           );
@@ -158,6 +155,38 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     );
   }
 
+  /// La barrita que dice en qué fila se está.
+  ///
+  /// **Vive en el carril de la izquierda, fuera de la píldora.** Dentro no
+  /// funcionaba por dos motivos a la vez: iba del mismo color que el teñido del
+  /// fondo de la fila elegida —así que se pisaban y ninguna de las dos se leía
+  /// bien— y quedaba pegada al icono, sin aire que la separase de él.
+  ///
+  /// Fuera no compite con nada. El teñido dice «esto está puesto» y la barra dice
+  /// «estás aquí», que son dos cosas distintas y ahora se ven como tales.
+  ///
+  /// Es más corta que la fila: de borde a borde se leería como un separador entre
+  /// filas en vez de como una marca. Y crece de nada a su alto al elegir la fila
+  /// y se recoge al dejarla, así que de una a otra se lee como que se ha movido.
+  Widget _selectionMark(double rowHeight) {
+    final alto = rowHeight * AppSizes.sidebarMarkHeightFactor;
+
+    return AnimatedContainer(
+      duration: context.motion(motionStandard),
+      curve: motionEnterCurve,
+      width: AppSizes.sidebarMarkWidth,
+      height: widget.isSelected ? alto : 0,
+      decoration: BoxDecoration(
+        color: context.colors.primary,
+        // Redondeada sólo por fuera: nace del borde del menú y se mete hacia
+        // dentro.
+        borderRadius: const BorderRadius.horizontal(
+          right: Radius.circular(AppSizes.sidebarMarkWidth),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -166,19 +195,24 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
       child: InkWell(
         onTap: widget.onTap,
         mouseCursor: WidgetStateMouseCursor.clickable,
-        child: Container(
+        child: _withMark(AnimatedContainer(
+          // El fondo entra y sale en vez de encenderse de golpe: cambiar de
+          // sección era un parpadeo de color, y ahora la marca se traslada de una
+          // fila a otra.
+          duration: context.motion(motionFast),
+          curve: motionEnterCurve,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
             color: _backgroundColor(context),
           ),
           width: widthAnimation.value,
-          margin: EdgeInsets.only(left: AppSpacing.s + _indent, right: AppSpacing.s),
+          margin: EdgeInsets.only(left: _indent, right: AppSpacing.s),
           padding: const EdgeInsets.all(AppSpacing.s),
           child: Row(
             children: <Widget>[
               if (_showsDepthMark) ...[
                 Icon(
-                  Icons.subdirectory_arrow_right,
+                  Symbols.subdirectory_arrow_right,
                   color: context.colors.unremarked,
                   size: AppSizes.iconSmall,
                 ),
@@ -205,8 +239,40 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
               ],
             ],
           ),
-        ),
+        )),
       ),
+    );
+  }
+
+  /// La píldora con su carril a la izquierda, y la marca dentro del carril.
+  ///
+  /// El carril se reserva **siempre**, elegida la fila o no: si apareciera al
+  /// elegirla, la fila entera se correría unos píxeles al pulsarla.
+  ///
+  /// La píldora pierde por la izquierda lo que gana el carril, así que el menú
+  /// mide lo mismo que antes y el contenido de la fila no se estrecha.
+  Widget _withMark(Widget pill) {
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: AppSizes.sidebarMarkGutter),
+          child: pill,
+        ),
+        // Centrada en el alto de la fila, midiéndolo del propio hueco: la fila
+        // crece con lo que lleve dentro y una altura escrita a mano se quedaría
+        // corta o larga en cuanto alguien la toque.
+        Positioned(
+          left: _indent,
+          top: 0,
+          bottom: 0,
+          width: AppSizes.sidebarMarkWidth,
+          child: LayoutBuilder(
+            builder: (context, constraints) => Center(
+              child: _selectionMark(constraints.maxHeight),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

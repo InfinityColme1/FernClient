@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Aviso previo a traerse contenido de una plataforma.
 ///
@@ -94,7 +95,7 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    Icons.schedule,
+                    Symbols.schedule,
                     size: AppSizes.iconCompact,
                     color: context.colors.terciary,
                   ),
@@ -116,7 +117,7 @@ class ConfirmRemoteImportDialog extends StatelessWidget {
       ),
       actionButton: FernPillButton(
         label: texts.actionImport,
-        icon: Icons.file_download_outlined,
+        icon: Symbols.download,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: () => Navigator.of(context).pop(true),

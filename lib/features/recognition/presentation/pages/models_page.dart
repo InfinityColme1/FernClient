@@ -1,3 +1,4 @@
+import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
@@ -13,6 +14,7 @@ import 'package:Fern/features/recognition/presentation/widgets/fernie_confirm_di
 import 'package:Fern/features/recognition/presentation/widgets/model_card.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -79,16 +81,11 @@ class _ModelsPageState extends State<ModelsPage> {
       child: BlocBuilder<ModelsBloc, ModelsState>(
         bloc: _bloc,
         builder: (context, state) {
-          return Padding(
+          return FernGridScreen(
             padding: AppSpacing.pagePadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _header(context, texts),
-                const SizedBox(height: AppSpacing.l),
-                Expanded(child: _grid(state, texts)),
-              ],
-            ),
+            headerPadding: const EdgeInsets.only(bottom: AppSpacing.l),
+            header: _header(context, texts),
+            body: _grid(state, texts),
           );
         },
       ),
@@ -104,7 +101,7 @@ class _ModelsPageState extends State<ModelsPage> {
         // **de** los modelos, y lo que decide es en qué orden se ejecutan éstos.
         FernPillButton(
           label: texts.treeOpen,
-          icon: Icons.account_tree_outlined,
+          icon: Symbols.account_tree,
           backgroundColor: context.colors.secondary,
           foregroundColor: context.colors.black,
           onPressed: () => context.push(modelTreePath()),
@@ -132,6 +129,7 @@ class _ModelsPageState extends State<ModelsPage> {
               : FernEmptyState(
                   imageAsset: fernEmptyImage,
                   message: texts.modelsEmpty,
+                  description: texts.modelsEmptyHint,
                 ),
         ),
       );

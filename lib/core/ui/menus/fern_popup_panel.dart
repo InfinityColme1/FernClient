@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/ui/display/fern_scrollbar.dart';
 import 'package:flutter/material.dart';
 
 /// Panel blanco redondeado anclado a un botón: el armazón de todo lo que cuelga
@@ -36,6 +37,14 @@ class FernPopupPanel extends StatefulWidget {
   /// Relleno de los bordes del panel, por dentro.
   final EdgeInsetsGeometry padding;
 
+  /// Alto máximo del panel. Sin él, crece con lo que lleve dentro.
+  ///
+  /// Con tope, lo que no cabe **no se queda fuera**: el panel se queda de ese
+  /// alto y se desplaza, con su barra por dentro. Es lo que permite que una
+  /// lista siga creciendo —las fuentes de las que se importa, sin ir más lejos—
+  /// sin comerse la pantalla de arriba abajo.
+  final double? maxHeight;
+
   const FernPopupPanel({
     super.key,
     required this.children,
@@ -44,6 +53,7 @@ class FernPopupPanel extends StatefulWidget {
     this.gap = AppSpacing.s,
     this.windowMargin = AppSpacing.xxl,
     this.padding = const EdgeInsets.symmetric(vertical: AppSpacing.l),
+    this.maxHeight,
   });
 
   @override
@@ -53,6 +63,18 @@ class FernPopupPanel extends StatefulWidget {
 class _FernPopupPanelState extends State<FernPopupPanel> {
   final MenuController _controller = MenuController();
   final GlobalKey _anchorKey = GlobalKey();
+
+  /// El del desplazamiento de dentro, cuando hay tope de alto.
+  ///
+  /// Hace falta darselo a la barra a mano: dentro de un menu, ella sola no
+  /// encuentra el desplazable y se queda sin pintar.
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   /// Desplazamiento respecto a la esquina inferior izquierda del disparador. Se
   /// recalcula al abrir, cuando ya se sabe dónde ha quedado el botón.
@@ -98,13 +120,47 @@ class _FernPopupPanelState extends State<FernPopupPanel> {
     });
   }
 
+  /// Lo de dentro del panel, con su tope de alto si lo lleva.
+  Widget _body() {
+    final filas = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final child in widget.children)
+          SizedBox(width: widget.width, child: child),
+      ],
+    );
+
+    if (widget.maxHeight == null) return filas;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: widget.maxHeight!),
+      child: FernScrollbar(
+        controller: _scroll,
+        // Puesta mientras el panel esté abierto: aquí la barra no es un adorno,
+        // es lo que dice que hay más opciones debajo del borde.
+        isAlwaysVisible: true,
+        child: SingleChildScrollView(
+          controller: _scroll,
+          child: filas,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
       controller: _controller,
       alignmentOffset: _offset,
       style: MenuStyle(
-        backgroundColor: WidgetStatePropertyAll(context.colors.white),
+        backgroundColor:
+            WidgetStatePropertyAll(context.colors.surfaceRaised),
+        side: WidgetStatePropertyAll(
+          BorderSide(
+            color: context.colors.outline,
+            width: AppSizes.borderHairline,
+          ),
+        ),
         padding: WidgetStatePropertyAll(widget.padding),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
@@ -113,10 +169,7 @@ class _FernPopupPanelState extends State<FernPopupPanel> {
         ),
       ),
       // El ancho lo fija el panel, no su contenido: las filas se ajustan a él.
-      menuChildren: [
-        for (final child in widget.children)
-          SizedBox(width: widget.width, child: child),
-      ],
+      menuChildren: [_body()],
       builder: (context, controller, _) => KeyedSubtree(
         key: _anchorKey,
         child: widget.builder(context, _toggle),

@@ -1,6 +1,7 @@
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Marcar de golpe todo lo que hay a la vista, o soltarlo.
 ///
@@ -48,7 +49,7 @@ class SelectAllButton extends StatelessWidget {
       onPressed: visible.isEmpty
           ? null
           : () => onSelectAll([for (final one in visible) one.id]),
-      icon: Icon(_isEverythingSelected ? Icons.deselect : Icons.select_all),
+      icon: Icon(_isEverythingSelected ? Symbols.deselect : Symbols.select_all),
     );
   }
 }

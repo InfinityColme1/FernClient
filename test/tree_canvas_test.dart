@@ -16,6 +16,7 @@ import 'package:Fern/features/recognition/presentation/widgets/tree_node_card.da
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 ModelTreeNodeEntity _node(
   int id, {
@@ -147,7 +148,7 @@ void main() {
       // Se salta al reconocer, y con ella todo lo que cuelgue: eso no se ve
       // mirando el arbol si no se dice en la tarjeta.
       expect(find.text('Sin entrenar'), findsOneWidget);
-      expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+      expect(find.byIcon(Symbols.warning_amber), findsOneWidget);
     });
 
     testWidgets('pulsarla la elige', (tester) async {
@@ -174,7 +175,7 @@ void main() {
 
       // A ese tamano lo demas no se lee y solo emborrona.
       expect(find.text('Sin entrenar'), findsNothing);
-      expect(find.byIcon(Icons.close), findsNothing);
+      expect(find.byIcon(Symbols.close), findsNothing);
       expect(find.text('Modelo 1'), findsOneWidget);
     });
 
@@ -186,7 +187,7 @@ void main() {
         onNodeRemove: removed.add,
       );
 
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byIcon(Symbols.close));
       await tester.pump();
 
       expect(removed, [3]);

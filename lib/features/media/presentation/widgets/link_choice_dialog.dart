@@ -7,6 +7,7 @@ import 'package:Fern/features/media/domain/entities/post_link.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
 
 /// Una publicación trae varios enlaces y hay que decidir qué se hace con ellos.
@@ -106,7 +107,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
             children: [
               FernPillButton(
                 label: texts.linkChoiceIgnore,
-                icon: Icons.block,
+                icon: Symbols.block,
                 backgroundColor: context.colors.secondary,
                 foregroundColor: context.colors.black,
                 onPressed: () => _answer(
@@ -116,7 +117,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               const SizedBox(width: AppSpacing.s),
               FernPillButton(
                 label: texts.linkChoiceSelection(_selected.length),
-                icon: Icons.checklist,
+                icon: Symbols.checklist,
                 backgroundColor: context.colors.secondary,
                 foregroundColor: context.colors.black,
                 onPressed: _selected.isEmpty
@@ -130,7 +131,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
               const SizedBox(width: AppSpacing.s),
               FernPillButton(
                 label: texts.linkChoiceAll,
-                icon: Icons.download_outlined,
+                icon: Symbols.download,
                 backgroundColor: context.colors.primary,
                 foregroundColor: context.colors.black,
                 onPressed: () => _answer(LinkChoice(
@@ -163,8 +164,8 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
           ),
           Icon(
             link.kind == PostLinkKind.archive
-                ? Icons.folder_zip_outlined
-                : Icons.image_outlined,
+                ? Symbols.folder_zip
+                : Symbols.image,
             size: AppSizes.iconCompact,
             color: context.colors.gray,
           ),
@@ -180,7 +181,7 @@ class _LinkChoiceDialogState extends State<LinkChoiceDialog> {
           IconButton(
             tooltip: texts.linkChoiceOpen,
             onPressed: () => _open(link),
-            icon: const Icon(Icons.open_in_new, size: AppSizes.iconCompact),
+            icon: const Icon(Symbols.open_in_new, size: AppSizes.iconCompact),
           ),
         ],
       ),

@@ -1,4 +1,4 @@
-import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
@@ -60,45 +60,32 @@ class _FavoritesView extends StatelessWidget {
       builder: (context, state) {
         final mediaList = state.mediaList ?? const [];
 
-        return Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        return FernGridScreen(
+          header: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(
-                  right: AppSpacing.xl,
-                  bottom: AppSpacing.l,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      texts.favoritesCount(mediaList.length),
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const Spacer(),
-                    // El mismo panel de la biblioteca, sin el grupo que sólo
-                    // recorta una búsqueda: aquí no hay buscador.
-                    SearchFilterMenu(
-                      filters: state.searchFilters,
-                      sourceFilters: state.sourceFilters,
-                      typeFilters: state.typeFilters,
-                      hasSearch: false,
-                      showResultTypes: false,
-                    ),
-                  ],
+              Text(
+                texts.favoritesCount(mediaList.length),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              Expanded(
-                child: MediaGrid(
-                  mediaList: mediaList,
-                  columns: mediaGridColumns,
-                  isLoading: state.isBusy,
-                  returnsToViewed: true,
-                ),
+              const Spacer(),
+              // El mismo panel de la biblioteca, sin el grupo que sólo
+              // recorta una búsqueda: aquí no hay buscador.
+              SearchFilterMenu(
+                filters: state.searchFilters,
+                sourceFilters: state.sourceFilters,
+                typeFilters: state.typeFilters,
+                hasSearch: false,
+                showResultTypes: false,
               ),
             ],
+          ),
+          body: MediaGrid(
+            mediaList: mediaList,
+            columns: mediaGridColumns,
+            isLoading: state.isBusy,
+            returnsToViewed: true,
           ),
         );
       },

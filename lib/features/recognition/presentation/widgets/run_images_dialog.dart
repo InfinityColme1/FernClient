@@ -8,6 +8,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/presentation/widgets/metrics_panel.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
 /// Los ficheros que deja ultralytics en la carpeta de la run, por si sirven.
@@ -145,7 +146,7 @@ class RunImagesDialog extends StatelessWidget {
             backgroundColor: context.colors.secondary,
             foregroundColor: context.colors.black,
             label: texts.metricsOpenRunFolder,
-            icon: Icons.folder_open,
+            icon: Symbols.folder_open,
             onPressed: () => onOpenFolder!(directory),
           ),
         ],

@@ -8,6 +8,7 @@ import 'package:Fern/features/media/domain/services/tag_relations_layout.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Con quién se relaciona una etiqueta: de quién cuelga y con quiénes va a la
 /// par.
@@ -232,14 +233,14 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
               label: _parent == null
                   ? texts.tagRelationsAddParent
                   : texts.tagRelationsChangeParent,
-              icon: Icons.arrow_upward,
+              icon: Symbols.arrow_upward,
               backgroundColor: context.colors.secondary,
               foregroundColor: context.colors.black,
               onPressed: () => setState(() => _adding = _Adding.parent),
             ),
             FernPillButton(
               label: texts.tagRelationsAddSibling,
-              icon: Icons.swap_horiz,
+              icon: Symbols.swap_horiz,
               backgroundColor: context.colors.secondary,
               foregroundColor: context.colors.black,
               onPressed: () => setState(() => _adding = _Adding.sibling),
@@ -267,7 +268,7 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
             const SizedBox(height: AppSpacing.s),
             FernPillButton(
               label: texts.tagRelationsCreate,
-              icon: Icons.add,
+              icon: Symbols.add,
               backgroundColor: context.colors.secondary,
               foregroundColor: context.colors.black,
               onPressed: _create,
@@ -307,7 +308,7 @@ class _TagNode extends StatelessWidget {
           children: [
             FernAvatar(
               imagePath: tag.picturePath,
-              fallbackIcon: Icons.label_outline,
+              fallbackIcon: Symbols.label,
               radius: AppSizes.avatarSmall,
               iconSize: AppSizes.iconCompact,
             ),
@@ -337,7 +338,7 @@ class _TagNode extends StatelessWidget {
                 tooltip: AppLocalizations.of(context).actionRemove,
                 iconSize: AppSizes.iconSmall,
                 onPressed: onRemove,
-                icon: const Icon(Icons.close),
+                icon: const Icon(Symbols.close),
               ),
           ],
         ),

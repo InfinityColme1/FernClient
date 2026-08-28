@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Avisa de que lo que se va a reconocer saldrá de la biblioteca.
 ///
@@ -50,7 +51,7 @@ class ConfirmRecognitionDialog extends StatelessWidget {
       ),
       actionButton: FernPillButton(
         label: texts.recognizeReturnConfirm,
-        icon: Icons.auto_awesome_outlined,
+        icon: Symbols.auto_awesome,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: () => Navigator.of(context).pop(true),

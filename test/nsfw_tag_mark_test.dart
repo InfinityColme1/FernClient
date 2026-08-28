@@ -20,6 +20,7 @@ import 'package:Fern/features/media/presentation/widgets/search_result_row.dart'
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 Widget _harness(Widget child) => MaterialApp(
       theme: AppTheme.darkTheme,
@@ -109,7 +110,7 @@ void main() {
 
       return CollapsingListTile(
           title: 'delicada',
-          icon: Icons.sell_outlined,
+          icon: Symbols.sell,
           isNsfw: isNsfw,
           isExpanded: isExpanded,
           onTap: () {},
@@ -130,7 +131,7 @@ void main() {
 
       expect(find.byType(NsfwTagMark), findsOneWidget);
       // Y el icono sigue siendo el de siempre: la marca no lo sustituye.
-      expect(find.byIcon(Icons.sell_outlined), findsOneWidget);
+      expect(find.byIcon(Symbols.sell), findsOneWidget);
     });
 
     testWidgets('y no toca las demás', (tester) async {
@@ -147,7 +148,7 @@ void main() {
       await tester.pumpWidget(_harness(
         CollapsingListTile(
           title: 'una etiqueta con un nombre larguísimo que no cabe ni de lejos',
-          icon: Icons.sell_outlined,
+          icon: Symbols.sell,
           isNsfw: true,
           onTap: () {},
           animationController: animation..value = 0,

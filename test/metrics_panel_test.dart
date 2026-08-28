@@ -20,6 +20,7 @@ import 'package:Fern/features/recognition/presentation/widgets/run_images_dialog
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
 String _metrics({
@@ -150,14 +151,14 @@ void main() {
 
       // Una media de 0,80 con un fernie a 0,18 se ve estupenda y falla justo con
       // ese.
-      expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+      expect(find.byIcon(Symbols.warning_amber), findsOneWidget);
     });
 
     testWidgets('con todos por encima del liston no hay avisos',
         (tester) async {
       await _pump(tester);
 
-      expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
+      expect(find.byIcon(Symbols.warning_amber), findsNothing);
       expect(weakClassThreshold, lessThan(0.87));
     });
   });

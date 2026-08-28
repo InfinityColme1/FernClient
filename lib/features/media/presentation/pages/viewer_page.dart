@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/resources/app_icons.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/clipboard_service.dart';
 import 'package:Fern/core/services/fullscreen_service.dart';
@@ -585,7 +586,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       showFernToast(
         context,
         AppLocalizations.of(context).fernieRegionTiny,
-        icon: Icons.info_outline,
+        icon: Symbols.info,
       );
     }
 
@@ -603,8 +604,37 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     _restartHideTimer();
   }
 
+  /// Sobre cuántos mandos está el ratón ahora mismo.
+  ///
+  /// Un contador y no un sí o un no: al pasar de un mando al de al lado, el aviso
+  /// de que se ha entrado en el segundo puede llegar antes que el de que se ha
+  /// salido del primero, y con un `bool` el segundo aviso lo dejaría en «fuera»
+  /// teniendo el ratón encima.
+  int _controlsUnderPointer = 0;
+
+  bool get _isPointerOnControls => _controlsUnderPointer > 0;
+
+  /// El ratón ha entrado o salido de uno de los mandos.
+  void _onControlsHover(bool isOver) {
+    _controlsUnderPointer += isOver ? 1 : -1;
+    if (_controlsUnderPointer < 0) _controlsUnderPointer = 0;
+
+    if (isOver) {
+      _wakeControls();
+    } else {
+      _restartHideTimer();
+    }
+  }
+
   void _restartHideTimer() {
     _hideTimer?.cancel();
+
+    // Con el ratón encima de un mando no se cuenta. Quieto sobre un botón no hay
+    // movimiento que reinicie la cuenta, así que se desvanecía justo cuando se
+    // estaba a punto de pulsarlo. Al salir se vuelve a contar desde el
+    // principio.
+    if (_isPointerOnControls) return;
+
     _hideTimer = Timer(viewerControlsHideDelay, () {
       if (!mounted || !_areControlsVisible) return;
       setState(() => _areControlsVisible = false);
@@ -649,7 +679,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     showFernToast(
       context,
       copied ? l10n.viewerCopied : l10n.viewerCopyFailed,
-      icon: copied ? Icons.check_rounded : Icons.error_outline_rounded,
+      icon: copied ? Symbols.check : Symbols.error,
     );
   }
 
@@ -888,6 +918,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     MediaStates state,
     FernieModeState fernieState,
   ) {
+    final texts = AppLocalizations.of(context);
     final media = state.currentMedia;
 
     // El contenido que ya está en la papelera se trata distinto: su botón de
@@ -922,7 +953,8 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                       child: Row(
                         children: [
                           _buildNavigationArrow(
-                            asset: icLeft,
+                            icon: Symbols.chevron_left,
+                            tooltip: texts.viewerPrevious,
                             isVisible:
                                 showControls && !fernieState.isFernieMode,
                             isCollapsed: _isFullscreen,
@@ -943,7 +975,8 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                             ),
                           ),
                           _buildNavigationArrow(
-                            asset: icRight,
+                            icon: Symbols.chevron_right,
+                            tooltip: texts.viewerNext,
                             isVisible:
                                 showControls && !fernieState.isFernieMode,
                             isCollapsed: _isFullscreen,
@@ -965,13 +998,15 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                     // vídeo entero.
                     if (_isFullscreen && !fernieState.isFernieMode) ...[
                       _buildOverlayArrow(
-                        asset: icLeft,
+                        icon: Symbols.chevron_left,
+                        tooltip: texts.viewerPrevious,
                         isLeading: true,
                         isVisible: showControls,
                         onPressed: () => _goTo(next: false),
                       ),
                       _buildOverlayArrow(
-                        asset: icRight,
+                        icon: Symbols.chevron_right,
+                        tooltip: texts.viewerNext,
                         isLeading: false,
                         isVisible: showControls,
                         onPressed: () => _goTo(next: true),
@@ -1376,18 +1411,23 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// entero, con lo que el vídeo perdía de golpe la línea de tiempo, el espacio
   /// y el clic.
   Widget _buildNavigationArrow({
-    required String asset,
+    required IconData icon,
+    required String tooltip,
     required bool isVisible,
     required bool isCollapsed,
     required VoidCallback onPressed,
   }) {
     return FernFadingControls(
       isVisible: isVisible,
+      onHoverChanged: _onControlsHover,
       child: isCollapsed
           ? const SizedBox.shrink()
           : IconButton(
+              tooltip: tooltip,
               onPressed: onPressed,
-              icon: Image.asset(asset, width: AppSizes.buttonHeightSmall),
+              iconSize: AppSizes.iconExtraLarge,
+              color: Colors.white,
+              icon: Icon(icon),
             ),
     );
   }
@@ -1398,7 +1438,8 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// de una imagen clara un icono blanco no se ve, y ahí no hay margen gris que
   /// haga de fondo como en la ventana.
   Widget _buildOverlayArrow({
-    required String asset,
+    required IconData icon,
+    required String tooltip,
     required bool isLeading,
     required bool isVisible,
     required VoidCallback onPressed,
@@ -1411,14 +1452,18 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       child: Center(
         child: FernFadingControls(
           isVisible: isVisible,
+          onHoverChanged: _onControlsHover,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: fullscreenArrowScrimOpacity),
               shape: BoxShape.circle,
             ),
             child: IconButton(
+              tooltip: tooltip,
               onPressed: onPressed,
-              icon: Image.asset(asset, width: AppSizes.buttonHeightSmall),
+              iconSize: AppSizes.iconExtraLarge,
+              color: Colors.white,
+              icon: Icon(icon),
             ),
           ),
         ),
@@ -1442,6 +1487,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       bottom: AppSpacing.l,
       child: FernFadingControls(
         isVisible: isVisible,
+        onHoverChanged: _onControlsHover,
         child: MediaTimeline(
           playback: _playback,
           // Coger la barra para o no según lo que el usuario tenga puesto. En
@@ -1516,6 +1562,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       child: Center(
         child: FernFadingControls(
           isVisible: isVisible,
+          onHoverChanged: _onControlsHover,
           child: Material(
             color: context.colors.scrim.withValues(alpha: viewerShadeOpacity),
             borderRadius: BorderRadius.circular(AppSizes.radiusFull),
@@ -1685,6 +1732,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       right: 0,
       child: FernFadingControls(
         isVisible: isVisible,
+        onHoverChanged: _onControlsHover,
         child: Stack(
           children: [
             _buildShade(),
@@ -1787,6 +1835,18 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // tiempo es la que deja elegir el fotograma.
     final canMark = media != null;
 
+    // La barra va en bloques separados por aire, y el orden no es casual.
+    //
+    // A la izquierda, salir. A la derecha lo que se hace **con** el contenido,
+    // de lo que se deshace con otro clic a lo que no tiene vuelta atrás, con un
+    // hueco antes del último bloque: borrar estaba encajado entre restablecer y
+    // el corazón, que es donde un clic de más cuesta caro.
+    //
+    // Dentro de la derecha: primero lo que se marca (favorito, NSFW), que es lo
+    // que más se usa; después las herramientas que abren algo (marcar regiones,
+    // reconocer); después lo que cambia cómo se ve (información, pantalla
+    // completa); y al final lo que saca el contenido de aquí (compartir,
+    // restablecer, borrar).
     return [
       _buildAction(
         tooltip: l10n.viewerBack,
@@ -1794,61 +1854,15 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         onPressed: () => context.pop(),
       ),
       const Spacer(),
-      _buildAction(
-        tooltip: l10n.viewerShare,
-        icon: Symbols.ios_share,
-        onPressed: media == null ? null : () => _copyToClipboard(media),
-      ),
-      // La pantalla completa la da el sistema, así que sólo se ofrece donde la
-      // aplicación sabe pedirla.
-      if (FullscreenService.instance.isSupported)
-        _buildAction(
-          tooltip: _isFullscreen
-              ? l10n.viewerExitFullscreen
-              : l10n.viewerFullscreen,
-          icon: _isFullscreen ? Symbols.fullscreen_exit : Symbols.fullscreen,
-          onPressed: _toggleFullscreen,
-        ),
-      // Marcar regiones se pide desde aquí, junto al resto de lo que se puede
-      // hacer con el contenido. Antes estaba escondido dentro del panel de
-      // información, que hay que abrir para verlo.
-      _buildAction(
-        tooltip: l10n.fernieModeTooltip,
-        icon: Symbols.crop_free,
-        asset: icFernie,
-        onPressed: canMark ? _enterFernieMode : null,
-      ),
-      _buildRecognizeAction(enabled: media != null),
-      _buildAction(
-        tooltip: l10n.mediaInfoTitle,
-        icon: Symbols.info,
-        onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
-      ),
-      // Lo que ya está en la papelera se restablece desde aquí: es la otra
-      // salida que tiene, y sin ella habría que volver a la rejilla para
-      // deshacerlo.
-      if (isMarked)
-        _buildAction(
-          tooltip: l10n.actionRestore,
-          icon: Symbols.restore,
-          onPressed: media == null
-              ? null
-              : () => context.read<MediaBloc>().add(RestoreMediaEvent(media)),
-        ),
-      _buildAction(
-        tooltip: l10n.actionDelete,
-        icon: Symbols.delete,
-        onPressed: media == null
-            ? null
-            : () => _delete(context, media, isMarked: isMarked),
-      ),
+
+      // --- Lo que se marca ------------------------------------------------
       if (!isPending)
         _buildAction(
           // El corazón se rellena al marcar como favorito: relleno o vacío se
           // distingue de un vistazo, que es más de lo que decía el color por sí
           // solo.
           tooltip: isFavorite ? l10n.viewerUnfavorite : l10n.viewerFavorite,
-          icon: Symbols.favorite,
+          icon: AppIcons.favorite,
           fill: isFavorite ? 1 : 0,
           color: isFavorite ? context.colors.terciary : Colors.white,
           onPressed: media == null
@@ -1866,7 +1880,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           tooltip: _isMarkedNsfw(media)
               ? l10n.mediaNsfwUnmark
               : l10n.mediaNsfwMark,
-          icon: Symbols.visibility_off,
+          icon: AppIcons.hidden,
           fill: _isMarkedNsfw(media) ? 1 : 0,
           color: _isMarkedNsfw(media) ? context.colors.terciary : Colors.white,
           onPressed: () => context.read<MediaBloc>().add(
@@ -1876,6 +1890,69 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                 ),
               ),
         ),
+
+      // --- Herramientas ---------------------------------------------------
+      const SizedBox(width: AppSpacing.m),
+      // Marcar regiones se pide desde aquí, junto al resto de lo que se puede
+      // hacer con el contenido. Antes estaba escondido dentro del panel de
+      // información, que hay que abrir para verlo.
+      //
+      // Con el icono de los fernies, que es lo que se va a marcar. Llevaba el de
+      // recortar, y en esta barra ése es prácticamente el mismo dibujo que el de
+      // pantalla completa: dos botones iguales a dos sitios de distancia.
+      _buildAction(
+        tooltip: l10n.fernieModeTooltip,
+        icon: AppIcons.fernie,
+        onPressed: canMark ? _enterFernieMode : null,
+      ),
+      _buildRecognizeAction(enabled: media != null),
+
+      // --- Lo que cambia cómo se ve ----------------------------------------
+      const SizedBox(width: AppSpacing.m),
+      _buildAction(
+        tooltip: l10n.viewerInfoTooltip,
+        icon: AppIcons.info,
+        onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
+      ),
+      // La pantalla completa la da el sistema, así que sólo se ofrece donde la
+      // aplicación sabe pedirla.
+      if (FullscreenService.instance.isSupported)
+        _buildAction(
+          tooltip: _isFullscreen
+              ? l10n.viewerExitFullscreen
+              : l10n.viewerFullscreen,
+          icon: _isFullscreen ? Symbols.fullscreen_exit : Symbols.fullscreen,
+          onPressed: _toggleFullscreen,
+        ),
+
+      // --- Lo que saca el contenido de aquí --------------------------------
+      const SizedBox(width: AppSpacing.xl),
+      _buildAction(
+        tooltip: l10n.viewerShare,
+        icon: Symbols.ios_share,
+        onPressed: media == null ? null : () => _copyToClipboard(media),
+      ),
+      // Lo que ya está en la papelera se restablece desde aquí: es la otra
+      // salida que tiene, y sin ella habría que volver a la rejilla para
+      // deshacerlo.
+      if (isMarked)
+        _buildAction(
+          tooltip: l10n.actionRestore,
+          // El reloj con la flecha —`restore`— es el mismo dibujo que el de «hace
+          // tanto» de la pantalla de importación, y aquí no se vuelve atrás en el
+          // tiempo: se saca algo de la papelera.
+          icon: Symbols.restore_from_trash,
+          onPressed: media == null
+              ? null
+              : () => context.read<MediaBloc>().add(RestoreMediaEvent(media)),
+        ),
+      _buildAction(
+        tooltip: l10n.actionDelete,
+        icon: AppIcons.deleted,
+        onPressed: media == null
+            ? null
+            : () => _delete(context, media, isMarked: isMarked),
+      ),
     ];
   }
 
@@ -1903,7 +1980,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
 
         return _buildAction(
           tooltip: isBusy ? l10n.viewerRecognizing : l10n.viewerRecognize,
-          icon: Symbols.auto_awesome,
+          icon: AppIcons.recognize,
           fill: isBusy ? 1 : 0,
           color: isBusy ? context.colors.terciary : Colors.white,
           onPressed: (enabled && !isBusy) ? _recognize : null,
@@ -1938,7 +2015,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
       state.lastRunSuggestions > 0
           ? l10n.recognizeFoundCount(state.lastRunSuggestions)
           : l10n.recognizeFoundNothing,
-      icon: Icons.info_outline,
+      icon: Symbols.info,
       // Sin parte no hay a dónde llevar, y entonces el aviso se va solo como
       // cualquier otro.
       onTap: log == null
@@ -1985,7 +2062,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           count: 1,
         ),
       ),
-      icon: queued ? Icons.info_outline : Icons.error_outline_rounded,
+      icon: queued ? Symbols.info : Symbols.error,
     );
   }
 
@@ -2001,7 +2078,6 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     required String tooltip,
     required IconData icon,
     required VoidCallback? onPressed,
-    String? asset,
     Color color = Colors.white,
     double fill = 0,
   }) {
@@ -2013,21 +2089,13 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     return IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
-      icon: asset != null
-          ? fernFallbackIcon(
-              context,
-              icon: icon,
-              asset: asset,
-              size: AppSizes.iconExtraLarge,
-              color: effective,
-            )
-          : Icon(
-              icon,
-              color: effective,
-              size: AppSizes.iconExtraLarge,
-              weight: viewerIconWeight,
-              fill: fill,
-            ),
+      icon: Icon(
+        icon,
+        color: effective,
+        size: AppSizes.iconExtraLarge,
+        weight: viewerIconWeight,
+        fill: fill,
+      ),
     );
   }
 

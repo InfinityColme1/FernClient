@@ -15,6 +15,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 RecognitionModelEntity _model({
   String name = 'Personajes',
@@ -179,7 +180,7 @@ void main() {
 
       // Una papelera permanente en cada tarjeta invita a pulsarla sin querer, y
       // aqui lo que se borra no vuelve.
-      await tester.tap(find.byIcon(Icons.delete_outline), warnIfMissed: false);
+      await tester.tap(find.byIcon(Symbols.delete), warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(deleted, 0);
@@ -191,7 +192,7 @@ void main() {
       await mouse.moveTo(tester.getCenter(find.byType(ModelCard)));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.tap(find.byIcon(Symbols.delete));
       await tester.pumpAndSettle();
 
       expect(deleted, 1);
@@ -200,7 +201,7 @@ void main() {
     testWidgets('sin a quien avisar, no hay boton', (tester) async {
       await _pump(tester, _model());
 
-      expect(find.byIcon(Icons.delete_outline), findsNothing);
+      expect(find.byIcon(Symbols.delete), findsNothing);
     });
 
     testWidgets('el cursor encima remarca la tarjeta', (tester) async {

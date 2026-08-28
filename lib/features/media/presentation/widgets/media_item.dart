@@ -22,6 +22,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -29,33 +30,72 @@ import '../../domain/entities/media/media_summary_entity.dart';
 
 /// Lo que se ve pegado al cursor al arrastrar contenido.
 ///
-/// La miniatura de lo que se arrastró y, si van varios, cuántos: sin el número,
-/// arrastrar una celda con treinta seleccionadas parece que mueve una sola, y la
-/// sorpresa llega al soltar.
+/// **Con varios se arrastra una pila, no una miniatura con un número.** El
+/// número dice cuántos son, pero hay que leerlo; la pila dice que son varios de
+/// un vistazo, que es lo que hace falta mientras se está apuntando a una
+/// etiqueta al otro lado de la pantalla. Van las dos cosas: las siluetas por
+/// detrás y el número encima.
+///
+/// Sin ellas, arrastrar una celda con treinta seleccionadas parecía que movía
+/// una sola, y la sorpresa llegaba al soltar.
 class _DragFeedback extends StatelessWidget {
   final String? path;
   final int count;
 
   const _DragFeedback({required this.path, required this.count});
 
+  /// Una de las siluetas de detrás: el mismo recorte, sin contenido dentro.
+  ///
+  /// No lleva la imagen: son el borde de un montón, no copias de la miniatura.
+  /// Repetir la foto tres veces se lee como tres fotos iguales, que es
+  /// justamente lo que no pasa.
+  Widget _silhouette(BuildContext context, int depth) {
+    final scale = 1.0 - dragStackScaleStep * depth;
+
+    return Transform.translate(
+      offset: Offset(dragStackOffset * depth, -dragStackOffset * depth),
+      child: Transform.scale(
+        scale: scale,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: context.colors.surfaceRaised,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+            border: Border.all(
+              color: context.colors.outline,
+              width: AppSizes.borderHairline,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasMany = count > 1;
+
     return SizedBox(
       width: dragFeedbackSize,
       height: dragFeedbackSize,
       child: Stack(
+        // Las siluetas se salen del cuadro por arriba y por la derecha: es lo
+        // que hace que se vean asomar.
+        clipBehavior: Clip.none,
         fit: StackFit.expand,
         children: [
+          if (hasMany)
+            for (var depth = dragStackDepth; depth >= 1; depth--)
+              _silhouette(context, depth),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
             child: path == null
                 ? ColoredBox(color: context.colors.secondary)
                 : Image.file(File(path!), fit: BoxFit.cover),
           ),
-          if (count > 1)
+          if (hasMany)
             Positioned(
-              right: -AppSpacing.xs,
-              top: -AppSpacing.xs,
+              left: -AppSpacing.xs,
+              bottom: -AppSpacing.xs,
               child: FernBadge(count: count),
             ),
         ],
@@ -100,6 +140,12 @@ class MediaItem extends StatefulWidget {
   /// Se invoca, una sola vez por fichero, cuando el contenido no se ha podido
   /// cargar. Quien lo escuche decide qué hacer con el contenido.
   final VoidCallback? onLoadFailed;
+
+  /// Si esta celda vuela al visor al abrirla.
+  ///
+  /// No siempre: en la vista por grupos el mismo contenido puede salir dos veces
+  /// y dos vuelos con la misma etiqueta en una pantalla revientan.
+  final bool fliesToViewer;
 
   /// Recorte que hay que enseñar en lugar del contenido entero.
   ///
@@ -147,6 +193,7 @@ class MediaItem extends StatefulWidget {
     this.onSelectionToggled,
     this.onRangeSelectionRequested,
     this.onLoadFailed,
+    this.fliesToViewer = false,
     this.crop,
     this.frames = const [],
     this.warning,
@@ -730,7 +777,7 @@ class _MediaItemState extends State<MediaItem> {
           scale: _isHovered ? mediaHoverScale : 1.0,
           duration: hoverAnimationDuration,
           curve: Curves.easeOut,
-          child: ClipRRect(
+          child: _flying(ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
             child: AspectRatio(
               aspectRatio: aspectRatio,
@@ -747,11 +794,25 @@ class _MediaItemState extends State<MediaItem> {
                 ],
               ),
             ),
-          ),
+          )),
         ),
       ),
       ),
       ),
+    );
+  }
+
+  /// La celda, envuelta en su vuelo al visor si le toca.
+  ///
+  /// Tapada no vuela: lo que se veria durante el vuelo es el contenido que el
+  /// filtro esconde, justo lo que no se puede enseñar.
+  Widget _flying(Widget child) {
+    if (!widget.fliesToViewer || _isCovered) return child;
+
+    return Hero(
+      tag: mediaHeroTag(widget.media.path),
+      // Durante el vuelo no se arrastra ni se pulsa: lo que se ve es una copia.
+      child: child,
     );
   }
 
@@ -775,7 +836,7 @@ class _MediaItemState extends State<MediaItem> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.lock_outline, color: Colors.white),
+                const Icon(Symbols.lock, color: Colors.white),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   texts.nsfwCoveredLabel,
@@ -838,7 +899,7 @@ class _MediaItemState extends State<MediaItem> {
         cacheWidth: _decodeWidth(context, constraints.maxWidth),
         errorBuilder: (_, _, _) {
           _reportLoadFailure();
-          return _buildPlaceholder();
+          return _buildPlaceholder(isBroken: true);
         },
       ),
     );
@@ -859,7 +920,7 @@ class _MediaItemState extends State<MediaItem> {
 
         // Una región degenerada dejaría la imagen a tamaño infinito.
         if (!width.isFinite || crop.w <= 0 || crop.h <= 0) {
-          return _buildPlaceholder();
+          return _buildPlaceholder(isBroken: true);
         }
 
         final fullWidth = width / crop.w;
@@ -913,14 +974,32 @@ class _MediaItemState extends State<MediaItem> {
     return math.min(stepped, intrinsic);
   }
 
-  Widget _buildPlaceholder() {
+  /// El hueco de una celda: **esperando** o **rota**, que no es lo mismo.
+  ///
+  /// Antes eran lo mismo: un cuadrado gris con un icono de imagen rota, tanto
+  /// mientras la miniatura estaba de camino como cuando el fichero ya no estaba.
+  /// Decir «esto se ha roto» a algo que sólo está tardando es mentir, y encima
+  /// es lo que más se ve: al desplazarse deprisa la rejilla entera se llena de
+  /// estos huecos durante un segundo.
+  ///
+  /// Esperando se pinta el hueco que late, el mismo de la carga; roto se dice
+  /// con el icono y el color de lo que va mal.
+  Widget _buildPlaceholder({bool isBroken = false}) {
+    if (!isBroken) {
+      return FernSkeleton(
+        radius: AppSizes.radiusLarge,
+        // Lanzada, quieto. La rejilla se llena de huecos justo mientras se
+        // desplaza deprisa, y decenas de latidos a la vez son lo contrario de lo
+        // que hace falta ahí — además de que nadie los mira al pasar de largo.
+        isPulsing: !_isFlinging,
+      );
+    }
+
+    // Sin texto: en una miniatura no cabe, y lo que hace falta a ese tamaño es
+    // distinguir de un vistazo la celda rota de las demás.
     return ColoredBox(
-      color: context.colors.lightgray,
-      child: Icon(
-        _isVideo ? Icons.movie_outlined : Icons.broken_image_outlined,
-        color: Colors.white,
-        size: AppSizes.iconExtraLarge,
-      ),
+      color: context.colors.secondary,
+      child: FernBrokenMedia.compact(isVideo: _isVideo),
     );
   }
 
@@ -1001,7 +1080,7 @@ class _MediaItemState extends State<MediaItem> {
           shape: BoxShape.circle,
         ),
         child: Icon(
-          Icons.auto_awesome,
+          Symbols.auto_awesome,
           color: context.colors.terciary,
           size: AppSizes.iconSmall,
         ),
@@ -1023,7 +1102,7 @@ class _MediaItemState extends State<MediaItem> {
           shape: BoxShape.circle,
         ),
         child: Icon(
-          Icons.warning_amber_rounded,
+          Symbols.warning_amber,
           color: context.colors.terciary,
           size: AppSizes.iconSmall,
         ),
@@ -1046,7 +1125,7 @@ class _MediaItemState extends State<MediaItem> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.play_arrow_rounded,
+              Symbols.play_arrow,
               color: Colors.white,
               size: AppSizes.iconSmall,
             ),
@@ -1084,8 +1163,8 @@ class _MediaItemState extends State<MediaItem> {
             iconSize: AppSizes.iconMedium,
             icon: Icon(
               widget.isSelected
-                  ? Icons.check_circle_rounded
-                  : Icons.radio_button_unchecked_rounded,
+                  ? Symbols.check_circle
+                  : Symbols.radio_button_unchecked,
               color: widget.isSelected ? context.colors.terciary : Colors.white,
               shadows: [
                 Shadow(

@@ -27,6 +27,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Ficha de la etiqueta elegida en la pantalla de gestión de etiquetas.
@@ -214,7 +215,7 @@ class _TagCardState extends State<TagCard> {
     showFernToast(
       context,
       texts.tagNsfwAffected(result.data ?? 0),
-      icon: value ? Icons.visibility_off : Icons.visibility,
+      icon: value ? Symbols.visibility_off : Symbols.visibility,
     );
 
     getIt<TagsBloc>().add(const LoadTagsEvent());
@@ -318,7 +319,7 @@ class _TagCardState extends State<TagCard> {
                     // la pantalla con la rejilla, y el avatar es lo que más ocupa.
                     avatar: FernEditableAvatar(
                       imagePath: _picturePath,
-                      fallbackIcon: Icons.label_outline,
+                      fallbackIcon: Symbols.label,
                       radius: AppSizes.avatarXLarge,
                       iconSize: AppSizes.iconHuge,
                       onTap: _pickImage,
@@ -366,7 +367,7 @@ class _TagCardState extends State<TagCard> {
               children: [
                 FernPillButton(
                   label: texts.actionDeleteTag,
-                  icon: Icons.delete_outline,
+                  icon: Symbols.delete,
                   backgroundColor: context.colors.error,
                   foregroundColor: Colors.white,
                   onPressed: _isBusy ? null : () => _run(_delete),
@@ -374,7 +375,7 @@ class _TagCardState extends State<TagCard> {
                 _unassignButton(texts),
                 FernPillButton(
                   label: texts.actionSave,
-                  icon: Icons.check,
+                  icon: Symbols.check,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
                   // Con el padre en error no se guarda: guardar a medias —el
@@ -411,8 +412,8 @@ class _TagCardState extends State<TagCard> {
 
     return IconButton(
       icon: Icon(
-        _isNsfw ? Icons.visibility_off : Icons.visibility_off_outlined,
-        size: AppSizes.iconExtraLarge,
+        _isNsfw ? Symbols.visibility_off : Symbols.visibility_off,
+        size: AppSizes.iconCardAction,
         // Encendido, con el color con el que la aplicación marca lo que hay que
         // mirar dos veces. Apagado se queda como los demás iconos de la fila.
         color: _isNsfw ? context.colors.terciary : null,
@@ -425,8 +426,8 @@ class _TagCardState extends State<TagCard> {
   Widget _assignUrlsButton(AppLocalizations texts) {
     return IconButton(
       icon: Icon(
-        _sourceUrls.isEmpty ? Icons.add_link : Icons.link,
-        size: AppSizes.iconExtraLarge,
+        _sourceUrls.isEmpty ? Symbols.add_link : Symbols.link,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
@@ -446,7 +447,7 @@ class _TagCardState extends State<TagCard> {
     return Row(
       children: [
         Icon(
-          Icons.account_tree_outlined,
+          Symbols.account_tree,
           size: AppSizes.iconSmall,
           color: context.colors.unremarked,
         ),
@@ -477,8 +478,8 @@ class _TagCardState extends State<TagCard> {
   Widget _relationsButton(AppLocalizations texts) {
     return IconButton(
       icon: const Icon(
-        Icons.account_tree_outlined,
-        size: AppSizes.iconExtraLarge,
+        Symbols.account_tree,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.tagRelationsTooltip,
       onPressed: _isBusy ? null : _editRelations,
@@ -572,8 +573,8 @@ class _TagCardState extends State<TagCard> {
   Widget _recognizeButton(AppLocalizations texts) {
     return IconButton(
       icon: const Icon(
-        Icons.auto_awesome_outlined,
-        size: AppSizes.iconExtraLarge,
+        Symbols.auto_awesome,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.recognizeTagTooltip,
       onPressed: _isBusy ? null : _recognizeAll,
@@ -598,7 +599,7 @@ class _TagCardState extends State<TagCard> {
       selector: (state) => state.selectedIds.isNotEmpty,
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionUnassignTag,
-        icon: Icons.label_off_outlined,
+        icon: Symbols.label_off,
         backgroundColor: context.colors.secondary,
         foregroundColor: context.colors.black,
         onPressed: hasSelection

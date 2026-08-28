@@ -1,3 +1,5 @@
+import 'package:Fern/core/navigation/screen_slot.dart';
+import 'package:Fern/core/navigation/screen_choreography.dart';
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
@@ -12,8 +14,10 @@ import 'package:Fern/features/duplicates/presentation/widgets/duplicate_comparis
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -65,7 +69,7 @@ class _RepeatedMediaView extends StatelessWidget {
           listener: (context, state) => showFernToast(
             context,
             texts.duplicatesQueued,
-            icon: Icons.info_outline,
+            icon: Symbols.info,
           ),
         ),
         BlocListener<DuplicatesBloc, DuplicatesState>(
@@ -84,35 +88,38 @@ class _RepeatedMediaView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      texts.navRepeatedMedia,
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                    const SizedBox(width: AppSpacing.l),
-                    if (!state.isLoading && state.groups.isNotEmpty)
+                TutorialAnchor(
+                  id: TutorialAnchorId.screenHeader,
+                  child: Row(
+                    children: [
                       Text(
-                        texts.duplicatesGroupCount(state.groups.length),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: context.colors.unremarked,
-                        ),
+                        texts.navRepeatedMedia,
+                        style: theme.textTheme.headlineSmall,
                       ),
-                    const Spacer(),
-                    FernPillButton(
-                      label: state.isUserScan
-                          ? texts.duplicatesScanning
-                          : texts.duplicatesScanNow,
-                      icon: Icons.travel_explore_outlined,
-                      backgroundColor: context.colors.primary,
-                      foregroundColor: context.colors.black,
-                      onPressed: state.canScan
-                          ? () => context.read<DuplicatesBloc>().add(
-                              const ScanForDuplicatesEvent(),
-                            )
-                          : null,
-                    ),
-                  ],
+                      const SizedBox(width: AppSpacing.l),
+                      if (!state.isLoading && state.groups.isNotEmpty)
+                        Text(
+                          texts.duplicatesGroupCount(state.groups.length),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: context.colors.unremarked,
+                          ),
+                        ),
+                      const Spacer(),
+                      FernPillButton(
+                        label: state.isUserScan
+                            ? texts.duplicatesScanning
+                            : texts.duplicatesScanNow,
+                        icon: Symbols.travel_explore,
+                        backgroundColor: context.colors.primary,
+                        foregroundColor: context.colors.black,
+                        onPressed: state.canScan
+                            ? () => context.read<DuplicatesBloc>().add(
+                                const ScanForDuplicatesEvent(),
+                              )
+                            : null,
+                      ),
+                    ],
+                  ),
                 ),
                 // Mientras dura, aquí y no sólo en la cola de arriba: quien
                 // acaba de pulsar el botón está mirando esta pantalla, y un
@@ -120,7 +127,12 @@ class _RepeatedMediaView extends StatelessWidget {
                 // que puede durar horas.
                 if (state.isUserScan) _ScanProgress(state: state),
                 const SizedBox(height: AppSpacing.l),
-                Expanded(child: _body(context, state)),
+                Expanded(
+                  child: TutorialAnchor(
+                    id: TutorialAnchorId.screenBody,
+                    child: _body(context, state),
+                  ),
+                ),
               ],
             ),
           );
@@ -143,23 +155,23 @@ class _RepeatedMediaView extends StatelessWidget {
     final (String message, IconData icon) = switch (outcome) {
       DuplicateScanOutcome.found => (
           texts.duplicatesScanFound(state.freshGroups),
-          Icons.done_all_outlined,
+          Symbols.done_all,
         ),
       DuplicateScanOutcome.nothingNew => (
           texts.duplicatesScanNothingNew(state.groups.length),
-          Icons.done_outlined,
+          Symbols.done,
         ),
       DuplicateScanOutcome.clean => (
           texts.duplicatesScanClean,
-          Icons.done_outlined,
+          Symbols.done,
         ),
       DuplicateScanOutcome.cancelled => (
           texts.duplicatesScanStopped,
-          Icons.info_outline,
+          Symbols.info,
         ),
       DuplicateScanOutcome.failed => (
           texts.duplicatesScanFailed,
-          Icons.error_outline,
+          Symbols.error,
         ),
     };
 
@@ -196,6 +208,9 @@ class _RepeatedMediaView extends StatelessWidget {
               message: last == null
                   ? texts.duplicatesNeverScanned
                   : texts.duplicatesNone,
+              description: last == null
+                  ? texts.duplicatesNeverScannedHint
+                  : texts.duplicatesNoneHint,
             ),
             const SizedBox(height: AppSpacing.s),
             Text(
@@ -225,15 +240,25 @@ class _RepeatedMediaView extends StatelessWidget {
       );
     }
 
+    // Los grupos viven a la izquierda y lo que se compara a la derecha, así que
+    // cada uno se retira por su lado al cambiar de pantalla.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
           width: duplicateGroupListWidth,
-          child: _GroupList(state: state),
+          child: ScreenSlotTransition(
+            slot: ScreenSlot.groups,
+            child: _GroupList(state: state),
+          ),
         ),
         const SizedBox(width: AppSpacing.l),
-        Expanded(child: _ComparisonPane(state: state)),
+        Expanded(
+          child: ScreenSlotTransition(
+            slot: ScreenSlot.compare,
+            child: _ComparisonPane(state: state),
+          ),
+        ),
       ],
     );
   }
@@ -351,7 +376,7 @@ class _GroupRow extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    Icons.filter_none_outlined,
+                    Symbols.filter_none,
                     size: AppSizes.iconSmall,
                     color: colors.unremarked,
                   ),
@@ -467,7 +492,7 @@ class _ComparisonPane extends StatelessWidget {
           children: [
             FernPillButton(
               label: texts.duplicatesNotDuplicates,
-              icon: Icons.block_outlined,
+              icon: Symbols.block,
               backgroundColor: context.colors.secondary,
               foregroundColor: context.colors.black,
               onPressed: state.isApplying
@@ -477,7 +502,7 @@ class _ComparisonPane extends StatelessWidget {
             const Spacer(),
             FernPillButton(
               label: texts.duplicatesApplyAndNext,
-              icon: Icons.done_all_outlined,
+              icon: Symbols.done_all,
               backgroundColor: context.colors.primary,
               foregroundColor: context.colors.black,
               onPressed: state.canApply

@@ -5,6 +5,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/inputs/fern_outlined_field.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Selector de carpeta: la ruta elegida a la izquierda y un botón para abrir el
 /// explorador a la derecha, dentro del marco con etiqueta flotante del resto de
@@ -60,7 +61,7 @@ class FernDirectoryField extends StatelessWidget {
                 onPressed: onPressed,
                 tooltip: texts.chooseFolder,
                 icon: const Icon(
-                  Icons.folder_open,
+                  Symbols.folder_open,
                   size: AppSizes.iconMedium,
                 ),
               ),

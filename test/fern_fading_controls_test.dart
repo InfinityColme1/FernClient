@@ -15,6 +15,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -29,7 +30,7 @@ Future<void> _pump(
           isVisible: isVisible,
           child: IconButton(
             onPressed: onPressed,
-            icon: const Icon(Icons.fullscreen),
+            icon: const Icon(Symbols.fullscreen),
           ),
         ),
       ),

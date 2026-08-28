@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/jobs/presentation/blocs/jobs_bloc.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Cómo se llama cada trabajo en pantalla. El dominio sólo guarda el tipo.
@@ -26,13 +27,13 @@ extension JobTypeLabels on JobType {
   /// de texto parecidas y había que leerlas enteras para saber cuál era cuál.
   /// El icono se ve antes de leer.
   IconData get icon => switch (this) {
-        JobType.training => Icons.model_training,
-        JobType.recognition => Icons.auto_awesome_outlined,
-        JobType.duplicateScan => Icons.travel_explore_outlined,
-        JobType.hashing => Icons.fingerprint,
-        JobType.mediaImport => Icons.move_to_inbox_outlined,
-        JobType.linkReview => Icons.help_outline,
-        JobType.linkImport => Icons.link,
+        JobType.training => Symbols.model_training,
+        JobType.recognition => Symbols.auto_awesome,
+        JobType.duplicateScan => Symbols.travel_explore,
+        JobType.hashing => Symbols.fingerprint,
+        JobType.mediaImport => Symbols.move_to_inbox,
+        JobType.linkReview => Symbols.help,
+        JobType.linkImport => Symbols.link,
       };
 }
 
@@ -79,7 +80,7 @@ class JobsIndicator extends StatelessWidget {
             // Sin nada que enseñar no se abre: un panel que sólo dice «no hay
             // nada» es un clic tirado.
             onPressed: null,
-            icon: const Icon(Icons.sync),
+            icon: const Icon(Symbols.sync),
           );
         }
 
@@ -130,7 +131,7 @@ class JobsIndicator extends StatelessWidget {
   Widget _icon(BuildContext context, JobsState state) {
     final count = state.active.length;
     final icon = Icon(
-      state.active.isEmpty ? Icons.error_outline : Icons.sync,
+      state.active.isEmpty ? Symbols.error : Symbols.sync,
       color: state.active.isEmpty ? context.colors.error : null,
     );
 
@@ -276,19 +277,21 @@ class _JobRow extends StatelessWidget {
               onPressed: onDetail,
               icon: Icon(
                 job.type == JobType.linkReview
-                    ? Icons.rule
-                    : Icons.receipt_long_outlined,
+                    ? Symbols.rule
+                    : Symbols.receipt_long,
               ),
             ),
-          // Vivo se para; terminado se quita de la lista. Nunca las dos, porque
-          // son la misma aspa y significan cosas distintas.
+          // Vivo se para; terminado se quita de la lista. Nunca las dos a la
+          // vez, y ya no son el mismo dibujo: `close` y `clear` son el mismo
+          // glifo, así que dos botones que hacen cosas distintas —uno interrumpe
+          // trabajo, el otro sólo ordena la lista— se veían idénticos.
           if (job.status.isActive)
             IconButton(
               tooltip: texts.jobCancelTooltip,
               iconSize: AppSizes.iconMedium,
               onPressed: () =>
                   context.read<JobsBloc>().add(CancelJobEvent(job.id)),
-              icon: const Icon(Icons.close),
+              icon: const Icon(Symbols.stop_circle),
             )
           else
             IconButton(
@@ -296,7 +299,7 @@ class _JobRow extends StatelessWidget {
               iconSize: AppSizes.iconMedium,
               onPressed: () =>
                   context.read<JobsBloc>().add(DismissJobEvent(job.id)),
-              icon: const Icon(Icons.clear),
+              icon: const Icon(Symbols.close),
             ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Cuánto de la biblioteca hay que mirar.
 enum RecognitionScope {
@@ -62,7 +63,7 @@ class RecognizeLibraryDialog extends StatelessWidget {
           FernPillButton(
             label: '${texts.recognizeLibraryOnlyNew} '
                 '(${texts.recognizeCountable(unrecognized)})',
-            icon: Icons.auto_awesome_outlined,
+            icon: Symbols.auto_awesome,
             backgroundColor: context.colors.primary,
             foregroundColor: context.colors.black,
             // Sin nada nuevo el botón no sirve de nada, y dejarlo pulsable sólo
@@ -76,7 +77,7 @@ class RecognizeLibraryDialog extends StatelessWidget {
           FernPillButton(
             label: '${texts.recognizeLibraryAll} '
                 '(${texts.recognizeCountable(total)})',
-            icon: Icons.refresh,
+            icon: Symbols.refresh,
             backgroundColor: context.colors.secondary,
             foregroundColor: context.colors.black,
             onPressed: total == 0

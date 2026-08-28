@@ -30,6 +30,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -231,7 +232,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
     _bloc.add(const LoadModelsEvent());
 
     showFernToast(context, AppLocalizations.of(context).modelSaved,
-        icon: Icons.check);
+        icon: Symbols.check);
   }
 
   /// Guarda los mandos del entrenamiento.
@@ -429,12 +430,12 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
               IconButton(
                 tooltip: texts.viewerBack,
                 onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(Symbols.arrow_back),
               ),
               const SizedBox(width: AppSpacing.s),
               FernEditableAvatar(
                 imagePath: _picturePath,
-                fallbackIcon: Icons.hub_outlined,
+                fallbackIcon: Symbols.hub,
                 radius: AppSizes.avatarXLarge,
                 iconSize: AppSizes.iconExtraLarge,
                 onTap: _pickImage,
@@ -466,7 +467,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
                         dimension: AppSizes.iconMedium,
                         child: FernProgressIndicator(),
                       )
-                    : const Icon(Icons.file_download_outlined),
+                    : const Icon(Symbols.download),
               ),
               const SizedBox(width: AppSpacing.s),
               FernConfirmButton(
@@ -518,8 +519,8 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
             // La elegida va marcada y con el icono; la otra, apagada. Es un
             // interruptor de dos, no dos botones que hacen cosas distintas.
             icon: _function == function
-                ? Icons.check_circle_outline
-                : Icons.circle_outlined,
+                ? Symbols.check_circle
+                : Symbols.circle,
             backgroundColor: _function == function
                 ? context.colors.primary
                 : context.colors.secondary,
@@ -538,7 +539,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          Icons.info_outline,
+          Symbols.info,
           size: AppSizes.iconSmall,
           color: context.colors.unremarked,
         ),

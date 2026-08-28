@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Una celda de la rejilla de modelos.
 ///
@@ -92,7 +93,7 @@ class _ModelCardState extends State<ModelCard> {
               children: [
                 FernAvatar(
                   imagePath: model.picturePath,
-                  fallbackIcon: Icons.hub_outlined,
+                  fallbackIcon: Symbols.hub,
                   radius: AppSizes.avatarXLarge,
                   iconSize: AppSizes.iconExtraLarge,
                 ),
@@ -157,7 +158,7 @@ class _ModelCardState extends State<ModelCard> {
               tooltip: texts.modelDeleteTitle,
               onPressed: widget.onDelete,
               icon: Icon(
-                Icons.delete_outline,
+                Symbols.delete,
                 size: AppSizes.iconMedium,
                 color: context.colors.error,
               ),

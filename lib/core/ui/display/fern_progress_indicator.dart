@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
@@ -49,7 +51,13 @@ class FernProgressIndicator extends StatelessWidget {
 /// sigue ahí y que lo que pasa es que hay que esperar. Mientras el velo está
 /// puesto no se puede pulsar nada de lo que tapa, que es contenido que está a
 /// punto de cambiar.
-class FernBusyOverlay extends StatelessWidget {
+///
+/// **No aparece si la espera es corta.** Casi todo lo que hace esperar aquí
+/// —leer la biblioteca, escribir una etiqueta— se resuelve en unas decenas de
+/// milisegundos, y un velo que se levanta y cae en ese tiempo no informa de
+/// nada: sólo se ve como un parpadeo. Se le da un margen ([busyOverlayDelay]) y
+/// sólo si la cosa sigue en marcha después se enseña.
+class FernBusyOverlay extends StatefulWidget {
   final bool isBusy;
   final Widget child;
 
@@ -82,7 +90,58 @@ class FernBusyOverlay extends StatelessWidget {
   });
 
   @override
+  State<FernBusyOverlay> createState() => _FernBusyOverlayState();
+}
+
+class _FernBusyOverlayState extends State<FernBusyOverlay> {
+  /// Si ya toca enseñarlo: la espera ha durado lo suficiente.
+  bool _isShowing = false;
+
+  Timer? _pending;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(FernBusyOverlay old) {
+    super.didUpdateWidget(old);
+    if (old.isBusy != widget.isBusy) _sync();
+  }
+
+  @override
+  void dispose() {
+    _pending?.cancel();
+    super.dispose();
+  }
+
+  void _sync() {
+    _pending?.cancel();
+
+    if (!widget.isBusy) {
+      // Al terminar se quita en el acto: lo que estorba es que aparezca tarde,
+      // no que se vaya pronto.
+      if (_isShowing) setState(() => _isShowing = false);
+
+      return;
+    }
+
+    _pending = Timer(busyOverlayDelay, () {
+      if (mounted) setState(() => _isShowing = true);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isBusy = _isShowing;
+    final color = widget.color;
+    final radius = widget.radius;
+    final indicatorColor = widget.indicatorColor;
+    final action = widget.action;
+    final child = widget.child;
+
     return Stack(
       fit: StackFit.passthrough,
       children: [
@@ -123,8 +182,8 @@ class FernBusyOverlay extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (action != null) ...[
-                          action!,
+                        if (action case final action?) ...[
+                          action,
                           const SizedBox(height: AppSpacing.s),
                         ],
                         FernProgressIndicator(color: indicatorColor),

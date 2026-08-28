@@ -1,11 +1,11 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
-import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Todos los fernies de la aplicación, uno debajo de otro.
 ///
@@ -43,8 +43,7 @@ class FernieList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.s),
           child: FernSectionHeader(
-            icon: Icons.face_retouching_natural_outlined,
-            iconAsset: icFernie,
+            icon: Symbols.face_retouching_natural,
             title: texts.ferniesTitle,
           ),
         ),
@@ -100,8 +99,7 @@ class _FernieTile extends StatelessWidget {
           children: [
             FernAvatar(
               imagePath: fernie.picturePath,
-              fallbackIcon: Icons.face_retouching_natural,
-              fallbackAsset: icFernie,
+              fallbackIcon: Symbols.face_retouching_natural,
               radius: AppSizes.avatarMedium,
               iconSize: AppSizes.iconMedium,
               backgroundColor: context.colors.secondary,

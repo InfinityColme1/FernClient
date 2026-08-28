@@ -3,6 +3,9 @@ import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_controller.dart';
+import 'package:Fern/core/navigation/screen_choreography.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/core/services/media_size_store.dart';
 import 'package:Fern/core/services/jobs/job_queue.dart';
@@ -200,6 +203,13 @@ Future<void> initializeDependencies() async {
       PreferencesService(getIt<SharedPreferences>())
   );
 
+  // El tutorial. Unico y fuera de las pantallas porque no lo arranca solo el
+  // velo que lo pinta: lo arranca la primera vez que se abre la aplicacion, y
+  // tambien el boton de los ajustes, que esta en otro sitio del arbol.
+  getIt.registerLazySingleton<TutorialController>(
+    () => TutorialController(getIt<PreferencesService>()),
+  );
+
   // Ajustes. La carpeta por defecto de los avatares cuelga del directorio de
   // datos de la aplicación y se resuelve aquí, que es el único sitio donde se
   // puede esperar a que `path_provider` responda: a partir de este punto los
@@ -376,6 +386,7 @@ Future<void> initializeDependencies() async {
 
   getIt.registerLazySingleton<LocalMediaRepository>(() =>
       LocalMediaRepositoryImpl(
+        shuffle: getIt<ShuffleSeed>(),
         appDatabase: getIt<Isar>(),
         fileOrganizer: getIt(),
         avatarStorage: getIt(),
@@ -428,6 +439,14 @@ Future<void> initializeDependencies() async {
   // Por aquí le pregunta al usuario una importación en marcha. Quien contesta
   // lo pone la interfaz al arrancar.
   getIt.registerLazySingleton<ImportDecisions>(() => ImportDecisions());
+
+  // Una sola baraja para toda la aplicación: la rejilla y el visor tienen
+  // que ver el contenido en el mismo orden.
+  getIt.registerLazySingleton<ShuffleSeed>(ShuffleSeed.new);
+
+  // Quien sabe de qué pantalla se viene y a cuál se va. Lo leen las dos a
+  // la vez mientras dura la transición: ninguna de ellas conoce a la otra.
+  getIt.registerLazySingleton<ScreenChoreography>(ScreenChoreography.new);
 
   getIt.registerLazySingleton<ExternalMediaResolver>(() =>
       ExternalMediaResolver()
@@ -1149,6 +1168,7 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<MediaBloc>(
       MediaBloc(
+        shuffle: getIt<ShuffleSeed>(),
         decisions: getIt(),
         getScannedMediaUseCase: getIt(),
         getLastImportUseCase: getIt(),

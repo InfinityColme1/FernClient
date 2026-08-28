@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
 import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/utils/file_utils.dart';
@@ -44,6 +45,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Qué se puede enseñar ahora mismo. De fábrica, todo.
   final ContentVisibility _visibility;
 
+  /// Con qué se baraja cuando se pide ver el contenido al azar.
+  final ShuffleSeed _shuffle;
+
   /// A quién avisar de que lo bloqueado puede haber cambiado.
   ///
   /// Lo que decide qué está bloqueado es un índice en memoria, y quien lo
@@ -54,6 +58,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   final Future<void> Function()? _onNsfwChanged;
 
   LocalMediaRepositoryImpl({
+    required ShuffleSeed shuffle,
     required Isar appDatabase,
     required MediaFileOrganizer fileOrganizer,
     required AvatarStorageService avatarStorage,
@@ -61,7 +66,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     required TagHierarchy tagHierarchy,
     ContentVisibility visibility = const ContentVisibility(),
     Future<void> Function()? onNsfwChanged,
-  })  : _appDatabase = appDatabase,
+  })  : _shuffle = shuffle,
+        _appDatabase = appDatabase,
         _fileOrganizer = fileOrganizer,
         _avatarStorage = avatarStorage,
         _registry = registry,
@@ -232,13 +238,6 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     }
   }
 
-  /// La semilla con la que se baraja, una por sesión.
-  ///
-  /// Una y no una por consulta: si cambiara en cada lectura, la rejilla se
-  /// recolocaría al desplazarse y al volver del visor, y se acabaría viendo
-  /// contenido dos veces y contenido ninguna.
-  late final int _shuffleSeed = DateTime.now().millisecondsSinceEpoch;
-
   /// Pone [summaries] en el orden pedido.
   ///
   /// Los dos órdenes que miran a los **detalles** —cuándo llegó y qué dice su
@@ -297,7 +296,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           });
 
       case MediaSortOrder.random:
-        return [...summaries]..shuffle(Random(_shuffleSeed));
+        // La semilla no se saca aquí: la guarda [ShuffleSeed], que es quien sabe
+        // cuándo hay que volver a barajar. Sacándola en cada lectura, la rejilla
+        // se recolocaría sola al desplazarse y al volver del visor.
+        return [...summaries]..shuffle(Random(_shuffle.value));
     }
   }
 

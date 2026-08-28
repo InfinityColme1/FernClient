@@ -9,6 +9,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 const _panelWidth = 320.0;
 const _margin = 32.0;
@@ -32,7 +33,7 @@ Future<void> _open(
           padding: padding,
           builder: (context, toggle) => IconButton(
             onPressed: toggle,
-            icon: const Icon(Icons.sync),
+            icon: const Icon(Symbols.sync),
           ),
           children: const [Text('Tareas en segundo plano')],
         ),

@@ -16,6 +16,7 @@ import 'package:Fern/features/media/presentation/widgets/link_choice_dialog.dart
 import 'package:Fern/features/media/presentation/widgets/pending_links_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Le pregunta al usuario con diálogos lo que una importación no puede decidir
 /// sola.
@@ -168,7 +169,7 @@ class DialogImportDecisions implements ImportDecisionHandler {
     showFernToast(
       context,
       texts.pendingLinksToast(posts.length),
-      icon: Icons.cloud_outlined,
+      icon: Symbols.cloud,
       onTap: () => unawaited(_openPendingLinks(posts)),
     );
   }

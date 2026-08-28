@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_log_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Qué hicieron los modelos, contenido a contenido.
 ///
@@ -106,7 +107,7 @@ class _MediaRow extends StatelessWidget {
               children: [
                 if (onTap != null)
                   Icon(
-                    isOpen ? Icons.expand_more : Icons.chevron_right,
+                    isOpen ? Symbols.expand_more : Symbols.chevron_right,
                     size: AppSizes.iconMedium,
                     color: context.colors.unremarked,
                   ),
@@ -190,7 +191,7 @@ class _ModelRow extends StatelessWidget {
               // sin leerlos uno a uno.
               FernAvatar(
                 imagePath: entry.picturePath,
-                fallbackIcon: Icons.hub_outlined,
+                fallbackIcon: Symbols.hub,
                 radius: AppSizes.avatarSmall,
                 iconSize: AppSizes.iconSmall,
                 backgroundColor: context.colors.secondary,

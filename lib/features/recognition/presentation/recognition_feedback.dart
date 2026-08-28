@@ -8,6 +8,7 @@ import 'package:Fern/features/settings/domain/repositories/settings_repository.d
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Manda a reconocer y cuenta en qué ha quedado.
 ///
@@ -53,7 +54,7 @@ Future<RecognitionRequest> requestRecognition(
   showFernToast(
     context,
     recognitionMessage(AppLocalizations.of(context), request),
-    icon: request.isQueued ? Icons.info_outline : Icons.error_outline_rounded,
+    icon: request.isQueued ? Symbols.info : Symbols.error,
   );
 
   return request;

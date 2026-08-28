@@ -9,6 +9,7 @@ import 'package:Fern/features/settings/presentation/widgets/duplicates_settings_
 import 'package:Fern/features/settings/presentation/widgets/nsfw_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/appearance_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/browser_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/help_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_section_list.dart';
 import 'package:Fern/features/settings/presentation/widgets/database_settings_section.dart';
@@ -20,6 +21,7 @@ import 'package:Fern/features/settings/presentation/widgets/remote_sources_setti
 import 'package:Fern/features/settings/presentation/widgets/viewer_settings_section.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -113,7 +115,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, size: AppSizes.iconExtraLarge),
+                tooltip: AppLocalizations.of(context).actionClose,
+                icon: const Icon(Symbols.close, size: AppSizes.iconExtraLarge),
                 onPressed: () => context.pop(),
               ),
             ],
@@ -143,6 +146,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
               SettingsSection.notifications =>
                 const NotificationSettingsSection(),
               SettingsSection.browser => const BrowserSettingsSection(),
+              SettingsSection.help => const HelpSettingsSection(),
               SettingsSection.database => const DatabaseSettingsSection(),
             },
           ),

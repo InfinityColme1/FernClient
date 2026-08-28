@@ -19,6 +19,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Ficha del fernie elegido en la pantalla de gestión de fernies.
@@ -210,8 +211,7 @@ class _FernieCardState extends State<FernieCard> {
                     titleColor: name.isEmpty ? context.colors.unremarked : null,
                     avatar: FernEditableAvatar(
                       imagePath: _picturePath,
-                      fallbackIcon: Icons.face_retouching_natural,
-                      fallbackAsset: icFernie,
+                      fallbackIcon: Symbols.face_retouching_natural,
                       radius: AppSizes.avatarXLarge,
                       iconSize: AppSizes.iconHuge,
                       onTap: _pickImage,
@@ -249,14 +249,14 @@ class _FernieCardState extends State<FernieCard> {
               children: [
                 FernPillButton(
                   label: texts.actionDeleteFernie,
-                  icon: Icons.delete_outline,
+                  icon: Symbols.delete,
                   backgroundColor: context.colors.error,
                   foregroundColor: Colors.white,
                   onPressed: _isBusy ? null : () => _run(_delete),
                 ),
                 FernPillButton(
                   label: texts.actionRemoveLink,
-                  icon: Icons.link_off,
+                  icon: Symbols.link_off,
                   backgroundColor: context.colors.secondary,
                   foregroundColor: context.colors.black,
                   onPressed:
@@ -265,7 +265,7 @@ class _FernieCardState extends State<FernieCard> {
                 _deleteRegionsButton(texts),
                 FernPillButton(
                   label: texts.actionSave,
-                  icon: Icons.check,
+                  icon: Symbols.check,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
                   onPressed: _isBusy ? null : () => _run(_save),
@@ -383,7 +383,7 @@ class _FernieCardState extends State<FernieCard> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.warning_amber_rounded,
+                    Symbols.warning_amber,
                     size: AppSizes.iconSmall,
                     color: context.colors.terciary,
                   ),
@@ -406,7 +406,7 @@ class _FernieCardState extends State<FernieCard> {
       selector: (state) => state.selectedRegionIds.isNotEmpty,
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionDeleteRegions,
-        icon: Icons.crop_free,
+        icon: Symbols.crop_free,
         backgroundColor: context.colors.secondary,
         foregroundColor: context.colors.black,
         onPressed: hasSelection

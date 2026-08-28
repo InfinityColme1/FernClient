@@ -206,6 +206,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionImport => 'Import';
 
   @override
+  String get actionClose => 'Close';
+
+  @override
+  String get actionClearSearch => 'Clear search';
+
+  @override
+  String get actionDecrease => 'Decrease';
+
+  @override
+  String get actionIncrease => 'Increase';
+
+  @override
   String get actionRefresh => 'Refresh';
 
   @override
@@ -231,9 +243,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionUnassignTag => 'Unassign tag';
-
-  @override
-  String get actionRemoveParentTag => 'Remove parent';
 
   @override
   String get actionDeleteTag => 'Delete tag';
@@ -548,9 +557,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get trainingQueued => 'Training queued';
-
-  @override
   String get metricsLastTraining => 'Last training';
 
   @override
@@ -602,9 +608,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No data yet. It counts how many suggestions from this model you accept and reject while importing, which is the only honest measure of whether it works.';
 
   @override
-  String get modelImportWeights => 'Import weights';
-
-  @override
   String get modelImportWeightsHint =>
       'A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.';
 
@@ -650,7 +653,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get jobsNone => 'Nothing running';
+  String get jobsNone => 'No tasks';
 
   @override
   String get treeTitle => 'Model tree';
@@ -679,14 +682,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get treeNodeNotTrained => 'Not trained';
-
-  @override
-  String get treeAddAsRoot => 'Add on its own';
-
-  @override
-  String treeAddAsChild(String parent) {
-    return 'Hang from «$parent»';
-  }
 
   @override
   String treeSelectedHint(String name) {
@@ -838,13 +833,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagNameLabel => 'Tag Name';
 
   @override
-  String get parentTagNotFound =>
-      'There is no tag with that name. Pick one from the list or create it.';
-
-  @override
-  String get parentTagCreate => 'Create it';
-
-  @override
   String get tagRelationsTitle => 'Where this tag sits';
 
   @override
@@ -884,13 +872,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get siblingTagsLabel => 'Related tags';
-
-  @override
-  String get siblingTagsNote =>
-      'Setting this tag also sets these. They do not hang from it nor it from them, and the relation goes both ways. They are saved as you touch them, with no need to press save.';
 
   @override
   String get addSiblingTag => 'Add a related tag';
@@ -985,6 +966,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get viewerSaveSectionNote =>
       'What the viewer does once you mark an imported media as final. It leaves the import grid either way, so the viewer cannot stay where it was.';
+
+  @override
+  String get viewerPrevious => 'Previous';
+
+  @override
+  String get viewerNext => 'Next';
 
   @override
   String get viewerSaveNext => 'Go to the next media';
@@ -1396,6 +1383,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get redditGuideCopied => 'Redirect URI copied';
+
+  @override
+  String get emptyLibraryHint =>
+      'Whatever you bring in from a platform or a folder shows up here once you have reviewed it.';
+
+  @override
+  String get noTagsYetHint =>
+      'Tags are how you find things again later. Create one from the + in the top bar.';
+
+  @override
+  String get noCreatorsYetHint =>
+      'A creator groups everything by whoever made it. Create one from the + in the top bar.';
+
+  @override
+  String get noFerniesYetHint =>
+      'A fernie is someone a model learns to spot. Create one from the + in the top bar, then mark it on your content.';
+
+  @override
+  String get modelsEmptyHint =>
+      'A model learns to recognise your fernies. Create one from the + in the top bar.';
+
+  @override
+  String get duplicatesNeverScannedHint =>
+      'Press “Scan now” and Fern goes through the whole library. It may take a while on the first run.';
+
+  @override
+  String get duplicatesNoneHint =>
+      'Scan again after importing, or lower the similarity bar in Settings.';
+
+  @override
+  String get viewerInfoTooltip => 'Show the details';
+
+  @override
+  String get settingsOpenTooltip => 'Open settings';
+
+  @override
+  String get mediaFileMissing => 'The file is no longer where it was';
 
   @override
   String get danbooruTitle => 'Danbooru';
@@ -2013,13 +2037,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The recognition data could not be moved';
 
   @override
-  String get jobsTooltip => 'Tasks running';
+  String get jobsTooltip => 'Tasks';
 
   @override
   String get jobsTitle => 'Background tasks';
-
-  @override
-  String get jobsEmpty => 'Nothing waiting and nothing running';
 
   @override
   String get jobRunning => 'Working…';
@@ -2437,7 +2458,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag the region across every frame in between';
 
   @override
-  String get fernieModeTooltip => 'Mark regions';
+  String get fernieModeTooltip => 'Mark fernies on this content';
 
   @override
   String get fernieModeAccept => 'Save the regions';
@@ -2517,12 +2538,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewerRecognizing => 'Recognising…';
 
   @override
-  String get viewerRecognizeQueued => 'Recognition queued';
-
-  @override
-  String get suggestionsTitle => 'Suggestions';
-
-  @override
   String suggestionConfidence(int percent) {
     return '$percent%';
   }
@@ -2532,9 +2547,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestionCreatorTitle => 'Suggested creator';
-
-  @override
-  String get suggestionsNone => 'Nothing suggested here';
 
   @override
   String get actionAccept => 'Accept';
@@ -2660,9 +2672,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jobsClearFinished => 'Dismiss the finished ones';
-
-  @override
-  String get recognitionLogFromToast => 'Tap to see what the models did';
 
   @override
   String recognitionLogSubtitle(int count) {
@@ -2838,10 +2847,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteCreatorsEmpty => 'No creators found in this source';
 
   @override
-  String get remoteCreatorsUnsupported =>
-      'This source cannot list creators yet';
-
-  @override
   String remoteCreatorsImport(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2901,15 +2906,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get duplicatesNone => 'No repeated content found';
 
   @override
-  String get duplicatesNoneHint =>
-      'Scan again after importing, or lower the similarity bar in Settings.';
-
-  @override
   String get duplicatesNeverScanned => 'Nothing has been scanned yet';
-
-  @override
-  String get duplicatesNeverScannedHint =>
-      'Press “Scan now” and Fern goes through the whole library. It may take a while on the first run.';
 
   @override
   String duplicatesScanFound(int count) {
@@ -3017,10 +3014,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get duplicatesPickGroup => 'Pick a group to compare its copies';
-
-  @override
-  String get duplicatesApplyFailed =>
-      'The group could not be resolved. Nothing was deleted.';
 
   @override
   String get settingsDuplicates => 'Repeated content';
@@ -3281,40 +3274,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagNsfwOffTooltip => 'Mark as NSFW';
 
   @override
-  String get tagNsfwBadge => 'NSFW tag';
-
-  @override
   String get mediaNsfwMark => 'Mark as NSFW';
 
   @override
   String get mediaNsfwUnmark => 'Unmark as NSFW';
-
-  @override
-  String mediaNsfwMarked(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items marked as NSFW.',
-      one: '1 item marked as NSFW.',
-      zero: 'Nothing changed.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String mediaNsfwUnmarked(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items unmarked.',
-      one: '1 item unmarked.',
-      zero: 'Nothing changed.',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get mediaNsfwByTag => 'Marked by one of its tags';
 
   @override
   String get duplicatesScanSectionTitle => 'Automatic search';
@@ -3402,4 +3365,338 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get duplicatesRehashFailed => 'The fingerprints could not be cleared.';
+
+  @override
+  String get settingsHelp => 'Help';
+
+  @override
+  String get tutorialSectionTitle => 'Guided tour';
+
+  @override
+  String get tutorialSectionNote =>
+      'A walk through the screens of the app and what each one is for. You can leave it at any point.';
+
+  @override
+  String get tutorialOfferTitle => 'Shall I show you around?';
+
+  @override
+  String get tutorialOfferBody =>
+      'It is a short guided tour and you can leave at any point. If you would rather look around on your own, it is in the settings.';
+
+  @override
+  String get tutorialOfferAccept => 'Start';
+
+  @override
+  String get tutorialOfferDecline => 'Not now';
+
+  @override
+  String tutorialProgress(int position, int total) {
+    return '$position of $total';
+  }
+
+  @override
+  String get tutorialSkip => 'Leave';
+
+  @override
+  String get tutorialBack => 'Back';
+
+  @override
+  String get tutorialNext => 'Next';
+
+  @override
+  String get tutorialDone => 'Done';
+
+  @override
+  String get tutorialWelcomeTitle => 'Welcome to FeRN';
+
+  @override
+  String get tutorialWelcomeBody =>
+      'A quick tour of what the app does. Move on with Next or the arrow keys, and leave with Escape.';
+
+  @override
+  String get tutorialSidebarTitle => 'This is how you move around';
+
+  @override
+  String get tutorialSidebarBody =>
+      'Every screen lives here: your library, what you bring in from elsewhere, your favourites and the managers. The button above folds it away to give the content more room.';
+
+  @override
+  String get tutorialImportTitle => 'This is where content comes in';
+
+  @override
+  String get tutorialImportBody =>
+      'Bring content from a remote source or from a folder on your disk. What arrives waits for review until you accept it, so nothing reaches the library without you seeing it.';
+
+  @override
+  String get tutorialContentTitle => 'Everything shows up here';
+
+  @override
+  String get tutorialContentBody =>
+      'Your library. A click opens the viewer, right-click brings up the actions, and you can mark several at once to handle them together.';
+
+  @override
+  String get tutorialTagsTitle => 'Tag by dragging';
+
+  @override
+  String get tutorialTagsBody =>
+      'The tags in the menu are also places to drop things: drag one or more items onto a tag and they are tagged. Click it and the library shows only what is in it.';
+
+  @override
+  String get tutorialCreateTitle => 'Creators, tags and fernies';
+
+  @override
+  String get tutorialCreateBody =>
+      'Everything you organise with is created here: creators, tags, and fernies, which are the faces the app learns to recognise.';
+
+  @override
+  String get tutorialSearchTitle => 'Search';
+
+  @override
+  String get tutorialSearchBody =>
+      'Search by name, creator or tag from any screen.';
+
+  @override
+  String get tutorialSettingsTitle => 'Everything else lives here';
+
+  @override
+  String get tutorialSettingsBody =>
+      'Language, theme, folders, remote sources and recognition. This tutorial too, in case you want to see it again.';
+
+  @override
+  String get tourGeneralTitle => 'General tour';
+
+  @override
+  String get tourGeneralDescription =>
+      'Where everything is and how content gets in. This is the one offered the first time.';
+
+  @override
+  String get tourImportingTitle => 'Bringing in and reviewing content';
+
+  @override
+  String get tourImportingDescription =>
+      'Where content comes from, how it is reviewed, and what it takes for it to reach the library.';
+
+  @override
+  String get tourImporting1Title => 'From where, and how much';
+
+  @override
+  String get tourImporting1Body =>
+      'Pick the source — a remote one or a folder on this computer — choose everything or only what is new since last time, and press Fetch.';
+
+  @override
+  String get tourImporting2Title => 'What arrives is reviewed here';
+
+  @override
+  String get tourImporting2Body =>
+      'None of this is in your library yet. This grid is the inbox: what has been fetched, waiting for you to say what to do with it.';
+
+  @override
+  String get tourImporting3Title => 'Open one and decide';
+
+  @override
+  String get tourImporting3Body =>
+      'A click opens it in the viewer. There you save it, which makes it final, or discard it: discarding takes it out of the database and asks whether to delete the file too.';
+
+  @override
+  String get tourImporting4Title => 'Its details, without leaving the viewer';
+
+  @override
+  String get tourImporting4Body =>
+      'The information panel is where you set creator, tags, title and links. You edit it while looking at it, which is when you know what it is.';
+
+  @override
+  String get tourImporting5Title => 'And then it is in Content';
+
+  @override
+  String get tourImporting5Body =>
+      'What you saved leaves the import grid and shows up in the library.';
+
+  @override
+  String get tourManagersTitle => 'Creators and tags';
+
+  @override
+  String get tourManagersDescription =>
+      'The two ways of ordering what you have, and the quick way to tag several things at once.';
+
+  @override
+  String get tourManagers1Title => 'The list of creators';
+
+  @override
+  String get tourManagers1Body =>
+      'Every creator you have. Pick one and the screen fills with their work.';
+
+  @override
+  String get tourManagers2Title => 'Their details';
+
+  @override
+  String get tourManagers2Body =>
+      'Name, avatar and the links to their sites. What you change here is saved on the creator.';
+
+  @override
+  String get tourManagers3Title => 'Everything of theirs';
+
+  @override
+  String get tourManagers3Body =>
+      'The content you have assigned to them, in a grid like the library one.';
+
+  @override
+  String get tourManagers4Title => 'Tags work the same way';
+
+  @override
+  String get tourManagers4Body =>
+      'With one difference: a tag can hang from another, so they can be arranged as a tree.';
+
+  @override
+  String get tourManagers5Title => 'And you apply them by dragging';
+
+  @override
+  String get tourManagers5Body =>
+      'From the library, drag one or more items onto a tag in the menu. It is the quick way to tag several at once.';
+
+  @override
+  String get tourFernieTitle => 'Fernie mode';
+
+  @override
+  String get tourFernieDescription =>
+      'What a fernie is, where its examples come from, and how you mark them in the viewer.';
+
+  @override
+  String get tourFernie1Title => 'What a fernie is';
+
+  @override
+  String get tourFernie1Body =>
+      'A face, a character or an object you want Fern to learn to recognise in your content.';
+
+  @override
+  String get tourFernie2Title => 'Here are yours';
+
+  @override
+  String get tourFernie2Body =>
+      'Each fernie can propose a tag or a creator when it is found. With nothing linked it only trains: on its own it tags nothing.';
+
+  @override
+  String get tourFernie3Title => 'Its regions';
+
+  @override
+  String get tourFernie3Body =>
+      'Each crop is an example of it, and those examples are what a model learns from. The more and the more varied, the better: with little variety it will learn the background instead of the fernie.';
+
+  @override
+  String get tourFernie4Title => 'You mark them in the viewer';
+
+  @override
+  String get tourFernie4Body =>
+      'Open something, go into fernie mode and drag over what you want to mark. Hold the space bar or the middle button to move around the image.';
+
+  @override
+  String get tourFernie5Title => 'And then you train';
+
+  @override
+  String get tourFernie5Body =>
+      'Fernies on their own recognise nothing. What recognises is a model trained with them.';
+
+  @override
+  String get tourModelsTitle => 'Models and recognition';
+
+  @override
+  String get tourModels1Title => 'Your models';
+
+  @override
+  String get tourModels1Body =>
+      'A model is what actually recognises. You put it together from the fernies you give it.';
+
+  @override
+  String get tourModels2Title => 'Creating one';
+
+  @override
+  String get tourModels2Body =>
+      'You pick its fernies and what it has to answer: whether each one is there or not, or which of them it found and where. The second needs at least two, because with one there is nothing to choose between.';
+
+  @override
+  String get tourModels3Title => 'Training takes a while';
+
+  @override
+  String get tourModels3Body =>
+      'It runs in the background and you can keep using Fern meanwhile. The indicator in the top bar says how far along it is.';
+
+  @override
+  String get tourModels4Title => 'Recognising';
+
+  @override
+  String get tourModels4Body =>
+      'A trained model goes over whatever content you point it at and proposes what it sees. Below the confidence threshold it proposes nothing.';
+
+  @override
+  String get tourModels5Title => 'Nothing is applied on its own';
+
+  @override
+  String get tourModels5Body =>
+      'What it sees stays a suggestion until you accept it. You can accept in one go every suggestion above a given confidence.';
+
+  @override
+  String get tourDuplicatesTitle => 'Repeated content';
+
+  @override
+  String get tourDuplicatesDescription =>
+      'How repeats are found, how you decide which copy stays, and what makes two things count as the same.';
+
+  @override
+  String get tourDuplicates1Title => 'Finding repeats';
+
+  @override
+  String get tourDuplicates1Body =>
+      'Press Scan now and Fern goes over the whole library working out a fingerprint for each item. The first time it can take a while.';
+
+  @override
+  String get tourDuplicates2Title => 'The groups';
+
+  @override
+  String get tourDuplicates2Body =>
+      'Each group is copies alike enough to be the same thing. The ones you have already answered do not come back.';
+
+  @override
+  String get tourDuplicates3Title => 'You decide which one stays';
+
+  @override
+  String get tourDuplicates3Body =>
+      'Pick the copy you keep and the rest are discarded. You can merge into the one that stays the tags, creator, favourite and description of the discarded ones.';
+
+  @override
+  String get tourDuplicates4Title => 'The threshold, in Settings';
+
+  @override
+  String get tourDuplicates4Body =>
+      'How different two items can be and still count as the same. Raising it groups more and starts joining things that merely look alike; lowering it leaves repeats unfound.';
+
+  @override
+  String get tourDuplicates5Title => 'And it looks on its own';
+
+  @override
+  String get tourDuplicates5Body =>
+      'Every so often Fern goes over the library by itself and tells you if it finds anything. That period is in Settings too.';
+
+  @override
+  String get tourModelsDescription =>
+      'How a model is put together, how long training takes, what happens to what it proposes, and how the tree decides which ones run.';
+
+  @override
+  String get tourModels6Title => 'The model tree';
+
+  @override
+  String get tourModels6Body =>
+      'A model that is not in the tree never runs when recognising. The tree is what says which ones run, and in what order.';
+
+  @override
+  String get tourModels7Title => 'Putting them in and hanging them';
+
+  @override
+  String get tourModels7Body =>
+      'The panel on the right holds the models that are outside. Pick a node in the tree and whatever you add hangs from it. A model cannot hang from itself or close a loop: the tree would bite its own tail.';
+
+  @override
+  String get tourModels8Title => 'Every branch has its condition';
+
+  @override
+  String get tourModels8Body =>
+      'A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing.';
 }

@@ -13,6 +13,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
 
@@ -167,7 +168,7 @@ class _NotificationSettingsSectionState
               value: notifications.volume.toDouble(),
               min: 0,
               max: 100,
-              suffix: '${notifications.volume} %',
+              valueLabel: (value) => '${value.round()} %',
               onChanged: notifications.enabled && !notifications.muted
                   ? (value) =>
                       apply(notifications.copyWith(volume: value.round()))
@@ -180,7 +181,8 @@ class _NotificationSettingsSectionState
               value: notifications.maxSeconds.toDouble(),
               min: minNotificationSeconds.toDouble(),
               max: maxNotificationSeconds.toDouble(),
-              suffix: texts.notificationsSeconds(notifications.maxSeconds),
+              valueLabel: (value) =>
+                  texts.notificationsSeconds(value.round()),
               onChanged: notifications.enabled
                   ? (value) =>
                       apply(notifications.copyWith(maxSeconds: value.round()))
@@ -275,7 +277,7 @@ class _NotificationSettingsSectionState
                   volume: notifications.volume,
                   maxSeconds: notifications.maxSeconds,
                 ),
-                icon: const Icon(Icons.play_arrow),
+                icon: const Icon(Symbols.play_arrow),
               ),
               IconButton(
                 tooltip: texts.notificationsChooseSound,
@@ -283,14 +285,14 @@ class _NotificationSettingsSectionState
                 onPressed: notifications.enabled
                     ? () => _pickSound(kind, notifications)
                     : null,
-                icon: const Icon(Icons.folder_open),
+                icon: const Icon(Symbols.folder_open),
               ),
               if (isCustom)
                 IconButton(
                   tooltip: texts.notificationsResetSound,
                   iconSize: AppSizes.iconMedium,
                   onPressed: () => _resetSound(kind, notifications),
-                  icon: const Icon(Icons.restore),
+                  icon: const Icon(Symbols.settings_backup_restore),
                 ),
             ],
           ),
@@ -325,42 +327,30 @@ class _NotificationSettingsSectionState
     WidgetsBinding.instance.addPostFrameCallback((_) => _measure(kind, path));
   }
 
+  /// Una fila de ajuste con deslizador.
+  ///
+  /// El ajuste se guarda **al soltar**, no en cada pixel arrastrado: escribirlo
+  /// y esperar a que volviera era lo que hacia que el tirador fuera a saltos. El
+  /// numero de la derecha sale del tirador, asi que si se mueve mientras se
+  /// arrastra.
   Widget _slider(
     BuildContext context, {
     required String label,
     required double value,
     required double min,
     required double max,
-    required String suffix,
+    required String Function(double value) valueLabel,
     ValueChanged<double>? onChanged,
   }) {
-    return Row(
-      children: [
-        SizedBox(
-          width: AppSizes.settingsLabelWidth,
-          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        ),
-        Expanded(
-          child: Slider(
-            value: value.clamp(min, max),
-            min: min,
-            max: max,
-            divisions: (max - min).round(),
-            onChanged: onChanged,
-          ),
-        ),
-        SizedBox(
-          width: AppSizes.settingsValueWidth,
-          child: Text(
-            suffix,
-            textAlign: TextAlign.end,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: context.colors.gray),
-          ),
-        ),
-      ],
+    return FernSliderRow(
+      label: label,
+      value: value.clamp(min, max),
+      min: min,
+      max: max,
+      divisions: (max - min).round(),
+      valueLabel: valueLabel,
+      isEnabled: onChanged != null,
+      onCommitted: onChanged ?? (_) {},
     );
   }
 

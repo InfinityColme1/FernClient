@@ -10,6 +10,7 @@ import 'package:Fern/features/recognition/domain/services/training_checks.dart';
 import 'package:Fern/features/recognition/domain/services/training_presets.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Con qué esmero se entrena, qué falta para poder hacerlo, y el botón.
 ///
@@ -230,7 +231,7 @@ class _TrainingPanelState extends State<TrainingPanel> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  _isAdvancedOpen ? Icons.expand_more : Icons.chevron_right,
+                  _isAdvancedOpen ? Symbols.expand_more : Symbols.chevron_right,
                   size: AppSizes.iconMedium,
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -310,6 +311,7 @@ class _TrainingPanelState extends State<TrainingPanel> {
     required ValueChanged<int> onChanged,
     String? caption,
   }) {
+    final texts = AppLocalizations.of(context);
     final isEnabled = widget.job == null;
 
     void move(int by) {
@@ -336,8 +338,9 @@ class _TrainingPanelState extends State<TrainingPanel> {
           ),
         ),
         IconButton(
+          tooltip: texts.actionDecrease,
           onPressed: isEnabled && value > min ? () => move(-step) : null,
-          icon: const Icon(Icons.remove),
+          icon: const Icon(Symbols.remove),
           iconSize: AppSizes.iconMedium,
         ),
         SizedBox(
@@ -349,8 +352,9 @@ class _TrainingPanelState extends State<TrainingPanel> {
           ),
         ),
         IconButton(
+          tooltip: texts.actionIncrease,
           onPressed: isEnabled && value < max ? () => move(step) : null,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Symbols.add),
           iconSize: AppSizes.iconMedium,
         ),
       ],
@@ -375,8 +379,8 @@ class _TrainingPanelState extends State<TrainingPanel> {
             children: [
               Icon(
                 issue.isBlocking
-                    ? Icons.block
-                    : Icons.warning_amber_rounded,
+                    ? Symbols.block
+                    : Symbols.warning_amber,
                 size: AppSizes.iconSmall,
                 color: issue.isBlocking
                     ? context.colors.error
@@ -432,7 +436,7 @@ class _TrainingPanelState extends State<TrainingPanel> {
         label: widget.model.isUsable
             ? texts.trainingRetrain
             : texts.trainingStart,
-        icon: Icons.play_arrow,
+        icon: Symbols.play_arrow,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: blocked ? null : widget.onTrain,

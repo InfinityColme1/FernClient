@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Un fernie dentro de un modelo: quién es, cuánto aporta y cómo se reparte.
 ///
@@ -75,8 +76,7 @@ class _FernieSplitRowState extends State<FernieSplitRow> {
             children: [
               FernAvatar(
                 imagePath: fernie.picturePath,
-                fallbackIcon: Icons.face_retouching_natural,
-                fallbackAsset: icFernie,
+                fallbackIcon: Symbols.face_retouching_natural,
                 radius: AppSizes.avatarMedium,
                 iconSize: AppSizes.iconMedium,
               ),
@@ -100,7 +100,7 @@ class _FernieSplitRowState extends State<FernieSplitRow> {
                   tooltip: texts.modelRemoveFernie,
                   onPressed: widget.onRemove,
                   icon: Icon(
-                    Icons.close,
+                    Symbols.close,
                     size: AppSizes.iconMedium,
                     color: context.colors.unremarked,
                   ),
@@ -163,7 +163,7 @@ class _FernieSplitRowState extends State<FernieSplitRow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.warning_amber_rounded,
+            Symbols.warning_amber,
             size: AppSizes.iconSmall,
             color: context.colors.error,
           ),

@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:isar/isar.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 /// La jerarquía de etiquetas contra una base de datos de verdad.
 ///
@@ -68,6 +69,7 @@ void main() {
     final hierarchy = TagHierarchy(database: isar);
 
     repository = LocalMediaRepositoryImpl(
+      shuffle: ShuffleSeed(),
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: _NoSettings()),
       avatarStorage: AvatarStorageService(settingsRepository: _NoSettings()),

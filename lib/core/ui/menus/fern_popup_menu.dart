@@ -1,6 +1,5 @@
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
-import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:Fern/core/ui/menus/fern_popup_panel.dart';
 import 'package:flutter/material.dart';
 
@@ -13,13 +12,11 @@ class FernMenuOption<T> {
 
   /// Icono en forma de imagen del paquete, para lo que no tiene glifo propio.
   /// Manda sobre [icon] cuando viene.
-  final String? iconAsset;
 
   const FernMenuOption({
     required this.value,
     required this.label,
     required this.icon,
-    this.iconAsset,
   });
 }
 
@@ -36,11 +33,11 @@ class FernMenuOption<T> {
 /// ```dart
 /// FernPopupMenu<CreateOption>(
 ///   options: const [
-///     FernMenuOption(value: CreateOption.tag, label: "Tag", icon: Icons.label_outline),
+///     FernMenuOption(value: CreateOption.tag, label: "Tag", icon: Symbols.label),
 ///   ],
 ///   onSelected: _create,
 ///   builder: (context, toggle) =>
-///       IconButton(onPressed: toggle, icon: const Icon(Icons.add)),
+///       IconButton(onPressed: toggle, icon: const Icon(Symbols.add)),
 /// );
 /// ```
 class FernPopupMenu<T> extends StatelessWidget {
@@ -86,12 +83,7 @@ class FernPopupMenu<T> extends StatelessWidget {
                     horizontal: AppSpacing.xl,
                   ),
                 ),
-                leadingIcon: fernFallbackIcon(
-                  context,
-                  icon: option.icon,
-                  asset: option.iconAsset,
-                  size: AppSizes.iconLarge,
-                ),
+                leadingIcon: Icon(option.icon, size: AppSizes.iconLarge),
                 onPressed: () => onSelected(option.value),
                 child: Text(
                   option.label,

@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Con cuánta seguridad tiene que ver algo este modelo para proponerlo.
 ///
@@ -92,7 +93,7 @@ class RecognitionPanel extends StatelessWidget {
               IconButton(
                 tooltip: texts.recognitionThresholdLower,
                 onPressed: _percent > _min ? () => _move(-5) : null,
-                icon: const Icon(Icons.remove),
+                icon: const Icon(Symbols.remove),
                 iconSize: AppSizes.iconMedium,
               ),
               SizedBox(
@@ -106,7 +107,7 @@ class RecognitionPanel extends StatelessWidget {
               IconButton(
                 tooltip: texts.recognitionThresholdRaise,
                 onPressed: _percent < _max ? () => _move(5) : null,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Symbols.add),
                 iconSize: AppSizes.iconMedium,
               ),
             ],

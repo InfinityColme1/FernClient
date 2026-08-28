@@ -16,6 +16,7 @@ import 'package:Fern/config/theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// La pila del modo fernie: lo pulsable debajo y la ayuda por encima.
 class _Harness extends StatefulWidget {
@@ -60,7 +61,7 @@ class _HarnessState extends State<_Harness> {
           left: 0,
           child: IconButton(
             onPressed: widget.onCancelPressed,
-            icon: const Icon(Icons.close),
+            icon: const Icon(Symbols.close),
           ),
         ),
 
@@ -167,7 +168,7 @@ void main() {
     // Cancelar está debajo de la ayuda igual que la pestaña, y tampoco puede
     // quedarse sin sus pulsaciones: es una de las dos salidas del modo. Vale lo
     // mismo que se dice arriba sobre lo que esta prueba llega a demostrar.
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(find.byIcon(Symbols.close));
     await tester.pumpAndSettle();
 
     expect(cancelPresses, 1);

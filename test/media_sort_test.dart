@@ -26,14 +26,17 @@ import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 void main() {
   late Directory directory;
   late Isar isar;
   late LocalMediaRepositoryImpl repository;
+  late ShuffleSeed shuffle;
 
   final isarLibrary = _isarLibrary();
 
@@ -67,7 +70,10 @@ void main() {
     final settings = _Settings(avatarsPath: avatars.path);
     final hierarchy = TagHierarchy(database: isar);
 
+    shuffle = ShuffleSeed();
+
     repository = LocalMediaRepositoryImpl(
+      shuffle: shuffle,
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: settings),
       avatarStorage: AvatarStorageService(settingsRepository: settings),
@@ -143,11 +149,29 @@ void main() {
 
     // Si cambiara en cada consulta, la rejilla se recolocaría al desplazarse y
     // al volver del visor: se vería contenido dos veces y contenido ninguna.
-    test('sale igual mientras dure la sesión', () async {
+    test('sale igual mientras nadie vuelva a barajar', () async {
       expect(
         await idsIn(MediaSortOrder.random),
         await idsIn(MediaSortOrder.random),
       );
+    });
+
+    // Y la otra mitad: con una semilla fija para siempre, «al azar» saldría una
+    // vez y a partir de ahí sería un orden fijo más. Quien pulsa el botón espera
+    // otro orden, y baraja de nuevo.
+    test('y cambia en cuanto se vuelve a barajar', () async {
+      final antes = await idsIn(MediaSortOrder.random);
+
+      // Con cuatro contenidos, una baraja puede caer igual por casualidad: se
+      // insiste unas cuantas veces antes de darlo por roto.
+      var haCambiado = false;
+      for (var i = 0; i < 20 && !haCambiado; i++) {
+        shuffle.renew();
+        haCambiado = !const ListEquality<int>()
+            .equals(antes, await idsIn(MediaSortOrder.random));
+      }
+
+      expect(haCambiado, isTrue);
     });
   });
 

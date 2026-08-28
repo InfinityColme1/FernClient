@@ -9,6 +9,12 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
+  /// Cuánto se acerca al color del texto una superficie levantada sobre otra.
+  ///
+  /// Poco a propósito: lo justo para que se vea que hay dos capas y no tanto como
+  /// para que parezca otro color.
+  static const raisedSurfaceBlend = 0.06;
+
   /// La paleta de siempre de la aplicación.
   static const light = AppPalette(
     brightness: Brightness.light,
@@ -22,8 +28,17 @@ class AppColors {
     white: Color(0xFFFFFFFF),
     black: Color(0xFF1D1B20),
     gray: Color(0xFF49454F),
-    unremarked: Color(0xFF49454F),
+    // Un escalón por debajo de [gray] y no el mismo color: eran idénticos, así
+    // que «texto que acompaña» y «dato de relleno» se leían con el mismo peso y
+    // la jerarquía de la pantalla se perdía justo donde más letra pequeña hay.
+    unremarked: Color(0xFF79747E),
     lightgray: Color(0xFFCAC4D0),
+    // Los tres se pintan con transparencia sobre lo que haya debajo, así que son
+    // el mismo tono del texto rebajado: se apoyan en el fondo que tengan en vez
+    // de traer un color propio que habría que mantener a juego.
+    outline: Color(0x171D1B20),
+    surfaceRaised: Color(0xFFFFFFFF),
+    stateLayer: Color(0x0F1D1B20),
     scrim: Color(0xFF1D1B20),
   );
 
@@ -46,6 +61,14 @@ class AppColors {
     gray: Color(0xFFCAC4D0),
     unremarked: Color(0xFF938F99),
     lightgray: Color(0xFF49454F),
+    // De noche hace falta algo más de trazo y algo más de velo: sobre oscuro, la
+    // misma transparencia se ve bastante menos.
+    outline: Color(0x24E6E0E9),
+    // Y aquí el escalón sí existe: sobre fondo oscuro, lo que se levanta se
+    // aclara. En el tema claro no hay nada más claro que el blanco, así que allí
+    // el escalón lo da el trazo.
+    surfaceRaised: Color(0xFF2C2A31),
+    stateLayer: Color(0x1AE6E0E9),
     scrim: Color(0xFF000000),
   );
 
@@ -70,7 +93,7 @@ class AppColors {
         ? dark
         : light;
 
-    return base.copyWith(
+    final chosen = base.copyWith(
       primary: primary,
       secondary: secondary,
       terciary: terciary,
@@ -78,6 +101,21 @@ class AppColors {
       background: background,
       white: surface,
       black: foreground,
+    );
+
+    // El trazo, el velo y la superficie levantada **no se eligen**: se sacan de
+    // lo que el usuario ya ha elegido. Son tres papeles que tienen que estar a
+    // juego con su fondo y con su texto, y pedirlos aparte sería pedirle que
+    // acierte tres veces con algo que sólo se nota cuando está mal.
+    return chosen.copyWith(
+      outline: chosen.black.withValues(alpha: base.isDark ? 0.14 : 0.09),
+      stateLayer: chosen.black.withValues(alpha: base.isDark ? 0.10 : 0.06),
+      // Lo que se levanta se separa del fondo yendo hacia el color del texto: de
+      // noche eso aclara y de día no hay hacia dónde ir, que es justo por lo que
+      // en claro el escalón lo da el trazo.
+      surfaceRaised: base.isDark
+          ? Color.lerp(chosen.white, chosen.black, raisedSurfaceBlend)!
+          : chosen.white,
     );
   }
 

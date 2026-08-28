@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
-import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/navigation/sidebar.dart';
 import 'package:Fern/core/widgets/sidebar_toggle_button.dart';
@@ -19,8 +18,14 @@ import 'package:Fern/features/notifications/presentation/blocs/notifications_blo
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_search_bar.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_controller.dart';
+import 'package:Fern/features/tutorial/presentation/tutorial_tours.dart';
+import 'package:Fern/features/tutorial/presentation/widgets/tutorial_invitation.dart';
+import 'package:Fern/features/tutorial/presentation/widgets/tutorial_overlay.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Fern/core/navigation/sidebar_collapse.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +48,38 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  final _tutorial = getIt<TutorialController>();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_offerTutorialOnFirstRun());
+  }
+
+  /// La primera vez que se abre la aplicación, y sólo esa, se pregunta si se
+  /// quiere una vuelta guiada.
+  ///
+  /// Va en el fotograma siguiente porque durante la construcción no se puede
+  /// abrir un diálogo, y aquí y no en la pantalla de bienvenida porque lo que el
+  /// tutorial señala —el menú, la barra de arriba— es de este marco: desde la
+  /// bienvenida no habría todavía nada a lo que apuntar.
+  Future<void> _offerTutorialOnFirstRun() async {
+    if (!_tutorial.isUnoffered) return;
+
+    // Se da por ofrecido antes de preguntar, no después: si la aplicación se
+    // cierra con la pregunta abierta, la siguiente vez no se vuelve a preguntar.
+    // Insistir es peor que quedarse corto, y para verlo está el botón de los
+    // ajustes.
+    await _tutorial.markOffered();
+
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+
+    if (await askForTutorial(context) && mounted) {
+      _tutorial.start(TutorialTour.general.steps(AppLocalizations.of(context)));
+    }
+  }
+
   /// Las opciones se arman en cada construcción porque sus etiquetas salen del
   /// idioma en curso, que puede cambiar sin salir de la pantalla.
   List<FernMenuOption<_CreateOption>> _createOptions(AppLocalizations texts) {
@@ -50,23 +87,22 @@ class _MainLayoutState extends State<MainLayout> {
       FernMenuOption(
         value: _CreateOption.creator,
         label: texts.menuNewCreator,
-        icon: Icons.person_outline,
+        icon: Symbols.person,
       ),
       FernMenuOption(
         value: _CreateOption.tag,
         label: texts.menuNewTag,
-        icon: Icons.label_outline,
+        icon: Symbols.label,
       ),
       FernMenuOption(
         value: _CreateOption.fernie,
         label: texts.menuNewFernie,
-        icon: Icons.face_retouching_natural,
-        iconAsset: icFernie,
+        icon: Symbols.face_retouching_natural,
       ),
       FernMenuOption(
         value: _CreateOption.model,
         label: texts.menuNewModel,
-        icon: Icons.hub_outlined,
+        icon: Symbols.hub,
       ),
     ];
   }
@@ -196,10 +232,21 @@ class _MainLayoutState extends State<MainLayout> {
       _isSidebarCollapsed = collapse.isCollapsed;
       _lastWidthVerdict = collapse.verdict;
 
-      return _buildLargeScreenLayout(
-        context,
-        widget.child,
-        isSidebarCollapsed: _isSidebarCollapsed,
+      // El velo del tutorial va encima de la aplicación entera y no dentro de
+      // ninguna pantalla: lo que señala son el menú y la barra de arriba, que
+      // son de aquí, y así sigue puesto se navegue a donde se navegue.
+      return Stack(
+        children: [
+          _buildLargeScreenLayout(
+            context,
+            widget.child,
+            isSidebarCollapsed: _isSidebarCollapsed,
+          ),
+          ListenableBuilder(
+            listenable: _tutorial,
+            builder: (context, _) => TutorialOverlay(controller: _tutorial),
+          ),
+        ],
       );
     });
   }
@@ -216,21 +263,24 @@ class _MainLayoutState extends State<MainLayout> {
             // Lo que abre y cierra el menú, en la esquina de la que sale el
             // menú y junto al logo: desde ahí se ve y se alcanza igual con el
             // menú desplegado que plegado.
-            SidebarToggleButton(
-              isCollapsed: isSidebarCollapsed,
-              onPressed: () => setState(
-                () => _isSidebarCollapsed = !_isSidebarCollapsed,
+            TutorialAnchor(
+              id: TutorialAnchorId.sidebarToggle,
+              child: SidebarToggleButton(
+                isCollapsed: isSidebarCollapsed,
+                onPressed: () => setState(
+                  () => _isSidebarCollapsed = !_isSidebarCollapsed,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.s),
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.xxxl),
-              child: Image.asset(
-                appLogo,
-                width: AppSizes.logoWidth,
-              ),
+              child: const FernLogo(height: AppSizes.logoHeight),
             ),
-            const MediaSearchBar(),
+            const TutorialAnchor(
+              id: TutorialAnchorId.search,
+              child: MediaSearchBar(),
+            ),
           ],
         ),
         actions: [
@@ -266,27 +316,42 @@ class _MainLayoutState extends State<MainLayout> {
           FernPopupMenu<_CreateOption>(
             options: _createOptions(AppLocalizations.of(context)),
             onSelected: _onCreateSelected,
-            builder: (context, toggle) => IconButton(
-              // Los demás botones de esta barra lo llevan, y éste es el que más
-              // se usa: sin él, un icono «+» a secas no dice de qué.
-              tooltip: AppLocalizations.of(context).createTooltip,
-              onPressed: toggle,
-              icon: const Icon(Icons.add),
+            builder: (context, toggle) => TutorialAnchor(
+              id: TutorialAnchorId.create,
+              child: IconButton(
+                // Los demás botones de esta barra lo llevan, y éste es el que
+                // más se usa: sin él, un icono «+» a secas no dice de qué.
+                tooltip: AppLocalizations.of(context).createTooltip,
+                onPressed: toggle,
+                icon: const Icon(Symbols.add),
+              ),
             ),
           ),
-          IconButton(
-            // Los demás de esta barra lo llevan y éste se había quedado sin él.
-            tooltip: AppLocalizations.of(context).settingsTitle,
-            onPressed: _openSettings,
-            icon: const Icon(Icons.settings),
+          TutorialAnchor(
+            id: TutorialAnchorId.settings,
+            child: IconButton(
+              // Los demás de esta barra lo llevan y éste se había quedado sin
+              // él.
+              tooltip: AppLocalizations.of(context).settingsOpenTooltip,
+              onPressed: _openSettings,
+              icon: const Icon(Symbols.settings),
+            ),
           ),
           const SizedBox(width: AppSpacing.l),
         ],
       ),
       body: Row(
         children: [
-          _buildSidebar(isCollapsed: isSidebarCollapsed),
-          Expanded(child: child)
+          TutorialAnchor(
+            id: TutorialAnchorId.sidebar,
+            child: _buildSidebar(isCollapsed: isSidebarCollapsed),
+          ),
+          Expanded(
+            child: TutorialAnchor(
+              id: TutorialAnchorId.content,
+              child: child,
+            ),
+          ),
         ],
       ),
     );

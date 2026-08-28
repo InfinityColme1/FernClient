@@ -39,6 +39,7 @@ import 'package:Fern/features/settings/domain/repositories/settings_repository.d
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 /// Los identificadores de la biblioteca de prueba.
 const visibleId = 1;
@@ -114,6 +115,7 @@ void main() {
     );
 
     repository = LocalMediaRepositoryImpl(
+      shuffle: ShuffleSeed(),
       appDatabase: isar,
       fileOrganizer: MediaFileOrganizer(settingsRepository: settings),
       avatarStorage: AvatarStorageService(settingsRepository: settings),

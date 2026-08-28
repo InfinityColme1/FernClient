@@ -28,6 +28,7 @@ import 'package:Fern/features/recognition/data/models/recognition_model_model.da
 import 'package:Fern/features/recognition/data/models/recognition_result_model.dart';
 import 'package:isar/isar.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:Fern/core/services/shuffle_seed.dart';
 
 void main() {
   late Directory directory;
@@ -72,6 +73,7 @@ void main() {
     // Lo demás no lo toca esta consulta: mira el sumario y nada más. Ponerlo a
     // `null` sería mentirle al constructor, así que se le dan dobles vacíos.
     repository = LocalMediaRepositoryImpl(
+      shuffle: ShuffleSeed(),
       appDatabase: isar,
       fileOrganizer: _Explodes(),
       avatarStorage: _Explodes(),

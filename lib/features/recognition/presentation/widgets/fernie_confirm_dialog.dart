@@ -3,6 +3,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Aviso de una sola pregunta para las cosas del modo fernie que no tienen
 /// vuelta atrás: tirar lo que se lleva marcado, tirar los cambios de una región
@@ -23,7 +24,7 @@ class FernieConfirmDialog extends StatelessWidget {
     required this.title,
     required this.message,
     required this.confirmLabel,
-    this.confirmIcon = Icons.delete_outline,
+    this.confirmIcon = Symbols.delete,
   });
 
   @override

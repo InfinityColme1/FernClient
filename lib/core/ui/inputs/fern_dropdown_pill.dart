@@ -2,26 +2,42 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/resources/app_icons.dart';
+import 'package:Fern/core/ui/menus/fern_popup_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Desplegable compacto sobre fondo de color, del mismo alto que
 /// [FernPillButton], para las cabeceras de las pantallas.
 ///
-/// Las opciones que no caben en [maxVisibleItems] no se quedan fuera: el
-/// desplegable se queda de ese alto y se desplaza. Es lo que permite que una
-/// lista siga creciendo (las fuentes de las que se importa, sin ir más lejos)
-/// sin comerse la pantalla de arriba abajo.
+/// **Por qué no es un `DropdownButton`.** Lo era, y por eso se veía distinto de
+/// todo lo demás que se despliega en la aplicación: Material pinta su menú con
+/// sus propios colores, su propia elevación y su propia barra de desplazamiento,
+/// y ninguna de las tres sale de la paleta. Al lado del menú de crear —que sí es
+/// nuestro— parecían dos aplicaciones.
+///
+/// Ahora es el mismo panel que aquél ([FernPopupPanel]): mismo color de
+/// superficie levantada, mismo trazo fino, mismo radio. Lo único que añade es la
+/// marca de cuál está puesta, que un menú de acciones no necesita y un
+/// desplegable sí.
+///
+/// Las opciones que no caben en [maxVisibleItems] no se quedan fuera: el panel se
+/// queda de ese alto y se desplaza, con la barra por dentro.
 class FernDropdownPill<T> extends StatefulWidget {
   final T value;
   final List<T> items;
   final ValueChanged<T?>? onChanged;
   final String Function(T value)? labelBuilder;
+
   /// Sin decir nada, el fondo suave de la paleta que esté puesta.
   final Color? backgroundColor;
   final double height;
 
   /// Cuántas opciones se ven a la vez antes de que haya que desplazarse.
   final int maxVisibleItems;
+
+  /// Ancho del panel que se abre. El de la píldora lo decide su contenido.
+  final double menuWidth;
 
   const FernDropdownPill({
     super.key,
@@ -32,6 +48,7 @@ class FernDropdownPill<T> extends StatefulWidget {
     this.backgroundColor,
     this.height = AppSizes.buttonHeightSmall,
     this.maxVisibleItems = dropdownMaxVisibleItems,
+    this.menuWidth = AppSizes.menuWidth,
   });
 
   @override
@@ -57,48 +74,124 @@ class _FernDropdownPillState<T> extends State<FernDropdownPill<T>> {
     );
   }
 
+  /// Lo alto que puede ponerse el panel: [maxVisibleItems] filas enteras.
+  ///
+  /// Sale de la cuenta y no de un número a ojo, así que la última opción que se
+  /// ve queda entera y no cortada por la mitad, que es lo que dice «esto sigue».
+  double get _menuMaxHeight =>
+      widget.maxVisibleItems * AppSizes.buttonHeight + dropdownMenuPadding;
+
   @override
   Widget build(BuildContext context) {
-    // El cursor y el velo se marcan en toda la píldora, no sólo sobre el texto
-    // del desplegable, que es la zona que cubre el [DropdownButton].
-    return MouseRegion(
-      cursor: _isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: hoverAnimationDuration,
-        height: widget.height,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
-        decoration: BoxDecoration(
-          color: _background,
-          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
-            value: widget.value,
-            // El desplegable trae de fábrica un cursor que fuera de la web es
-            // el normal, y como va por encima de la píldora se lleva por
-            // delante el que ella pone. Se le dice el que toca a él también.
-            mouseCursor: WidgetStateMouseCursor.clickable,
-            icon:
-                const Icon(Icons.keyboard_arrow_down, size: AppSizes.iconCompact),
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
-            onChanged: widget.onChanged,
-            // Alto fijo por opción para que el tope de altura del desplegable
-            // sea justo el de [maxVisibleItems] y no una aproximación.
-            itemHeight: kMinInteractiveDimension,
-            menuMaxHeight: widget.maxVisibleItems * kMinInteractiveDimension +
-                dropdownMenuPadding,
-            items: widget.items
-                .map((item) => DropdownMenuItem<T>(
-                      value: item,
-                      child: Text(_label(item)),
-                    ))
-                .toList(),
+    final theme = Theme.of(context);
+
+    return FernPopupPanel(
+      width: widget.menuWidth,
+      maxHeight: widget.items.length > widget.maxVisibleItems
+          ? _menuMaxHeight
+          : null,
+      children: [
+        for (final item in widget.items)
+          _Option(
+            label: _label(item),
+            isSelected: item == widget.value,
+            onPressed: () => widget.onChanged?.call(item),
           ),
+      ],
+      builder: (context, toggle) => MouseRegion(
+        cursor: _isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: _isEnabled ? toggle : null,
+          child: AnimatedContainer(
+            duration: hoverAnimationDuration,
+            height: widget.height,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
+            decoration: BoxDecoration(
+              color: _background,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    _label(widget.value),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _isEnabled
+                          ? context.colors.black
+                          : context.colors.unremarked,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Icon(
+                  Symbols.keyboard_arrow_down,
+                  size: AppSizes.iconCompact,
+                  color: _isEnabled
+                      ? context.colors.black
+                      : context.colors.unremarked,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Una opción del panel.
+///
+/// Es un [MenuItemButton] como los del menú de crear —así el panel se cierra
+/// solo al elegir— con la marca de cuál está puesta a la derecha. La marca va
+/// ahí y no delante para que los rótulos empiecen todos en la misma vertical:
+/// con el hueco por delante sólo en la elegida, la lista se lee torcida.
+class _Option extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  const _Option({
+    required this.label,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return MenuItemButton(
+      style: MenuItemButton.styleFrom(
+        minimumSize: const Size(0, AppSizes.buttonHeight),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+      ),
+      // Del mismo color que el texto de la opción, y dicho a mano.
+      //
+      // Iba con el primario, que en el tema oscuro es un morado profundo y sobre
+      // la superficie del panel casi no se ve — justo en lo único que dice cuál
+      // está puesta. Y dejarlo heredar tampoco vale: `MenuItemButton` pinta sus
+      // iconos con un color propio, más apagado que el del texto que llevan al
+      // lado.
+      trailingIcon: isSelected
+          ? Icon(
+              AppIcons.check,
+              size: AppSizes.iconCompact,
+              color: context.colors.black,
+            )
+          : null,
+      onPressed: onPressed,
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: isSelected ? FontWeight.w600 : null,
         ),
       ),
     );

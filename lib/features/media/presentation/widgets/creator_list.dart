@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Todos los creadores de la aplicación, uno debajo de otro.
 ///
@@ -42,14 +43,17 @@ class CreatorList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.s),
           child: FernSectionHeader(
-            icon: Icons.person_outline,
+            icon: Symbols.person,
             title: texts.creatorsTitle,
           ),
         ),
         Expanded(
           // Las filas se pintan bajo demanda: los creadores pueden ser muchos.
           child: ListView.builder(
-            padding: EdgeInsets.zero,
+            // Apartado por la derecha lo que ocupa la barra de
+            // desplazamiento: sin ese carril la pastilla queda pegada al borde
+            // de las fichas y parece parte de ellas.
+            padding: const EdgeInsets.only(right: AppSizes.scrollbarLane),
             itemCount: creators.length,
             itemBuilder: (context, index) => _CreatorTile(
               creator: creators[index],
@@ -98,7 +102,7 @@ class _CreatorTile extends StatelessWidget {
           children: [
             FernAvatar(
               imagePath: creator.picturePath,
-              fallbackIcon: Icons.person,
+              fallbackIcon: Symbols.person,
               radius: AppSizes.avatarMedium,
               iconSize: AppSizes.iconMedium,
               backgroundColor: context.colors.secondary,

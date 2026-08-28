@@ -31,6 +31,7 @@ import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.da
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -181,7 +182,7 @@ class _InfoContent extends StatelessWidget {
     showFernToast(
       context,
       texts.revealInExplorerFailed,
-      icon: Icons.error_outline,
+      icon: Symbols.error,
     );
   }
 
@@ -212,7 +213,7 @@ class _InfoContent extends StatelessWidget {
                       tooltip: texts.actionRevealInExplorer,
                       iconSize: AppSizes.iconMedium,
                       onPressed: () => _reveal(context, media.path),
-                      icon: const Icon(Icons.folder_open_outlined),
+                      icon: const Icon(Symbols.folder_open),
                     ),
                 ],
               ),
@@ -226,7 +227,7 @@ class _InfoContent extends StatelessWidget {
               _SuggestionList(
                 bloc: suggestions,
                 pick: (state) => state.creatorSuggestions,
-                fallbackIcon: Icons.person,
+                fallbackIcon: Symbols.person,
                 title: texts.suggestionCreatorTitle,
                 // El creador es uno: aceptar el último sustituye al anterior,
                 // que es lo mismo que hace el diálogo de asignarlo.
@@ -239,7 +240,7 @@ class _InfoContent extends StatelessWidget {
               _FerniesSection(media: media, fernieMode: fernieMode),
               const SizedBox(height: AppSpacing.l),
               FernSectionHeader(
-                icon: Icons.label_outline,
+                icon: Symbols.label,
                 title: texts.tagsTitle,
               ),
               const SizedBox(height: AppSpacing.m),
@@ -261,7 +262,7 @@ class _InfoContent extends StatelessWidget {
                 label: tag.name,
                 leading: FernAvatar(
                   imagePath: tag.picturePath,
-                  fallbackIcon: Icons.label,
+                  fallbackIcon: Symbols.label,
                   radius: AppSizes.avatarMedium,
                   iconSize: AppSizes.iconMedium,
                   backgroundColor: context.colors.secondary,
@@ -285,7 +286,7 @@ class _InfoContent extends StatelessWidget {
               ...state.tagSuggestions,
               ...state.unlinkedSuggestions,
             ],
-            fallbackIcon: Icons.label,
+            fallbackIcon: Symbols.label,
             apply: (context, which) async => _updateMedia(
               context,
               media.copyWith(tags: await _withTags(media, which)),
@@ -348,8 +349,7 @@ class _FerniesSection extends StatelessWidget {
           // dudar de si hacen cosas distintas. El atajo de siempre está en la
           // barra del visor.
           FernSectionHeader(
-            icon: Icons.face_retouching_natural_outlined,
-            iconAsset: icFernie,
+            icon: Symbols.face_retouching_natural,
             title: texts.ferniesTitle,
           ),
           const SizedBox(height: AppSpacing.m),
@@ -370,8 +370,7 @@ class _FerniesSection extends StatelessWidget {
                 FernAvatarTile(
                   label: fernie.name,
                   imagePath: fernie.picturePath,
-                  fallbackIcon: Icons.face_retouching_natural,
-                  fallbackAsset: icFernie,
+                  fallbackIcon: Symbols.face_retouching_natural,
                   // Pulsar un fernie lleva a su pantalla, donde están todas
                   // sus regiones y no sólo las de este contenido.
                   //
@@ -471,7 +470,7 @@ class _CreatorRow extends StatelessWidget {
       children: [
         FernEditableAvatar(
           imagePath: media.creator.picturePath,
-          fallbackIcon: Icons.person,
+          fallbackIcon: Symbols.person,
           radius: AppSizes.avatarMedium,
           iconSize: AppSizes.iconMedium,
           overlayIconSize: AppSizes.iconMedium,
@@ -625,8 +624,8 @@ class _SuggestionList extends StatelessWidget {
           ? texts.suggestionRegionSaved
           : texts.suggestionRegionFailed,
       icon: result is DataSuccess
-          ? Icons.info_outline
-          : Icons.error_outline_rounded,
+          ? Symbols.info
+          : Symbols.error,
     );
   }
 

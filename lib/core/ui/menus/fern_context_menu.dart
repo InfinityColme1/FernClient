@@ -73,9 +73,16 @@ class FernContextMenu extends StatelessWidget {
                   maxHeight: maxHeight,
                 ),
                 child: Material(
-                  color: context.colors.white,
+                  color: context.colors.surfaceRaised,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppSizes.radiusExtraLarge),
+                    side: BorderSide(
+                      color: context.colors.outline,
+                      width: AppSizes.borderHairline,
+                    ),
+                  ),
                   elevation: contextMenuElevation,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusExtraLarge),
                   clipBehavior: Clip.antiAlias,
                   child: SizedBox(width: width, child: child),
                 ),

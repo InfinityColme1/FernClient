@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
@@ -36,6 +37,7 @@ import 'package:Fern/features/media/presentation/widgets/select_all_button.dart'
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -56,10 +58,10 @@ extension ImportSourceLabel on ImportSource {
 /// Cómo se nombra cada opción de la píldora del tope: un número, o el nombre de
 /// las dos que no lo son.
 String importLimitLabel(int limit, AppLocalizations texts) => switch (limit) {
-      unlimitedImportLimit => texts.importLimitAll,
-      untilLastImportLimit => texts.importLimitSinceLast,
-      _ => '$limit',
-    };
+  unlimitedImportLimit => texts.importLimitAll,
+  untilLastImportLimit => texts.importLimitSinceLast,
+  _ => '$limit',
+};
 
 class ImportPage extends StatefulWidget {
   const ImportPage({super.key});
@@ -142,8 +144,8 @@ class _ImportViewState extends State<_ImportView> {
   /// El suyo y no el de la biblioteca: una tanda recién traída se repasa
   /// agrupada por tipo o puesta por nombre, y eso no tiene por qué ser cómo se
   /// quiere ver la biblioteca después.
-  late MediaSortOrder _sortOrder =
-      getIt<PreferencesService>().getImportSortOrder();
+  late MediaSortOrder _sortOrder = getIt<PreferencesService>()
+      .getImportSortOrder();
 
   /// Si se está enseñando la lista de creadores en vez del contenido.
   ///
@@ -177,15 +179,19 @@ class _ImportViewState extends State<_ImportView> {
     final found = await getIt<GetRemoteCreatorsUseCase>()(params: source);
     if (!mounted || _creatorsOf != source) return;
 
-    final creators = found is DataSuccess ? found.data ?? const <RemoteCreator>[] : const <RemoteCreator>[];
+    final creators = found is DataSuccess
+        ? found.data ?? const <RemoteCreator>[]
+        : const <RemoteCreator>[];
 
     setState(() {
       _creators = creators;
       _loadingCreators = false;
     });
 
-    await for (final counted
-        in getIt<CountRemoteCreatorPostsUseCase>()(source, creators)) {
+    await for (final counted in getIt<CountRemoteCreatorPostsUseCase>()(
+      source,
+      creators,
+    )) {
       if (!mounted || _creatorsOf != source) return;
 
       setState(() {
@@ -207,11 +213,7 @@ class _ImportViewState extends State<_ImportView> {
   bool _offersCreators(ImportSource source) {
     if (source != ImportSource.pawchive) return false;
 
-    return getIt<SettingsBloc>()
-        .state
-        .settings
-        .pawchive
-        .byFavoriteCreators;
+    return getIt<SettingsBloc>().state.settings.pawchive.byFavoriteCreators;
   }
 
   /// Si lo que se está enseñando ahora mismo es la lista de creadores.
@@ -267,7 +269,7 @@ class _ImportViewState extends State<_ImportView> {
               showFernToast(
                 context,
                 texts.remoteCreatorImporting(creator.name),
-                icon: Icons.download_outlined,
+                icon: Symbols.download,
               );
             },
             onSelectionToggled: () => setState(() {
@@ -334,7 +336,7 @@ class _ImportViewState extends State<_ImportView> {
     showFernToast(
       context,
       AppLocalizations.of(context).acceptAboveDone(result.data?.accepted ?? 0),
-      icon: Icons.info_outline,
+      icon: Symbols.info,
     );
 
     // Las celdas dejan de llevar el distintivo en cuanto no les queda nada sin
@@ -370,7 +372,9 @@ class _ImportViewState extends State<_ImportView> {
   String _lastImportLabel(AppLocalizations texts, DateTime at) {
     final elapsed = DateTime.now().difference(at);
     if (elapsed.isNegative || elapsed.inHours < 1) {
-      return texts.lastImportMinutes(elapsed.isNegative ? 0 : elapsed.inMinutes);
+      return texts.lastImportMinutes(
+        elapsed.isNegative ? 0 : elapsed.inMinutes,
+      );
     }
     if (elapsed.inDays < 1) return texts.lastImportHours(elapsed.inHours);
 
@@ -389,7 +393,8 @@ class _ImportViewState extends State<_ImportView> {
   /// Cuando lo que le falta a la fuente es que el usuario entre en su cuenta, la
   /// nota lleva además a dónde se hace ([onTap]): decir que falta algo y no
   /// decir por dónde se arregla es dejar el trabajo a medias.
-  ({String label, String hint, IconData icon, VoidCallback? onTap})? _sourceNote(
+  ({String label, String hint, IconData icon, VoidCallback? onTap})?
+  _sourceNote(
     BuildContext context,
     AppLocalizations texts,
     MediaStates state,
@@ -403,7 +408,7 @@ class _ImportViewState extends State<_ImportView> {
         return (
           label: texts.sourceLogIn(state.importSource.name(texts)),
           hint: texts.sourceLogInHint(state.importSource.name(texts)),
-          icon: Icons.login,
+          icon: Symbols.login,
           onTap: () => context.go(browserRouteWithUrl(login.loginUrl)),
         );
       }
@@ -411,7 +416,7 @@ class _ImportViewState extends State<_ImportView> {
       return (
         label: texts.sourceNotConfigured,
         hint: texts.sourceNotConfiguredHint,
-        icon: Icons.info_outline,
+        icon: Symbols.info,
         onTap: null,
       );
     }
@@ -423,7 +428,7 @@ class _ImportViewState extends State<_ImportView> {
       return (
         label: texts.sourceBrowserNote,
         hint: texts.sourceBrowserHint,
-        icon: Icons.travel_explore_outlined,
+        icon: Symbols.travel_explore,
         onTap: () => context.go(browserRoute),
       );
     }
@@ -437,7 +442,7 @@ class _ImportViewState extends State<_ImportView> {
           ? texts.lastImportNever
           : _lastImportLabel(texts, lastImportAt),
       hint: texts.lastImportHint,
-      icon: Icons.history,
+      icon: Symbols.history,
       onTap: null,
     );
   }
@@ -511,10 +516,8 @@ class _ImportViewState extends State<_ImportView> {
     if (remote.isNotEmpty) {
       final confirmed = await showFernDialog<bool, MediaBloc>(
         context: context,
-        builder: (_) => ConfirmRemoteImportDialog(
-          sources: remote,
-          limit: _limit,
-        ),
+        builder: (_) =>
+            ConfirmRemoteImportDialog(sources: remote, limit: _limit),
       );
       if (confirmed != true) return;
     }
@@ -548,9 +551,8 @@ class _ImportViewState extends State<_ImportView> {
 
     await showFernDialog<void, MediaBloc>(
       context: context,
-      builder: (_) => const SettingsDialog(
-        initialSection: SettingsSection.remoteSources,
-      ),
+      builder: (_) =>
+          const SettingsDialog(initialSection: SettingsSection.remoteSources),
     );
   }
 
@@ -561,10 +563,8 @@ class _ImportViewState extends State<_ImportView> {
 
     final deleteFiles = await showFernDialog<bool, MediaBloc>(
       context: context,
-      builder: (_) => ConfirmDeleteDialog(
-        kind: MediaDeletionKind.discard,
-        count: count,
-      ),
+      builder: (_) =>
+          ConfirmDeleteDialog(kind: MediaDeletionKind.discard, count: count),
     );
     if (deleteFiles == null) return;
 
@@ -631,7 +631,10 @@ class _ImportViewState extends State<_ImportView> {
         // sobre lo segundo: enseñar un número que no cuadra con lo que se está
         // viendo es peor que no enseñarlo.
         final all = state.mediaList ?? const <MediaSummaryEntity>[];
-        final visible = [for (final one in all) if (_filter.matches(one)) one];
+        final visible = [
+          for (final one in all)
+            if (_filter.matches(one)) one,
+        ];
 
         final hasMedia = all.isNotEmpty;
         // Los botones masivos actúan sobre la selección de la rejilla, así que
@@ -655,210 +658,197 @@ class _ImportViewState extends State<_ImportView> {
         // enseñarle una pantalla vacía y pedirle que la llene.
         _loadCreatorsIfNeeded(source);
 
-        return Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.l, left: AppSpacing.l),
-          child: Column(
-            children: [
-              // HEADER ROW DINÁMICA
-              Padding(
-                padding: const EdgeInsets.only(
-                  right: AppSpacing.xl,
-                  bottom: AppSpacing.l,
-                ),
-                child: BlocBuilder<SettingsBloc, SettingsState>(
-                  bloc: getIt<SettingsBloc>(),
-                  builder: (context, settings) {
-                    final isConfigured = _isConfigured(source, settings);
+        return FernGridScreen(
+          // HEADER ROW DINÁMICA
+          header: BlocBuilder<SettingsBloc, SettingsState>(
+            bloc: getIt<SettingsBloc>(),
+            builder: (context, settings) {
+              final isConfigured = _isConfigured(source, settings);
 
-                    // Seleccionar cambia a qué se está jugando: ya no se trata
-                    // de traer contenido sino de decidir sobre lo que hay. La
-                    // fila se sustituye entera en vez de encender tres botones
-                    // más, que es lo que la reventaba justo cuando más falta
-                    // hacía que se entendiera.
-                    if (hasSelection) {
-                      return _SelectionBar(
-                        selected: selectedCount,
-                        total: visible.length,
-                        onAcceptAbove: () => _acceptAbove(context, state),
-                        onDelete: () =>
-                            _discardSelection(context, selectedCount),
-                        onRecognize: () => requestRecognition(
-                          context,
-                          state.selectedIds.toList(),
-                          name: texts.recognizeJobSelection,
-                        ),
-                        selectAll: SelectAllButton(
-                          visible: visible,
-                          selectedIds: state.selectedIds,
-                          onSelectAll: (ids) => context
-                              .read<MediaBloc>()
-                              .add(SelectAllMediaEvent(ids)),
-                        ),
+              // Seleccionar cambia a qué se está jugando: ya no se trata
+              // de traer contenido sino de decidir sobre lo que hay. La
+              // fila se sustituye entera en vez de encender tres botones
+              // más, que es lo que la reventaba justo cuando más falta
+              // hacía que se entendiera.
+              if (hasSelection) {
+                return _SelectionBar(
+                  selected: selectedCount,
+                  total: visible.length,
+                  onAcceptAbove: () => _acceptAbove(context, state),
+                  onDelete: () => _discardSelection(context, selectedCount),
+                  onRecognize: () => requestRecognition(
+                    context,
+                    state.selectedIds.toList(),
+                    name: texts.recognizeJobSelection,
+                  ),
+                  selectAll: SelectAllButton(
+                    visible: visible,
+                    selectedIds: state.selectedIds,
+                    onSelectAll: (ids) =>
+                        context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
+                  ),
+                );
+              }
+
+              return Row(
+                children: [
+                  FernDropdownPill<ImportSource>(
+                    value: source,
+                    items: const [ImportSource.all, ...ImportSource.listed],
+                    labelBuilder: (source) => source.name(texts),
+                    onChanged: (source) {
+                      if (source == null) return;
+                      context.read<MediaBloc>().add(
+                        ImportSourceChangedEvent(source),
                       );
-                    }
+                    },
+                  ),
+                  // Al lado de la fuente, cómo está: si todavía no se
+                  // puede usar se dice aquí (que es donde se ha elegido)
+                  // en lugar de dejar que la importación no haga nada sin
+                  // explicar por qué, y si ya se ha usado, cuánto hace de
+                  // la última vez.
+                  if (_sourceNote(context, texts, state, isConfigured)
+                      case final note?) ...[
+                    const SizedBox(width: AppSpacing.m),
+                    Flexible(child: _note(context, note)),
+                  ],
+                  const Spacer(),
+                  // CENTER: Stats
+                  //
+                  // Con selección se dice una sola cosa —«3 de 332
+                  // seleccionados»— y no dos. Dos textos ocupan el ancho
+                  // que necesitan los botones de la derecha, y la cuenta
+                  // total sin la selección al lado tampoco decía gran
+                  // cosa.
+                  if (hasMedia) ...[
+                    // Entero, sin recortar: es un numero, y un numero a
+                    // medias con puntos suspensivos no dice nada.
+                    Text(
+                      texts.mediaFetched(visible.length),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
 
-                    return Row(
-                      // Los controles con rótulo son más altos, y lo que tiene
-                      // que cuadrar es su base, no su centro.
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        FernDropdownPill<ImportSource>(
-                          value: source,
-                          items: const [ImportSource.all, ...ImportSource.listed],
-                          labelBuilder: (source) => source.name(texts),
-                          onChanged: (source) {
-                            if (source == null) return;
-                            context
-                                .read<MediaBloc>()
-                                .add(ImportSourceChangedEvent(source));
-                          },
-                        ),
-                        // Al lado de la fuente, cómo está: si todavía no se
-                        // puede usar se dice aquí (que es donde se ha elegido)
-                        // en lugar de dejar que la importación no haga nada sin
-                        // explicar por qué, y si ya se ha usado, cuánto hace de
-                        // la última vez.
-                        if (_sourceNote(context, texts, state, isConfigured)
-                            case final note?) ...[
-                          const SizedBox(width: AppSpacing.m),
-                          Flexible(child: _note(context, note)),
-                        ],
-                        const Spacer(),
-                        // CENTER: Stats
-                        //
-                        // Con selección se dice una sola cosa —«3 de 332
-                        // seleccionados»— y no dos. Dos textos ocupan el ancho
-                        // que necesitan los botones de la derecha, y la cuenta
-                        // total sin la selección al lado tampoco decía gran
-                        // cosa.
-                        if (hasMedia) ...[
-                          // Entero, sin recortar: es un numero, y un numero a
-                          // medias con puntos suspensivos no dice nada.
-                          Text(
-                            texts.mediaFetched(visible.length),
-                            style: theme.textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
+                  const Spacer(),
 
-                        const Spacer(),
+                  // RIGHT: Actions
+                  //
+                  // Cuántos contenidos nuevos se trae el escaneo como
+                  // mucho. Vale para cualquier fuente que se escanee: es un
+                  // tope de lo que se descarga, no una cosa de las remotas.
+                  // De la que no se escanea no se enseña, que ahí no hay
+                  // nada que topar.
+                  if (canScan) ...[
+                    // **El rótulo va dentro de la píldora, no encima.**
+                    //
+                    // Encima hacía este control más alto que todos los demás
+                    // de la fila, y por eso la cabecera entera tenía que
+                    // alinearse por la base en vez de por el centro: un solo
+                    // control torcía la maquetación de los otros seis. Dentro
+                    // dice lo mismo y la fila vuelve a estar a una altura.
+                    Tooltip(
+                      // Lo que hace cada opción no cabe en la píldora, así que
+                      // se explica aquí la que esté puesta.
+                      message: _limit == untilLastImportLimit
+                          ? texts.importLimitSinceLastTooltip
+                          : texts.importLimitTooltip,
+                      child: FernDropdownPill<int>(
+                        value: _limit,
+                        items: importLimitOptions,
+                        labelBuilder: (limit) =>
+                            '${texts.importFetchLabel} '
+                            '${importLimitLabel(limit, texts)}',
+                        onChanged: (limit) {
+                          if (limit == null) return;
 
-                        // RIGHT: Actions
-                        //
-                        // Cuántos contenidos nuevos se trae el escaneo como
-                        // mucho. Vale para cualquier fuente que se escanee: es un
-                        // tope de lo que se descarga, no una cosa de las remotas.
-                        // De la que no se escanea no se enseña, que ahí no hay
-                        // nada que topar.
-                        if (canScan) ...[
-                          _LabeledControl(
-                            label: texts.importFetchLabel,
-                            child: Tooltip(
-                              // Lo que hace cada opción no cabe en la píldora,
-                              // así que se explica aquí la que esté puesta.
-                              message: _limit == untilLastImportLimit
-                                  ? texts.importLimitSinceLastTooltip
-                                  : texts.importLimitTooltip,
-                              child: FernDropdownPill<int>(
-                                value: _limit,
-                                items: importLimitOptions,
-                                labelBuilder: (limit) =>
-                                    importLimitLabel(limit, texts),
-                                onChanged: (limit) {
-                                  if (limit == null) return;
+                          setState(() => _limit = limit);
+                          getIt<PreferencesService>().setImportLimit(limit);
+                        },
+                      ),
+                    ),
+                  ],
+                  // Con qué parte de lo pendiente se trabaja y en qué
+                  // orden: las dos en un solo botón. Son dos preguntas
+                  // distintas, pero se contestan juntas, se cambian poco, y
+                  // dos desplegables más eran los que dejaban la cabecera
+                  // sin sitio.
+                  //
+                  // Con aire de sobra: son dos controles distintos y
+                  // pegados parecían uno partido en dos.
+                  const SizedBox(width: AppSpacing.l),
+                  ImportViewMenu(
+                    filter: _filter,
+                    order: _sortOrder,
+                    hasMedia: hasMedia,
+                    hasCreators: _offersCreators(source),
+                    showsCreators: _showCreators,
+                    onShowsCreatorsChanged: (creators) =>
+                        setState(() => _showCreators = creators),
+                    onFilterChanged: (filter) =>
+                        setState(() => _filter = filter),
+                    onOrderChanged: (order) {
+                      setState(() => _sortOrder = order);
+                      context.read<MediaBloc>().add(
+                        MediaSortOrderChangedEvent(order),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: AppSpacing.s),
+                  // Buscar contenido en la fuente es siempre lo mismo,
+                  // pero el icono dice qué va a pasar: con la rejilla
+                  // vacía todavía no ha llegado nada de esta fuente y lo
+                  // que se hace es traerlo; con contenido a la vista, lo
+                  // que se hace es actualizarlo.
+                  IconButton(
+                    // En la vista de creadores el botón trae **lo que esté
+                    // marcado**, y sin nada marcado, lo de todos: es lo
+                    // que hacía la casilla de los ajustes a la que esta
+                    // vista sustituye.
+                    tooltip: _selectedCreators.isNotEmpty
+                        ? texts.remoteCreatorsImport(_selectedCreators.length)
+                        : hasMedia
+                        ? texts.actionRefresh
+                        : texts.actionImport,
+                    onPressed: isConfigured && canScan
+                        ? () => _selectedCreators.isEmpty
+                              ? _scan(context, source)
+                              : _importCreators(Set.of(_selectedCreators))
+                        : null,
+                    icon: Icon(
+                      _selectedCreators.isNotEmpty
+                          ? Symbols.download
+                          : hasMedia
+                          ? Symbols.refresh
+                          : Symbols.download,
+                    ),
+                  ),
+                  SelectAllButton(
+                    visible: visible,
+                    selectedIds: state.selectedIds,
+                    onSelectAll: (ids) =>
+                        context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
+                  ),
+                  IconButton(
+                    tooltip: texts.actionSelectFolder,
+                    onPressed: canPickFolder
+                        ? () => context.read<MediaBloc>().add(
+                            SelectAndScanDirectoryEvent(limit: _limit),
+                          )
+                        : null,
+                    icon: const Icon(Symbols.folder_open),
+                  ),
+                ],
+              );
+            },
+          ),
 
-                                  setState(() => _limit = limit);
-                                  getIt<PreferencesService>()
-                                      .setImportLimit(limit);
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                        // Con qué parte de lo pendiente se trabaja y en qué
-                        // orden: las dos en un solo botón. Son dos preguntas
-                        // distintas, pero se contestan juntas, se cambian poco, y
-                        // dos desplegables más eran los que dejaban la cabecera
-                        // sin sitio.
-                        //
-                        // Con aire de sobra: son dos controles distintos y
-                        // pegados parecían uno partido en dos.
-                        const SizedBox(width: AppSpacing.l),
-                        ImportViewMenu(
-                          filter: _filter,
-                          order: _sortOrder,
-                          hasMedia: hasMedia,
-                          hasCreators: _offersCreators(source),
-                          showsCreators: _showCreators,
-                          onShowsCreatorsChanged: (creators) =>
-                              setState(() => _showCreators = creators),
-                          onFilterChanged: (filter) =>
-                              setState(() => _filter = filter),
-                          onOrderChanged: (order) {
-                            setState(() => _sortOrder = order);
-                            context
-                                .read<MediaBloc>()
-                                .add(MediaSortOrderChangedEvent(order));
-                          },
-                        ),
-                        const SizedBox(width: AppSpacing.s),
-                        // Buscar contenido en la fuente es siempre lo mismo,
-                        // pero el icono dice qué va a pasar: con la rejilla
-                        // vacía todavía no ha llegado nada de esta fuente y lo
-                        // que se hace es traerlo; con contenido a la vista, lo
-                        // que se hace es actualizarlo.
-                        IconButton(
-                          // En la vista de creadores el botón trae **lo que esté
-                          // marcado**, y sin nada marcado, lo de todos: es lo
-                          // que hacía la casilla de los ajustes a la que esta
-                          // vista sustituye.
-                          tooltip: _selectedCreators.isNotEmpty
-                              ? texts.remoteCreatorsImport(
-                                  _selectedCreators.length,
-                                )
-                              : hasMedia
-                                  ? texts.actionRefresh
-                                  : texts.actionImport,
-                          onPressed: isConfigured && canScan
-                              ? () => _selectedCreators.isEmpty
-                                  ? _scan(context, source)
-                                  : _importCreators(Set.of(_selectedCreators))
-                              : null,
-                          icon: Icon(
-                            _selectedCreators.isNotEmpty
-                                ? Icons.download_outlined
-                                : hasMedia
-                                    ? Icons.refresh
-                                    : Icons.download_outlined,
-                          ),
-                        ),
-                        SelectAllButton(
-                          visible: visible,
-                          selectedIds: state.selectedIds,
-                          onSelectAll: (ids) => context
-                              .read<MediaBloc>()
-                              .add(SelectAllMediaEvent(ids)),
-                        ),
-                        IconButton(
-                          tooltip: texts.actionSelectFolder,
-                          onPressed: canPickFolder
-                              ? () => context
-                                  .read<MediaBloc>()
-                                  .add(SelectAndScanDirectoryEvent(limit: _limit))
-                              : null,
-                          icon: const Icon(Icons.folder_open_outlined),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-
-              // GRID
-              Expanded(
-                child: _showsCreatorsMode(source)
-                    ? _creatorsGrid(texts)
-                    : MediaGrid(
+          // GRID
+          body: _showsCreatorsMode(source)
+              ? _creatorsGrid(texts)
+              : MediaGrid(
                   mediaList: visible,
                   columns: mediaGridColumns,
                   isLoading: state.isBusy,
@@ -872,9 +862,6 @@ class _ImportViewState extends State<_ImportView> {
                   onStop: () =>
                       context.read<MediaBloc>().add(const StopImportEvent()),
                 ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -926,7 +913,7 @@ class _SelectionBar extends StatelessWidget {
           tooltip: texts.actionClearSelection,
           onPressed: () =>
               context.read<MediaBloc>().add(const ClearMediaSelectionEvent()),
-          icon: const Icon(Icons.close),
+          icon: const Icon(Symbols.close),
         ),
         selectAll,
         const SizedBox(width: AppSpacing.s),
@@ -946,7 +933,7 @@ class _SelectionBar extends StatelessWidget {
         // primero tiene que haber pasado esto.
         FernPillButton(
           label: texts.recognizeSelectedTooltip,
-          icon: Icons.auto_awesome_outlined,
+          icon: Symbols.auto_awesome,
           backgroundColor: context.colors.secondary,
           foregroundColor: context.colors.black,
           onPressed: onRecognize,
@@ -963,7 +950,7 @@ class _SelectionBar extends StatelessWidget {
             label: texts.acceptAboveLabel(
               (suggestionHighConfidence * 100).round(),
             ),
-            icon: Icons.done_all,
+            icon: Symbols.done_all,
             backgroundColor: context.colors.secondary,
             foregroundColor: context.colors.black,
             onPressed: onAcceptAbove,
@@ -972,7 +959,7 @@ class _SelectionBar extends StatelessWidget {
         const SizedBox(width: AppSpacing.s),
         FernPillButton(
           label: texts.actionDelete,
-          icon: Icons.delete_outline,
+          icon: Symbols.delete,
           backgroundColor: context.colors.error,
           foregroundColor: Colors.white,
           onPressed: onDelete,
@@ -980,7 +967,7 @@ class _SelectionBar extends StatelessWidget {
         const SizedBox(width: AppSpacing.s),
         FernPillButton(
           label: texts.actionConfirm,
-          icon: Icons.check,
+          icon: Symbols.check,
           backgroundColor: context.colors.primary,
           foregroundColor: context.colors.black,
           onPressed: () =>
@@ -991,37 +978,8 @@ class _SelectionBar extends StatelessWidget {
   }
 }
 
-
 /// Un control con un rótulo encima que dice qué es.
 ///
 /// Dos desplegables uno al lado del otro no se distinguen por su contenido:
 /// «Todo» y «Todos» se leen igual, y hay que abrirlos para saber cuál es cuál.
 /// El rótulo es lo que evita esa apertura a ciegas.
-class _LabeledControl extends StatelessWidget {
-  final String label;
-  final Widget child;
-
-  const _LabeledControl({required this.label, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.m),
-          child: Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: context.colors.unremarked),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xxs),
-        child,
-      ],
-    );
-  }
-}

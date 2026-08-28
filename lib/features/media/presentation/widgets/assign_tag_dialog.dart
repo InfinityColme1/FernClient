@@ -11,6 +11,7 @@ import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -169,7 +170,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
       onRemove: () => _removeTag(tag),
       leading: FernAvatar(
         imagePath: tag.picturePath,
-        fallbackIcon: Icons.label,
+        fallbackIcon: Symbols.label,
         radius: AppSizes.avatarSmall,
         iconSize: AppSizes.iconCompact,
         backgroundColor:
@@ -190,7 +191,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
       onClose: () => context.pop(),
       leftContent: FernDialogSidePanel.list(
         header: FernSectionHeader(
-          icon: Icons.label_outline,
+          icon: Symbols.label,
           title: texts.tagsTitle,
         ),
         items: chips.isNotEmpty

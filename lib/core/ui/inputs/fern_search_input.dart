@@ -5,6 +5,8 @@ import 'package:Fern/core/ui/display/fern_progress_indicator.dart';
 import 'package:Fern/core/ui/inputs/fern_outlined_field.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 
 /// Campo de búsqueda con contorno, etiqueta flotante y sugerencias en overlay.
 ///
@@ -198,7 +200,8 @@ class _FernSearchInputState extends State<FernSearchInput> {
                 ),
               (false, true) => null,
               (false, false) => IconButton(
-                  icon: Icon(Icons.cancel, color: context.colors.black),
+                  tooltip: AppLocalizations.of(context).actionClearSearch,
+                  icon: Icon(Symbols.cancel, color: context.colors.black),
                   onPressed: () {
                     _controller.clear();
                     _hideOverlay();

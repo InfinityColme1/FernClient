@@ -20,6 +20,7 @@ import 'package:Fern/features/recognition/presentation/widgets/training_panel.da
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 var _nextId = 0;
 
@@ -179,7 +180,7 @@ void main() {
       );
 
       // Se entrena sabiendo, que es distinto de no poder.
-      expect(find.byIcon(Icons.warning_amber_rounded), findsWidgets);
+      expect(find.byIcon(Symbols.warning_amber), findsWidgets);
       expect(_canTrain(tester), isTrue);
     });
 

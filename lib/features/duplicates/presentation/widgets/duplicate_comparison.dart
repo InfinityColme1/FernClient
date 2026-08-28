@@ -11,6 +11,7 @@ import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/duplicates/domain/services/duplicate_detail.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:intl/intl.dart';
 
 /// Las copias de un grupo, una al lado de otra, con la que se conserva marcada.
@@ -130,26 +131,26 @@ class _CopyCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           _Line(
-            icon: Icons.save_outlined,
+            icon: Symbols.save,
             text: formatFileWeight(copy.sizeInBytes),
           ),
           _Line(
-            icon: Icons.event_outlined,
+            icon: Symbols.event,
             text: DateFormat.yMMMd(
               Localizations.localeOf(context).languageCode,
             ).format(copy.media.downloaded),
           ),
           _Line(
-            icon: Icons.person_outline,
+            icon: Symbols.person,
             text: _creatorOf(context),
           ),
           _Line(
-            icon: Icons.sell_outlined,
+            icon: Symbols.sell,
             text: texts.duplicatesTagCount(copy.tagCount),
           ),
           if (copy.media.isFavorite)
             _Line(
-              icon: Icons.favorite,
+              icon: Symbols.favorite,
               text: texts.duplicatesFavorite,
               color: colors.terciary,
             ),
@@ -253,14 +254,7 @@ class _CopyPreviewState extends State<_CopyPreview> {
   Widget build(BuildContext context) {
     final path = _isVideo ? _preview?.thumbnailPath : widget.path;
 
-    if (path == null) {
-      return Center(
-        child: Icon(
-          _isVideo ? Icons.movie_outlined : Icons.broken_image_outlined,
-          color: context.colors.unremarked,
-        ),
-      );
-    }
+    if (path == null) return FernBrokenMedia(isVideo: _isVideo);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
@@ -270,12 +264,7 @@ class _CopyPreviewState extends State<_CopyPreview> {
         width: double.infinity,
         // Que un fichero no se pueda pintar no puede tumbar la comparación: el
         // resto de la ficha sigue sirviendo para elegir.
-        errorBuilder: (context, error, stack) => Center(
-          child: Icon(
-            Icons.broken_image_outlined,
-            color: context.colors.unremarked,
-          ),
-        ),
+        errorBuilder: (_, _, _) => const FernBrokenMedia(),
       ),
     );
   }

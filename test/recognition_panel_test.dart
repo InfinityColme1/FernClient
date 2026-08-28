@@ -17,6 +17,7 @@ import 'package:Fern/features/recognition/presentation/widgets/recognition_panel
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 RecognitionModelEntity _model(double threshold) => RecognitionModelEntity(
       id: 1,
@@ -85,7 +86,7 @@ void main() {
     testWidgets('bajar resta cinco puntos', (tester) async {
       await pump(tester, 0.35);
 
-      await tester.tap(find.byIcon(Icons.remove));
+      await tester.tap(find.byIcon(Symbols.remove));
       await tester.pump();
 
       expect(saved.single.confidenceThreshold, closeTo(0.30, 0.0001));
@@ -94,7 +95,7 @@ void main() {
     testWidgets('subir suma cinco puntos', (tester) async {
       await pump(tester, 0.35);
 
-      await tester.tap(find.byIcon(Icons.add));
+      await tester.tap(find.byIcon(Symbols.add));
       await tester.pump();
 
       expect(saved.single.confidenceThreshold, closeTo(0.40, 0.0001));
@@ -103,7 +104,7 @@ void main() {
     testWidgets('se puede llegar hasta el mínimo', (tester) async {
       await pump(tester, recognitionFloor + 0.05);
 
-      await tester.tap(find.byIcon(Icons.remove));
+      await tester.tap(find.byIcon(Symbols.remove));
       await tester.pump();
 
       expect(saved.single.confidenceThreshold, closeTo(recognitionFloor, 0.0001));
@@ -118,7 +119,7 @@ void main() {
       // sin que cambie nada es peor que uno que se para.
       final button = tester.widget<IconButton>(
         find.ancestor(
-          of: find.byIcon(Icons.remove),
+          of: find.byIcon(Symbols.remove),
           matching: find.byType(IconButton),
         ),
       );
@@ -132,7 +133,7 @@ void main() {
       // Un listón que no deja pasar jamás una sugerencia es apagar el modelo.
       final button = tester.widget<IconButton>(
         find.ancestor(
-          of: find.byIcon(Icons.add),
+          of: find.byIcon(Symbols.add),
           matching: find.byType(IconButton),
         ),
       );

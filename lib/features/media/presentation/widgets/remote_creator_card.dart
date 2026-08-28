@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/remote_creator.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:intl/intl.dart';
 
 /// Un creador de una fuente remota, para elegir de quién traerse contenido.
@@ -246,7 +247,7 @@ class _RemoteCreatorCardState extends State<RemoteCreatorCard> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          Icons.bookmark_added_outlined,
+          Symbols.bookmark_added,
           size: AppSizes.iconSmall,
           color: context.colors.terciary,
         ),
@@ -270,7 +271,7 @@ class _RemoteCreatorCardState extends State<RemoteCreatorCard> {
     return GestureDetector(
       onTap: onSelectionToggled,
       child: Icon(
-        isSelected ? Icons.check_circle : Icons.circle_outlined,
+        isSelected ? Symbols.check_circle : Symbols.circle,
         color: isSelected ? context.colors.primary : context.colors.gray,
         size: AppSizes.iconMedium,
       ),

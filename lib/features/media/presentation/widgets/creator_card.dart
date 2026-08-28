@@ -22,6 +22,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -193,7 +194,7 @@ class _CreatorCardState extends State<CreatorCard> {
       showFernToast(
         context,
         AppLocalizations.of(context).creatorNameTaken,
-        icon: Icons.error_outline,
+        icon: Symbols.error,
       );
       return;
     }
@@ -320,7 +321,7 @@ class _CreatorCardState extends State<CreatorCard> {
                     // la pantalla con la rejilla, y el avatar es lo que más ocupa.
                     avatar: FernEditableAvatar(
                       imagePath: _picturePath,
-                      fallbackIcon: Icons.person_outline,
+                      fallbackIcon: Symbols.person,
                       radius: AppSizes.avatarXLarge,
                       iconSize: AppSizes.iconHuge,
                       onTap: _pickImage,
@@ -365,7 +366,7 @@ class _CreatorCardState extends State<CreatorCard> {
               children: [
                 FernPillButton(
                   label: texts.actionDeleteCreator,
-                  icon: Icons.delete_outline,
+                  icon: Symbols.delete,
                   backgroundColor: context.colors.error,
                   foregroundColor: Colors.white,
                   onPressed: _isBusy || _isUnknown ? null : () => _run(_delete),
@@ -373,7 +374,7 @@ class _CreatorCardState extends State<CreatorCard> {
                 _unassignButton(texts),
                 FernPillButton(
                   label: texts.actionSave,
-                  icon: Icons.check,
+                  icon: Symbols.check,
                   backgroundColor: context.colors.primary,
                   foregroundColor: context.colors.black,
                   onPressed: _isBusy ? null : () => _run(_save),
@@ -393,8 +394,8 @@ class _CreatorCardState extends State<CreatorCard> {
   Widget _assignUrlsButton(AppLocalizations texts) {
     return IconButton(
       icon: Icon(
-        _sourceUrls.isEmpty ? Icons.add_link : Icons.link,
-        size: AppSizes.iconExtraLarge,
+        _sourceUrls.isEmpty ? Symbols.add_link : Symbols.link,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.assignUrlsCreatorTooltip,
       onPressed: _isBusy ? null : _assignUrls,
@@ -473,14 +474,14 @@ class _CreatorCardState extends State<CreatorCard> {
             ),
           ),
           _rowButton(
-            icon: Icons.check,
+            icon: Symbols.check,
             tooltip: texts.doneEditingProfileTooltip,
             // Sólo se sale del modo edición: lo escrito se queda en el campo y
             // se guarda con el resto de la ficha.
             onPressed: () => setState(() => _editingProfiles.remove(index)),
           ),
           _rowButton(
-            icon: Icons.close,
+            icon: Symbols.close,
             tooltip: texts.removeProfileTooltip,
             onPressed: () => _removeProfile(index),
           ),
@@ -505,7 +506,7 @@ class _CreatorCardState extends State<CreatorCard> {
               message: texts.openProfileTooltip,
               child: Row(
                 children: [
-                  const Icon(Icons.open_in_new, size: AppSizes.iconCompact),
+                  const Icon(Symbols.open_in_new, size: AppSizes.iconCompact),
                   const SizedBox(width: AppSpacing.s),
                   Expanded(
                     child: Text(
@@ -521,7 +522,7 @@ class _CreatorCardState extends State<CreatorCard> {
           ),
         ),
         _rowButton(
-          icon: Icons.edit_outlined,
+          icon: Symbols.edit,
           tooltip: texts.editProfileTooltip,
           onPressed: () => setState(() => _editingProfiles.add(index)),
         ),
@@ -562,8 +563,8 @@ class _CreatorCardState extends State<CreatorCard> {
   Widget _recognizeButton(AppLocalizations texts) {
     return IconButton(
       icon: const Icon(
-        Icons.auto_awesome_outlined,
-        size: AppSizes.iconExtraLarge,
+        Symbols.auto_awesome,
+        size: AppSizes.iconCardAction,
       ),
       tooltip: texts.recognizeCreatorTooltip,
       onPressed: _isBusy ? null : _recognizeAll,
@@ -589,7 +590,7 @@ class _CreatorCardState extends State<CreatorCard> {
       selector: (state) => state.selectedIds.isNotEmpty,
       builder: (context, hasSelection) => FernPillButton(
         label: texts.actionUnassignCreator,
-        icon: Icons.person_remove_outlined,
+        icon: Symbols.person_remove,
         backgroundColor: context.colors.secondary,
         foregroundColor: context.colors.black,
         onPressed: hasSelection && !_isUnknown

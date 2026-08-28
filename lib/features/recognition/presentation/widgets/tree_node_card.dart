@@ -5,6 +5,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/model_tree_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Un modelo dentro del árbol.
 ///
@@ -68,7 +69,7 @@ class TreeNodeCard extends StatelessWidget {
                   children: [
                     FernAvatar(
                       imagePath: node.model.picturePath,
-                      fallbackIcon: Icons.hub_outlined,
+                      fallbackIcon: Symbols.hub,
                       radius: AppSizes.avatarSmall,
                       iconSize: AppSizes.iconSmall,
                     ),
@@ -88,7 +89,7 @@ class TreeNodeCard extends StatelessWidget {
                         iconSize: AppSizes.iconSmall,
                         visualDensity: VisualDensity.compact,
                         icon: Icon(
-                          Icons.close,
+                          Symbols.close,
                           color: context.colors.unremarked,
                         ),
                       ),
@@ -118,7 +119,7 @@ class TreeNodeCard extends StatelessWidget {
       return Row(
         children: [
           Icon(
-            Icons.warning_amber_rounded,
+            Symbols.warning_amber,
             size: AppSizes.iconSmall,
             color: context.colors.error,
           ),

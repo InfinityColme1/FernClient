@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Pregunta antes de instalar la versión de tarjeta gráfica.
 ///
@@ -37,11 +38,11 @@ class ConfirmGpuDialog extends StatelessWidget {
         children: [
           Text(texts.gpuDialogTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.l),
-          _point(context, Icons.speed, texts.gpuDialogBenefit),
+          _point(context, Symbols.speed, texts.gpuDialogBenefit),
           const SizedBox(height: AppSpacing.m),
-          _point(context, Icons.schedule, texts.gpuDialogTime),
+          _point(context, Symbols.schedule, texts.gpuDialogTime),
           const SizedBox(height: AppSpacing.m),
-          _point(context, Icons.storage_outlined, texts.gpuDialogSize),
+          _point(context, Symbols.storage, texts.gpuDialogSize),
           const SizedBox(height: AppSpacing.l),
           Text(
             texts.gpuDialogReversible,
@@ -52,7 +53,7 @@ class ConfirmGpuDialog extends StatelessWidget {
       ),
       actionButton: FernPillButton(
         label: texts.gpuDialogConfirm,
-        icon: Icons.bolt,
+        icon: Symbols.bolt,
         backgroundColor: context.colors.primary,
         foregroundColor: context.colors.black,
         onPressed: () => Navigator.of(context).pop(true),
