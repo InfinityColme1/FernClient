@@ -29,6 +29,17 @@ class TagModel {
   /// que es como se comparan las dos listas entre sí.
   List<String> nsfwSourceUrls = const [];
 
+  /// La etiqueta identifica a una persona o a un personaje.
+  ///
+  /// Es lo único que la separa de las demás, y la separación es sobre todo
+  /// conceptual: se gestiona en su propia pantalla en vez de mezclada con los
+  /// conceptos y las cosas. Fuera de ahí sigue siendo una etiqueta y se comporta
+  /// como tal al asignar, al buscar y al colgar de otra.
+  ///
+  /// De fábrica `false`: lo que ya hay en la base sigue siendo una etiqueta
+  /// normal, que es lo correcto. Separarlas es cosa del usuario, una a una.
+  bool isPerson = false;
+
   /// Contenido no apto: lo que lleve esta etiqueta no se ve con el modo NSFW
   /// apagado.
   ///
@@ -69,6 +80,7 @@ class TagModel {
     this.sourceUrls = const [],
     this.nsfwSourceUrls = const [],
     this.isNsfw = false,
+    this.isPerson = false,
   });
 
   TagEntity toEntity() =>
@@ -94,6 +106,7 @@ class TagModel {
       sourceUrls: sourceUrls,
       nsfwSourceUrls: nsfwSourceUrls,
       isNsfw: isNsfw,
+      isPerson: isPerson,
       children: children,
       // Planas: sin sus hijas ni sus propias hermanas. Lo que hace falta de una
       // hermana es su nombre, y recorrer sus ramas aquí acabaría cargando media
@@ -122,6 +135,7 @@ class TagModel {
       sourceUrls: entity.sourceUrls,
       nsfwSourceUrls: entity.nsfwSourceUrls,
       isNsfw: entity.isNsfw,
+      isPerson: entity.isPerson,
     );
   }
 }

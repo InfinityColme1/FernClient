@@ -22,23 +22,28 @@ const TagModelSchema = CollectionSchema(
       name: r'isNsfw',
       type: IsarType.bool,
     ),
-    r'name': PropertySchema(
+    r'isPerson': PropertySchema(
       id: 1,
+      name: r'isPerson',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 2,
       name: r'name',
       type: IsarType.string,
     ),
     r'nsfwSourceUrls': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'nsfwSourceUrls',
       type: IsarType.stringList,
     ),
     r'picturePath': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'picturePath',
       type: IsarType.string,
     ),
     r'sourceUrls': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'sourceUrls',
       type: IsarType.stringList,
     )
@@ -121,10 +126,11 @@ void _tagModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeBool(offsets[0], object.isNsfw);
-  writer.writeString(offsets[1], object.name);
-  writer.writeStringList(offsets[2], object.nsfwSourceUrls);
-  writer.writeString(offsets[3], object.picturePath);
-  writer.writeStringList(offsets[4], object.sourceUrls);
+  writer.writeBool(offsets[1], object.isPerson);
+  writer.writeString(offsets[2], object.name);
+  writer.writeStringList(offsets[3], object.nsfwSourceUrls);
+  writer.writeString(offsets[4], object.picturePath);
+  writer.writeStringList(offsets[5], object.sourceUrls);
 }
 
 TagModel _tagModelDeserialize(
@@ -136,10 +142,11 @@ TagModel _tagModelDeserialize(
   final object = TagModel(
     id: id,
     isNsfw: reader.readBoolOrNull(offsets[0]) ?? false,
-    name: reader.readString(offsets[1]),
-    nsfwSourceUrls: reader.readStringList(offsets[2]) ?? const [],
-    picturePath: reader.readStringOrNull(offsets[3]),
-    sourceUrls: reader.readStringList(offsets[4]) ?? const [],
+    isPerson: reader.readBoolOrNull(offsets[1]) ?? false,
+    name: reader.readString(offsets[2]),
+    nsfwSourceUrls: reader.readStringList(offsets[3]) ?? const [],
+    picturePath: reader.readStringOrNull(offsets[4]),
+    sourceUrls: reader.readStringList(offsets[5]) ?? const [],
   );
   return object;
 }
@@ -154,12 +161,14 @@ P _tagModelDeserializeProp<P>(
     case 0:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 2:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
       return (reader.readStringList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -317,6 +326,16 @@ extension TagModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isNsfw',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition> isPersonEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isPerson',
         value: value,
       ));
     });
@@ -1302,6 +1321,18 @@ extension TagModelQuerySortBy on QueryBuilder<TagModel, TagModel, QSortBy> {
     });
   }
 
+  QueryBuilder<TagModel, TagModel, QAfterSortBy> sortByIsPerson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPerson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterSortBy> sortByIsPersonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPerson', Sort.desc);
+    });
+  }
+
   QueryBuilder<TagModel, TagModel, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1353,6 +1384,18 @@ extension TagModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<TagModel, TagModel, QAfterSortBy> thenByIsPerson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPerson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterSortBy> thenByIsPersonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPerson', Sort.desc);
+    });
+  }
+
   QueryBuilder<TagModel, TagModel, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1383,6 +1426,12 @@ extension TagModelQueryWhereDistinct
   QueryBuilder<TagModel, TagModel, QDistinct> distinctByIsNsfw() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isNsfw');
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QDistinct> distinctByIsPerson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isPerson');
     });
   }
 
@@ -1424,6 +1473,12 @@ extension TagModelQueryProperty
   QueryBuilder<TagModel, bool, QQueryOperations> isNsfwProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isNsfw');
+    });
+  }
+
+  QueryBuilder<TagModel, bool, QQueryOperations> isPersonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isPerson');
     });
   }
 

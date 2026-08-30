@@ -1964,6 +1964,40 @@ class AppLocalizationsCa extends AppLocalizations {
   String get noSourceUrls => 'Sense adreces vinculades';
 
   @override
+  String get showsTagBranchOnFilter =>
+      'Mostra la branca sencera en filtrar etiquetes';
+
+  @override
+  String get showsTagBranchOnFilterDescription =>
+      'En filtrar la llista d\'etiquetes, cada coincidència arriba amb el que en penja, per veure la branca i no només el nom.';
+
+  @override
+  String get peopleTitle => 'Persones';
+
+  @override
+  String get navPersonaManager => 'Persones';
+
+  @override
+  String get tagIsPerson => 'Aquesta etiqueta és una persona';
+
+  @override
+  String get tagIsPersonDescription =>
+      'Les persones i els personatges es gestionen a la seva pantalla. Continua sent una etiqueta: en assignar i en cercar es comporta igual.';
+
+  @override
+  String get openPeopleTooltip => 'Vés a les persones';
+
+  @override
+  String get openTagsTooltip => 'Vés a les etiquetes';
+
+  @override
+  String get noPeopleYet => 'Encara no hi ha persones';
+
+  @override
+  String get noPeopleYetHint =>
+      'Marca una etiqueta com a persona des de la seva fitxa, o crea\'n una des d\'aquí.';
+
+  @override
   String get markLinkNsfwTooltip => 'Marca l\'adreça com a no apta';
 
   @override

@@ -121,25 +121,35 @@ class FernCreateDialog extends StatefulWidget {
   /// no aparece.
   final String? currentMediaPath;
 
+  /// La etiqueta nace ya marcada como persona.
+  ///
+  /// Lo pone a `true` quien abre el diálogo desde la pantalla de personas: allí
+  /// crear una etiqueta normal sería crearla para que desaparezca de la lista.
+  final bool startsAsPerson;
+
   const FernCreateDialog.tag({
     super.key,
     this.initialName = '',
     this.currentMediaPath,
+    this.startsAsPerson = false,
   }) : type = CreateDialogType.tag;
 
   const FernCreateDialog.creator({super.key, this.currentMediaPath})
       : type = CreateDialogType.creator,
-        initialName = '';
+        initialName = '',
+        startsAsPerson = false;
 
   const FernCreateDialog.fernie({super.key})
       : type = CreateDialogType.fernie,
         initialName = '',
-        currentMediaPath = null;
+        currentMediaPath = null,
+        startsAsPerson = false;
 
   const FernCreateDialog.model({super.key})
       : type = CreateDialogType.model,
         initialName = '',
-        currentMediaPath = null;
+        currentMediaPath = null,
+        startsAsPerson = false;
 
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
@@ -176,6 +186,9 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
   /// La etiqueta nace marcada como NSFW.
   bool _isNsfw = false;
+
+  /// La etiqueta nace identificando a una persona o a un personaje.
+  late bool _isPerson = widget.startsAsPerson;
   TagEntity? _parentTag;
 
   /// Direcciones vinculadas a la etiqueta que se está creando.
@@ -313,6 +326,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
                   if (link.isNsfw) link.url,
               ],
               isNsfw: _isNsfw,
+              isPerson: _isPerson,
             ),
             parent: _parentTag,
           ),
@@ -430,6 +444,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                _personToggle(texts),
                 _nsfwToggle(texts),
                 _assignUrlsButton(texts),
               ],
@@ -603,6 +618,27 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           color: _isNsfw ? context.colors.terciary : null,
         ),
         onPressed: () => setState(() => _isNsfw = !_isNsfw),
+      ),
+    );
+  }
+
+  /// Decir ya al crearla que es una persona.
+  ///
+  /// Un icono más de la fila de arriba, junto a los otros dos: son las tres
+  /// cosas que se le hacen a la etiqueta y que no son rellenar su ficha. Lo que
+  /// hace lo cuenta su tooltip.
+  ///
+  /// A diferencia del de NSFW, éste sale siempre: no depende de que haya
+  /// contraseña puesta ni esconde nada, sólo dice en qué lista se gestiona.
+  Widget _personToggle(AppLocalizations texts) {
+    return Tooltip(
+      message: texts.tagIsPerson,
+      child: IconButton(
+        icon: Icon(
+          Symbols.face,
+          color: _isPerson ? context.colors.terciary : null,
+        ),
+        onPressed: () => setState(() => _isPerson = !_isPerson),
       ),
     );
   }

@@ -334,6 +334,15 @@ class AppSettingsEntity extends Equatable {
   /// uso de esto y el que obligaba a volver a marcarlo todo cada vez.
   final bool keepsSelectionOnDrop;
 
+  /// Al filtrar la lista de la pantalla de gestión de etiquetas, lo que encaja
+  /// llega con toda su descendencia colgando.
+  ///
+  /// Encendido de fábrica. Buscar una etiqueta madre y ver sólo su nombre deja a
+  /// medias justo lo que se venía a hacer: casi siempre se busca la rama, no la
+  /// fila. Apagado se comporta como antes, con las coincidencias sueltas y en
+  /// plano.
+  final bool showsTagBranchOnFilter;
+
   /// La lista de etiquetas del menú lateral enseña el avatar de cada una en vez
   /// del icono de siempre.
   ///
@@ -432,6 +441,7 @@ class AppSettingsEntity extends Equatable {
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
     this.keepsSelectionOnDrop = false,
+    this.showsTagBranchOnFilter = true,
     this.themeMode = AppThemeMode.system,
     this.customTheme = const CustomThemeEntity(),
     this.viewerSaveBehavior = ViewerSaveBehavior.goToNext,
@@ -473,6 +483,7 @@ class AppSettingsEntity extends Equatable {
     bool? autoTagRemoteSource,
     bool? showListAvatars,
     bool? keepsSelectionOnDrop,
+    bool? showsTagBranchOnFilter,
     AppThemeMode? themeMode,
     CustomThemeEntity? customTheme,
     ViewerSaveBehavior? viewerSaveBehavior,
@@ -512,6 +523,8 @@ class AppSettingsEntity extends Equatable {
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
       keepsSelectionOnDrop: keepsSelectionOnDrop ?? this.keepsSelectionOnDrop,
+      showsTagBranchOnFilter:
+          showsTagBranchOnFilter ?? this.showsTagBranchOnFilter,
       themeMode: themeMode ?? this.themeMode,
       customTheme: customTheme ?? this.customTheme,
       viewerSaveBehavior: viewerSaveBehavior ?? this.viewerSaveBehavior,
@@ -551,6 +564,7 @@ class AppSettingsEntity extends Equatable {
         autoTagRemoteSource,
         showListAvatars,
         keepsSelectionOnDrop,
+        showsTagBranchOnFilter,
         themeMode,
         customTheme,
         viewerSaveBehavior,

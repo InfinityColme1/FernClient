@@ -15,6 +15,7 @@
 import 'dart:ffi' show Abi;
 import 'dart:io';
 
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
@@ -287,6 +288,61 @@ void main() {
 
       expect(tag.marksLink('reddit.com/r/dos'), isTrue);
       expect(tag.marksLink('reddit.com/r/uno'), isFalse);
+    });
+  });
+
+  // La separacion entre personas y etiquetas: un campo mas, aditivo. Lo que ya
+  // hay en la base sigue siendo una etiqueta normal, que es lo correcto:
+  // separarlas es cosa del usuario, una a una.
+  group('las personas', () {
+    test('lo que ya estaba guardado no es una persona', () async {
+      expect((await fromTree(1)).isPerson, isFalse);
+    });
+
+    test('convertir una etiqueta la marca, y el arbol lo trae', () async {
+      final tag = await fromTree(1);
+
+      final result = await repository.updateTag(tag.copyWith(isPerson: true));
+      expect(result, isA<DataSuccess>());
+
+      expect((await isar.tagModels.get(1))!.isPerson, isTrue);
+      expect((await fromTree(1)).isPerson, isTrue);
+    });
+
+    test('y se puede deshacer', () async {
+      await repository.updateTag((await fromTree(1)).copyWith(isPerson: true));
+      await repository.updateTag((await fromTree(1)).copyWith(isPerson: false));
+
+      expect((await fromTree(1)).isPerson, isFalse);
+    });
+
+    // Convertirla no le quita nada de lo suyo: sigue siendo la misma etiqueta,
+    // con su contenido, sus direcciones y su sitio en el arbol.
+    test('convertir no toca lo demas', () async {
+      await repository.saveTagSiblings(1, [2]);
+
+      final tag = await fromTree(1);
+      await repository.updateTag(tag.copyWith(isPerson: true));
+
+      final after = await fromTree(1);
+
+      expect(after.sourceUrls, ['reddit.com/r/miraculous']);
+      expect(after.siblings.map((each) => each.name), ['serie']);
+      expect(after.name, 'ladybug');
+    });
+
+    test('una persona nueva nace marcada', () async {
+      final result = await repository.saveTag(
+        const TagEntity(
+          id: unsavedId,
+          name: 'marinette',
+          children: [],
+          isPerson: true,
+        ),
+      );
+
+      expect(result, isA<DataSuccess>());
+      expect(result.data!.isPerson, isTrue);
     });
   });
 }

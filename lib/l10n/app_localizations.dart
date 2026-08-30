@@ -3144,6 +3144,66 @@ abstract class AppLocalizations {
   /// **'No linked addresses'**
   String get noSourceUrls;
 
+  /// No description provided for @showsTagBranchOnFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the whole branch when filtering tags'**
+  String get showsTagBranchOnFilter;
+
+  /// No description provided for @showsTagBranchOnFilterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtering the tag list also brings whatever hangs from each match, so you can see the branch and not just the name.'**
+  String get showsTagBranchOnFilterDescription;
+
+  /// No description provided for @peopleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get peopleTitle;
+
+  /// No description provided for @navPersonaManager.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get navPersonaManager;
+
+  /// No description provided for @tagIsPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'This tag is a person'**
+  String get tagIsPerson;
+
+  /// No description provided for @tagIsPersonDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People and characters are managed on their own screen. It is still a tag: it keeps working the same when tagging and searching.'**
+  String get tagIsPersonDescription;
+
+  /// No description provided for @openPeopleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to people'**
+  String get openPeopleTooltip;
+
+  /// No description provided for @openTagsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to tags'**
+  String get openTagsTooltip;
+
+  /// No description provided for @noPeopleYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No people yet'**
+  String get noPeopleYet;
+
+  /// No description provided for @noPeopleYetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a tag as a person from its card, or create one from here.'**
+  String get noPeopleYetHint;
+
   /// No description provided for @markLinkNsfwTooltip.
   ///
   /// In en, this message translates to:

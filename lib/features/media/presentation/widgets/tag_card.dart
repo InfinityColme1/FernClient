@@ -103,6 +103,14 @@ class _TagCardState extends State<TagCard> {
   /// sería la peor forma de contarlo.
   late bool _isNsfw = widget.tag.isNsfw;
 
+  /// La etiqueta identifica a una persona.
+  ///
+  /// Se guarda con el botón de guardar, como el nombre y el avatar: es un campo
+  /// de la etiqueta y no una decisión que haga desaparecer contenido. Al
+  /// guardarla cambia de lista, y la pantalla se encuentra sin la que estaba
+  /// elegida y pasa a la primera, que es lo que ya hace al borrarla.
+  late bool _isPerson = widget.tag.isPerson;
+
   /// A cuántos contenidos afecta la marca, cuando se acaba de tocar.
   /// Las etiquetas relacionadas, tal y como se están editando.
   ///
@@ -192,6 +200,7 @@ class _TagCardState extends State<TagCard> {
           name: name,
           picturePath: _picturePath,
           children: widget.tag.children,
+          isPerson: _isPerson,
         ),
         parent: _parent,
       ),
@@ -345,6 +354,7 @@ class _TagCardState extends State<TagCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                _personButton(texts),
                 _nsfwButton(texts),
                 _relationsButton(texts),
                 _recognizeButton(texts),
@@ -471,6 +481,27 @@ class _TagCardState extends State<TagCard> {
       ),
       tooltip: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
       onPressed: _isBusy ? null : () => _run(() => _setNsfw(!_isNsfw)),
+    );
+  }
+
+  /// El interruptor de «esta etiqueta es una persona».
+  ///
+  /// Es lo que hace usable la separación el primer día: todo lo que ya hay en la
+  /// base está mezclado, y sin esto habría que borrar cada persona y volver a
+  /// crearla —perdiendo de paso su contenido, sus direcciones y sus relaciones—.
+  ///
+  /// Sale siempre, también sin contraseña puesta: no esconde nada, sólo dice en
+  /// qué lista se gestiona.
+  Widget _personButton(AppLocalizations texts) {
+    return IconButton(
+      icon: Icon(
+        Symbols.face,
+        size: AppSizes.iconCardAction,
+        color: _isPerson ? context.colors.terciary : null,
+      ),
+      tooltip: texts.tagIsPerson,
+      onPressed:
+          _isBusy ? null : () => setState(() => _isPerson = !_isPerson),
     );
   }
 

@@ -180,6 +180,16 @@ class KeepsSelectionOnDropToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Enciende o apaga que el filtro de la lista de etiquetas traiga la rama.
+class ShowsTagBranchOnFilterToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ShowsTagBranchOnFilterToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 /// Cambia el tema con el que se pinta la aplicación.
 ///
 /// Se ve al instante y en toda la aplicación: el tema cuelga de la raíz, así que

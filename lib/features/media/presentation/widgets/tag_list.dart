@@ -2,7 +2,9 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +46,26 @@ enum TagDropMode {
 /// podía hacer abriendo la ficha de cada una, y con el árbol grande era ir y
 /// venir por una lista de doscientas.
 class TagList extends StatefulWidget {
+  /// El árbol **entero**, con etiquetas y personas mezcladas. Aquí se reparte.
   final List<TagEntity> tags;
+
+  /// Si esta lista es la de personas. La otra enseña todo lo demás.
+  ///
+  /// El árbol es uno solo y compartido: una persona puede colgar de una etiqueta
+  /// normal y ser hermana suya. Lo único que cambia es quién se pinta dónde.
+  final bool showsPeople;
+
+  /// Qué hacer al pulsar el botón de la cabecera, que lleva a la otra lista. Sin
+  /// esto, el botón no sale.
+  final VoidCallback? onSwitchList;
+
+  /// Si al filtrar por nombre, lo que encaja llega con su descendencia.
+  ///
+  /// Sin decir nada se lee del ajuste, como la lista de fernies lee el filtro
+  /// NSFW al pintarse: así cambiarlo en los ajustes se ve al volver, sin que la
+  /// pantalla de encima tenga que enterarse ni pasarlo hacia abajo. Se puede
+  /// forzar para poder probar las dos formas sin localizador de servicios.
+  final bool? showsBranchOnFilter;
 
   /// Etiqueta marcada, por identificador: al guardar cambia el nombre y el
   /// avatar, pero el identificador es el mismo y la fila sigue marcada.
@@ -67,7 +88,32 @@ class TagList extends StatefulWidget {
     required this.onSelected,
     this.selectedTagId,
     this.onDropped,
+    this.showsPeople = false,
+    this.onSwitchList,
+    this.showsBranchOnFilter,
   });
+
+  /// El árbol con sólo las etiquetas de una clase, **sin podar ramas enteras**.
+  ///
+  /// Una etiqueta que no entra no se lleva por delante lo que cuelga de ella: sus
+  /// hijas suben al sitio que deja. Es lo que hace que una persona colgada de una
+  /// etiqueta normal aparezca en la raíz de la lista de personas, y al revés, sin
+  /// que ninguna se pierda por estar en la rama equivocada.
+  static List<TagEntity> ofKind(List<TagEntity> tags, {required bool people}) {
+    final kept = <TagEntity>[];
+
+    for (final tag in tags) {
+      final children = ofKind(tag.children, people: people);
+
+      if (tag.isPerson == people) {
+        kept.add(tag.copyWith(children: children));
+      } else {
+        kept.addAll(children);
+      }
+    }
+
+    return kept;
+  }
 
   /// Las etiquetas aplanadas en el orden en el que se pintan, cada una con su
   /// nivel.
@@ -122,22 +168,61 @@ class _TagListState extends State<TagList> {
   /// Para pasar el punto donde se ha soltado a coordenadas de la pila.
   final _stackKey = GlobalKey();
 
+  /// El árbol de esta lista: sólo las de su clase, con las demás apartadas.
+  List<TagEntity> get _tree =>
+      TagList.ofKind(widget.tags, people: widget.showsPeople);
+
+  /// Si la rama acompaña a lo que encaja. De fábrica sí.
+  bool get _showsBranch =>
+      widget.showsBranchOnFilter ??
+      (getIt.isRegistered<SettingsRepository>()
+          ? getIt<SettingsRepository>().getSettings().showsTagBranchOnFilter
+          : true);
+
   /// Lo que se pinta: el árbol con su sangría, o lo que encaje con el filtro.
   ///
-  /// **Filtrando se pierde la sangría a propósito.** Lo que encaja puede estar a
-  /// tres niveles de distancia de lo siguiente que encaja, y sangrar filas
-  /// sueltas cuyas madres no se ven dibuja un árbol que no existe.
+  /// Filtrando hay dos formas, y el motivo de que haya dos es la sangría. Sin la
+  /// rama, **se pierde a propósito**: lo que encaja puede estar a tres niveles de
+  /// distancia de lo siguiente que encaja, y sangrar filas sueltas cuyas madres
+  /// no se ven dibuja un árbol que no existe. Con la rama ese motivo desaparece,
+  /// porque la madre de cada fila sangrada sí está: es la coincidencia de la que
+  /// cuelga.
   List<TagRow> get _rows {
     final needle = _query.trim().toLowerCase();
-    final all = TagList.flatten(widget.tags);
+    final tree = _tree;
 
-    if (needle.isEmpty) return all;
+    if (needle.isEmpty) return TagList.flatten(tree);
 
-    return [
-      for (final row in all)
-        if (row.tag.name.toLowerCase().contains(needle))
-          (tag: row.tag, depth: 0),
-    ];
+    final all = TagList.flatten(tree);
+
+    if (!_showsBranch) {
+      return [
+        for (final row in all)
+          if (row.tag.name.toLowerCase().contains(needle))
+            (tag: row.tag, depth: 0),
+      ];
+    }
+
+    // Cada coincidencia arranca en la raíz y su rama cuelga de ella, con la
+    // sangría contada **desde ella** y no desde el árbol entero.
+    //
+    // Sin llevar la cuenta de lo ya emitido, una hija que también encaja saldría
+    // dos veces: una colgando de su madre y otra por su cuenta. Como las madres
+    // van antes en el recorrido, la primera vez sale en su sitio.
+    final emitted = <int>{};
+    final rows = <TagRow>[];
+
+    for (final row in all) {
+      if (!row.tag.name.toLowerCase().contains(needle)) continue;
+      if (emitted.contains(row.tag.id)) continue;
+
+      for (final each in TagList.flatten([row.tag])) {
+        if (!emitted.add(each.tag.id)) continue;
+        rows.add(each);
+      }
+    }
+
+    return rows;
   }
 
   /// Si [dragged] se puede soltar sobre [target].
@@ -179,10 +264,30 @@ class _TagListState extends State<TagList> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s),
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.s,
+                right: AppSizes.scrollbarLane,
+              ),
               child: FernSectionHeader(
-                icon: Symbols.label,
-                title: texts.tagsTitle,
+                icon: widget.showsPeople ? Symbols.face : Symbols.label,
+                title:
+                    widget.showsPeople ? texts.peopleTitle : texts.tagsTitle,
+                // A la altura del rótulo y encima del buscador: es el mismo sitio
+                // en las dos listas, así que ir y volver es pulsar donde ya estaba
+                // el dedo.
+                trailing: widget.onSwitchList == null
+                    ? null
+                    : IconButton(
+                        icon: Icon(
+                          widget.showsPeople ? Symbols.label : Symbols.face,
+                          size: AppSizes.iconMedium,
+                        ),
+                        tooltip: widget.showsPeople
+                            ? texts.openTagsTooltip
+                            : texts.openPeopleTooltip,
+                        visualDensity: VisualDensity.compact,
+                        onPressed: widget.onSwitchList,
+                      ),
               ),
             ),
             // Encima de la lista y debajo del rótulo: filtra lo que hay justo

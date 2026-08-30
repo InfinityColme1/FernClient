@@ -1018,9 +1018,18 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         return DataException(DuplicateTagNameException(tag.name));
       }
 
+      final normalized = normalizedSourceUrls(tag.sourceUrls);
+
       final model = TagModel.fromEntity(tag)
         ..name = tag.name.trim()
-        ..sourceUrls = normalizedSourceUrls(tag.sourceUrls);
+        ..sourceUrls = normalized
+        // Las marcadas, normalizadas igual y sólo las que siguen estando: una
+        // etiqueta recién creada puede nacer ya con direcciones marcadas desde
+        // su diálogo.
+        ..nsfwSourceUrls = [
+          for (final url in normalizedSourceUrls(tag.nsfwSourceUrls))
+            if (normalized.contains(url)) url,
+        ];
 
       await _appDatabase.writeTxn(() async {
         model.id = await _appDatabase.tagModels.put(model);
@@ -1089,6 +1098,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       await _appDatabase.writeTxn(() async {
         model.name = tag.name;
         model.picturePath = tag.picturePath;
+        // Esto sí es un campo del formulario, a diferencia de las direcciones:
+        // el interruptor de «es una persona» está en la ficha y se guarda con
+        // ella. Cambiarlo la mueve de una lista a la otra.
+        model.isPerson = tag.isPerson;
         // **Las direcciones no se tocan aqui.** Tienen su propio
         // `saveTagSourceUrls`, como las hermanas tienen `saveTagSiblings` y la
         // marca NSFW tiene `setTagNsfw`. Mientras esto escribiera un campo que

@@ -17,8 +17,18 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-TagEntity _tag(int id, String name, {List<TagEntity> children = const []}) =>
-    TagEntity(id: id, name: name, children: children);
+TagEntity _tag(
+  int id,
+  String name, {
+  List<TagEntity> children = const [],
+  bool isPerson = false,
+}) =>
+    TagEntity(
+      id: id,
+      name: name,
+      children: children,
+      isPerson: isPerson,
+    );
 
 /// Un árbol de tres niveles:
 ///
@@ -38,6 +48,12 @@ Future<void> _pump(
   WidgetTester tester, {
   List<TagEntity>? tags,
   List<Dropped>? drops,
+  // Explícito y no por el ajuste: sin localizador de servicios el widget se
+  // quedaría con el valor de fábrica, y entonces cada prueba diría que comprueba
+  // una cosa mientras comprueba la otra.
+  bool showsBranchOnFilter = false,
+  bool showsPeople = false,
+  VoidCallback? onSwitchList,
 }) {
   return tester.pumpWidget(MaterialApp(
     theme: AppTheme.lightTheme,
@@ -52,6 +68,9 @@ Future<void> _pump(
         height: 600,
         child: TagList(
           tags: tags ?? _tree,
+          showsBranchOnFilter: showsBranchOnFilter,
+          showsPeople: showsPeople,
+          onSwitchList: onSwitchList,
           onSelected: (_) {},
           onDropped: (dragged, target, mode) => drops
               ?.add((dragged: dragged, target: target, mode: mode)),
@@ -221,6 +240,144 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Paisajes'), findsOneWidget);
+    });
+  });
+
+  // Con el ajuste puesto, lo que encaja llega con lo que cuelga de ello. El
+  // motivo por el que antes se aplanaba —sangrar filas cuyas madres no se ven
+  // dibuja un árbol que no existe— desaparece: la madre de cada fila sangrada
+  // es la coincidencia de la que cuelga.
+  group('el filtro con la rama', () {
+    testWidgets('la madre trae a las hijas y a las nietas', (tester) async {
+      await _pump(tester, showsBranchOnFilter: true);
+
+      await tester.enterText(find.byType(TextField), 'paisa');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Paisajes'), findsOneWidget);
+      expect(find.text('Montaña'), findsOneWidget);
+      expect(find.text('Nieve'), findsOneWidget);
+      expect(find.text('Retratos'), findsNothing);
+    });
+
+    testWidgets('sin él, sólo lo que encaja', (tester) async {
+      await _pump(tester);
+
+      await tester.enterText(find.byType(TextField), 'paisa');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Paisajes'), findsOneWidget);
+      expect(find.text('Montaña'), findsNothing);
+    });
+
+    // Si encajan madre e hija, la hija saldría dos veces: una colgando de su
+    // madre y otra por su cuenta. Como las madres van antes en el recorrido, la
+    // primera vez sale en su sitio.
+    testWidgets('una hija que también encaja no sale dos veces',
+        (tester) async {
+      await _pump(
+        tester,
+        showsBranchOnFilter: true,
+        tags: [
+          _tag(1, 'Nieve', children: [_tag(2, 'Nieve polvo')]),
+        ],
+      );
+
+      await tester.enterText(find.byType(TextField), 'nieve');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nieve'), findsOneWidget);
+      expect(find.text('Nieve polvo'), findsOneWidget);
+    });
+
+    testWidgets('la rama sale sangrada respecto a lo que encaja',
+        (tester) async {
+      await _pump(tester, showsBranchOnFilter: true);
+
+      await tester.enterText(find.byType(TextField), 'monta');
+      await tester.pumpAndSettle();
+
+      // «Montaña» está a un nivel del árbol, pero al ser la coincidencia arranca
+      // en la raíz: la sangría se cuenta desde ella y no desde el árbol entero.
+      final match = tester.getTopLeft(find.text('Montaña'));
+      final child = tester.getTopLeft(find.text('Nieve'));
+
+      expect(child.dx, greaterThan(match.dx));
+    });
+  });
+
+  // Las personas y las demás etiquetas comparten árbol y se listan aparte. Lo
+  // que no puede pasar es que una se pierda por estar en la rama de la otra
+  // clase.
+  group('el reparto entre etiquetas y personas', () {
+    final mixed = [
+      _tag(1, 'Miraculous', children: [
+        _tag(2, 'Marinette', isPerson: true, children: [
+          _tag(3, 'Trajes'),
+        ]),
+      ]),
+      _tag(4, 'Retratos'),
+    ];
+
+    testWidgets('la lista de etiquetas no enseña a las personas',
+        (tester) async {
+      await _pump(tester, tags: mixed);
+
+      expect(find.text('Miraculous'), findsOneWidget);
+      expect(find.text('Retratos'), findsOneWidget);
+      expect(find.text('Marinette'), findsNothing);
+    });
+
+    // Una etiqueta normal colgada de una persona no se pierde: sube al sitio que
+    // deja la persona.
+    testWidgets('lo que cuelga de una persona sigue en la de etiquetas',
+        (tester) async {
+      await _pump(tester, tags: mixed);
+
+      expect(find.text('Trajes'), findsOneWidget);
+    });
+
+    testWidgets('la lista de personas sólo enseña a las personas',
+        (tester) async {
+      await _pump(tester, tags: mixed, showsPeople: true);
+
+      expect(find.text('Marinette'), findsOneWidget);
+      expect(find.text('Miraculous'), findsNothing);
+      expect(find.text('Trajes'), findsNothing);
+    });
+
+    test('una persona bajo una etiqueta normal queda en la raíz', () {
+      final people = TagList.ofKind(mixed, people: true);
+
+      expect(people.map((tag) => tag.name), ['Marinette']);
+      expect(people.single.children, isEmpty);
+    });
+
+    test('y al revés: la normal bajo la persona también', () {
+      final tags = TagList.ofKind(mixed, people: false);
+      final rows = TagList.flatten(tags);
+
+      expect(
+        rows.map((row) => (row.tag.name, row.depth)),
+        [('Miraculous', 0), ('Trajes', 1), ('Retratos', 0)],
+      );
+    });
+
+    testWidgets('el botón de la cabecera lleva a la otra lista', (tester) async {
+      var switched = 0;
+
+      await _pump(tester, tags: mixed, onSwitchList: () => switched++);
+
+      await tester.tap(find.byTooltip('Ir a las personas'));
+      await tester.pump();
+
+      expect(switched, 1);
+    });
+
+    testWidgets('sin a dónde ir, no hay botón', (tester) async {
+      await _pump(tester, tags: mixed);
+
+      expect(find.byTooltip('Ir a las personas'), findsNothing);
     });
   });
 }

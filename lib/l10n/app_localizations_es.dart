@@ -1966,6 +1966,40 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noSourceUrls => 'Sin direcciones vinculadas';
 
   @override
+  String get showsTagBranchOnFilter =>
+      'Enseñar la rama entera al filtrar etiquetas';
+
+  @override
+  String get showsTagBranchOnFilterDescription =>
+      'Al filtrar la lista de etiquetas, cada coincidencia llega con lo que cuelga de ella, para ver la rama y no sólo el nombre.';
+
+  @override
+  String get peopleTitle => 'Personas';
+
+  @override
+  String get navPersonaManager => 'Personas';
+
+  @override
+  String get tagIsPerson => 'Esta etiqueta es una persona';
+
+  @override
+  String get tagIsPersonDescription =>
+      'Las personas y los personajes se gestionan en su propia pantalla. Sigue siendo una etiqueta: al asignar y al buscar se comporta igual.';
+
+  @override
+  String get openPeopleTooltip => 'Ir a las personas';
+
+  @override
+  String get openTagsTooltip => 'Ir a las etiquetas';
+
+  @override
+  String get noPeopleYet => 'Todavía no hay personas';
+
+  @override
+  String get noPeopleYetHint =>
+      'Marca una etiqueta como persona desde su ficha, o crea una desde aquí.';
+
+  @override
   String get markLinkNsfwTooltip => 'Marcar la dirección como no apta';
 
   @override

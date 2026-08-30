@@ -82,6 +82,18 @@ const deletedRoute = '/deleted';
 const creatorManagerRoute = '/creator-manager';
 const tagManagerRoute = '/tag-manager';
 
+/// Las etiquetas que identifican a una persona o a un personaje.
+///
+/// No está en el menú lateral a propósito: se llega con el botón de la cabecera
+/// de la lista de etiquetas, y desde allí se vuelve. Son la misma pantalla
+/// mirando dos cosas, no dos sitios distintos de la aplicación.
+///
+/// **Cuelga de la de etiquetas**, y por eso: el menú lateral marca el botón cuya
+/// ruta cubre la dirección (ver `sidebarSelectedId`), así que estando aquí sigue
+/// marcado «Etiquetas». Con una ruta suelta no se marcaría ninguno y el menú
+/// diría que no se está en ninguna parte.
+const personaManagerRoute = '$tagManagerRoute/people';
+
 // Reconocimiento. Las pantallas llegan en fases posteriores; las rutas se
 // declaran ya porque los avisos necesitan saber a dónde llevan.
 const fernieManagerRoute = '/fernies';
@@ -267,6 +279,10 @@ const showListAvatarsPreferenceKey = 'show_list_avatars';
 /// sin haberlo pedido es una selección que se arrastra sin querer a lo
 /// siguiente que se haga.
 const keepsSelectionOnDropPreferenceKey = 'keeps_selection_on_drop';
+
+/// Con qué clave se guarda si el filtro de la lista de etiquetas enseña
+/// también la descendencia de lo que encaja.
+const showsTagBranchOnFilterPreferenceKey = 'shows_tag_branch_on_filter';
 
 /// Cuánto se espera como mucho a que termine la relectura para devolver lo que
 /// estaba marcado. Es un tope de seguridad, no un tiempo de espera esperado: la

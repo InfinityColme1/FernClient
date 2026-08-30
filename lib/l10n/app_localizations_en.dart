@@ -1962,6 +1962,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSourceUrls => 'No linked addresses';
 
   @override
+  String get showsTagBranchOnFilter =>
+      'Show the whole branch when filtering tags';
+
+  @override
+  String get showsTagBranchOnFilterDescription =>
+      'Filtering the tag list also brings whatever hangs from each match, so you can see the branch and not just the name.';
+
+  @override
+  String get peopleTitle => 'People';
+
+  @override
+  String get navPersonaManager => 'People';
+
+  @override
+  String get tagIsPerson => 'This tag is a person';
+
+  @override
+  String get tagIsPersonDescription =>
+      'People and characters are managed on their own screen. It is still a tag: it keeps working the same when tagging and searching.';
+
+  @override
+  String get openPeopleTooltip => 'Go to people';
+
+  @override
+  String get openTagsTooltip => 'Go to tags';
+
+  @override
+  String get noPeopleYet => 'No people yet';
+
+  @override
+  String get noPeopleYetHint =>
+      'Mark a tag as a person from its card, or create one from here.';
+
+  @override
   String get markLinkNsfwTooltip => 'Mark this address as not safe';
 
   @override

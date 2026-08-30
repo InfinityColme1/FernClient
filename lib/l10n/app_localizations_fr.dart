@@ -1964,6 +1964,40 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noSourceUrls => 'Aucune adresse liée';
 
   @override
+  String get showsTagBranchOnFilter =>
+      'Afficher toute la branche en filtrant les étiquettes';
+
+  @override
+  String get showsTagBranchOnFilterDescription =>
+      'En filtrant la liste des étiquettes, chaque résultat arrive avec ce qui en dépend, pour voir la branche et pas seulement le nom.';
+
+  @override
+  String get peopleTitle => 'Personnes';
+
+  @override
+  String get navPersonaManager => 'Personnes';
+
+  @override
+  String get tagIsPerson => 'Cette étiquette est une personne';
+
+  @override
+  String get tagIsPersonDescription =>
+      'Les personnes et les personnages se gèrent sur leur propre écran. Cela reste une étiquette : l\'attribution et la recherche fonctionnent pareil.';
+
+  @override
+  String get openPeopleTooltip => 'Aller aux personnes';
+
+  @override
+  String get openTagsTooltip => 'Aller aux étiquettes';
+
+  @override
+  String get noPeopleYet => 'Aucune personne pour l\'instant';
+
+  @override
+  String get noPeopleYetHint =>
+      'Marquez une étiquette comme personne depuis sa fiche, ou créez-en une ici.';
+
+  @override
   String get markLinkNsfwTooltip => 'Marquer l\'adresse comme non adaptée';
 
   @override

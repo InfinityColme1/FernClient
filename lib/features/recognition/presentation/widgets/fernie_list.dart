@@ -18,7 +18,10 @@ import 'package:material_symbols_icons/symbols.dart';
 /// A diferencia de la de etiquetas no tiene jerarquía ni sangría: un fernie no
 /// cuelga de otro. Lo que sí lleva cada fila es el recuento de regiones, que es
 /// lo único que dice de un vistazo cuáles dan ya para entrenar.
-class FernieList extends StatelessWidget {
+///
+/// Y su filtro, como las de etiquetas y creadores: con cincuenta fernies, ir
+/// buscando uno a ojo por la lista es lo que se acaba haciendo.
+class FernieList extends StatefulWidget {
   final List<FernieEntity> fernies;
 
   /// Fernie marcado, por identificador: al guardar cambian el nombre y el
@@ -35,8 +38,32 @@ class FernieList extends StatelessWidget {
   });
 
   @override
+  State<FernieList> createState() => _FernieListState();
+}
+
+class _FernieListState extends State<FernieList> {
+  /// Lo escrito en el filtro. Vacío es la lista entera.
+  String _query = '';
+
+  /// Los que encajan con lo escrito.
+  ///
+  /// Se compara sin distinguir mayúsculas y por cualquier parte del nombre, no
+  /// sólo por el principio: es lo mismo que hacen las otras dos listas, y con
+  /// cincuenta fernies acordarse de cómo empieza uno es justo lo que no pasa.
+  List<FernieEntity> get _visible {
+    final needle = _query.trim().toLowerCase();
+    if (needle.isEmpty) return widget.fernies;
+
+    return [
+      for (final fernie in widget.fernies)
+        if (fernie.name.toLowerCase().contains(needle)) fernie,
+    ];
+  }
+
+  @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    final fernies = _visible;
 
     // La lista va directamente sobre el fondo de la pantalla: la superficie de
     // esta pantalla es la de la ficha, no la de todo lo que hay en ella.
@@ -50,15 +77,30 @@ class FernieList extends StatelessWidget {
             title: texts.ferniesTitle,
           ),
         ),
+        // Encima de la lista y debajo del rótulo: filtra lo que hay justo
+        // debajo, así que es donde se busca sin pensarlo.
+        Padding(
+          padding: const EdgeInsets.only(
+            bottom: AppSpacing.s,
+            right: AppSizes.scrollbarLane,
+          ),
+          child: FernFilterField(
+            hintText: texts.filterByNameHint,
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
         Expanded(
           // Las filas se pintan bajo demanda: los fernies pueden ser muchos.
           child: ListView.builder(
-            padding: EdgeInsets.zero,
+            // Apartado por la derecha lo que ocupa la barra de desplazamiento,
+            // como en las otras dos listas: sin ese carril la pastilla queda
+            // pegada al borde de la ficha y parece parte de ella.
+            padding: const EdgeInsets.only(right: AppSizes.scrollbarLane),
             itemCount: fernies.length,
             itemBuilder: (context, index) => _FernieTile(
               fernie: fernies[index],
-              isSelected: fernies[index].id == selectedFernieId,
-              onTap: () => onSelected(fernies[index]),
+              isSelected: fernies[index].id == widget.selectedFernieId,
+              onTap: () => widget.onSelected(fernies[index]),
             ),
           ),
         ),

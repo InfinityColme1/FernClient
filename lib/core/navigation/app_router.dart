@@ -126,6 +126,18 @@ final appRouter = GoRouter(
               child: const TagManagerPage(),
             ),
         ),
+        // Las personas: la misma pantalla con el reparto cambiado. Va en la
+        // misma familia para que ir de una a otra sea la transición de siempre
+        // entre dos gestiones, que es lo que son.
+        GoRoute(
+            path: personaManagerRoute,
+            pageBuilder: (context, state) => fernShellPage(
+              key: state.pageKey,
+              location: personaManagerRoute,
+              family: ScreenFamily.management,
+              child: const TagManagerPage(showsPeople: true),
+            ),
+        ),
         // Reconocimiento. La de fernies es la de esta fase; las otras dos
         // existen para que sus botones del menú lateral lleven a algún sitio
         // hasta que lleguen sus fases.

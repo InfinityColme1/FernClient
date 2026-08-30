@@ -56,6 +56,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
     on<KeepsSelectionOnDropToggledEvent>(onKeepsSelectionOnDropToggled);
+    on<ShowsTagBranchOnFilterToggledEvent>(onShowsTagBranchOnFilterToggled);
     on<PauseWhenSeekingToggledEvent>(onPauseWhenSeekingToggled);
     on<ReturnToViewedMediaToggledEvent>(onReturnToViewedMediaToggled);
     on<RecognizeOnImportToggledEvent>(onRecognizeOnImportToggled);
@@ -282,6 +283,17 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(keepsSelectionOnDrop: event.enabled),
+      emit,
+    );
+  }
+
+  /// Se ve en el momento: la lista de etiquetas lee esto al pintarse.
+  Future<void> onShowsTagBranchOnFilterToggled(
+    ShowsTagBranchOnFilterToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(showsTagBranchOnFilter: event.enabled),
       emit,
     );
   }

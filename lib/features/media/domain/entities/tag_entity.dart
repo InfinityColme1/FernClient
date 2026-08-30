@@ -27,6 +27,13 @@ class TagEntity extends Equatable{
   /// Si la etiqueta entera está marcada, todas lo están: ver [marksLink].
   final List<String> nsfwSourceUrls;
 
+  /// La etiqueta identifica a una persona o a un personaje.
+  ///
+  /// Se gestiona en su propia pantalla en vez de mezclada con los conceptos y
+  /// las cosas. Fuera de ahí no cambia nada: al asignar a un contenido, al
+  /// buscar y en el menú lateral sigue siendo una etiqueta más.
+  final bool isPerson;
+
   /// La etiqueta está marcada como NSFW.
   ///
   /// Es la marca **propia**, la que el usuario puso aquí: una etiqueta que queda
@@ -60,6 +67,7 @@ class TagEntity extends Equatable{
     this.sourceUrls = const [],
     this.nsfwSourceUrls = const [],
     this.isNsfw = false,
+    this.isPerson = false,
     this.siblings = const [],
     bool? isUnderNsfw,
   }) : isUnderNsfw = isUnderNsfw ?? isNsfw;
@@ -79,6 +87,7 @@ class TagEntity extends Equatable{
     List<String>? sourceUrls,
     List<String>? nsfwSourceUrls,
     bool? isNsfw,
+    bool? isPerson,
     bool? isUnderNsfw,
     List<TagEntity>? siblings,
   }) {
@@ -90,6 +99,7 @@ class TagEntity extends Equatable{
       sourceUrls: sourceUrls ?? this.sourceUrls,
       nsfwSourceUrls: nsfwSourceUrls ?? this.nsfwSourceUrls,
       isNsfw: isNsfw ?? this.isNsfw,
+      isPerson: isPerson ?? this.isPerson,
       isUnderNsfw: isUnderNsfw ?? this.isUnderNsfw,
       siblings: siblings ?? this.siblings,
     );
@@ -104,6 +114,7 @@ class TagEntity extends Equatable{
     sourceUrls,
     nsfwSourceUrls,
     isNsfw,
+    isPerson,
     isUnderNsfw,
     siblings,
   ];
