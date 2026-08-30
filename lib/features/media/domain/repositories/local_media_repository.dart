@@ -179,7 +179,14 @@ abstract class LocalMediaRepository {
   /// Manda lo que llega: las que había antes y no vengan en [urls] se pierden,
   /// que es cómo se quita una desde el diálogo. Las direcciones se normalizan
   /// aquí, así que da igual cómo las haya escrito el usuario.
-  Future<DataState<TagEntity>> saveTagSourceUrls(int tagId, List<String> urls);
+  ///
+  /// [nsfwUrls] son las de [urls] que quedan marcadas como no aptas. Se
+  /// normalizan igual, que es como se comparan las dos listas entre sí.
+  Future<DataState<TagEntity>> saveTagSourceUrls(
+    int tagId,
+    List<String> urls, {
+    List<String> nsfwUrls,
+  });
 
   /// Las etiquetas que están por encima de [tags] en la jerarquía, a cualquier
   /// profundidad y sin [tags] mismas.
@@ -262,10 +269,13 @@ abstract class LocalMediaRepository {
   /// Manda lo que llega: las que había antes y no vengan en [urls] se pierden,
   /// que es cómo se quita una desde el diálogo. Las direcciones se normalizan
   /// aquí, así que da igual cómo las haya escrito el usuario.
+  ///
+  /// [nsfwUrls] son las de [urls] que quedan marcadas como no aptas.
   Future<DataState<CreatorEntity>> saveCreatorSourceUrls(
     int creatorId,
-    List<String> urls,
-  );
+    List<String> urls, {
+    List<String> nsfwUrls,
+  });
 
   /// Borra el creador [creatorId] de la base de datos.
   ///

@@ -8,7 +8,14 @@ class SaveTagSourceUrlsParams {
   final int tagId;
   final List<String> urls;
 
-  const SaveTagSourceUrlsParams({required this.tagId, required this.urls});
+  /// Cuáles de [urls] quedan marcadas como no aptas.
+  final List<String> nsfwUrls;
+
+  const SaveTagSourceUrlsParams({
+    required this.tagId,
+    required this.urls,
+    this.nsfwUrls = const [],
+  });
 }
 
 /// Vincula unas direcciones con una etiqueta: a partir de ahí, lo que se importe
@@ -21,6 +28,10 @@ class SaveTagSourceUrlsUseCase
 
   @override
   Future<DataState<TagEntity>> call({SaveTagSourceUrlsParams? params}) {
-    return _repository.saveTagSourceUrls(params!.tagId, params.urls);
+    return _repository.saveTagSourceUrls(
+      params!.tagId,
+      params.urls,
+      nsfwUrls: params.nsfwUrls,
+    );
   }
 }

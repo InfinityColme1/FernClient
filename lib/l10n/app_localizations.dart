@@ -3138,6 +3138,48 @@ abstract class AppLocalizations {
   /// **'Add address'**
   String get addSourceUrl;
 
+  /// No description provided for @noSourceUrls.
+  ///
+  /// In en, this message translates to:
+  /// **'No linked addresses'**
+  String get noSourceUrls;
+
+  /// No description provided for @markLinkNsfwTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark this address as not safe'**
+  String get markLinkNsfwTooltip;
+
+  /// No description provided for @unmarkLinkNsfwTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'This address is marked as not safe'**
+  String get unmarkLinkNsfwTooltip;
+
+  /// No description provided for @openSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the address in the browser'**
+  String get openSourceUrlTooltip;
+
+  /// No description provided for @editSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit address'**
+  String get editSourceUrlTooltip;
+
+  /// No description provided for @doneEditingSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Done editing'**
+  String get doneEditingSourceUrlTooltip;
+
+  /// No description provided for @removeSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove address'**
+  String get removeSourceUrlTooltip;
+
   /// No description provided for @filtersType.
   ///
   /// In en, this message translates to:

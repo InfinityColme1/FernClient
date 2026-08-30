@@ -182,7 +182,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   ///
   /// Se quedan aquí hasta que se confirma: la etiqueta todavía no existe, así
   /// que no hay a qué engancharlas. Se guardan con ella de una vez.
-  List<String> _sourceUrls = const [];
+  List<FernLink> _sourceUrls = const [];
 
   /// Hay una escritura en marcha: la de guardar o la de copiar el avatar
   /// elegido. El botón de confirmar pasa a ser el indicador de espera y no admite
@@ -259,11 +259,15 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// creación no se ha ido a ninguna parte, sólo tenía otro delante. Si se cierra
   /// sin confirmar no llega nada y las direcciones se quedan como estuvieran.
   Future<void> _assignUrls() async {
-    final urls = await showFernDialog<List<String>, TagsBloc>(
+    final urls = await showFernDialog<List<FernLink>, TagsBloc>(
       context: context,
       builder: (_) => AssignUrlDialog(
         urls: _sourceUrls,
         name: _nameController.text.trim(),
+        canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+        // Aquí nunca se esconden: la etiqueta se está creando ahora y lo que se
+        // acaba de escribir tiene que poder verse y corregirse.
+        hidesMarked: false,
       ),
     );
     if (urls == null || !mounted) return;
@@ -303,7 +307,11 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
               name: name,
               picturePath: _selectedImagePath,
               children: const [],
-              sourceUrls: _sourceUrls,
+              sourceUrls: [for (final link in _sourceUrls) link.url],
+              nsfwSourceUrls: [
+                for (final link in _sourceUrls)
+                  if (link.isNsfw) link.url,
+              ],
               isNsfw: _isNsfw,
             ),
             parent: _parentTag,

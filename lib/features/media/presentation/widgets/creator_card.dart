@@ -18,13 +18,14 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Ficha del creador elegido en la pantalla de gestión de creadores.
 ///
@@ -60,26 +61,25 @@ class _CreatorCardState extends State<CreatorCard> {
 
   late String? _picturePath = widget.creator.picturePath;
 
-  /// Un campo por enlace de red social, con los que ya tiene el creador.
+  /// Los enlaces de redes sociales, tal y como se están editando.
   ///
-  /// Se editan aquí y se escriben con el resto del formulario, al guardar: como
-  /// el nombre, no como las direcciones vinculadas (que tienen su propio
-  /// diálogo y se guardan solas).
-  late final List<TextEditingController> _socialControllers = [
+  /// Se escriben con el resto del formulario, al guardar: como el nombre, no
+  /// como las direcciones vinculadas (que tienen su propio diálogo y se guardan
+  /// solas). La lista de enlaces avisa en cada cambio y esto se queda con lo
+  /// último.
+  late List<FernLink> _socialProfiles = [
     for (final link in widget.creator.socialProfiles ?? const <String>[])
-      TextEditingController(text: link),
+      FernLink(link, isNsfw: widget.creator.nsfwSocialProfiles.contains(link)),
   ];
-
-  /// Los enlaces que se están editando, por posición. Los demás se ven como
-  /// enlaces pulsables: en la ficha se entra a editar enlace a enlace, que lo
-  /// normal es venir a tocar uno y no la lista entera.
-  final Set<int> _editingProfiles = {};
 
   /// Direcciones de las que sale el contenido del creador.
   ///
   /// Se guardan desde su propio diálogo, así que aquí sólo se llevan para saber
   /// con cuáles abrirlo y para no perderlas al guardar el formulario.
-  late List<String> _sourceUrls = widget.creator.sourceUrls;
+  late List<FernLink> _sourceUrls = [
+    for (final url in widget.creator.sourceUrls)
+      FernLink(url, isNsfw: widget.creator.nsfwSourceUrls.contains(url)),
+  ];
 
   /// El creador desconocido no se borra: es el respaldo al que van a parar los
   /// contenidos cuando se borra otro, así que sin él no habría dónde dejarlos.
@@ -91,42 +91,6 @@ class _CreatorCardState extends State<CreatorCard> {
   /// desactivados: son operaciones sobre el mismo creador, así que no tiene
   /// sentido lanzar dos a la vez.
   bool _isBusy = false;
-
-  /// Enlaces escritos, sin los campos que se han quedado vacíos: dejar uno en
-  /// blanco es otra forma de quitarlo.
-  List<String> get _socialProfileLinks => _socialControllers
-      .map((controller) => controller.text.trim())
-      .where((link) => link.isNotEmpty)
-      .toList();
-
-  /// Añade un enlace más, ya en modo edición: nace vacío, así que no hay nada
-  /// que pulsar hasta que se escriba.
-  void _addProfile() {
-    setState(() {
-      _socialControllers.add(TextEditingController());
-      _editingProfiles.add(_socialControllers.length - 1);
-    });
-  }
-
-  /// Quita el enlace de la posición [index].
-  ///
-  /// Las posiciones que estaban en edición se recolocan: los índices por debajo
-  /// del que se va se quedan como están y los de encima bajan uno, o se estaría
-  /// editando un enlace distinto del que se abrió.
-  void _removeProfile(int index) {
-    setState(() {
-      _socialControllers.removeAt(index).dispose();
-
-      final editing = _editingProfiles
-          .where((position) => position != index)
-          .map((position) => position > index ? position - 1 : position)
-          .toSet();
-
-      _editingProfiles
-        ..clear()
-        ..addAll(editing);
-    });
-  }
 
   /// Lanza [operation] dejando la ficha en espera mientras dure.
   Future<void> _run(Future<void> Function() operation) async {
@@ -175,7 +139,7 @@ class _CreatorCardState extends State<CreatorCard> {
 
     // Sin ninguno se manda `null` y no una lista vacía: es como se guardan los
     // creadores que se crean sin enlaces.
-    final links = _socialProfileLinks;
+    final links = [for (final link in _socialProfiles) link.url];
 
     final result = await _updateCreator(
       params: CreatorEntity(
@@ -183,7 +147,15 @@ class _CreatorCardState extends State<CreatorCard> {
         name: name,
         picturePath: _picturePath,
         socialProfiles: links.isEmpty ? null : links,
-        sourceUrls: _sourceUrls,
+        nsfwSocialProfiles: [
+          for (final link in _socialProfiles)
+            if (link.isNsfw) link.url,
+        ],
+        sourceUrls: [for (final link in _sourceUrls) link.url],
+        nsfwSourceUrls: [
+          for (final link in _sourceUrls)
+            if (link.isNsfw) link.url,
+        ],
       ),
     );
     if (!mounted) return;
@@ -212,12 +184,14 @@ class _CreatorCardState extends State<CreatorCard> {
   /// en él queda confirmado. Al cerrarlo sin confirmar no llega nada y las
   /// direcciones se quedan como estaban.
   Future<void> _assignUrls() async {
-    final urls = await showFernDialog<List<String>, MediaBloc>(
+    final urls = await showFernDialog<List<FernLink>, MediaBloc>(
       context: context,
       builder: (_) => AssignUrlDialog(
         urls: _sourceUrls,
         name: widget.creator.name,
         target: AssignUrlTarget.creator,
+        canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+        hidesMarked: getIt<NsfwVisibility>().hidesMarkedLinks,
       ),
     );
     if (urls == null || !mounted) return;
@@ -226,7 +200,11 @@ class _CreatorCardState extends State<CreatorCard> {
       final result = await _saveCreatorSourceUrls(
         params: SaveCreatorSourceUrlsParams(
           creatorId: widget.creator.id,
-          urls: urls,
+          urls: [for (final link in urls) link.url],
+          nsfwUrls: [
+            for (final link in urls)
+              if (link.isNsfw) link.url,
+          ],
         ),
       );
 
@@ -235,7 +213,12 @@ class _CreatorCardState extends State<CreatorCard> {
 
       // Se recogen ya normalizadas: son las que se van a comparar al importar, y
       // así el diálogo se vuelve a abrir con lo que de verdad hay guardado.
-      setState(() => _sourceUrls = creator.sourceUrls);
+      setState(() {
+        _sourceUrls = [
+          for (final url in creator.sourceUrls)
+            FernLink(url, isNsfw: creator.nsfwSourceUrls.contains(url)),
+        ];
+      });
     });
   }
 
@@ -251,27 +234,9 @@ class _CreatorCardState extends State<CreatorCard> {
     getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
   }
 
-  /// Abre el enlace en el navegador del sistema.
-  ///
-  /// Los enlaces se guardan tal y como los escribió el usuario, así que muchos
-  /// llegan sin protocolo (`instagram.com/alguien`): sin él, `Uri` no sabría a
-  /// qué aplicación dárselo.
-  Future<void> _openProfile(String link) async {
-    final value = link.trim();
-    if (value.isEmpty) return;
-
-    final uri = Uri.tryParse(value.contains('://') ? value : 'https://$value');
-    if (uri == null) return;
-
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
   @override
   void dispose() {
     _nameController.dispose();
-    for (final controller in _socialControllers) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -402,152 +367,41 @@ class _CreatorCardState extends State<CreatorCard> {
     );
   }
 
-  /// Los enlaces de redes sociales del creador: pulsar uno lo abre en el
-  /// navegador del sistema y el botón de al lado lo pasa a editar.
+  /// Los enlaces de redes sociales del creador.
   ///
-  /// Debajo, el mismo botón discreto que en el diálogo de creación para añadir
-  /// uno más. Lo que se escriba se guarda con el resto del formulario, al pulsar
-  /// "Guardar": hasta entonces la ficha no ha tocado nada.
+  /// La lista es la del catálogo, la misma que las direcciones vinculadas de la
+  /// etiqueta: pulsar un enlace lo abre en el navegador, el botón de al lado lo
+  /// pasa a editar y el aspa lo quita. Lo que se escriba se guarda con el resto
+  /// del formulario, al pulsar «Guardar»: hasta entonces la ficha no ha tocado
+  /// nada.
   ///
-  /// Sin ninguno se dice y ya está, en tono apagado como el resto de huecos por
-  /// rellenar.
+  /// Con el hueco que quede y no con un alto propio: la ficha lo tiene fijo, así
+  /// que este bloque es el que se estira o se encoge y lo que no quepa se
+  /// desplaza aquí dentro. Con un máximo, la ficha crecería enlace a enlace y no
+  /// todos los creadores tendrían la misma.
   Widget _socialProfilesField(AppLocalizations texts) {
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          texts.socialProfilesLabel,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+    return FernLinkListField(
+      links: [
+        for (final link in widget.creator.socialProfiles ?? const <String>[])
+          FernLink(
+            link,
+            isNsfw: widget.creator.nsfwSocialProfiles.contains(link),
           ),
-        ),
-        const SizedBox(height: AppSpacing.s),
-        // Con el hueco que quede y no con un alto propio: la ficha lo tiene
-        // fijo, así que este bloque es el que se estira o se encoge y lo que no
-        // quepa se desplaza aquí dentro. Con un máximo, la ficha crecería enlace
-        // a enlace y no todos los creadores tendrían la misma.
-        Expanded(
-          child: _socialControllers.isEmpty
-              ? Text(
-                  texts.noSocialProfiles,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: context.colors.unremarked,
-                  ),
-                )
-              : ListView.separated(
-                  padding: EdgeInsets.zero,
-                  itemCount: _socialControllers.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.xs),
-                  itemBuilder: (_, index) => _profileRow(texts, index),
-                ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        FernAddButton.compact(
-          label: texts.addProfile,
-          onTap: _addProfile,
-        ),
       ],
-    );
-  }
-
-  /// Un enlace de la lista, en una de sus dos formas.
-  ///
-  /// Editándose es el mismo campo que en el diálogo de creación, con el botón
-  /// que lo da por bueno y el que lo quita. En reposo es el enlace pulsable, y
-  /// el botón de al lado es el que lleva a la otra forma: así el enlace se abre
-  /// de una pulsación, que es lo que se viene a hacer casi siempre.
-  Widget _profileRow(AppLocalizations texts, int index) {
-    final controller = _socialControllers[index];
-
-    if (_editingProfiles.contains(index)) {
-      return Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.url,
-              autofocus: true,
-              decoration: InputDecoration(hintText: texts.profileLinkHint),
-            ),
-          ),
-          _rowButton(
-            icon: Symbols.check,
-            tooltip: texts.doneEditingProfileTooltip,
-            // Sólo se sale del modo edición: lo escrito se queda en el campo y
-            // se guarda con el resto de la ficha.
-            onPressed: () => setState(() => _editingProfiles.remove(index)),
-          ),
-          _rowButton(
-            icon: Symbols.close,
-            tooltip: texts.removeProfileTooltip,
-            onPressed: () => _removeProfile(index),
-          ),
-        ],
-      );
-    }
-
-    final link = controller.text.trim();
-
-    return SizedBox(
-      height: creatorProfileRowHeight,
-      child: Row(
-      children: [
-        Expanded(
-          // A mano y no con una píldora del catálogo: los enlaces son largos y
-          // aquí lo que hay es una columna estrecha, así que el texto tiene que
-          // poder recortarse.
-          child: InkWell(
-            onTap: () => _openProfile(link),
-            mouseCursor: WidgetStateMouseCursor.clickable,
-            child: Tooltip(
-              message: texts.openProfileTooltip,
-              child: Row(
-                children: [
-                  const Icon(Symbols.open_in_new, size: AppSizes.iconCompact),
-                  const SizedBox(width: AppSpacing.s),
-                  Expanded(
-                    child: Text(
-                      link,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        _rowButton(
-          icon: Symbols.edit,
-          tooltip: texts.editProfileTooltip,
-          onPressed: () => setState(() => _editingProfiles.add(index)),
-        ),
-      ],
-      ),
-    );
-  }
-
-  /// Los botones que acompañan a un enlace, sin el hueco que un `IconButton`
-  /// reserva por defecto: son varios en una lista que tiene que caber en la
-  /// ficha.
-  Widget _rowButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback onPressed,
-  }) {
-    return IconButton(
-      icon: Icon(icon, size: AppSizes.iconCompact),
-      tooltip: tooltip,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(
-        width: creatorProfileRowHeight,
-        height: creatorProfileRowHeight,
-      ),
-      onPressed: onPressed,
+      onChanged: (links) => _socialProfiles = links,
+      canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+      hidesMarked: getIt<NsfwVisibility>().hidesMarkedLinks,
+      markNsfwTooltip: texts.markLinkNsfwTooltip,
+      unmarkNsfwTooltip: texts.unmarkLinkNsfwTooltip,
+      label: texts.socialProfilesLabel,
+      emptyMessage: texts.noSocialProfiles,
+      hintText: texts.profileLinkHint,
+      addLabel: texts.addProfile,
+      openTooltip: texts.openProfileTooltip,
+      editTooltip: texts.editProfileTooltip,
+      removeTooltip: texts.removeProfileTooltip,
+      doneTooltip: texts.doneEditingProfileTooltip,
+      fills: true,
     );
   }
 

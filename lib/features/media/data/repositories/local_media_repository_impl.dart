@@ -105,10 +105,26 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// puede rellenar `isUnderNsfw` por su cuenta —no conoce el índice, y la marca
   /// de una madre no está escrita en sus hijas— así que se pone aquí, en el
   /// único sitio donde se sabe.
-  TagEntity _asEntity(TagModel model) => model.toEntity().copyWith(
-        isUnderNsfw: _visibility.marksTag(model.id),
-        children: [for (final child in model.children) _asEntity(child)],
-      );
+  /// Las hermanas se piden aparte con [withSiblings] y no siempre: son un enlace
+  /// más que cargar por etiqueta, y quien devuelve **todas** las etiquetas
+  /// (`getTags`, `searchTags`) pagaria una consulta por cada una para pintar una
+  /// lista que no las enseña.
+  Future<TagEntity> _asEntity(
+    TagModel model, {
+    bool withSiblings = false,
+  }) async {
+    await model.children.load();
+    if (withSiblings) await model.siblings.load();
+
+    final children = <TagEntity>[];
+    for (final child in model.children) {
+      children.add(await _asEntity(child));
+    }
+
+    return model
+        .toEntityWithChildren(children)
+        .copyWith(isUnderNsfw: _visibility.marksTag(model.id));
+  }
 
   /// Avisa de que lo que el filtro NSFW esconde puede haber cambiado.
   ///
@@ -1020,7 +1036,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       await _nsfwChanged();
 
-      return DataSuccess(_asEntity(model));
+      return DataSuccess(await _asEntity(model, withSiblings: true));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1073,7 +1089,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       await _appDatabase.writeTxn(() async {
         model.name = tag.name;
         model.picturePath = tag.picturePath;
-        model.sourceUrls = normalizedSourceUrls(tag.sourceUrls);
+        // **Las direcciones no se tocan aqui.** Tienen su propio
+        // `saveTagSourceUrls`, como las hermanas tienen `saveTagSiblings` y la
+        // marca NSFW tiene `setTagNsfw`. Mientras esto escribiera un campo que
+        // sus pantallas no editan, bastaba con que un llamante pasara una
+        // `TagEntity` sin direcciones para vaciarlas: es lo que hacia arrastrar
+        // una etiqueta sobre otra en la lista, y lo que hacia guardar su nombre.
         await _appDatabase.tagModels.put(model);
 
         // Quien la tuviera entre sus hijas la suelta, menos el padre nuevo si ya
@@ -1109,7 +1130,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       await model.children.load();
 
-      return DataSuccess(_asEntity(model));
+      return DataSuccess(await _asEntity(model, withSiblings: true));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1186,20 +1207,30 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<TagEntity>> saveTagSourceUrls(
     int tagId,
-    List<String> urls,
-  ) async {
+    List<String> urls, {
+    List<String> nsfwUrls = const [],
+  }) async {
     try {
       final model = await _appDatabase.tagModels.get(tagId);
       if (model == null) return DataException(Exception("Tag not found"));
 
+      final normalized = normalizedSourceUrls(urls);
+
       await _appDatabase.writeTxn(() async {
-        model.sourceUrls = normalizedSourceUrls(urls);
+        model.sourceUrls = normalized;
+        // Sólo las que siguen estando: una marcada que se ha quitado de la lista
+        // dejaría una marca huérfana que no esconde nada y que volvería a
+        // aplicarse sola si alguien vuelve a escribir esa dirección.
+        model.nsfwSourceUrls = [
+          for (final url in normalizedSourceUrls(nsfwUrls))
+            if (normalized.contains(url)) url,
+        ];
         await _appDatabase.tagModels.put(model);
       });
 
       await model.children.load();
 
-      return DataSuccess(_asEntity(model));
+      return DataSuccess(await _asEntity(model, withSiblings: true));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1607,6 +1638,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         model.name = name;
         model.picturePath = creator.picturePath;
         model.socialProfiles = creator.socialProfiles;
+        model.nsfwSocialProfiles = [
+          for (final link in creator.nsfwSocialProfiles)
+            if (creator.socialProfiles?.contains(link) ?? false) link,
+        ];
         // Y sus direcciones, como hace `updateTag` con las de la etiqueta.
         //
         // No las guardaba, y era una trampa esperando: quien las cambiara desde
@@ -1614,7 +1649,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         // ninguna, sin un solo error por medio. Hoy la ficha manda las que ya
         // tenía, así que esto no cambia nada de lo que hay; lo que quita es el
         // día que alguien las cambie desde ahí.
-        model.sourceUrls = normalizedSourceUrls(creator.sourceUrls);
+        final normalized = normalizedSourceUrls(creator.sourceUrls);
+        model.sourceUrls = normalized;
+        model.nsfwSourceUrls = [
+          for (final url in normalizedSourceUrls(creator.nsfwSourceUrls))
+            if (normalized.contains(url)) url,
+        ];
         await _appDatabase.creatorModels.put(model);
       });
 
@@ -1636,14 +1676,21 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<CreatorEntity>> saveCreatorSourceUrls(
     int creatorId,
-    List<String> urls,
-  ) async {
+    List<String> urls, {
+    List<String> nsfwUrls = const [],
+  }) async {
     try {
       final model = await _appDatabase.creatorModels.get(creatorId);
       if (model == null) return DataException(Exception("Creator not found"));
 
+      final normalized = normalizedSourceUrls(urls);
+
       await _appDatabase.writeTxn(() async {
-        model.sourceUrls = normalizedSourceUrls(urls);
+        model.sourceUrls = normalized;
+        model.nsfwSourceUrls = [
+          for (final url in normalizedSourceUrls(nsfwUrls))
+            if (normalized.contains(url)) url,
+        ];
         await _appDatabase.creatorModels.put(model);
       });
 
@@ -1765,7 +1812,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final query = await _appDatabase.tagModels.where().findAll();
 
       return DataSuccess(
-        _visibleTags(query).map((e) => _asEntity(e)).toList(),
+        [for (final tag in _visibleTags(query)) await _asEntity(tag)],
       );
     } on Exception catch (e) {
       return DataException(e);
@@ -1856,7 +1903,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         return const DataSuccess(null);
       }
 
-      return DataSuccess(_asEntity(model));
+      return DataSuccess(await _asEntity(model, withSiblings: true));
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -1909,8 +1956,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
   /// La etiqueta con toda su descendencia, cargando los enlaces nivel a nivel:
   /// Isar los deja vacíos hasta que se piden.
+  ///
+  /// **Se cargan también las direcciones y las hermanas.** El árbol se armaba a
+  /// mano dejándolas fuera, y esto es lo que se pinta en la ficha de la pantalla
+  /// de gestión: la ficha nacía con las dos listas vacías, así que las
+  /// direcciones no se veían y —peor— guardar el nombre las borraba, porque
+  /// `updateTag` escribe lo que se le da. Con las hermanas pasaba lo mismo:
+  /// relacionar dos etiquetas arrastrando sustituía las que ya había en vez de
+  /// sumar.
   Future<TagEntity> _tagWithChildren(TagModel model, Set<int> visited) async {
     await model.children.load();
+    await model.siblings.load();
 
     final children = <TagEntity>[];
     for (final child in _byName(model.children)) {
@@ -1918,16 +1974,21 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       children.add(await _tagWithChildren(child, visited));
     }
 
-    return TagEntity(
-      id: model.id,
-      name: model.name,
-      picturePath: model.picturePath,
-      children: children,
-      // El árbol se armaba a mano y se dejaba la marca por el camino, así que
-      // el menú lateral —que se pinta con esto— no podía distinguir una
-      // etiqueta NSFW de las demás.
-      isNsfw: model.isNsfw,
+    // A partir de `toEntity()` y no campo a campo: así hereda las direcciones,
+    // el nombre, el avatar y la marca sin que se pueda volver a olvidar
+    // ninguno. Lo único que se pone aquí es lo que el modelo no puede saber
+    // —la marca heredada de la rama— y las hijas, que van ordenadas y con el
+    // corte de ciclos.
+    final tag = model.toEntityWithChildren(children);
+
+    return tag.copyWith(
       isUnderNsfw: _visibility.marksTag(model.id),
+      // Las hermanas llegan planas del modelo; sólo hay que decirles si cuelgan
+      // de una rama marcada, que es cosa del índice y no del modelo.
+      siblings: [
+        for (final sibling in tag.siblings)
+          sibling.copyWith(isUnderNsfw: _visibility.marksTag(sibling.id)),
+      ],
     );
   }
 
@@ -1966,7 +2027,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       final results = await _tagsByName(term, limit: limit);
 
-      return DataSuccess(results.map(_asEntity).toList());
+      return DataSuccess([for (final tag in results) await _asEntity(tag)]);
     } on Exception catch (e) {
       return DataException(e);
     }

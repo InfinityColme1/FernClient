@@ -16,16 +16,28 @@ class CreatorModel {
 
   List<String> ? socialProfiles;
 
+  /// Cuáles de [socialProfiles] están marcados como no aptos.
+  ///
+  /// Un subconjunto de la otra lista, para que el campo sea aditivo y lo que ya
+  /// hay guardado siga siendo lo que era. Aquí los enlaces van tal y como los
+  /// escribió el usuario, sin normalizar, porque así están en [socialProfiles].
+  List<String> nsfwSocialProfiles = const [];
+
   /// Direcciones vinculadas con el creador, ya normalizadas: lo que se importe
   /// de debajo de alguna de ellas nace con este creador puesto.
   List<String> sourceUrls = const [];
+
+  /// Cuáles de [sourceUrls] están marcadas como no aptas, también normalizadas.
+  List<String> nsfwSourceUrls = const [];
 
   CreatorModel({
     required this.id,
     required this.name,
     this.picturePath,
     this.socialProfiles,
-    this.sourceUrls = const []
+    this.nsfwSocialProfiles = const [],
+    this.sourceUrls = const [],
+    this.nsfwSourceUrls = const [],
   });
 
   CreatorEntity toEntity() {
@@ -34,7 +46,9 @@ class CreatorModel {
         name: name,
         picturePath: picturePath,
         socialProfiles: socialProfiles,
-        sourceUrls: sourceUrls
+        nsfwSocialProfiles: nsfwSocialProfiles,
+        sourceUrls: sourceUrls,
+        nsfwSourceUrls: nsfwSourceUrls,
     );
   }
 
@@ -47,7 +61,9 @@ class CreatorModel {
         name: entity.name,
         picturePath: entity.picturePath,
         socialProfiles: entity.socialProfiles,
-        sourceUrls: entity.sourceUrls
+        nsfwSocialProfiles: entity.nsfwSocialProfiles,
+        sourceUrls: entity.sourceUrls,
+        nsfwSourceUrls: entity.nsfwSourceUrls,
     );
   }
 }

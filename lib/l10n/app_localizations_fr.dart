@@ -1961,6 +1961,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addSourceUrl => 'Ajouter une adresse';
 
   @override
+  String get noSourceUrls => 'Aucune adresse liée';
+
+  @override
+  String get markLinkNsfwTooltip => 'Marquer l\'adresse comme non adaptée';
+
+  @override
+  String get unmarkLinkNsfwTooltip =>
+      'L\'adresse est marquée comme non adaptée';
+
+  @override
+  String get openSourceUrlTooltip => 'Ouvrir l\'adresse dans le navigateur';
+
+  @override
+  String get editSourceUrlTooltip => 'Modifier l\'adresse';
+
+  @override
+  String get doneEditingSourceUrlTooltip => 'Terminer la modification';
+
+  @override
+  String get removeSourceUrlTooltip => 'Retirer l\'adresse';
+
+  @override
   String get filtersType => 'Type de contenu';
 
   @override

@@ -708,6 +708,13 @@
   "sourceUrlsLabel": "Direcciones",
   "sourceUrlHint": "reddit.com/r/ejemplo, pixiv.net/users/123…",
   "addSourceUrl": "Añadir dirección",
+  "noSourceUrls": "Sin direcciones vinculadas",
+  "markLinkNsfwTooltip": "Marcar la dirección como no apta",
+  "unmarkLinkNsfwTooltip": "La dirección está marcada como no apta",
+  "openSourceUrlTooltip": "Abrir la dirección en el navegador",
+  "editSourceUrlTooltip": "Editar la dirección",
+  "doneEditingSourceUrlTooltip": "Terminar de editar",
+  "removeSourceUrlTooltip": "Quitar la dirección",
 
   "filtersType": "Tipo de contenido",
   "filterImages": "Imágenes",

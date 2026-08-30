@@ -1961,6 +1961,27 @@ class AppLocalizationsCa extends AppLocalizations {
   String get addSourceUrl => 'Afegir adreça';
 
   @override
+  String get noSourceUrls => 'Sense adreces vinculades';
+
+  @override
+  String get markLinkNsfwTooltip => 'Marca l\'adreça com a no apta';
+
+  @override
+  String get unmarkLinkNsfwTooltip => 'L\'adreça està marcada com a no apta';
+
+  @override
+  String get openSourceUrlTooltip => 'Obre l\'adreça al navegador';
+
+  @override
+  String get editSourceUrlTooltip => 'Edita l\'adreça';
+
+  @override
+  String get doneEditingSourceUrlTooltip => 'Acaba d\'editar';
+
+  @override
+  String get removeSourceUrlTooltip => 'Treu l\'adreça';
+
+  @override
   String get filtersType => 'Tipus de contingut';
 
   @override

@@ -21,6 +21,14 @@ class TagModel {
   /// normalizadas. Es lo que mira el etiquetado automático al importar.
   List<String> sourceUrls = const [];
 
+  /// Cuáles de [sourceUrls] están marcadas como no aptas.
+  ///
+  /// Un subconjunto de la otra lista y no una lista de objetos con su marca: así
+  /// el campo es aditivo y las direcciones que ya hay guardadas siguen siendo
+  /// exactamente lo que eran. Se guardan normalizadas, igual que [sourceUrls],
+  /// que es como se comparan las dos listas entre sí.
+  List<String> nsfwSourceUrls = const [];
+
   /// Contenido no apto: lo que lleve esta etiqueta no se ve con el modo NSFW
   /// apagado.
   ///
@@ -59,17 +67,34 @@ class TagModel {
     required this.name,
     this.picturePath,
     this.sourceUrls = const [],
+    this.nsfwSourceUrls = const [],
     this.isNsfw = false,
   });
 
-  TagEntity toEntity() {
+  TagEntity toEntity() =>
+      toEntityWithChildren(children.map((tag) => tag.toEntity()).toList());
+
+  /// La etiqueta con las hijas que se le digan, en vez de con las suyas.
+  ///
+  /// **Es el único sitio donde se mapean los campos de una etiqueta**, y existe
+  /// para que siga siendo el único: quien arma el árbol necesita poner sus
+  /// propias hijas (ordenadas, con el corte de ciclos y con la marca heredada),
+  /// y si para eso tuviera que construir la `TagEntity` a mano acabaría
+  /// dejándose campos por el camino. Es lo que pasó: el árbol se armaba sin las
+  /// direcciones ni las hermanas, y guardar el nombre de una etiqueta le borraba
+  /// las direcciones.
+  ///
+  /// Recorrer la descendencia con `toEntity()` por cada nodo del árbol sería
+  /// además cuadrático, así que quien ya la tiene armada la pasa por aquí.
+  TagEntity toEntityWithChildren(List<TagEntity> children) {
     return TagEntity(
       id: id,
       name: name,
       picturePath: picturePath,
       sourceUrls: sourceUrls,
+      nsfwSourceUrls: nsfwSourceUrls,
       isNsfw: isNsfw,
-      children: children.map((tag) {return tag.toEntity();}).toList(),
+      children: children,
       // Planas: sin sus hijas ni sus propias hermanas. Lo que hace falta de una
       // hermana es su nombre, y recorrer sus ramas aquí acabaría cargando media
       // base de datos por pintar una lista de tres nombres.
@@ -95,6 +120,7 @@ class TagModel {
       picturePath: entity.picturePath,
       name: entity.name,
       sourceUrls: entity.sourceUrls,
+      nsfwSourceUrls: entity.nsfwSourceUrls,
       isNsfw: entity.isNsfw,
     );
   }

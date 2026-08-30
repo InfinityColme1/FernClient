@@ -27,13 +27,18 @@ const TagModelSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'picturePath': PropertySchema(
+    r'nsfwSourceUrls': PropertySchema(
       id: 2,
+      name: r'nsfwSourceUrls',
+      type: IsarType.stringList,
+    ),
+    r'picturePath': PropertySchema(
+      id: 3,
       name: r'picturePath',
       type: IsarType.string,
     ),
     r'sourceUrls': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'sourceUrls',
       type: IsarType.stringList,
     )
@@ -86,6 +91,13 @@ int _tagModelEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
+  bytesCount += 3 + object.nsfwSourceUrls.length * 3;
+  {
+    for (var i = 0; i < object.nsfwSourceUrls.length; i++) {
+      final value = object.nsfwSourceUrls[i];
+      bytesCount += value.length * 3;
+    }
+  }
   {
     final value = object.picturePath;
     if (value != null) {
@@ -110,8 +122,9 @@ void _tagModelSerialize(
 ) {
   writer.writeBool(offsets[0], object.isNsfw);
   writer.writeString(offsets[1], object.name);
-  writer.writeString(offsets[2], object.picturePath);
-  writer.writeStringList(offsets[3], object.sourceUrls);
+  writer.writeStringList(offsets[2], object.nsfwSourceUrls);
+  writer.writeString(offsets[3], object.picturePath);
+  writer.writeStringList(offsets[4], object.sourceUrls);
 }
 
 TagModel _tagModelDeserialize(
@@ -124,8 +137,9 @@ TagModel _tagModelDeserialize(
     id: id,
     isNsfw: reader.readBoolOrNull(offsets[0]) ?? false,
     name: reader.readString(offsets[1]),
-    picturePath: reader.readStringOrNull(offsets[2]),
-    sourceUrls: reader.readStringList(offsets[3]) ?? const [],
+    nsfwSourceUrls: reader.readStringList(offsets[2]) ?? const [],
+    picturePath: reader.readStringOrNull(offsets[3]),
+    sourceUrls: reader.readStringList(offsets[4]) ?? const [],
   );
   return object;
 }
@@ -142,8 +156,10 @@ P _tagModelDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
       return (reader.readStringList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -433,6 +449,232 @@ extension TagModelQueryFilter
         property: r'name',
         value: '',
       ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nsfwSourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'nsfwSourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'nsfwSourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'nsfwSourceUrls',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'nsfwSourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'nsfwSourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'nsfwSourceUrls',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'nsfwSourceUrls',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nsfwSourceUrls',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'nsfwSourceUrls',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'nsfwSourceUrls',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'nsfwSourceUrls',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'nsfwSourceUrls',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'nsfwSourceUrls',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'nsfwSourceUrls',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      nsfwSourceUrlsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'nsfwSourceUrls',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -1151,6 +1393,12 @@ extension TagModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<TagModel, TagModel, QDistinct> distinctByNsfwSourceUrls() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'nsfwSourceUrls');
+    });
+  }
+
   QueryBuilder<TagModel, TagModel, QDistinct> distinctByPicturePath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1182,6 +1430,13 @@ extension TagModelQueryProperty
   QueryBuilder<TagModel, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<TagModel, List<String>, QQueryOperations>
+      nsfwSourceUrlsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'nsfwSourceUrls');
     });
   }
 

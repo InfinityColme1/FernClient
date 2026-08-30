@@ -1959,6 +1959,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addSourceUrl => 'Add address';
 
   @override
+  String get noSourceUrls => 'No linked addresses';
+
+  @override
+  String get markLinkNsfwTooltip => 'Mark this address as not safe';
+
+  @override
+  String get unmarkLinkNsfwTooltip => 'This address is marked as not safe';
+
+  @override
+  String get openSourceUrlTooltip => 'Open the address in the browser';
+
+  @override
+  String get editSourceUrlTooltip => 'Edit address';
+
+  @override
+  String get doneEditingSourceUrlTooltip => 'Done editing';
+
+  @override
+  String get removeSourceUrlTooltip => 'Remove address';
+
+  @override
   String get filtersType => 'Content type';
 
   @override

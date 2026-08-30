@@ -7,6 +7,7 @@ import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.da
 import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
@@ -74,13 +75,24 @@ class _TagCardState extends State<TagCard> {
   late String? _picturePath = widget.tag.picturePath;
   late TagEntity? _parent = widget.parent;
 
-  /// Direcciones de las que sale el contenido de la etiqueta.
+  /// Direcciones de las que sale el contenido de la etiqueta, tal y como se
+  /// están editando.
   ///
-  /// Se guardan desde su propio diálogo, así que aquí sólo se llevan para saber
-  /// con cuáles abrirlo y para no perderlas al guardar el formulario.
-  late List<String> _sourceUrls = widget.tag.sourceUrls;
+  /// Se ven y se tocan en la propia ficha, y también desde su diálogo: los dos
+  /// caminos escriben aquí, así que abrir el diálogo enseña lo que hay en la
+  /// ficha aunque todavía no se haya guardado.
+  late List<FernLink> _sourceUrls = [
+    for (final url in widget.tag.sourceUrls)
+      FernLink(url, isNsfw: widget.tag.marksLink(url)),
+  ];
 
-
+  /// Cuántas veces han cambiado las direcciones **desde fuera de la lista**.
+  ///
+  /// Es la clave de la lista de enlaces: la lista se queda con las direcciones
+  /// que recibe al nacer, así que para que recoja lo que acaba de confirmar el
+  /// diálogo hay que hacerla nacer otra vez. Escribir en ella no toca esto: si
+  /// lo tocara, la lista se reharía en cada tecla y el campo perdería el foco.
+  int _urlsRevision = 0;
 
 
   /// La etiqueta está marcada como contenido no apto.
@@ -180,9 +192,6 @@ class _TagCardState extends State<TagCard> {
           name: name,
           picturePath: _picturePath,
           children: widget.tag.children,
-          // Las direcciones no están en este formulario, pero `updateTag` manda
-          // lo que le llega: sin ellas, guardar el nombre las borraría.
-          sourceUrls: _sourceUrls,
         ),
         parent: _parent,
       ),
@@ -232,6 +241,33 @@ class _TagCardState extends State<TagCard> {
     getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
   }
 
+  /// Escribe las direcciones de la etiqueta y se queda con las normalizadas.
+  ///
+  /// Son las que se van a comparar al importar, así que la ficha enseña lo que de
+  /// verdad hay guardado y no lo que se escribió.
+  Future<void> _saveUrls(List<FernLink> urls) async {
+    final result = await _saveTagSourceUrls(
+      params: SaveTagSourceUrlsParams(
+        tagId: widget.tag.id,
+        urls: [for (final link in urls) link.url],
+        nsfwUrls: [
+          for (final link in urls)
+            if (link.isNsfw) link.url,
+        ],
+      ),
+    );
+
+    final tag = result.data;
+    if (result is! DataSuccess || tag == null || !mounted) return;
+
+    setState(() {
+      _sourceUrls = [
+        for (final url in tag.sourceUrls)
+          FernLink(url, isNsfw: tag.marksLink(url)),
+      ];
+    });
+  }
+
   /// Abre el diálogo de las direcciones de la etiqueta y guarda lo que se
   /// confirme.
   ///
@@ -240,26 +276,25 @@ class _TagCardState extends State<TagCard> {
   /// en él queda confirmado. Al cerrarlo sin confirmar no llega nada y las
   /// direcciones se quedan como estaban.
   Future<void> _assignUrls() async {
-    final urls = await showFernDialog<List<String>, MediaBloc>(
+    final urls = await showFernDialog<List<FernLink>, MediaBloc>(
       context: context,
       builder: (_) => AssignUrlDialog(
         urls: _sourceUrls,
         name: widget.tag.name,
+        canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+        hidesMarked: getIt<NsfwVisibility>().hidesMarkedLinks,
       ),
     );
     if (urls == null || !mounted) return;
 
     await _run(() async {
-      final result = await _saveTagSourceUrls(
-        params: SaveTagSourceUrlsParams(tagId: widget.tag.id, urls: urls),
-      );
+      await _saveUrls(urls);
+      if (!mounted) return;
 
-      final tag = result.data;
-      if (result is! DataSuccess || tag == null || !mounted) return;
-
-      // Se recogen ya normalizadas: son las que se van a comparar al importar, y
-      // así el diálogo se vuelve a abrir con lo que de verdad hay guardado.
-      setState(() => _sourceUrls = tag.sourceUrls);
+      // La lista de la ficha se quedó con las direcciones que recibió al nacer,
+      // así que para que recoja lo que acaba de confirmar el diálogo hay que
+      // hacerla nacer otra vez.
+      setState(() => _urlsRevision++);
     });
   }
 
@@ -316,7 +351,10 @@ class _TagCardState extends State<TagCard> {
                 _assignUrlsButton(texts),
               ],
             ),
-            Row(
+            // Con el alto que le den: la ficha lo tiene fijo (lo pone la
+            // pantalla) y este bloque es el que se queda con lo que sobre.
+            Expanded(
+              child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
@@ -356,12 +394,15 @@ class _TagCardState extends State<TagCard> {
                       // lista de relacionadas ocupaban tanto aquí que la rejilla
                       // de contenido de debajo se salía de la pantalla.
                       _relationsSummary(texts),
+                      const SizedBox(height: AppSpacing.m),
+                      Expanded(child: _sourceUrlsField(texts)),
                     ],
                   ),
                 ),
               ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.l),
+            const SizedBox(height: AppSpacing.m),
             // Los botones se reparten en varias líneas si no caben: son cuatro y
             // sus textos crecen bastante según el idioma.
             //
@@ -441,6 +482,49 @@ class _TagCardState extends State<TagCard> {
       ),
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
+    );
+  }
+
+  /// Las direcciones vinculadas con la etiqueta, a la vista.
+  ///
+  /// Es la misma lista que los enlaces de redes sociales de la ficha del
+  /// creador. Antes no se veían: la ficha sólo tenía el botón que abría el
+  /// diálogo, y ni siquiera llegaban hasta aquí, así que guardar el nombre de la
+  /// etiqueta las borraba.
+  ///
+  /// Con el hueco que quede y no con un alto propio: la ficha lo tiene fijo (lo
+  /// pone la pantalla), así que este bloque es el que se estira o se encoge y lo
+  /// que no quepa se desplaza aquí dentro. Con un máximo, la ficha crecería
+  /// dirección a dirección y no todas las etiquetas tendrían la misma.
+  ///
+  /// Se guarda en cuanto se termina cada dirección, no con el botón de guardar
+  /// de la ficha: las direcciones tienen su propia escritura
+  /// (`SaveTagSourceUrlsUseCase`), igual que las hermanas y la marca NSFW, y
+  /// `updateTag` ya no las toca.
+  Widget _sourceUrlsField(AppLocalizations texts) {
+    return FernLinkListField(
+      // Se rehace cuando el diálogo trae direcciones nuevas, no al escribir.
+      key: ValueKey(_urlsRevision),
+      links: _sourceUrls,
+      onChanged: (urls) => setState(() => _sourceUrls = urls),
+      canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+      hidesMarked: getIt<NsfwVisibility>().hidesMarkedLinks,
+      markNsfwTooltip: texts.markLinkNsfwTooltip,
+      unmarkNsfwTooltip: texts.unmarkLinkNsfwTooltip,
+      // Sin el indicador de espera de la ficha: es una escritura corta y se
+      // dispara al salir de cada campo, así que tapar la ficha entera cada vez
+      // parpadearía. Y sin pasar por `_run`, que descarta lo que llegue mientras
+      // haya otra escritura en marcha —y aquí eso sería perder la dirección.
+      onCommitted: _saveUrls,
+      label: texts.sourceUrlsLabel,
+      emptyMessage: texts.noSourceUrls,
+      hintText: texts.sourceUrlHint,
+      addLabel: texts.addSourceUrl,
+      openTooltip: texts.openSourceUrlTooltip,
+      editTooltip: texts.editSourceUrlTooltip,
+      removeTooltip: texts.removeSourceUrlTooltip,
+      doneTooltip: texts.doneEditingSourceUrlTooltip,
+      fills: true,
     );
   }
 

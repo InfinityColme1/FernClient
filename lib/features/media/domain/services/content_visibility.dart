@@ -77,4 +77,18 @@ class ContentVisibility {
 
   /// Si este modelo está marcado, esté el filtro puesto o no.
   bool marksModel(int modelId) => false;
+
+  /// Si las direcciones marcadas no se pueden enseñar ahora mismo.
+  ///
+  /// No lleva identificador porque no depende de cuál sea: o el bloqueo está
+  /// cerrado y no se enseña ninguna, o está abierto y se enseñan todas.
+  ///
+  /// Una dirección vinculada delata tanto como el nombre de una etiqueta: la
+  /// galería de la que sale el contenido dice lo que hay dentro aunque el
+  /// contenido no se llegue a ver.
+  ///
+  /// **No dice nada de lo que la dirección hace.** Escondida sigue etiquetando
+  /// al importar, igual que un fernie escondido sigue entrenando: por eso quien
+  /// lee para trabajar (`MediaRegistry`) no pregunta esto.
+  bool get hidesMarkedLinks => false;
 }

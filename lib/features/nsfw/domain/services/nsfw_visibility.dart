@@ -110,4 +110,10 @@ class NsfwVisibility extends ContentVisibility {
 
   @override
   bool marksModel(int modelId) => _index.hasModel(modelId);
+
+  /// Las direcciones marcadas se esconden con el bloqueo cerrado, como las
+  /// etiquetas y los fernies, y por lo mismo: una dirección no se puede tapar a
+  /// medias, o se lee o no está.
+  @override
+  bool get hidesMarkedLinks => _isActive && !_mode.isUnlocked;
 }

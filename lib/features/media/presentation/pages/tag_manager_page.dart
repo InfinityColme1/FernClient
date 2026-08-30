@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:Fern/core/navigation/fern_screen_layout.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/core/navigation/screen_choreography.dart';
@@ -190,14 +192,7 @@ class _TagManagerPageState extends State<TagManagerPage> {
               bottom: AppSpacing.l,
             ),
             listWidth: AppSizes.tagListWidth,
-            cardBuilder: (context, _) => TagCard(
-              // La ficha se rehace al cambiar de etiqueta: sus campos arrancan
-              // con los valores de la etiqueta, así que tienen que volver a
-              // nacer con los de la nueva.
-              key: ValueKey(selected.id),
-              tag: selected,
-              parent: TagList.parentOf(state.tags, selected.id),
-            ),
+            cardBuilder: (context, space) => _tagCard(state, selected, space),
             grid: _tagMedia(),
             // Al guardar o borrar una etiqueta la lista se vuelve a leer: hasta
             // que llegue se queda la de antes, con el indicador encima.
@@ -215,6 +210,34 @@ class _TagManagerPageState extends State<TagManagerPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// La ficha de la etiqueta elegida, con su alto ya repartido.
+  ///
+  /// El alto lo pone la pantalla y no el contenido de la ficha, igual que en la
+  /// de creadores: así la ficha mide lo mismo tenga la etiqueta las direcciones
+  /// que tenga, y añadirle una no mueve de sitio la rejilla de debajo. Sin esto,
+  /// la lista de direcciones iría empujando la rejilla fuera de la pantalla
+  /// dirección a dirección.
+  Widget _tagCard(TagsState state, TagEntity selected, BoxConstraints space) {
+    final cardHeight = math.min(
+      managementCardHeight,
+      // En una ventana baja la ficha cede antes que la rejilla, pero sólo hasta
+      // el mínimo con el que su formulario sigue cabiendo.
+      math.max(space.maxHeight - managementGridMinHeight, managementCardMinHeight),
+    );
+
+    return SizedBox(
+      height: cardHeight,
+      child: TagCard(
+        // La ficha se rehace al cambiar de etiqueta: sus campos arrancan con los
+        // valores de la etiqueta, así que tienen que volver a nacer con los de la
+        // nueva.
+        key: ValueKey(selected.id),
+        tag: selected,
+        parent: TagList.parentOf(state.tags, selected.id),
       ),
     );
   }

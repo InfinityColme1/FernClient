@@ -779,6 +779,13 @@
   "sourceUrlsLabel": "Addresses",
   "sourceUrlHint": "reddit.com/r/example, pixiv.net/users/123…",
   "addSourceUrl": "Add address",
+  "noSourceUrls": "No linked addresses",
+  "markLinkNsfwTooltip": "Mark this address as not safe",
+  "unmarkLinkNsfwTooltip": "This address is marked as not safe",
+  "openSourceUrlTooltip": "Open the address in the browser",
+  "editSourceUrlTooltip": "Edit address",
+  "doneEditingSourceUrlTooltip": "Done editing",
+  "removeSourceUrlTooltip": "Remove address",
 
   "filtersType": "Content type",
   "filterImages": "Images",

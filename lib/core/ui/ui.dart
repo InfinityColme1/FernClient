@@ -47,6 +47,7 @@ export 'inputs/fern_entity_search_field.dart';
 export 'inputs/fern_filter_field.dart';
 export 'inputs/fern_field_label.dart';
 export 'inputs/fern_labeled_text_field.dart';
+export 'inputs/fern_link_list_field.dart';
 export 'inputs/fern_outlined_field.dart';
 export 'inputs/fern_radio_tile.dart';
 export 'inputs/fern_slider.dart';

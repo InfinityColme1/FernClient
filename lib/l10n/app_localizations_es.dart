@@ -1963,6 +1963,27 @@ class AppLocalizationsEs extends AppLocalizations {
   String get addSourceUrl => 'Añadir dirección';
 
   @override
+  String get noSourceUrls => 'Sin direcciones vinculadas';
+
+  @override
+  String get markLinkNsfwTooltip => 'Marcar la dirección como no apta';
+
+  @override
+  String get unmarkLinkNsfwTooltip => 'La dirección está marcada como no apta';
+
+  @override
+  String get openSourceUrlTooltip => 'Abrir la dirección en el navegador';
+
+  @override
+  String get editSourceUrlTooltip => 'Editar la dirección';
+
+  @override
+  String get doneEditingSourceUrlTooltip => 'Terminar de editar';
+
+  @override
+  String get removeSourceUrlTooltip => 'Quitar la dirección';
+
+  @override
   String get filtersType => 'Tipo de contenido';
 
   @override

@@ -18,6 +18,15 @@ class TagEntity extends Equatable{
   /// forma en la que se comparan.
   final List<String> sourceUrls;
 
+  /// Cuáles de [sourceUrls] están marcadas como no aptas.
+  ///
+  /// Con el bloqueo cerrado no se enseñan, como no se enseña el nombre de una
+  /// etiqueta marcada: la galería de la que sale el contenido cuenta lo que hay
+  /// dentro aunque el contenido no se vea. Siguen etiquetando al importar.
+  ///
+  /// Si la etiqueta entera está marcada, todas lo están: ver [marksLink].
+  final List<String> nsfwSourceUrls;
+
   /// La etiqueta está marcada como NSFW.
   ///
   /// Es la marca **propia**, la que el usuario puso aquí: una etiqueta que queda
@@ -49,16 +58,26 @@ class TagEntity extends Equatable{
     required this.children,
     this.picturePath,
     this.sourceUrls = const [],
+    this.nsfwSourceUrls = const [],
     this.isNsfw = false,
     this.siblings = const [],
     bool? isUnderNsfw,
   }) : isUnderNsfw = isUnderNsfw ?? isNsfw;
+
+  /// Si [url] cuenta como no apta.
+  ///
+  /// Una etiqueta escondida esconde también sus direcciones, estén marcadas una
+  /// a una o no: con el bloqueo puesto la etiqueta entera no se ve, así que unas
+  /// direcciones suyas «visibles» no significarían nada. Y así no hay que ir
+  /// marcándolas de una en una al marcar la etiqueta.
+  bool marksLink(String url) => isUnderNsfw || nsfwSourceUrls.contains(url);
 
   TagEntity copyWith({
     String? name,
     String? picturePath,
     List<TagEntity>? children,
     List<String>? sourceUrls,
+    List<String>? nsfwSourceUrls,
     bool? isNsfw,
     bool? isUnderNsfw,
     List<TagEntity>? siblings,
@@ -69,6 +88,7 @@ class TagEntity extends Equatable{
       picturePath: picturePath ?? this.picturePath,
       children: children ?? this.children,
       sourceUrls: sourceUrls ?? this.sourceUrls,
+      nsfwSourceUrls: nsfwSourceUrls ?? this.nsfwSourceUrls,
       isNsfw: isNsfw ?? this.isNsfw,
       isUnderNsfw: isUnderNsfw ?? this.isUnderNsfw,
       siblings: siblings ?? this.siblings,
@@ -82,6 +102,7 @@ class TagEntity extends Equatable{
     children,
     picturePath,
     sourceUrls,
+    nsfwSourceUrls,
     isNsfw,
     isUnderNsfw,
     siblings,

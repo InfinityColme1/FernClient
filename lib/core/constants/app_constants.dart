@@ -171,7 +171,14 @@ const firstSchemaVersion = 1;
 /// modelos de reconocimiento y sus fernies asignados. Son colecciones nuevas,
 /// así que Isar las crea sola y no hay ninguna migración que escribir: el número
 /// sube igual para dejar constancia de que el esquema no es el mismo.
-const currentSchemaVersion = 6;
+///
+/// La 7 añade además las direcciones marcadas como no aptas (campos nuevos con
+/// valor por defecto, que Isar resuelve sola) y es la primera que sí ejecuta
+/// algo: repara las relaciones de hermandad
+/// que quedaron a medias. El árbol de etiquetas se leía sin ellas, así que la
+/// pantalla de gestión partía siempre de una lista vacía y guardar desde ahí
+/// podía desenlazar por un lado lo que seguía enlazado por el otro.
+const currentSchemaVersion = 7;
 
 // Preferences keys
 /// Hasta qué versión se ha puesto al día la base de datos de este equipo.
@@ -1664,34 +1671,42 @@ const fernieRowsTwoColumnsWidth = 900.0;
 const modelCardWidth = 220.0;
 const modelCardHeight = 280.0;
 
-/// Alto de la ficha de la pantalla de gestión de creadores.
+/// Alto de la ficha de las pantallas de gestión (creadores y etiquetas).
 ///
-/// Va fijo y no lo pone su contenido: así la ficha mide lo mismo tenga el
-/// creador los enlaces que tenga, y cambiar de uno a otro (o añadirle un enlace)
-/// no mueve de sitio la rejilla que hay debajo. El bloque de enlaces se queda con
-/// el hueco que sobra y desplaza lo que no quepa.
-const creatorCardHeight = 360.0;
+/// Va fijo y no lo pone su contenido: así la ficha mide lo mismo tenga los
+/// enlaces que tenga, y cambiar de uno a otro (o añadirle un enlace) no mueve de
+/// sitio la rejilla que hay debajo. El bloque de enlaces se queda con el hueco
+/// que sobra y desplaza lo que no quepa.
+///
+/// Es el mismo para las dos pantallas porque las dos fichas son la misma cosa:
+/// avatar a la izquierda, formulario a la derecha, fila de botones abajo. La de
+/// etiquetas no lo tenía y creció con la lista de direcciones, que es
+/// justamente lo que esto impide.
+const managementCardHeight = 360.0;
 
 /// Hasta dónde puede encogerse esa ficha.
 ///
 /// Es lo que miden su avatar y su formulario, así que por debajo de aquí lo que
 /// lleva dentro ya no cabe: en una ventana más baja que eso lo que se queda sin
 /// sitio es la rejilla.
-const creatorCardMinHeight = 330.0;
+const managementCardMinHeight = 330.0;
 
-/// Lo que se le deja como mínimo a la rejilla de esa pantalla.
+/// Lo que se le deja como mínimo a la rejilla de esas pantallas.
 ///
 /// La ficha es lo primero que cede: en una ventana baja se queda con lo que haya
 /// hasta aquí en vez de empujar la rejilla fuera de la pantalla.
-const creatorGridMinHeight = 220.0;
+const managementGridMinHeight = 220.0;
 
-/// Alto de una fila de enlace de la ficha del creador, y de los botones que la
-/// acompañan.
+/// Alto de una fila de una lista de enlaces, y de los botones que la acompañan.
 ///
 /// Más apretado que el de un `IconButton` suelto (48): son varias filas dentro
 /// de una ficha que comparte el alto de la pantalla con la rejilla, y con el
 /// hueco de por defecto sólo cabría una.
-const creatorProfileRowHeight = 32.0;
+///
+/// Fijo también para que las dos formas de una fila —el enlace en reposo y el
+/// campo mientras se edita— midan lo mismo: dejándolo al contenido, la lista da
+/// un salto cada vez que se entra a editar.
+const linkRowHeight = 32.0;
 
 // Avisos breves
 /// Lo que se queda a la vista un aviso breve, y lo que tarda en aparecer y en
