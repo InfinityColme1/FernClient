@@ -1370,6 +1370,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your files stay where they are: nothing is deleted from disk, and scanning your library folder registers them again. Your settings, passwords and remote credentials also stay.';
 
   @override
+  String get databaseWipeScopeAll => 'Everything';
+
+  @override
+  String get databaseWipeScopeAllNote =>
+      'Tags, creators, fernies, models: the lot. The app starts over.';
+
+  @override
+  String get databaseWipeScopeNsfw => 'Only what is marked NSFW';
+
+  @override
+  String get databaseWipeScopeNsfwNote =>
+      'The media that is marked, and what it inherits from marked tags and creators. Tags, creators, fernies and models stay.';
+
+  @override
+  String get databaseWipeFiles => 'Delete the files from disk too';
+
+  @override
+  String get databaseWipeFilesNote =>
+      'Without this the files stay where they are and a scan brings them back. With it, they are gone: this is the part with no way back.';
+
+  @override
+  String get databaseWipeConfirmFiles =>
+      'The files go from disk as well. They will be deleted in the background and you can follow it in the task list.';
+
+  @override
+  String get databaseWipeConfirmNsfw =>
+      'Only what is marked NSFW is going. Everything else stays as it is.';
+
+  @override
   String get databaseWipeContinue => 'I understand, continue';
 
   @override
@@ -2722,6 +2751,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jobTagRegions => 'Marking a tag’s content';
+
+  @override
+  String get jobFileCleanup => 'Deleting files';
 
   @override
   String get fernieImportTagTitle => 'Mark a whole tag';

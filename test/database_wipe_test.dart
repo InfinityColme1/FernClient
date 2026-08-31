@@ -14,6 +14,19 @@
 import 'dart:ffi' show Abi;
 import 'dart:io';
 
+import 'package:Fern/core/services/shuffle_seed.dart';
+import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
+import 'package:Fern/features/media/data/repositories/local_media_repository_impl.dart';
+import 'package:Fern/features/media/data/services/media_file_organizer.dart';
+import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/data/services/nsfw_index.dart';
+import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
+import 'package:Fern/features/recognition/data/models/fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
+import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
+import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
+import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
+import 'package:Fern/features/settings/domain/services/database_wipe_options.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/data/models/blocked_import_model.dart';
 import 'package:Fern/features/media/data/services/blocked_imports.dart';
@@ -76,6 +89,8 @@ void main() {
     late Isar isar;
     late PreferencesService preferences;
     late BlockedImports blocked;
+    late NsfwIndex nsfw;
+    late LocalMediaRepositoryImpl media;
     late DatabaseMaintenanceService maintenance;
 
     final isarLibrary = _isarLibrary();
@@ -101,8 +116,17 @@ void main() {
           CreatorModelSchema,
           MediaSummaryModelSchema,
           MediaModelSchema,
-        MediaTagLogModelSchema,
+          MediaTagLogModelSchema,
           BlockedImportModelSchema,
+          // Los mira el borrado de contenido, que es por donde se va lo marcado
+          // como no apto.
+          FernieModelSchema,
+          FernieRegionModelSchema,
+          DuplicateGroupModelSchema,
+          // El índice de lo no apto los mira para saber qué modelos y qué
+          // fernies quedan escondidos.
+          RecognitionModelModelSchema,
+          ModelFernieModelSchema,
         ],
         directory: directory.path,
         inspector: false,
@@ -115,11 +139,31 @@ void main() {
       blocked = BlockedImports(database: isar);
       await blocked.rebuild();
 
+      nsfw = NsfwIndex(
+        database: isar,
+        hierarchy: TagHierarchy(database: isar),
+      );
+      await nsfw.rebuild();
+
+      media = LocalMediaRepositoryImpl(
+        shuffle: ShuffleSeed(),
+        appDatabase: isar,
+        fileOrganizer: _NoFiles(),
+        avatarStorage: _NoAvatars(),
+        registry: MediaRegistry(
+          database: isar,
+          tagHierarchy: TagHierarchy(database: isar),
+        ),
+        tagHierarchy: TagHierarchy(database: isar),
+      );
+
       maintenance = DatabaseMaintenanceService(
         database: isar,
         preferences: preferences,
         blocked: blocked,
         collapsedTags: CollapsedTags(preferences: preferences),
+        media: media,
+        nsfw: nsfw,
       );
     });
 
@@ -222,6 +266,249 @@ void main() {
       expect(preferences.getLastImportSource(), ImportSource.pixiv);
     });
   });
+
+  // Lo que se elige antes de vaciar: cuanto se lleva por delante y si los
+  // ficheros se van tambien del disco.
+  //
+  // Lo primero es lo que hace esto usable: dejar de tener guardado lo que no se
+  // quiere tener guardado no deberia costar empezar la biblioteca de cero.
+  group('con opciones', () {
+    late Directory directory;
+    late Isar isar;
+    late NsfwIndex nsfw;
+    late LocalMediaRepositoryImpl media;
+    late DatabaseMaintenanceService maintenance;
+
+    final isarLibrary = _isarLibrary();
+
+    setUpAll(() async {
+      if (isarLibrary == null) return;
+      await Isar.initializeIsarCore(libraries: {Abi.windowsX64: isarLibrary});
+    });
+
+    setUp(() async {
+      directory = await Directory.systemTemp.createTemp('fern_wipe_options');
+
+      isar = await Isar.open(
+        [
+          TagModelSchema,
+          PersonaModelSchema,
+          CreatorModelSchema,
+          MediaSummaryModelSchema,
+          MediaModelSchema,
+          MediaTagLogModelSchema,
+          BlockedImportModelSchema,
+          FernieModelSchema,
+          FernieRegionModelSchema,
+          DuplicateGroupModelSchema,
+          RecognitionModelModelSchema,
+          ModelFernieModelSchema,
+        ],
+        directory: directory.path,
+        inspector: false,
+      );
+
+      SharedPreferences.setMockInitialValues({});
+      final preferences = PreferencesService(
+        await SharedPreferences.getInstance(),
+      );
+
+      final blocked = BlockedImports(database: isar);
+      await blocked.rebuild();
+
+      nsfw = NsfwIndex(
+        database: isar,
+        hierarchy: TagHierarchy(database: isar),
+      );
+      await nsfw.rebuild();
+
+      media = LocalMediaRepositoryImpl(
+        shuffle: ShuffleSeed(),
+        appDatabase: isar,
+        fileOrganizer: _NoFiles(),
+        avatarStorage: _NoAvatars(),
+        registry: MediaRegistry(
+          database: isar,
+          tagHierarchy: TagHierarchy(database: isar),
+        ),
+        tagHierarchy: TagHierarchy(database: isar),
+      );
+
+      maintenance = DatabaseMaintenanceService(
+        database: isar,
+        preferences: preferences,
+        blocked: blocked,
+        collapsedTags: CollapsedTags(preferences: preferences),
+        media: media,
+        nsfw: nsfw,
+      );
+    });
+
+    tearDown(() async {
+      await isar.close(deleteFromDisk: true);
+      if (directory.existsSync()) directory.deleteSync(recursive: true);
+    });
+
+    /// Un contenido, marcado a mano como no apto si se dice.
+    Future<void> addMedia(int id, {bool isNsfw = false, int? tagId}) async {
+      final path = 'C:/media/$id.jpg';
+
+      final summary = MediaSummaryModel()
+        ..id = id
+        ..path = path
+        ..isNsfw = isNsfw;
+
+      final details = MediaModel(id: id, path: path)
+        ..downloaded = DateTime(2026)
+        ..isFavorite = false;
+
+      await isar.writeTxn(() async {
+        await isar.mediaSummaryModels.put(summary);
+        await isar.mediaModels.put(details);
+
+        if (tagId != null) {
+          final tag = await isar.tagModels.get(tagId);
+          if (tag != null) await details.tags.update(link: [tag]);
+        }
+      });
+    }
+
+    Future<void> addTag(int id, String name, {bool isNsfw = false}) async {
+      await isar.writeTxn(() async {
+        await isar.tagModels.put(TagModel(id: id, name: name)..isNsfw = isNsfw);
+      });
+    }
+
+    Future<List<int>> remainingMedia() async {
+      final rows = await isar.mediaSummaryModels.where().findAll();
+
+      return [for (final row in rows) row.id]..sort();
+    }
+
+    group('solo lo no apto', () {
+      test('se lleva lo marcado a mano y deja lo demas', () async {
+        await addMedia(1);
+        await addMedia(2, isNsfw: true);
+        await nsfw.rebuild();
+
+        await maintenance.wipe(
+          const DatabaseWipeOptions(scope: DatabaseWipeScope.nsfwOnly),
+        );
+
+        expect(await remainingMedia(), [1]);
+      });
+
+      // Lo que cuelga de una etiqueta marcada esta igual de escondido: dejarlo
+      // fuera vaciaria a medias justo lo que se pidio vaciar.
+      test('y tambien lo que hereda de una etiqueta marcada', () async {
+        await addTag(1, 'adultos', isNsfw: true);
+        await addMedia(1);
+        await addMedia(2, tagId: 1);
+        await nsfw.rebuild();
+
+        await maintenance.wipe(
+          const DatabaseWipeOptions(scope: DatabaseWipeScope.nsfwOnly),
+        );
+
+        expect(await remainingMedia(), [1]);
+      });
+
+      // Lo que se borra es contenido, no la biblioteca.
+      test('las etiquetas y los creadores se quedan', () async {
+        await addTag(1, 'adultos', isNsfw: true);
+        await isar.writeTxn(
+          () => isar.creatorModels.put(CreatorModel(id: 1, name: 'alguien')),
+        );
+        await addMedia(1, isNsfw: true);
+        await nsfw.rebuild();
+
+        await maintenance.wipe(
+          const DatabaseWipeOptions(scope: DatabaseWipeScope.nsfwOnly),
+        );
+
+        expect(await isar.tagModels.count(), 1);
+        expect(await isar.creatorModels.count(), 1);
+      });
+
+      test('sin nada marcado no borra nada', () async {
+        await addMedia(1);
+        await nsfw.rebuild();
+
+        final paths = await maintenance.wipe(
+          const DatabaseWipeOptions(scope: DatabaseWipeScope.nsfwOnly),
+        );
+
+        expect(paths, isEmpty);
+        expect(await remainingMedia(), [1]);
+      });
+
+      // El indice se relee: sin eso seguiria diciendo que hay contenido
+      // bloqueado que ya no existe.
+      test('y el indice se queda al dia', () async {
+        await addMedia(1, isNsfw: true);
+        await nsfw.rebuild();
+
+        await maintenance.wipe(
+          const DatabaseWipeOptions(scope: DatabaseWipeScope.nsfwOnly),
+        );
+
+        expect(nsfw.media, isEmpty);
+      });
+    });
+
+    group('los ficheros', () {
+      // No se borran aqui: se devuelven para que quien lo pidio los mande a la
+      // cola. Miles de ficheros son minutos, y hacerlo aqui dejaria la ventana
+      // bloqueada sin poder decir por donde va.
+      test('se devuelven para borrarlos fuera', () async {
+        await addMedia(1);
+        await addMedia(2);
+
+        final paths = await maintenance.wipe(
+          const DatabaseWipeOptions(deletesFiles: true),
+        );
+
+        expect(paths, hasLength(2));
+        expect(paths, contains('C:/media/1.jpg'));
+      });
+
+      // Sin pedirlo, los ficheros se quedan donde estan: es lo que hace que
+      // vaciar la base sea reversible con un escaneo.
+      test('sin pedirlo no se devuelve ninguno', () async {
+        await addMedia(1);
+
+        expect(await maintenance.wipe(), isEmpty);
+      });
+
+      test('los de lo no apto salen solo de lo que se borra', () async {
+        await addMedia(1);
+        await addMedia(2, isNsfw: true);
+        await nsfw.rebuild();
+
+        final paths = await maintenance.wipe(
+          const DatabaseWipeOptions(
+            scope: DatabaseWipeScope.nsfwOnly,
+            deletesFiles: true,
+          ),
+        );
+
+        expect(paths, ['C:/media/2.jpg']);
+      });
+
+      // Las rutas salen de las filas, asi que hay que leerlas antes de
+      // vaciarlas: despues no habria de donde.
+      test('las de todo se leen antes de vaciar', () async {
+        await addMedia(1);
+
+        final paths = await maintenance.wipe(
+          const DatabaseWipeOptions(deletesFiles: true),
+        );
+
+        expect(paths, ['C:/media/1.jpg']);
+        expect(await remainingMedia(), isEmpty);
+      });
+    });
+  });
 }
 
 String? _isarLibrary() {
@@ -240,3 +527,19 @@ String? _isarLibrary() {
 
   return null;
 }
+
+
+/// Ni ficheros ni avatares: vaciar la base no los toca, y las rutas que hay que
+/// borrar se devuelven para que las mande a la cola quien lo pidio.
+class _NoFiles implements MediaFileOrganizer {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
+
+class _NoAvatars implements AvatarStorageService {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
+

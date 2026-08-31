@@ -1372,6 +1372,35 @@ class AppLocalizationsCa extends AppLocalizations {
       'Els teus fitxers es queden on són: no s\'esborra res del disc, i escanejar la carpeta de la biblioteca els torna a donar d\'alta. Els ajustos, les contrasenyes i les credencials de les fonts també es queden.';
 
   @override
+  String get databaseWipeScopeAll => 'Tot';
+
+  @override
+  String get databaseWipeScopeAllNote =>
+      'Etiquetes, creadors, fernies, models: tot. L\'aplicació comença de zero.';
+
+  @override
+  String get databaseWipeScopeNsfw => 'Només el marcat com a NSFW';
+
+  @override
+  String get databaseWipeScopeNsfwNote =>
+      'El contingut marcat i el que hereta d\'etiquetes i creadors marcats. Les etiquetes, els creadors, els fernies i els models es queden.';
+
+  @override
+  String get databaseWipeFiles => 'Esborrar també els fitxers del disc';
+
+  @override
+  String get databaseWipeFilesNote =>
+      'Sense això els fitxers es queden on són i un escaneig els torna a portar. Amb això se\'n van: és la part que no té volta.';
+
+  @override
+  String get databaseWipeConfirmFiles =>
+      'Els fitxers se\'n van també del disc. S\'esborren en segon pla i es pot seguir a la llista de tasques.';
+
+  @override
+  String get databaseWipeConfirmNsfw =>
+      'Se\'n va només el marcat com a NSFW. Tota la resta es queda com és.';
+
+  @override
   String get databaseWipeContinue => 'Ho entenc, continuar';
 
   @override
@@ -2730,6 +2759,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get jobTagRegions => 'Marcant el contingut d’una etiqueta';
+
+  @override
+  String get jobFileCleanup => 'Esborrant fitxers';
 
   @override
   String get fernieImportTagTitle => 'Marca una etiqueta sencera';

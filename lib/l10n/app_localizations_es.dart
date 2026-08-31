@@ -1373,6 +1373,35 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tus ficheros se quedan donde están: no se borra nada del disco, y escanear la carpeta de la biblioteca los vuelve a dar de alta. Los ajustes, las contraseñas y las credenciales de las fuentes también se quedan.';
 
   @override
+  String get databaseWipeScopeAll => 'Todo';
+
+  @override
+  String get databaseWipeScopeAllNote =>
+      'Etiquetas, creadores, fernies, modelos: todo. La aplicación empieza de cero.';
+
+  @override
+  String get databaseWipeScopeNsfw => 'Sólo lo marcado como NSFW';
+
+  @override
+  String get databaseWipeScopeNsfwNote =>
+      'El contenido marcado y lo que hereda de etiquetas y creadores marcados. Las etiquetas, los creadores, los fernies y los modelos se quedan.';
+
+  @override
+  String get databaseWipeFiles => 'Borrar también los ficheros del disco';
+
+  @override
+  String get databaseWipeFilesNote =>
+      'Sin esto los ficheros se quedan donde están y un escaneo los vuelve a traer. Con esto se van: es la parte que no tiene vuelta.';
+
+  @override
+  String get databaseWipeConfirmFiles =>
+      'Los ficheros se van también del disco. Se borran en segundo plano y se puede seguir en la lista de tareas.';
+
+  @override
+  String get databaseWipeConfirmNsfw =>
+      'Se va sólo lo marcado como NSFW. Todo lo demás se queda como está.';
+
+  @override
   String get databaseWipeContinue => 'Lo entiendo, continuar';
 
   @override
@@ -2731,6 +2760,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get jobTagRegions => 'Marcando el contenido de una etiqueta';
+
+  @override
+  String get jobFileCleanup => 'Borrando ficheros';
 
   @override
   String get fernieImportTagTitle => 'Marcar una etiqueta entera';

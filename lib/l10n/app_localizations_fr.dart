@@ -1373,6 +1373,35 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vos fichiers restent où ils sont : rien n\'est supprimé du disque, et analyser le dossier de la bibliothèque les réenregistre. Les réglages, les mots de passe et les identifiants des sources restent également.';
 
   @override
+  String get databaseWipeScopeAll => 'Tout';
+
+  @override
+  String get databaseWipeScopeAllNote =>
+      'Étiquettes, créateurs, fernies, modèles : tout. L\'application repart de zéro.';
+
+  @override
+  String get databaseWipeScopeNsfw => 'Seulement ce qui est marqué NSFW';
+
+  @override
+  String get databaseWipeScopeNsfwNote =>
+      'Le contenu marqué et ce qu\'il hérite des étiquettes et des créateurs marqués. Les étiquettes, les créateurs, les fernies et les modèles restent.';
+
+  @override
+  String get databaseWipeFiles => 'Supprimer aussi les fichiers du disque';
+
+  @override
+  String get databaseWipeFilesNote =>
+      'Sans cela les fichiers restent où ils sont et une analyse les ramène. Avec, ils disparaissent : c\'est la partie sans retour.';
+
+  @override
+  String get databaseWipeConfirmFiles =>
+      'Les fichiers partent aussi du disque. Ils sont supprimés en arrière-plan et vous pouvez suivre ça dans la liste des tâches.';
+
+  @override
+  String get databaseWipeConfirmNsfw =>
+      'Seul ce qui est marqué NSFW s\'en va. Tout le reste reste tel quel.';
+
+  @override
   String get databaseWipeContinue => 'J\'ai compris, continuer';
 
   @override
@@ -2733,6 +2762,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jobTagRegions => 'Marquage du contenu d’une étiquette';
+
+  @override
+  String get jobFileCleanup => 'Suppression des fichiers';
 
   @override
   String get fernieImportTagTitle => 'Marquer une étiquette entière';

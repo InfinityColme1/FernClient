@@ -2316,6 +2316,54 @@ abstract class AppLocalizations {
   /// **'Your files stay where they are: nothing is deleted from disk, and scanning your library folder registers them again. Your settings, passwords and remote credentials also stay.'**
   String get databaseWipeKeeps;
 
+  /// No description provided for @databaseWipeScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get databaseWipeScopeAll;
+
+  /// No description provided for @databaseWipeScopeAllNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags, creators, fernies, models: the lot. The app starts over.'**
+  String get databaseWipeScopeAllNote;
+
+  /// No description provided for @databaseWipeScopeNsfw.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what is marked NSFW'**
+  String get databaseWipeScopeNsfw;
+
+  /// No description provided for @databaseWipeScopeNsfwNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The media that is marked, and what it inherits from marked tags and creators. Tags, creators, fernies and models stay.'**
+  String get databaseWipeScopeNsfwNote;
+
+  /// No description provided for @databaseWipeFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the files from disk too'**
+  String get databaseWipeFiles;
+
+  /// No description provided for @databaseWipeFilesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Without this the files stay where they are and a scan brings them back. With it, they are gone: this is the part with no way back.'**
+  String get databaseWipeFilesNote;
+
+  /// No description provided for @databaseWipeConfirmFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'The files go from disk as well. They will be deleted in the background and you can follow it in the task list.'**
+  String get databaseWipeConfirmFiles;
+
+  /// No description provided for @databaseWipeConfirmNsfw.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what is marked NSFW is going. Everything else stays as it is.'**
+  String get databaseWipeConfirmNsfw;
+
   /// No description provided for @databaseWipeContinue.
   ///
   /// In en, this message translates to:
@@ -4457,6 +4505,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marking a tag’s content'**
   String get jobTagRegions;
+
+  /// No description provided for @jobFileCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting files'**
+  String get jobFileCleanup;
 
   /// No description provided for @fernieImportTagTitle.
   ///

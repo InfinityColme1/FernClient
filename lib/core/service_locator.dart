@@ -105,6 +105,7 @@ import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/settings/data/services/database_maintenance_service.dart';
+import 'package:Fern/features/settings/data/services/file_deletion_job_runner.dart';
 import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
 import 'package:Fern/features/settings/data/services/leftover_files.dart';
 import 'package:Fern/features/settings/domain/usecases/sweep_unused_files_usecase.dart';
@@ -287,7 +288,21 @@ Future<void> initializeDependencies() async {
       preferences: getIt(),
       blocked: getIt(),
       collapsedTags: getIt(),
+      media: getIt<LocalMediaRepository>(),
+      nsfw: getIt<NsfwIndex>(),
     ),
+  );
+
+  // Borrar del disco lo que el vaciado deja huérfano. Va por la cola: son miles
+  // de ficheros y minutos de trabajo, y en el diálogo dejaría la ventana
+  // bloqueada sin decir por dónde va.
+  getIt.registerLazySingleton<FileDeletionJobRunner>(
+    () => FileDeletionJobRunner(organizer: getIt<MediaFileOrganizer>()),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.fileCleanup,
+    (context) => getIt<FileDeletionJobRunner>().run(context),
   );
 
   // Se lleva las copias de avatar que ya no usa nadie. Necesita la base entera:
@@ -316,7 +331,7 @@ Future<void> initializeDependencies() async {
   );
 
   getIt.registerLazySingleton<WipeDatabaseUseCase>(
-    () => WipeDatabaseUseCase(maintenance: getIt()),
+    () => WipeDatabaseUseCase(maintenance: getIt(), jobs: getIt<JobQueue>()),
   );
 
   // Los avisos. El sonido va aparte del contador porque son dos cosas que se

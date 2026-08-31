@@ -20,6 +20,7 @@ extension JobTypeLabels on JobType {
         JobType.linkReview => texts.jobLinkReview,
         JobType.linkImport => texts.jobLinkImport,
         JobType.tagRegions => texts.jobTagRegions,
+        JobType.fileCleanup => texts.jobFileCleanup,
       };
 
   /// Con qué se reconoce cada clase de trabajo en la lista.
@@ -36,6 +37,7 @@ extension JobTypeLabels on JobType {
         JobType.linkReview => Symbols.help,
         JobType.linkImport => Symbols.link,
         JobType.tagRegions => Symbols.select_all,
+        JobType.fileCleanup => Symbols.delete_sweep,
       };
 }
 

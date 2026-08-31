@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/settings/domain/services/database_wipe_options.dart';
 import 'package:Fern/features/settings/domain/services/database_wipe_phrase.dart';
 import 'package:Fern/features/settings/domain/usecases/wipe_database_usecase.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -15,9 +16,28 @@ import 'package:flutter/material.dart';
 /// Ésta es «¿sabes lo que esto hace?» y la otra es «¿seguro?»; juntas en un solo
 /// diálogo, la explicación se lee por encima con la mano ya en el botón.
 ///
-/// Se cierra devolviendo `true` cuando el usuario quiere seguir.
-class WipeDatabaseWarningDialog extends StatelessWidget {
-  const WipeDatabaseWarningDialog({super.key});
+/// Aquí se elige además **cuánto** se borra y si se van los ficheros: son las
+/// dos decisiones que cambian lo que esto significa, y tienen que estar donde se
+/// explica qué hace, no al lado del botón de confirmar.
+///
+/// Se cierra devolviendo lo elegido, o `null` si se cierra sin seguir.
+class WipeDatabaseWarningDialog extends StatefulWidget {
+  /// Si se puede elegir «sólo lo no apto».
+  ///
+  /// Con el bloqueo cerrado **no se ofrece**: ese contenido no se ve, así que
+  /// sería borrar a ciegas algo que no hay forma de comprobar. Llega por
+  /// parámetro para poder medir las dos formas sin localizador de servicios.
+  final bool canWipeNsfwOnly;
+
+  const WipeDatabaseWarningDialog({super.key, this.canWipeNsfwOnly = false});
+
+  @override
+  State<WipeDatabaseWarningDialog> createState() =>
+      _WipeDatabaseWarningDialogState();
+}
+
+class _WipeDatabaseWarningDialogState extends State<WipeDatabaseWarningDialog> {
+  DatabaseWipeOptions _options = const DatabaseWipeOptions();
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +45,7 @@ class WipeDatabaseWarningDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     return FernDialog(
-      onClose: () => Navigator.of(context).pop(false),
+      onClose: () => Navigator.of(context).pop(),
       maxWidth: AppSizes.dialogMaxWidth / 2,
       // Desplazable: el diálogo le da a su contenido la altura que sobra, y en
       // una ventana baja esta lista se desbordaría por abajo en vez de poder
@@ -49,11 +69,46 @@ class WipeDatabaseWarningDialog extends StatelessWidget {
             Text(texts.databaseWipeLoses, style: theme.textTheme.bodyMedium),
             const SizedBox(height: AppSpacing.l),
             // Y lo que no, que es lo que hace esto reversible: los ficheros
-            // siguen en su carpeta y un escaneo los vuelve a dar de alta.
+            // siguen en su carpeta y un escaneo los vuelve a dar de alta —
+            // mientras no se marque la casilla de abajo.
             Text(
               texts.databaseWipeKeeps,
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: context.colors.gray),
+            ),
+
+            // Cuánto. Sólo cuando hay dos respuestas posibles: con el bloqueo
+            // cerrado, «sólo lo no apto» sería borrar a ciegas.
+            if (widget.canWipeNsfwOnly) ...[
+              const SizedBox(height: AppSpacing.l),
+              FernRadioTile<DatabaseWipeScope>(
+                value: DatabaseWipeScope.everything,
+                groupValue: _options.scope,
+                label: texts.databaseWipeScopeAll,
+                description: texts.databaseWipeScopeAllNote,
+                onChanged: (scope) =>
+                    setState(() => _options = _options.copyWith(scope: scope)),
+              ),
+              FernRadioTile<DatabaseWipeScope>(
+                value: DatabaseWipeScope.nsfwOnly,
+                groupValue: _options.scope,
+                label: texts.databaseWipeScopeNsfw,
+                description: texts.databaseWipeScopeNsfwNote,
+                onChanged: (scope) =>
+                    setState(() => _options = _options.copyWith(scope: scope)),
+              ),
+            ],
+
+            const SizedBox(height: AppSpacing.m),
+            // Y si se van también del disco. Apagada de fábrica: es lo que esto
+            // ha hecho siempre, y es la única parte que no tiene vuelta.
+            FernCheckboxTile(
+              label: texts.databaseWipeFiles,
+              description: texts.databaseWipeFilesNote,
+              value: _options.deletesFiles,
+              onChanged: (value) => setState(
+                () => _options = _options.copyWith(deletesFiles: value),
+              ),
             ),
           ],
         ),
@@ -62,7 +117,7 @@ class WipeDatabaseWarningDialog extends StatelessWidget {
         label: texts.databaseWipeContinue,
         backgroundColor: context.colors.error,
         foregroundColor: context.colors.white,
-        onPressed: () => Navigator.of(context).pop(true),
+        onPressed: () => Navigator.of(context).pop(_options),
       ),
     );
   }
@@ -74,9 +129,19 @@ class WipeDatabaseWarningDialog extends StatelessWidget {
 /// hay atajo, ni se acepta con la tecla de entrada mientras no lo sea: lo que
 /// esto compra es que el borrado no pueda salir de un gesto automático.
 ///
+/// **Dice lo que se eligió antes**, y no una advertencia genérica: no es lo
+/// mismo confirmar que se vacía una base de datos que confirmar que se borran
+/// mil ficheros del disco, y quien llega aquí viene de leer otra pantalla.
+///
 /// Se cierra devolviendo `true` si la base de datos se ha vaciado.
 class WipeDatabaseConfirmDialog extends StatefulWidget {
-  const WipeDatabaseConfirmDialog({super.key});
+  /// Lo elegido en el primer aviso.
+  final DatabaseWipeOptions options;
+
+  const WipeDatabaseConfirmDialog({
+    super.key,
+    this.options = const DatabaseWipeOptions(),
+  });
 
   @override
   State<WipeDatabaseConfirmDialog> createState() =>
@@ -112,7 +177,7 @@ class _WipeDatabaseConfirmDialogState extends State<WipeDatabaseConfirmDialog> {
       _isWorking = true;
     });
 
-    final result = await getIt<WipeDatabaseUseCase>()();
+    final result = await getIt<WipeDatabaseUseCase>()(params: widget.options);
 
     if (!mounted) return;
 
@@ -157,6 +222,27 @@ class _WipeDatabaseConfirmDialogState extends State<WipeDatabaseConfirmDialog> {
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: context.colors.gray),
             ),
+
+            // Lo que se eligió, repetido aquí. Es la última pantalla antes de
+            // que no haya vuelta, y llegar a ella con una casilla marcada dos
+            // pantallas atrás y sin recordarlo es como se borran cosas sin
+            // querer.
+            if (!widget.options.isEverything) ...[
+              const SizedBox(height: AppSpacing.s),
+              Text(
+                texts.databaseWipeConfirmNsfw,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+            if (widget.options.deletesFiles) ...[
+              const SizedBox(height: AppSpacing.s),
+              Text(
+                texts.databaseWipeConfirmFiles,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: context.colors.error),
+              ),
+            ],
+
             const SizedBox(height: AppSpacing.l),
             // La frase, escrita tal cual hay que copiarla. Puesta aparte y en
             // negrita porque hay que leerla carácter a carácter: se compara

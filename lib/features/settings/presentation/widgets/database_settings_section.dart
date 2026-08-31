@@ -11,6 +11,8 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/settings/domain/services/database_wipe_options.dart';
 import 'package:Fern/features/settings/presentation/widgets/wipe_database_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
@@ -129,16 +131,20 @@ class _DatabaseSettingsSectionState extends State<DatabaseSettingsSection> {
   /// El primero puede cerrarse sin más; del segundo sólo se sale escribiendo la
   /// frase entera o cerrándolo.
   Future<void> _wipe(BuildContext context) async {
-    final understood = await showFernDialog<bool, MediaBloc>(
+    final options = await showFernDialog<DatabaseWipeOptions, MediaBloc>(
       context: context,
-      builder: (_) => const WipeDatabaseWarningDialog(),
+      builder: (_) => WipeDatabaseWarningDialog(
+        // Con el bloqueo cerrado no se ofrece vaciar «sólo lo no apto»: ese
+        // contenido no se ve, así que sería borrar a ciegas.
+        canWipeNsfwOnly: getIt<NsfwModeService>().isUnlocked,
+      ),
     );
 
-    if (understood != true || !context.mounted) return;
+    if (options == null || !context.mounted) return;
 
     final wiped = await showFernDialog<bool, MediaBloc>(
       context: context,
-      builder: (_) => const WipeDatabaseConfirmDialog(),
+      builder: (_) => WipeDatabaseConfirmDialog(options: options),
     );
 
     if (wiped != true || !context.mounted) return;
