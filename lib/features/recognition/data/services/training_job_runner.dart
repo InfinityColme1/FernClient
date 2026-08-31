@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:Fern/core/constants/app_constants.dart';
@@ -62,6 +63,7 @@ class TrainingJobRunner {
     required RecognitionRoot root,
     bool Function()? keepDatasets,
     TrainingNotifier? notifyFinished,
+    this.grace = trainingCancelGrace,
   })  : _notifyFinished = notifyFinished,
         _models = models,
         _datasets = datasets,
@@ -74,6 +76,17 @@ class TrainingJobRunner {
 
   /// La clave con la que viaja el modelo en el `payload` del trabajo.
   static const modelIdKey = 'modelId';
+
+  /// Lo que se enseña en la barra de tareas mientras se está parando.
+  ///
+  /// Parar no es inmediato: la señal se mira al cerrar cada época, así que lo
+  /// que se estaba entrenando termina la suya. Sin decirlo, el botón parece no
+  /// haber hecho nada y se pulsa otra vez.
+  static const cancellingStage = 'cancelling';
+
+  /// Cuánto se espera a que pare por las buenas antes de matar el sidecar.
+  /// Parámetro para poder medirlo sin esperar un minuto en cada prueba.
+  final Duration grace;
 
   /// Lo que la cola llama.
   Future<void> call(JobContext context) => run(context);
@@ -88,6 +101,11 @@ class TrainingJobRunner {
     await _models.setTraining(modelId: modelId, isTraining: true);
 
     String? root;
+
+    // Lo que hace que «cancelar» termine siempre: se pide parar por las buenas y,
+    // pasado el plazo, se mata el sidecar. Sin esto, una época larga dejaba la
+    // interfaz diciendo «Cancelando…» durante horas.
+    final killer = _killAfterGrace(context);
 
     try {
       final plan = await _planFor(modelId);
@@ -113,9 +131,13 @@ class TrainingJobRunner {
       // usuario entiende por «va por la mitad».
       context.report(0, total: model.epochs);
 
+      // La señal de parada llega hasta el sidecar, que la mira al cerrar cada
+      // época. Sin pasarla, cancelar dejaba el trabajo marcado en la cola y el
+      // Python entrenando hasta el final.
       final result = await _engine.train(
         _paramsFor(model, dataset),
         onProgress: (data) => _onEpoch(context, data),
+        token: context.token,
       );
 
       await _models.saveTrainingResult(
@@ -133,6 +155,15 @@ class TrainingJobRunner {
       await _models.saveTrainingResult(modelId: modelId);
       rethrow;
     } on Exception catch (error) {
+      // Matar el sidecar rompe la petición en curso, así que lo que llega aquí
+      // al cancelar es un fallo del canal. No lo es: lo ha parado el usuario, y
+      // apuntarlo como error dejaría la ficha del modelo diciendo que se rompió
+      // algo que se paró a propósito.
+      if (context.token.isCancelled) {
+        await _models.saveTrainingResult(modelId: modelId);
+        throw const JobCancelledException();
+      }
+
       await _models.saveTrainingResult(
         modelId: modelId,
         error: error.toString(),
@@ -144,6 +175,8 @@ class TrainingJobRunner {
       await _notify();
       rethrow;
     } finally {
+      killer.cancel();
+
       // Pase lo que pase, la marca de «entrenando» se quita y el dataset se
       // recoge: dejarlos puestos impediría volver a entrenar y llenaría el
       // disco.
@@ -153,6 +186,36 @@ class TrainingJobRunner {
         await _datasets.discard(root);
       }
     }
+  }
+
+  /// Al pedir parar: se dice que se está cancelando y se pone el reloj.
+  ///
+  /// Lo que se para de verdad lo decide el sidecar, que mira la señal **al
+  /// cerrar cada época**. Si para, esto se cancela en el `finally` y no llega a
+  /// matar nada. Si no para —una época larga, o el proceso atascado—, se le
+  /// acaba el plazo y se cierra el sidecar a la fuerza.
+  ///
+  /// **Se lleva por delante lo que estuviera reconociéndose en paralelo**, y es
+  /// a propósito: cancelar tarda siempre lo mismo, y lo que caiga sale contado en
+  /// la lista de tareas para poder relanzarlo. Esperar a la otra tanda podía ser
+  /// esperar horas por algo que el usuario acaba de pedir que pare.
+  _Killer _killAfterGrace(JobContext context) {
+    final killer = _Killer();
+
+    unawaited(context.token.whenCancelled.then((_) async {
+      if (killer.isCancelled) return;
+
+      // Que se vea que se ha enterado: el botón ya no responde y sin decir nada
+      // parece que no ha hecho nada.
+      context.report(context.job.done, stage: cancellingStage);
+
+      await Future<void>.delayed(grace);
+      if (killer.isCancelled) return;
+
+      await _engine.stop();
+    }));
+
+    return killer;
   }
 
   /// Avisa de que esto ha terminado, bien o mal.
@@ -226,4 +289,15 @@ class TrainingJobRunner {
       'workers': defaultTargetPlatform == TargetPlatform.windows ? 0 : 4,
     };
   }
+}
+
+/// El reloj de la cancelación, para poder pararlo cuando ya no hace falta.
+///
+/// No es un `Timer`: lo que se espera es una pausa dentro de un `async`, y lo
+/// único que hace falta es poder decir «déjalo» cuando el entrenamiento sí ha
+/// parado por las buenas.
+class _Killer {
+  bool isCancelled = false;
+
+  void cancel() => isCancelled = true;
 }

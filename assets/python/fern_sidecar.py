@@ -19,8 +19,14 @@ un equipo cualquiera.
 import json
 import os
 import sys
+import threading
 import time
 import traceback
+
+try:
+    import queue
+except ImportError:  # Python 2, que no se usa pero no cuesta nada
+    import Queue as queue
 
 SIDECAR_VERSION = "1"
 
@@ -102,9 +108,18 @@ def _device():
     return "cuda:0" if _cuda_works() else "cpu"
 
 
+# Escriben dos hilos: el que atiende las peticiones y el que lee stdin,
+# que contesta el "cancel" por su cuenta. Sin cerrojo, dos lineas podrian
+# entrelazarse y el otro lado leeria un JSON roto.
+_stdout_lock = threading.Lock()
+
+
 def _send(payload):
-    sys.stdout.write(json.dumps(payload) + "\n")
-    sys.stdout.flush()
+    line = json.dumps(payload) + "\n"
+
+    with _stdout_lock:
+        sys.stdout.write(line)
+        sys.stdout.flush()
 
 
 def _ok(request_id, result):
@@ -466,7 +481,17 @@ HANDLERS = {
 }
 
 
-def main():
+def _read_stdin(pending):
+    """Lee peticiones y las pone en la cola, **menos las de cancelar**.
+
+    Las de cancelar se contestan aqui mismo, en este hilo. Es todo el motivo de
+    que este hilo exista: mientras se entrena, el principal esta dentro de
+    ultralytics durante horas, asi que un "cancel" encolado no se leeria hasta
+    que el entrenamiento hubiera terminado - justo lo que se queria evitar.
+
+    Se puede atender desde aqui porque lo unico que hace el manejador es
+    levantar una bandera que los callbacks miran entre epoca y epoca.
+    """
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -477,6 +502,37 @@ def main():
         except ValueError as error:
             _error("", "INTERNAL", "Bad request: %s" % error)
             continue
+
+        if request.get("method") == "cancel":
+            request_id = request.get("id", "")
+            try:
+                _ok(
+                    request_id,
+                    handle_cancel(request_id, request.get("params") or {}),
+                )
+            except Exception:
+                _error(request_id, "INTERNAL", traceback.format_exc())
+            continue
+
+        pending.put(request)
+
+    # stdin cerrado: el otro lado se ha ido y no va a llegar nada mas.
+    pending.put(None)
+
+
+def main():
+    pending = queue.Queue()
+
+    # Demonio: si el hilo principal se va, este no puede quedarse esperando una
+    # linea que ya no va a llegar y dejar el proceso vivo.
+    reader = threading.Thread(target=_read_stdin, args=(pending,))
+    reader.daemon = True
+    reader.start()
+
+    while True:
+        request = pending.get()
+        if request is None:
+            return
 
         request_id = request.get("id", "")
         method = request.get("method", "")

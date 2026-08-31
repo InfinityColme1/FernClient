@@ -10,6 +10,8 @@
 // - Que un fallo no borra los pesos que funcionaban.
 // - Que cancelar no cuenta como error.
 
+import 'dart:async';
+
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
 import 'package:Fern/core/services/jobs/job.dart';
@@ -35,6 +37,16 @@ class _FakeRepository implements ModelRepository {
   final List<Map<String, String?>> results = [];
 
   _FakeRepository({required this.model, this.fernies = const []});
+
+  /// Los modelos a los que se les ha olvidado el entrenamiento.
+  final List<int> forgotten = [];
+
+  @override
+  Future<DataState<RecognitionModelEntity>> forgetTraining(int modelId) async {
+    forgotten.add(modelId);
+
+    return DataSuccess(model);
+  }
 
   @override
   Future<DataState<RecognitionModelEntity>> getModel(int id) async =>
@@ -142,14 +154,22 @@ class _FakeEngine implements RecognitionEngine {
 
   Map<String, dynamic>? params;
 
-  _FakeEngine({this.epochs = 3, this.throws});
+  /// La señal que le llega: sin ella, cancelar no sale de la cola.
+  CancellationToken? token;
+
+  /// Se queda entrenando para siempre, como el que no mira la señal.
+  final bool blocks;
+
+  _FakeEngine({this.epochs = 3, this.throws, this.blocks = false});
 
   @override
   Future<Map<String, dynamic>> train(
     Map<String, dynamic> params, {
     void Function(Map<String, dynamic> data)? onProgress,
+    CancellationToken? token,
   }) async {
     this.params = params;
+    this.token = token;
 
     if (throws != null) throw throws!;
 
@@ -157,11 +177,21 @@ class _FakeEngine implements RecognitionEngine {
       onProgress?.call({'epoch': epoch, 'epochs': epochs});
     }
 
+    // Lo que se queda esperando: es lo que deja medir qué pasa cuando se pide
+    // parar y el entrenamiento no para por las buenas.
+    if (blocks) await Completer<Map<String, dynamic>>().future;
+
     return {
       'weights': 'C:/runs/best.pt',
       'metrics': {'map50': 0.83},
     };
   }
+
+  /// Se ha pedido cerrar el sidecar por las malas.
+  bool wasStopped = false;
+
+  @override
+  Future<void> stop() async => wasStopped = true;
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -197,13 +227,20 @@ void main() {
   });
 
   /// Un contexto de trabajo, con su cuenta de avance.
-  ({JobContext context, List<int> reported, CancellationToken token}) job() {
+  ({
+    JobContext context,
+    List<int> reported,
+    List<String> stages,
+    CancellationToken token,
+  }) job() {
     final reported = <int>[];
+    final stages = <String>[];
     final token = CancellationToken();
 
     return (
       token: token,
       reported: reported,
+      stages: stages,
       context: JobContext(
         job: Job(
           id: 'job-1',
@@ -212,7 +249,10 @@ void main() {
           payload: const {TrainingJobRunner.modelIdKey: 7},
         ),
         token: token,
-        report: (done, {total, stage}) => reported.add(done),
+        report: (done, {total, stage}) {
+          reported.add(done);
+          if (stage != null) stages.add(stage);
+        },
       ),
     );
   }
@@ -420,5 +460,119 @@ void main() {
 
     expect(builder.built, isNotNull);
     expect(builder.built!.classNames[0], 'marinette');
+  });
+
+  // Cancelar un entrenamiento no llegaba al sidecar: el trabajo se marcaba como
+  // cancelado en la cola y el Python seguía entrenando hasta el final, comiéndose
+  // la tarjeta durante horas.
+  group('cancelar', () {
+    test('la señal llega al motor', () async {
+      final engine = _FakeEngine();
+      final runner = TrainingJobRunner(
+        models: repository,
+        datasets: builder,
+        engine: engine,
+        regionsOf: (_) async => const [],
+        root: () async => 'C:/fern',
+      );
+
+      final one = job();
+      await runner.run(one.context);
+
+      expect(engine.token, same(one.token));
+    });
+
+    // Lo que hace que «cancelar» termine siempre. La señal la mira el sidecar al
+    // cerrar cada época: si la época no termina, sin esto no termina nada.
+    test('lo que no para por las buenas se mata', () async {
+      final engine = _FakeEngine(blocks: true);
+      final runner = TrainingJobRunner(
+        models: repository,
+        datasets: builder,
+        engine: engine,
+        regionsOf: (_) async => const [],
+        root: () async => 'C:/fern',
+        grace: const Duration(milliseconds: 20),
+      );
+
+      final one = job();
+      unawaited(runner.run(one.context));
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      one.token.cancel();
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+
+      expect(engine.wasStopped, isTrue);
+    });
+
+    test('y se dice que se está parando', () async {
+      final engine = _FakeEngine(blocks: true);
+      final runner = TrainingJobRunner(
+        models: repository,
+        datasets: builder,
+        engine: engine,
+        regionsOf: (_) async => const [],
+        root: () async => 'C:/fern',
+        grace: const Duration(milliseconds: 20),
+      );
+
+      final one = job();
+      unawaited(runner.run(one.context));
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      one.token.cancel();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(one.stages, contains(TrainingJobRunner.cancellingStage));
+    });
+
+    // Matar el sidecar rompe la peticion en curso y eso llega aqui como un fallo
+    // del canal. No lo es: lo ha parado el usuario, y apuntarlo como error
+    // dejaria la ficha del modelo diciendo que se rompio algo que se paro a
+    // proposito.
+    test('el fallo de matarlo no se apunta como error del modelo', () async {
+      final engine = _FakeEngine(throws: Exception('SIDECAR_NOT_READY'));
+      final runner = TrainingJobRunner(
+        models: repository,
+        datasets: builder,
+        engine: engine,
+        regionsOf: (_) async => const [],
+        root: () async => 'C:/fern',
+        grace: const Duration(milliseconds: 5),
+      );
+
+      final one = job();
+      one.token.cancel();
+
+      await expectLater(
+        runner.run(one.context),
+        throwsA(isA<JobCancelledException>()),
+      );
+
+      expect(repository.results.last['error'], isNull);
+      expect(repository.trainingFlags.last, isFalse);
+    });
+
+    // Si para por las buenas no se mata nada: matar el sidecar se lleva por
+    // delante lo que estuviera reconociéndose en paralelo.
+    test('lo que sí para no se mata', () async {
+      final engine = _FakeEngine();
+      final runner = TrainingJobRunner(
+        models: repository,
+        datasets: builder,
+        engine: engine,
+        regionsOf: (_) async => const [],
+        root: () async => 'C:/fern',
+        grace: const Duration(milliseconds: 20),
+      );
+
+      final one = job();
+      await runner.run(one.context);
+      one.token.cancel();
+
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+
+      expect(engine.wasStopped, isFalse);
+    });
   });
 }

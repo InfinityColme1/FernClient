@@ -227,15 +227,22 @@ class RecognitionEngine {
   }
 
   /// Entrena un modelo. No tiene tiempo límite: puede durar horas.
+  ///
+  /// Con [token] se puede parar a media faena, igual que en [predict]. **Sin
+  /// pasarlo, cancelar no llegaba al sidecar**: el botón dejaba el trabajo
+  /// marcado como cancelado en la cola y el Python seguía entrenando hasta el
+  /// final, comiéndose la tarjeta durante horas.
   Future<Map<String, dynamic>> train(
     Map<String, dynamic> params, {
     void Function(Map<String, dynamic> data)? onProgress,
+    CancellationToken? token,
   }) {
     return _withClient((client) => client.call(
           'train',
           params: params,
           onProgress: onProgress,
           timeout: Duration.zero,
+          token: token,
         ));
   }
 

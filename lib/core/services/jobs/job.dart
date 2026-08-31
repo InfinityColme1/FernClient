@@ -183,6 +183,14 @@ class Job extends Equatable {
         done,
         total,
         error,
+        // **Sin esto, un cambio sólo de `stage` no se notifica.** La cola
+        // descarta la actualización si el trabajo compara igual, así que la
+        // línea de estado de la barra de tareas se quedaba con lo de antes: es
+        // lo que hacía invisible el «Cancelando…» de un entrenamiento.
+        //
+        // `payload` sigue fuera a propósito: puede llevar listas de miles de
+        // identificadores y se compararía entera en cada avance.
+        stage,
         createdAt,
         startedAt,
         finishedAt,

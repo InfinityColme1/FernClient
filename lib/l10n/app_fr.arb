@@ -170,6 +170,7 @@
   "trainingStart": "Entraîner le modèle",
   "trainingRetrain": "Réentraîner",
   "trainingPreparing": "Préparation du matériel...",
+  "trainingCancelling": "Arrêt à la fin de cette époque…",
   "trainingEpoch": "Époque {done} sur {total}",
   "@trainingEpoch": {
     "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
@@ -201,6 +202,12 @@
   "metricsRealPerformance": "Performance réelle",
   "metricsRealPerformanceEmpty": "Pas encore de données. On compte combien de suggestions de ce modèle vous acceptez et rejetez à l’import : la seule mesure honnête de son utilité.",
   "modelImportWeightsHint": "Un fichier .pt entraîné ailleurs. Il est copié dans le dossier de reconnaissance pour qu’il ne disparaisse pas sous le modèle.",
+  "modelForgetTrainingHint": "Oublier l'entraînement",
+  "modelForgetTrainingTitle": "Oublier ce que {model} a appris ?",
+  "modelForgetTrainingLoses": "Les poids, les métriques et la date de l'entraînement s'en vont, fichiers compris. Le réentraîner coûte ce qu'il a coûté la première fois.",
+  "modelForgetTrainingKeeps": "Les hyperparamètres, les fernies et la répartition restent tels quels. Le modèle redevient non entraîné et garde sa place dans l'arbre.",
+  "modelForgetTrainingAction": "Oublier",
+  "modelForgetTrainingDone": "Il ne reste rien de cet entraînement.",
   "modelImportWeightsInvalid": "Ces poids n’ont pas pu être lus : {error}",
   "@modelImportWeightsInvalid": {
     "placeholders": { "error": { "type": "String" } }

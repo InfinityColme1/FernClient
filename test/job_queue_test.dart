@@ -226,6 +226,38 @@ void main() {
     await queue.dispose();
   });
 
+  // **Un cambio sólo de estado tiene que notificar.** La cola descarta la
+  // actualización si el trabajo compara igual, así que sin `stage` entre lo que
+  // se compara, decir «Cancelando…» sin mover la barra no llegaba a la pantalla:
+  // el trabajo seguía diciendo lo de antes.
+  test('cambiar sólo en qué se está también se cuenta', () async {
+    final queue = JobQueue();
+    final gate = _Gate();
+    final seen = <String?>[];
+
+    queue.register(JobType.hashing, (context) async {
+      context.report(1, total: 10, stage: 'contando');
+      await Future<void>.delayed(Duration.zero);
+      context.report(1, total: 10, stage: 'cancelando');
+      await gate.completer.future;
+    });
+
+    final id = queue.enqueue(type: JobType.hashing);
+    final subscription = queue.changes.listen((jobs) {
+      for (final job in jobs) {
+        if (job.id == id) seen.add(job.stage);
+      }
+    });
+
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(seen, contains('cancelando'));
+
+    gate.open();
+    await subscription.cancel();
+    await queue.dispose();
+  });
+
   test('sin total no se finge un porcentaje', () {
     final job = Job(
       id: 'x',

@@ -1440,6 +1440,19 @@ const fernieMinDistinctMedia = 5;
 /// no cuele.
 const fernieMinRegionFraction = 0.0025;
 
+/// Cuánto se espera a que un entrenamiento se pare por las buenas antes de
+/// matar el sidecar.
+///
+/// La señal de parada la mira ultralytics **al cerrar cada época**, así que lo
+/// que se espera es a que termine la que esté en curso. Un minuto cubre de sobra
+/// una época normal; si tarda más, es un conjunto grande, y ahí quien acaba de
+/// cancelar no quiere esperarse a que acabe.
+///
+/// Al matarlo cae también lo que estuviera reconociéndose en paralelo. Es la
+/// decisión tomada: cancelar tarda siempre lo mismo, y lo que caiga lo cuenta la
+/// lista de tareas para poder relanzarlo.
+const trainingCancelGrace = Duration(minutes: 1);
+
 /// Cuántas líneas del registro de etiquetado se conservan por contenido.
 ///
 /// Con tope, como el parte de reconocimiento: reconocer la biblioteca entera

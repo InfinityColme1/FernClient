@@ -8,6 +8,7 @@ import 'package:Fern/features/recognition/domain/entities/model_fernie_entity.da
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/features/recognition/domain/services/training_checks.dart';
 import 'package:Fern/features/recognition/domain/services/training_presets.dart';
+import 'package:Fern/features/recognition/data/services/training_job_runner.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -447,13 +448,20 @@ class _TrainingPanelState extends State<TrainingPanel> {
   Widget _progress(BuildContext context, AppLocalizations texts, Job job) {
     final theme = Theme.of(context);
 
+    // Parar no es inmediato: la señal se mira al cerrar cada época, así que lo
+    // que se está entrenando termina la suya. Sin decirlo, el botón parece no
+    // haber hecho nada y se pulsa otra vez.
+    final isCancelling = job.stage == TrainingJobRunner.cancellingStage;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          job.total > 0
-              ? texts.trainingEpoch(job.done, job.total)
-              : texts.trainingPreparing,
+          isCancelling
+              ? texts.trainingCancelling
+              : job.total > 0
+                  ? texts.trainingEpoch(job.done, job.total)
+                  : texts.trainingPreparing,
           style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -481,7 +489,9 @@ class _TrainingPanelState extends State<TrainingPanel> {
               const SizedBox(width: AppSpacing.m),
             ],
             TextButton(
-              onPressed: widget.onCancel,
+              // Apagado desde que se pulsa: lo pedido está pedido, y volver a
+              // pulsarlo no lo para antes.
+              onPressed: isCancelling ? null : widget.onCancel,
               child: Text(texts.jobCancelTooltip),
             ),
           ],

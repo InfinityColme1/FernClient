@@ -81,5 +81,18 @@ abstract class ModelRepository {
   /// Se llama al arrancar: si el equipo se apagó a media faena, esos modelos se
   /// habrían quedado marcados para siempre y no se dejarían entrenar nunca más.
   /// Devuelve cuántos ha desatascado.
+  /// Deja el modelo **como si no se hubiera entrenado nunca**: sin pesos, sin
+  /// métricas, sin fecha y sin el último error.
+  ///
+  /// Existe aparte de [saveTrainingResult] porque aquél no puede poner nada en
+  /// nulo —usa el valor de antes cuando no llega uno nuevo, para que un
+  /// entrenamiento roto no se lleve por delante el que funcionaba— y aquí lo que
+  /// se pide es justamente vaciarlo.
+  ///
+  /// **No toca los hiperparámetros, ni los fernies, ni el reparto**: lo que se
+  /// olvida es el resultado, no cómo se pidió. Los ficheros los borra quien
+  /// llama, que es quien sabe si el usuario ha confirmado.
+  Future<DataState<RecognitionModelEntity>> forgetTraining(int modelId);
+
   Future<DataState<int>> clearStaleTrainingFlags();
 }

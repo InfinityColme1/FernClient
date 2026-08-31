@@ -894,6 +894,12 @@ abstract class AppLocalizations {
   /// **'Preparing the dataset...'**
   String get trainingPreparing;
 
+  /// No description provided for @trainingCancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping when this epoch ends…'**
+  String get trainingCancelling;
+
   /// No description provided for @trainingEpoch.
   ///
   /// In en, this message translates to:
@@ -1025,6 +1031,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.'**
   String get modelImportWeightsHint;
+
+  /// No description provided for @modelForgetTrainingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget what was trained'**
+  String get modelForgetTrainingHint;
+
+  /// No description provided for @modelForgetTrainingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget what {model} learned?'**
+  String modelForgetTrainingTitle(String model);
+
+  /// No description provided for @modelForgetTrainingLoses.
+  ///
+  /// In en, this message translates to:
+  /// **'The weights, the metrics and the training date go, files included. Training again takes as long as it took the first time.'**
+  String get modelForgetTrainingLoses;
+
+  /// No description provided for @modelForgetTrainingKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'The hyperparameters, the fernies and the split stay as they are. The model goes back to untrained, and stays where it is in the tree.'**
+  String get modelForgetTrainingKeeps;
+
+  /// No description provided for @modelForgetTrainingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget it'**
+  String get modelForgetTrainingAction;
+
+  /// No description provided for @modelForgetTrainingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing left of that training.'**
+  String get modelForgetTrainingDone;
 
   /// No description provided for @modelImportWeightsInvalid.
   ///

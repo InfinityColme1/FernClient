@@ -170,6 +170,7 @@
   "trainingStart": "Entrenar model",
   "trainingRetrain": "Tornar a entrenar",
   "trainingPreparing": "Preparant el material...",
+  "trainingCancelling": "Aturant-se en acabar aquesta època…",
   "trainingEpoch": "Època {done} de {total}",
   "@trainingEpoch": {
     "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
@@ -201,6 +202,12 @@
   "metricsRealPerformance": "Rendiment real",
   "metricsRealPerformanceEmpty": "Encara sense dades. Compta quants suggeriments d’aquest model acceptes i quants rebutges en importar, que és l’única mesura honesta de si serveix.",
   "modelImportWeightsHint": "Un fitxer .pt entrenat en un altre lloc. Es copia a la carpeta de reconeixement perquè no desaparegui per sota del model.",
+  "modelForgetTrainingHint": "Oblidar el que s'ha entrenat",
+  "modelForgetTrainingTitle": "Vols oblidar el que va aprendre {model}?",
+  "modelForgetTrainingLoses": "Se'n van els pesos, les mètriques i la data de l'entrenament, fitxers inclosos. Tornar a entrenar-lo costa el que va costar el primer cop.",
+  "modelForgetTrainingKeeps": "Els hiperparàmetres, els fernies i el repartiment es queden com són. El model torna a estar sense entrenar i segueix on era a l'arbre.",
+  "modelForgetTrainingAction": "Oblidar-ho",
+  "modelForgetTrainingDone": "D'aquell entrenament no en queda res.",
   "modelImportWeightsInvalid": "No s’han pogut llegir aquests pesos: {error}",
   "@modelImportWeightsInvalid": {
     "placeholders": { "error": { "type": "String" } }

@@ -221,6 +221,7 @@
   "trainingStart": "Train model",
   "trainingRetrain": "Train again",
   "trainingPreparing": "Preparing the dataset...",
+  "trainingCancelling": "Stopping when this epoch ends…",
   "trainingEpoch": "Epoch {done} of {total}",
   "@trainingEpoch": {
     "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
@@ -252,6 +253,13 @@
   "metricsRealPerformance": "Real performance",
   "metricsRealPerformanceEmpty": "No data yet. It counts how many suggestions from this model you accept and reject while importing, which is the only honest measure of whether it works.",
   "modelImportWeightsHint": "A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.",
+  "modelForgetTrainingHint": "Forget what was trained",
+  "modelForgetTrainingTitle": "Forget what {model} learned?",
+  "@modelForgetTrainingTitle": { "placeholders": { "model": {"type": "String"} } },
+  "modelForgetTrainingLoses": "The weights, the metrics and the training date go, files included. Training again takes as long as it took the first time.",
+  "modelForgetTrainingKeeps": "The hyperparameters, the fernies and the split stay as they are. The model goes back to untrained, and stays where it is in the tree.",
+  "modelForgetTrainingAction": "Forget it",
+  "modelForgetTrainingDone": "Nothing left of that training.",
   "modelImportWeightsInvalid": "Those weights could not be read: {error}",
   "@modelImportWeightsInvalid": {
     "placeholders": { "error": { "type": "String" } }

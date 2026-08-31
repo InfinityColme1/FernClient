@@ -63,6 +63,7 @@ import 'package:Fern/features/recognition/domain/repositories/model_repository.d
 import 'package:Fern/features/recognition/domain/usecases/assign_fernie_to_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/clear_stale_training_flags_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/forget_training_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_models_usecase.dart';
@@ -774,6 +775,11 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Olvidar lo entrenado sin perder cómo se pidió: hiperparámetros, fernies y
+  // reparto se quedan.
+  getIt.registerLazySingleton<ForgetTrainingUseCase>(
+    () => ForgetTrainingUseCase(models: getIt(), files: getIt()),
+  );
   getIt.registerSingleton<DeleteModelUseCase>(
     DeleteModelUseCase(getIt(), getIt()),
   );

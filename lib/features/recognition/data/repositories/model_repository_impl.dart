@@ -331,6 +331,32 @@ class ModelRepositoryImpl implements ModelRepository {
   }
 
   @override
+  Future<DataState<RecognitionModelEntity>> forgetTraining(int modelId) async {
+    try {
+      await _database.writeTxn(() async {
+        final row = await _database.recognitionModelModels.get(modelId);
+        if (row == null) return;
+
+        // A cero de verdad, y por eso no vale `saveTrainingResult`: aquél no
+        // puede dejar nada en nulo —usa `?? row.x` para no pisar lo bueno con lo
+        // que no llegó— y aquí lo que se pide es justamente vaciarlo.
+        row
+          ..weightsPath = null
+          ..lastTrainedAt = null
+          ..lastMetrics = null
+          ..lastError = null
+          ..isImportedWeights = false;
+
+        await _database.recognitionModelModels.put(row);
+      });
+
+      return getModel(modelId);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  @override
   Future<DataState<int>> clearStaleTrainingFlags() async {
     try {
       final stuck = await _database.recognitionModelModels

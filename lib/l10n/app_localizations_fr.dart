@@ -535,6 +535,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get trainingPreparing => 'Préparation du matériel...';
 
   @override
+  String get trainingCancelling => 'Arrêt à la fin de cette époque…';
+
+  @override
   String trainingEpoch(int done, int total) {
     return 'Époque $done sur $total';
   }
@@ -611,6 +614,28 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get modelImportWeightsHint =>
       'Un fichier .pt entraîné ailleurs. Il est copié dans le dossier de reconnaissance pour qu’il ne disparaisse pas sous le modèle.';
+
+  @override
+  String get modelForgetTrainingHint => 'Oublier l\'entraînement';
+
+  @override
+  String modelForgetTrainingTitle(String model) {
+    return 'Oublier ce que $model a appris ?';
+  }
+
+  @override
+  String get modelForgetTrainingLoses =>
+      'Les poids, les métriques et la date de l\'entraînement s\'en vont, fichiers compris. Le réentraîner coûte ce qu\'il a coûté la première fois.';
+
+  @override
+  String get modelForgetTrainingKeeps =>
+      'Les hyperparamètres, les fernies et la répartition restent tels quels. Le modèle redevient non entraîné et garde sa place dans l\'arbre.';
+
+  @override
+  String get modelForgetTrainingAction => 'Oublier';
+
+  @override
+  String get modelForgetTrainingDone => 'Il ne reste rien de cet entraînement.';
 
   @override
   String modelImportWeightsInvalid(String error) {
