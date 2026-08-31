@@ -41,8 +41,18 @@ enum FernieTool {
 /// las malas, y salir sin mirar dejaría marcado lo que nadie ha confirmado.
 class ProposedRegion extends Equatable {
   final Rect rect;
-  final int fernieId;
+
+  /// El fernie al que iría, **entero**.
+  ///
+  /// Por lo mismo que en `RegionAssignedEvent`: un fernie que todavía no tiene
+  /// ninguna región en este contenido no está entre los del modo, y sin traerlo
+  /// aquí no habría de dónde sacar su nombre. La pastilla del rectángulo salía
+  /// vacía en cuanto se aceptaba la propuesta.
+  final FernieEntity fernie;
+
   final int? frameMs;
+
+  int get fernieId => fernie.id;
 
   /// Lo seguro que estaba el modelo, de 0 a 1.
   ///
@@ -55,7 +65,7 @@ class ProposedRegion extends Equatable {
 
   const ProposedRegion({
     required this.rect,
-    required this.fernieId,
+    required this.fernie,
     required this.confidence,
     required this.label,
     this.frameMs,
@@ -66,7 +76,7 @@ class ProposedRegion extends Equatable {
       PendingRegion(rect: rect, fernieId: fernieId, frameMs: frameMs);
 
   @override
-  List<Object?> get props => [rect, fernieId, frameMs, confidence, label];
+  List<Object?> get props => [rect, fernie, frameMs, confidence, label];
 }
 
 class PendingRegion extends Equatable {
@@ -204,6 +214,9 @@ class FernieModeState extends Equatable {
     this.infoWasOpen = false,
     this.isBusy = false,
     this.proposed = const [],
+    this.offeredFor = const [],
+    this.acceptedOffered = false,
+    this.resolvedSuggestions = const [],
     this.appliedLinks = 0,
   });
 
@@ -329,6 +342,22 @@ class FernieModeState extends Equatable {
   /// guarda** — proponer no es marcar.
   final List<ProposedRegion> proposed;
 
+  /// De qué sugerencias salen las propuestas que se están ofreciendo.
+  final List<int> offeredFor;
+
+  /// Si alguna de las propuestas ha llegado a aceptarse.
+  ///
+  /// Es lo que decide si las sugerencias de las que salían quedan contestadas:
+  /// entrar a mirarlas y salir sin quedarse ninguna no contesta nada.
+  final bool acceptedOffered;
+
+  /// Las sugerencias que acaban de quedar contestadas al salir del modo.
+  ///
+  /// Se emiten una sola vez, en el estado final: el visor las escucha y las
+  /// aparta del panel. Sin esto había que ir a las regiones, aceptarlas y volver
+  /// a aceptar la sugerencia, que es decir dos veces lo mismo.
+  final List<int> resolvedSuggestions;
+
   /// Cuántas veces se le ha puesto al contenido lo que los fernies enlazan.
   ///
   /// Un contador y no un interruptor: el visor lo escucha para volver a leer las
@@ -349,6 +378,9 @@ class FernieModeState extends Equatable {
     bool? infoWasOpen,
     bool? isBusy,
     List<ProposedRegion>? proposed,
+    List<int>? offeredFor,
+    bool? acceptedOffered,
+    List<int>? resolvedSuggestions,
     int? appliedLinks,
   }) {
     return FernieModeState(
@@ -367,6 +399,12 @@ class FernieModeState extends Equatable {
       infoWasOpen: infoWasOpen ?? this.infoWasOpen,
       isBusy: isBusy ?? this.isBusy,
       proposed: proposed ?? this.proposed,
+      offeredFor: offeredFor ?? this.offeredFor,
+      acceptedOffered: acceptedOffered ?? this.acceptedOffered,
+      // No se arrastra con el `??`: es un aviso de un momento, y conservarlo
+      // haría que el panel contestara la misma sugerencia en cada cambio de
+      // estado.
+      resolvedSuggestions: resolvedSuggestions ?? const [],
       appliedLinks: appliedLinks ?? this.appliedLinks,
     );
   }
@@ -393,6 +431,8 @@ class FernieModeState extends Equatable {
       infoWasOpen: infoWasOpen,
       isBusy: isBusy,
       proposed: proposed,
+      offeredFor: offeredFor,
+      acceptedOffered: acceptedOffered,
       appliedLinks: appliedLinks,
     );
   }
@@ -414,6 +454,9 @@ class FernieModeState extends Equatable {
         infoWasOpen,
         isBusy,
         proposed,
+        offeredFor,
+        acceptedOffered,
+        resolvedSuggestions,
         appliedLinks,
       ];
 }

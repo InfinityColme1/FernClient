@@ -244,6 +244,13 @@ const recentPicksStored = 10;
 /// lista al revés, una clave ausente escondería el árbol entero.
 const collapsedTagsPreferenceKey = 'collapsed_tags';
 
+/// Si lo que se importa entra marcado como no apto.
+///
+/// Se recuerda entre sesiones, como el tope de importación: vaciar una fuente
+/// entera de contenido adulto son varias tandas, y volver a encenderlo cada vez
+/// es justo el olvido que deja media importación sin marcar.
+const importsAsNsfwPreferenceKey = 'imports_as_nsfw';
+
 /// Cuánto hay que posarse sobre una rama plegada, arrastrando, para que se abra.
 ///
 /// Un plazo y no al entrar: sin él se abrirían todas las ramas por las que pasa

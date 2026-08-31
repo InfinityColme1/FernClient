@@ -148,7 +148,7 @@ class RegionPainter extends CustomPainter {
     if (focus != null) _paintScrim(canvas, size, focus);
 
     for (final preview in previews) {
-      _paintPreview(canvas, _toScreen(preview.rect, size), preview.label);
+      _paintPreview(canvas, _toScreen(preview.rect, size), preview.label, size);
     }
 
     for (var index = 0; index < regions.length; index++) {
@@ -183,7 +183,7 @@ class RegionPainter extends CustomPainter {
       );
 
       if (region.label case final label?) {
-        _paintLabel(canvas, rect, label, opacity: opacity);
+        _paintLabel(canvas, rect, label, size, opacity: opacity);
       }
 
       if (isSelected) _paintHandles(canvas, rect);
@@ -242,7 +242,7 @@ class RegionPainter extends CustomPainter {
   ///
   /// Va con trazo fino y sin relleno para que no se confunda con lo marcado: es
   /// una ayuda para comprobar, no algo que se pueda tocar.
-  void _paintPreview(Canvas canvas, Rect rect, String? label) {
+  void _paintPreview(Canvas canvas, Rect rect, String? label, Size size) {
     final rounded = RRect.fromRectAndRadius(
       rect,
       const Radius.circular(AppSizes.radiusSmall),
@@ -257,7 +257,7 @@ class RegionPainter extends CustomPainter {
     );
 
     if (label != null) {
-      _paintLabel(canvas, rect, label, opacity: _previewOpacity);
+      _paintLabel(canvas, rect, label, size, opacity: _previewOpacity);
     }
   }
 
@@ -299,9 +299,17 @@ class RegionPainter extends CustomPainter {
   void _paintLabel(
     Canvas canvas,
     Rect rect,
-    String label, {
+    String label,
+    Size size, {
     required double opacity,
   }) {
+    // **No se recorta al ancho de la región.** La píldora es una etiqueta pegada
+    // a la esquina, no contenido de la caja: midiéndola contra el rectángulo,
+    // una región estrecha —una farola, una persona de lejos— dejaba el nombre en
+    // una letra y unos puntos suspensivos, que es justo lo que no sirve para
+    // saber de qué fernie es.
+    //
+    // El único límite es el lienzo, para que no se salga por el lado.
     final painter = TextPainter(
       text: TextSpan(
         text: label,
@@ -313,7 +321,7 @@ class RegionPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
       maxLines: 1,
       ellipsis: '…',
-    )..layout(maxWidth: rect.width);
+    )..layout(maxWidth: math.max(0, size.width - AppSpacing.s));
 
     final height = painter.height + AppSpacing.xs;
     final width = painter.width + AppSpacing.s;
@@ -322,8 +330,16 @@ class RegionPainter extends CustomPainter {
         ? rect.top - height - AppSpacing.xxs
         : rect.top + AppSpacing.xxs;
 
+    // Pegada al borde izquierdo de la región, salvo que así se saliera por la
+    // derecha: entonces se corre lo justo para caber. Una región del extremo
+    // derecho tenía su nombre medio fuera de la pantalla.
+    final left = math.max(
+      0.0,
+      math.min(rect.left, size.width - width),
+    );
+
     final background = RRect.fromRectAndRadius(
-      Rect.fromLTWH(rect.left, top, width, height),
+      Rect.fromLTWH(left, top, width, height),
       const Radius.circular(AppSizes.radiusSmall),
     );
 
@@ -336,7 +352,7 @@ class RegionPainter extends CustomPainter {
 
     painter.paint(
       canvas,
-      Offset(rect.left + AppSpacing.xs, top + AppSpacing.xxs),
+      Offset(left + AppSpacing.xs, top + AppSpacing.xxs),
     );
   }
 

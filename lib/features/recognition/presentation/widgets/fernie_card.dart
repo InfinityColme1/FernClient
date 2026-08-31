@@ -24,8 +24,7 @@ import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,7 +54,6 @@ class _FernieCardState extends State<FernieCard> {
   final _updateFernie = getIt<UpdateFernieUseCase>();
   final _deleteFernie = getIt<DeleteFernieUseCase>();
   final _setNsfw = getIt<SetFernieNsfwUseCase>();
-  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.fernie.name);
@@ -110,17 +108,19 @@ class _FernieCardState extends State<FernieCard> {
   // ---------------------------------------------------------------------------
   // Acciones
   // ---------------------------------------------------------------------------
-
-  /// Elige la imagen del avatar y se queda con la copia que guarda la
-  /// aplicación, como en las demás fichas.
+  /// Elige el avatar: de dónde sale la imagen, cuál, y qué trozo de ella.
+  ///
+  /// El explorador de ficheros era la única respuesta a la primera pregunta, y
+  /// obligaba a buscar por el disco una imagen que la aplicación ya tiene
+  /// guardada y sabe enseñar.
   Future<void> _pickImage() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
+    final choice = await chooseAvatarImage(context);
+    if (choice == null || !mounted) return;
 
-    final path = result?.files.single.path;
-    if (path == null) return;
-
+    // Guardar sí puede tardar, así que se hace con la ficha en espera. Elegir
+    // no: allí el tiempo lo pone el usuario.
     await _run(() async {
-      final storedPath = await _storeAvatar(params: path);
+      final storedPath = await storeChosenAvatar(choice);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);

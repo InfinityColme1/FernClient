@@ -26,6 +26,7 @@ Future<TransformationController> pumpLayer(
   int? highlightedIndex,
   double highlightIntensity = 0,
   FernRegionTool tool = FernRegionTool.mark,
+  bool squareSelection = false,
   int? selectedIndex,
   void Function(Rect normalized, Offset screenPosition)? onRegionDrawn,
   ValueChanged<bool>? onDrawingChanged,
@@ -53,6 +54,7 @@ Future<TransformationController> pumpLayer(
             highlightedIndexes: {?highlightedIndex},
             highlightIntensity: highlightIntensity,
             tool: tool,
+            squareSelection: squareSelection,
             selectedIndex: selectedIndex,
             onTap: onTap,
             onRegionDrawn: onRegionDrawn,
@@ -672,6 +674,106 @@ void main() {
       // El doble toque no cuenta como toque suelto: son dos gestos distintos.
       expect(taps, 0);
       expect(controller.value, Matrix4.identity());
+    });
+  });
+
+  // El recorte del avatar: lo que se arrastra es un cuadrado, no un rectángulo
+  // libre. El avatar es redondo, así que lo que se marca tiene que ser
+  // exactamente lo que se va a ver.
+  group('la selección cuadrada', () {
+    testWidgets('un arrastre torcido sale cuadrado', (tester) async {
+      Rect? drawn;
+
+      await pumpLayer(
+        tester,
+        enabled: true,
+        squareSelection: true,
+        onRegionDrawn: (rect, _) => drawn = rect,
+      );
+
+      // Cien de ancho y treinta de alto: manda el eje que más se ha movido.
+      final origin = tester.getTopLeft(find.byType(FernRegionSelectionLayer));
+      await dragMouse(
+        tester,
+        origin + const Offset(100, 100),
+        origin + const Offset(200, 130),
+      );
+
+      expect(drawn, isNotNull);
+      expect(drawn!.width, closeTo(drawn!.height, 0.001));
+      expect(drawn!.width, closeTo(0.25, 0.001));
+    });
+
+    // Lo que hay que sostener de verdad: **cuadrado en píxeles**, que es lo que
+    // se ve. En una imagen apaisada, un cuadrado de píxeles no tiene los lados
+    // iguales medido en fracciones del contenido.
+    testWidgets('cuadrado en píxeles, no en fracciones', (tester) async {
+      Rect? drawn;
+
+      await pumpLayer(
+        tester,
+        enabled: true,
+        squareSelection: true,
+        contentSize: const Size(400, 200),
+        onRegionDrawn: (rect, _) => drawn = rect,
+      );
+
+      // La imagen se pinta centrada y con bandas arriba y abajo: ocupa de 100 a
+      // 300 en vertical.
+      final origin = tester.getTopLeft(find.byType(FernRegionSelectionLayer));
+      await dragMouse(
+        tester,
+        origin + const Offset(50, 120),
+        origin + const Offset(150, 160),
+      );
+
+      expect(drawn, isNotNull);
+      expect(drawn!.width * 400, closeTo(drawn!.height * 200, 0.5));
+    });
+
+    testWidgets('y no se sale de la imagen', (tester) async {
+      Rect? drawn;
+
+      await pumpLayer(
+        tester,
+        enabled: true,
+        squareSelection: true,
+        onRegionDrawn: (rect, _) => drawn = rect,
+      );
+
+      final origin = tester.getTopLeft(find.byType(FernRegionSelectionLayer));
+      await dragMouse(
+        tester,
+        origin + const Offset(350, 100),
+        origin + const Offset(399, 399),
+      );
+
+      expect(drawn, isNotNull);
+      expect(drawn!.right, lessThanOrEqualTo(1.0));
+      expect(drawn!.width, closeTo(drawn!.height, 0.001));
+    });
+
+    // Sin pedirla, la capa sigue marcando rectángulos libres: es lo que hace el
+    // modo fernie, donde una región es la forma que tenga lo que se marca.
+    testWidgets('sin pedirla el rectángulo sigue siendo libre', (tester) async {
+      Rect? drawn;
+
+      await pumpLayer(
+        tester,
+        enabled: true,
+        onRegionDrawn: (rect, _) => drawn = rect,
+      );
+
+      final origin = tester.getTopLeft(find.byType(FernRegionSelectionLayer));
+      await dragMouse(
+        tester,
+        origin + const Offset(100, 100),
+        origin + const Offset(200, 130),
+      );
+
+      expect(drawn, isNotNull);
+      expect(drawn!.width, closeTo(0.25, 0.001));
+      expect(drawn!.height, closeTo(0.075, 0.001));
     });
   });
 }

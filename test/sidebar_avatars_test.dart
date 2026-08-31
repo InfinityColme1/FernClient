@@ -145,6 +145,27 @@ void main() {
       expect(find.byIcon(Symbols.expand_more), findsNothing);
     });
 
+    // El hueco es del árbol de etiquetas, no del menú entero: dárselo a las
+    // opciones normales les quitaba veinte píxeles de título y los nombres
+    // largos se cortaban con puntos suspensivos.
+    testWidgets('lo que no es una etiqueta no reserva su hueco',
+        (tester) async {
+      await pumpTile(tester, title: 'Gestor de etiquetas');
+
+      final sinHueco = tester.getTopLeft(find.text('Gestor de etiquetas')).dx;
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await pumpTile(
+        tester,
+        title: 'Gestor de etiquetas',
+        onToggleCollapse: () {},
+      );
+
+      final conHueco = tester.getTopLeft(find.text('Gestor de etiquetas')).dx;
+
+      expect(sinHueco, lessThan(conHueco));
+    });
+
     // Plegado sólo caben los iconos: ahí la jerarquía no se toca, lo plegado se
     // respeta igual pero no se puede cambiar desde ese estado.
     testWidgets('con el menú plegado no hay chevron', (tester) async {

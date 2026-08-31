@@ -374,6 +374,16 @@ class PreferencesService {
   ///
   /// Se guardan las plegadas: sin nada guardado el árbol sale entero, que es lo
   /// que hacía antes de poder plegarlo.
+  /// Si lo que se importa entra marcado como no apto.
+  ///
+  /// Apagado de fábrica: marcar es la excepción, y lo que se repite sin pensar
+  /// tiene que ser lo que no esconde nada.
+  bool getImportsAsNsfw() =>
+      _prefs.getBool(importsAsNsfwPreferenceKey) ?? false;
+
+  Future<bool> setImportsAsNsfw(bool value) =>
+      _prefs.setBool(importsAsNsfwPreferenceKey, value);
+
   Set<int> collapsedTagIds() => {
         for (final each
             in _prefs.getStringList(collapsedTagsPreferenceKey) ??

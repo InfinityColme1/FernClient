@@ -993,6 +993,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useCurrentImageAsAvatar => 'Use the picture you are viewing';
 
   @override
+  String get avatarCropTitle => 'Pick the avatar';
+
+  @override
+  String get avatarCropHint =>
+      'Drag a square over the picture. The wheel zooms in.';
+
+  @override
+  String get avatarCropWholeImage => 'Use the whole picture';
+
+  @override
+  String get avatarSourceTitle => 'Where does the picture come from?';
+
+  @override
+  String get avatarSourceLibrary => 'From your Fern library';
+
+  @override
+  String get avatarSourceDevice => 'From a file on this computer';
+
+  @override
+  String get avatarLibraryEmpty => 'Nothing here matches that';
+
+  @override
   String get viewerSaveSectionTitle => 'Saving imported media';
 
   @override
@@ -1898,6 +1920,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importLimitTooltip => 'Most items a scan brings in';
+
+  @override
+  String get importAsNsfwTooltip => 'Mark everything imported as NSFW';
 
   @override
   String get lastImportNever => 'Never imported';

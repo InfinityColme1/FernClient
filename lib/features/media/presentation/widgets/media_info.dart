@@ -726,6 +726,10 @@ class _SuggestionList extends StatelessWidget {
 
     fernieMode.add(ProposedRegionsOfferedEvent(
       infoWasOpen: context.read<MediaBloc>().state.showInfo,
+      // Al aceptar sus regiones, estas sugerencias quedan contestadas: ir a
+      // mirarlas, darlas por buenas y volver a aceptar la fila es decir dos
+      // veces lo mismo.
+      suggestionIds: group.ids,
       regions: [
         for (final one in located)
           ProposedRegion(
@@ -735,7 +739,10 @@ class _SuggestionList extends StatelessWidget {
               one.box!.w,
               one.box!.h,
             ),
-            fernieId: one.fernie.id,
+            // Entero y no sólo su identificador: el fernie puede no tener
+            // todavía ninguna región en este contenido, y entonces el modo no
+            // sabría de dónde sacar su nombre para la pastilla.
+            fernie: one.fernie,
             confidence: one.confidence,
             label: one.label,
             frameMs: one.frameMs,

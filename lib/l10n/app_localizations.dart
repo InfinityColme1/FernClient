@@ -1668,6 +1668,48 @@ abstract class AppLocalizations {
   /// **'Use the picture you are viewing'**
   String get useCurrentImageAsAvatar;
 
+  /// No description provided for @avatarCropTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the avatar'**
+  String get avatarCropTitle;
+
+  /// No description provided for @avatarCropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a square over the picture. The wheel zooms in.'**
+  String get avatarCropHint;
+
+  /// No description provided for @avatarCropWholeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the whole picture'**
+  String get avatarCropWholeImage;
+
+  /// No description provided for @avatarSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where does the picture come from?'**
+  String get avatarSourceTitle;
+
+  /// No description provided for @avatarSourceLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'From your Fern library'**
+  String get avatarSourceLibrary;
+
+  /// No description provided for @avatarSourceDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'From a file on this computer'**
+  String get avatarSourceDevice;
+
+  /// No description provided for @avatarLibraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here matches that'**
+  String get avatarLibraryEmpty;
+
   /// No description provided for @viewerSaveSectionTitle.
   ///
   /// In en, this message translates to:
@@ -3077,6 +3119,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Most items a scan brings in'**
   String get importLimitTooltip;
+
+  /// No description provided for @importAsNsfwTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark everything imported as NSFW'**
+  String get importAsNsfwTooltip;
 
   /// No description provided for @lastImportNever.
   ///

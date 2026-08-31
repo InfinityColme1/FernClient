@@ -994,6 +994,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get useCurrentImageAsAvatar => 'Usar la imagen que estás viendo';
 
   @override
+  String get avatarCropTitle => 'Elige el avatar';
+
+  @override
+  String get avatarCropHint =>
+      'Arrastra un cuadrado sobre la imagen. Con la rueda se acerca.';
+
+  @override
+  String get avatarCropWholeImage => 'Usar la imagen entera';
+
+  @override
+  String get avatarSourceTitle => '¿De dónde sale la imagen?';
+
+  @override
+  String get avatarSourceLibrary => 'De la biblioteca de Fern';
+
+  @override
+  String get avatarSourceDevice => 'De un fichero del equipo';
+
+  @override
+  String get avatarLibraryEmpty => 'Aquí no hay nada que encaje';
+
+  @override
   String get viewerSaveSectionTitle => 'Al guardar contenido importado';
 
   @override
@@ -1901,6 +1923,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get importLimitTooltip => 'Máximo de elementos que trae un escaneo';
+
+  @override
+  String get importAsNsfwTooltip => 'Marcar como NSFW todo lo que se importe';
 
   @override
   String get lastImportNever => 'Nunca importado';

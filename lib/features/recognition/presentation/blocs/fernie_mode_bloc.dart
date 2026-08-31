@@ -86,7 +86,15 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     // acaba de llegar ya no es de lo que se está viendo.
     if (state.mediaId != event.mediaId) return;
 
-    emit(state.copyWith(saved: regions, fernies: fernies, isBusy: false));
+    // Los que ya estuvieran en el estado se conservan. Al empezar la lectura se
+    // vació todo, así que cualquiera que haya aquí ha entrado mientras se leía
+    // —una región asignada, unas propuestas ofrecidas— y son justo los que la
+    // base todavía no puede devolver: pisarlos dejaba su rectángulo sin nombre.
+    emit(state.copyWith(
+      saved: regions,
+      fernies: _merged(fernies, state.fernies),
+      isBusy: false,
+    ));
   }
 
   /// Entra al modo con lo que el modelo ha detectado, dibujado y sin marcar.
@@ -104,11 +112,20 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
   ) {
     final entering = !state.isFernieMode;
 
+    // Con la herramienta de **editar**, no con la de marcar: aceptar una
+    // propuesta es pulsarla, y elegir una región sólo se puede con ésa. Abriendo
+    // con la de marcar, los rectángulos se dibujaban y no se dejaban pulsar.
     emit(state
         .copyWith(
           mode: ViewerMode.fernie,
-          tool: FernieTool.mark,
+          tool: FernieTool.edit,
           proposed: event.regions,
+          offeredFor: event.suggestionIds,
+          acceptedOffered: false,
+          // Sus fernies pasan a estar entre los de este contenido aunque
+          // todavía no tengan ninguna región guardada aquí: es lo que hace que
+          // su nombre salga sobre el rectángulo en cuanto se acepta.
+          fernies: _withFerniesOf(event.regions),
           // Al entrar se suelta lo de la sesión anterior, como hace entrar a
           // mano; ya dentro, lo que se lleve marcado se queda.
           infoWasOpen: entering ? event.infoWasOpen : state.infoWasOpen,
@@ -118,6 +135,26 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
           deleted: entering ? const {} : state.deleted,
         )
         .withSelection());
+  }
+
+  /// Los fernies del modo más los de estas propuestas, sin repetir.
+  List<FernieEntity> _withFerniesOf(List<ProposedRegion> regions) => _merged(
+        state.fernies,
+        [for (final one in regions) one.fernie],
+      );
+
+  /// Los de [first] y los de [second] que no estuvieran ya, por identificador.
+  List<FernieEntity> _merged(
+    List<FernieEntity> first,
+    List<FernieEntity> second,
+  ) {
+    final known = {for (final fernie in first) fernie.id};
+
+    return [
+      ...first,
+      for (final fernie in second)
+        if (known.add(fernie.id)) fernie,
+    ];
   }
 
   void _onProposedRegionAccepted(
@@ -135,6 +172,7 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
         for (final (position, each) in state.proposed.indexed)
           if (position != index) each,
       ],
+      acceptedOffered: true,
     ));
   }
 
@@ -152,6 +190,7 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
         for (final one in state.proposed) one.accepted,
       ],
       proposed: const [],
+      acceptedOffered: true,
     ));
   }
 
@@ -270,6 +309,11 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
       mediaId: mediaId,
       saved: regions,
       fernies: fernies,
+      // Las sugerencias de las que salían las propuestas quedan contestadas si
+      // alguna se aceptó: la región está marcada y la etiqueta puesta, así que
+      // volver a aceptarlas sería decir dos veces lo mismo.
+      resolvedSuggestions:
+          state.acceptedOffered ? state.offeredFor : const [],
       // Se cuenta para que el visor pueda enterarse: acaba de cambiar lo que el
       // contenido lleva puesto, y el panel seguiría enseñando lo de antes.
       appliedLinks: state.appliedLinks + (applied ? 1 : 0),

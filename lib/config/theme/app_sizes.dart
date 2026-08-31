@@ -119,6 +119,23 @@ class AppSizes {
   // Panel Widths
   static const double infoPanelWidth = 350.0;
   static const double dialogMaxWidth = 800.0;
+
+  /// Ancho y alto del diálogo que elige una imagen de la biblioteca.
+  ///
+  /// Más ancho que un diálogo normal a propósito: dentro va la lista de
+  /// etiquetas **y** una rejilla de contenido, y con los 800 de siempre la
+  /// rejilla se quedaba en un canal de dos celdas por el que no se puede buscar
+  /// nada.
+  static const double libraryPickerMaxWidth = 1100.0;
+  static const double libraryPickerHeight = 520.0;
+
+  /// Alto del lienzo en el que se recorta un avatar.
+  ///
+  /// Fijo y no proporcional a la ventana: la imagen se pinta con `contain`, así
+  /// que un lienzo que creciera con la ventana no enseñaría más imagen, sólo
+  /// más bandas a los lados. Lo que hace falta es que quepa dentro del diálogo
+  /// dejando sitio a los botones en una pantalla baja.
+  static const double avatarCropCanvasHeight = 420.0;
   static const double menuWidth = 280.0;
 
   /// Lo que le queda al texto de una fila de menu despues del icono y los

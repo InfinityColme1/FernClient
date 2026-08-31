@@ -18,6 +18,7 @@ import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_media_u
 import 'package:Fern/features/recognition/domain/usecases/get_regions_of_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/update_fernie_region_usecase.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/recognition/domain/entities/recognition_result_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_events.dart';
@@ -624,6 +625,28 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     });
   }
 
+  /// Aparta del panel las sugerencias que acaban de quedar contestadas.
+  ///
+  /// Se guardan en el momento y no al guardar el contenido, a diferencia de
+  /// aceptarlas desde el panel: aquí lo que se acepta ya está escrito —la región
+  /// marcada y la etiqueta puesta—, así que esperar a un guardado que no va a
+  /// llegar dejaría la sugerencia contestada en pantalla y sin contestar en la
+  /// base.
+  void _resolveSuggestions(List<int> ids) {
+    final wanted = ids.toSet();
+
+    final answered = [
+      for (final one in _suggestions.state.suggestions)
+        if (wanted.contains(one.id)) one,
+    ];
+    if (answered.isEmpty) return;
+
+    _suggestions.add(SuggestionsResolvedEvent(
+      answered,
+      status: SuggestionStatus.accepted,
+    ));
+  }
+
   /// Si esta propuesta es de lo que se está viendo ahora mismo.
   ///
   /// Las de otro fotograma se esconden, como las regiones marcadas: son el mismo
@@ -1028,6 +1051,18 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           bloc: _fernieMode,
           listenWhen: (previous, current) => previous.saved != current.saved,
           listener: (context, state) => _maybeHighlight(state),
+        ),
+        // Aceptar las regiones que un modelo proponía contesta su sugerencia:
+        // la región está marcada y la etiqueta puesta, así que la fila no tiene
+        // ya nada que preguntar.
+        BlocListener<FernieModeBloc, FernieModeState>(
+          bloc: _fernieMode,
+          listenWhen: (previous, current) =>
+              current.resolvedSuggestions.isNotEmpty &&
+              previous.resolvedSuggestions != current.resolvedSuggestions,
+          listener: (context, state) => _resolveSuggestions(
+            state.resolvedSuggestions,
+          ),
         ),
         // Marcar una región le ha puesto al contenido lo que el fernie enlaza,
         // así que el panel tiene que enseñarlo ya. Sin esto había que salir del

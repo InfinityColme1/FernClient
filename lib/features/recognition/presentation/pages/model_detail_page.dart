@@ -31,7 +31,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,7 +68,6 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
   final _saveModel = getIt<SaveModelUseCase>();
   final _setModelNsfw = getIt<SetModelNsfwUseCase>();
   final _searchFernies = getIt<SearchFerniesUseCase>();
-  final _storeAvatar = getIt<StoreAvatarUseCase>();
   final _jobs = getIt<JobQueue>();
   final _engine = getIt<RecognitionEngine>();
   final _importWeights = getIt<ImportModelWeightsUseCase>();
@@ -199,12 +198,16 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
         _function != model.function;
   }
 
+  /// Elige el avatar: de dónde sale la imagen, cuál, y qué trozo de ella.
+  ///
+  /// El explorador de ficheros era la única respuesta a la primera pregunta, y
+  /// obligaba a buscar por el disco una imagen que la aplicación ya tiene
+  /// guardada y sabe enseñar.
   Future<void> _pickImage() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
-    final path = result?.files.single.path;
-    if (path == null || !mounted) return;
+    final choice = await chooseAvatarImage(context);
+    if (choice == null || !mounted) return;
 
-    final stored = await _storeAvatar(params: path);
+    final stored = await storeChosenAvatar(choice);
     if (!mounted) return;
 
     setState(() => _picturePath = stored);

@@ -56,6 +56,14 @@ class TagList extends StatefulWidget {
   /// normal y ser hermana suya. Lo único que cambia es quién se pinta dónde.
   final bool showsPeople;
 
+  /// Enseña las dos clases juntas, sin repartirlas.
+  ///
+  /// Es lo que hace todo lo que no es la pantalla de gestión: fuera de allí una
+  /// persona es una etiqueta más —al asignarla a un contenido, en las
+  /// sugerencias del buscador, en el menú lateral—, y repartirlas obligaría a
+  /// saber en cuál de las dos listas está guardado algo que se usa igual.
+  final bool mixesPeople;
+
   /// Qué hacer al pulsar el botón de la cabecera, que lleva a la otra lista. Sin
   /// esto, el botón no sale.
   final VoidCallback? onSwitchList;
@@ -90,6 +98,7 @@ class TagList extends StatefulWidget {
     this.selectedTagId,
     this.onDropped,
     this.showsPeople = false,
+    this.mixesPeople = false,
     this.onSwitchList,
     this.showsBranchOnFilter,
   });
@@ -258,8 +267,9 @@ class _TagListState extends State<TagList> {
   final _stackKey = GlobalKey();
 
   /// El árbol de esta lista: sólo las de su clase, con las demás apartadas.
-  List<TagEntity> get _tree =>
-      TagList.ofKind(widget.tags, people: widget.showsPeople);
+  List<TagEntity> get _tree => widget.mixesPeople
+      ? widget.tags
+      : TagList.ofKind(widget.tags, people: widget.showsPeople);
 
   /// Si la rama acompaña a lo que encaja. De fábrica sí.
   bool get _showsBranch =>

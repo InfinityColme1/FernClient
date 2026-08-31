@@ -194,6 +194,21 @@ class _ImportViewState extends State<_ImportView> {
   /// Hasta dónde llega el escaneo. Se arranca con lo último que se eligió.
   late int _limit = getIt<PreferencesService>().getImportLimit();
 
+  /// Si lo que se importe entra marcado como no apto.
+  late bool _asNsfw = getIt<PreferencesService>().getImportsAsNsfw();
+
+  /// Si se puede ofrecer marcar lo importado.
+  ///
+  /// **Sólo con el bloqueo abierto.** Con el filtro puesto, lo que entrara
+  /// marcado desaparecería de la rejilla en cuanto se marcase: se importarían
+  /// cincuenta cosas y no se vería ninguna. Escondiendo la opción, esa trampa no
+  /// puede darse.
+  bool get _canImportAsNsfw {
+    final mode = getIt<NsfwModeService>();
+
+    return mode.isConfigured && mode.isUnlocked;
+  }
+
   /// En qué orden se pinta lo pendiente de revisar.
   ///
   /// El suyo y no el de la biblioteca: una tanda recién traída se repasa
@@ -577,7 +592,12 @@ class _ImportViewState extends State<_ImportView> {
       if (confirmed != true) return;
     }
 
-    bloc.add(ScanSourceEvent(limit: _limit));
+    // El interruptor sólo manda si de verdad se está ofreciendo: escondido bajo
+    // el filtro no puede marcar por su cuenta.
+    bloc.add(ScanSourceEvent(
+      limit: _limit,
+      asNsfw: _asNsfw && _canImportAsNsfw,
+    ));
   }
 
   /// Avisa de que [source] no ha aceptado lo que se le daba para entrar y, si
@@ -869,6 +889,29 @@ class _ImportViewState extends State<_ImportView> {
                           setState(() => _limit = limit);
                           getIt<PreferencesService>().setImportLimit(limit);
                         },
+                      ),
+                    ),
+                  ],
+                  // Que lo que entre quede marcado como no apto. Sólo con el
+                  // bloqueo abierto: con el filtro puesto se importarían
+                  // cincuenta cosas y no se vería ninguna.
+                  if (_canImportAsNsfw && canScan) ...[
+                    const SizedBox(width: AppSpacing.s),
+                    Tooltip(
+                      message: texts.importAsNsfwTooltip,
+                      child: IconButton(
+                        onPressed: () {
+                          setState(() => _asNsfw = !_asNsfw);
+                          getIt<PreferencesService>().setImportsAsNsfw(_asNsfw);
+                        },
+                        icon: Icon(
+                          Symbols.visibility_off,
+                          // Encendido con el color con el que la aplicación
+                          // marca lo que hay que mirar dos veces: se queda
+                          // puesto entre sesiones, así que tiene que verse.
+                          color: _asNsfw ? context.colors.terciary : null,
+                          fill: _asNsfw ? 1 : 0,
+                        ),
                       ),
                     ),
                   ],

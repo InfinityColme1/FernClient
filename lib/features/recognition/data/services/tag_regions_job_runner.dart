@@ -1,5 +1,4 @@
 import 'package:Fern/core/constants/app_constants.dart';
-import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/jobs/job_runner.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';

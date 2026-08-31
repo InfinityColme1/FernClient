@@ -925,10 +925,62 @@ void main() {
     ProposedRegion proposal(double x, {double confidence = 0.9}) =>
         ProposedRegion(
           rect: Rect.fromLTWH(x, 0.1, 0.1, 0.1),
-          fernieId: 1,
+          fernie: _fernie(1, 'Adrien'),
           confidence: confidence,
           label: 'coche',
         );
+
+    // Con la de **marcar** los rectángulos se dibujaban y no se dejaban pulsar:
+    // elegir una región sólo se puede con la de editar, y aceptar una propuesta
+    // es exactamente eso. Abría un modo en el que lo ofrecido no se podía coger.
+    test('con la herramienta que deja cogerlas', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        regions: [proposal(0.1)],
+      ));
+      await _settle();
+
+      expect(bloc.state.tool, FernieTool.edit);
+    });
+
+    // El fernie de una propuesta puede no tener todavía **ninguna** región en
+    // este contenido —es la primera vez que se le marca ahí—, así que no estaba
+    // entre los del modo y su nombre salía vacío: la pastilla del rectángulo se
+    // pintaba en blanco al aceptarla.
+    test('la aceptada sale con el nombre de su fernie', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        regions: [proposal(0.1)],
+      ));
+      await _settle();
+
+      bloc.add(const ProposedRegionAcceptedEvent(0));
+      await _settle();
+
+      expect(bloc.state.views.single.label, 'Adrien');
+    });
+
+    test('y uno que ya estaba no se duplica', () async {
+      final bloc = _blocOf(_FakeRepository(fernies: [_fernie(1, 'Adrien')]));
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        regions: [proposal(0.1), proposal(0.4)],
+      ));
+      await _settle();
+
+      expect(
+        bloc.state.fernies.where((each) => each.id == 1),
+        hasLength(1),
+      );
+    });
 
     test('entra al modo con ellas dibujadas', () async {
       final bloc = _blocOf(_FakeRepository());
@@ -1057,6 +1109,114 @@ void main() {
 
       expect(repository.addedBatches, isEmpty);
       expect(bloc.state.proposed, isEmpty);
+    });
+
+    // Ir a las regiones de una sugerencia, darlas por buenas y tener que volver
+    // a aceptar la sugerencia es decir dos veces lo mismo — más aún ahora que
+    // marcar la región ya le pone la etiqueta al contenido.
+    test('aceptarlas contesta la sugerencia de la que salían', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        suggestionIds: const [11, 12],
+        regions: [proposal(0.1), proposal(0.4)],
+      ));
+      await _settle();
+
+      bloc.add(const AllProposedRegionsAcceptedEvent());
+      await _settle();
+
+      bloc.add(const ExitFernieModeEvent(save: true));
+      await _settle();
+
+      expect(bloc.state.resolvedSuggestions, [11, 12]);
+    });
+
+    test('con una basta', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        suggestionIds: const [11],
+        regions: [proposal(0.1), proposal(0.4)],
+      ));
+      await _settle();
+
+      bloc.add(const ProposedRegionAcceptedEvent(0));
+      await _settle();
+
+      bloc.add(const ExitFernieModeEvent(save: true));
+      await _settle();
+
+      expect(bloc.state.resolvedSuggestions, [11]);
+    });
+
+    // Entrar a mirarlas y salir sin quedarse ninguna no contesta nada: mirar no
+    // es decir que sí.
+    test('sin aceptar ninguna no se contesta nada', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        suggestionIds: const [11],
+        regions: [proposal(0.1)],
+      ));
+      await _settle();
+
+      bloc.add(const ExitFernieModeEvent(save: true));
+      await _settle();
+
+      expect(bloc.state.resolvedSuggestions, isEmpty);
+    });
+
+    test('ni cancelando', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        suggestionIds: const [11],
+        regions: [proposal(0.1)],
+      ));
+      await _settle();
+
+      bloc.add(const AllProposedRegionsAcceptedEvent());
+      await _settle();
+
+      bloc.add(const ExitFernieModeEvent(save: false));
+      await _settle();
+
+      expect(bloc.state.resolvedSuggestions, isEmpty);
+    });
+
+    // El aviso es de un momento: conservarlo haría que el panel contestara la
+    // misma sugerencia en cada cambio de estado.
+    test('el aviso no se queda pegado al estado', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        suggestionIds: const [11],
+        regions: [proposal(0.1)],
+      ));
+      await _settle();
+
+      bloc.add(const AllProposedRegionsAcceptedEvent());
+      await _settle();
+
+      bloc.add(const ExitFernieModeEvent(save: true));
+      await _settle();
+      expect(bloc.state.resolvedSuggestions, [11]);
+
+      bloc.add(const EnterFernieModeEvent(infoWasOpen: false));
+      await _settle();
+
+      expect(bloc.state.resolvedSuggestions, isEmpty);
     });
 
     // Cada fila del panel ofrece **sus** detecciones: arrastrar las de la

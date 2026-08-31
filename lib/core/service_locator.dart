@@ -108,6 +108,7 @@ import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
 import 'package:Fern/features/settings/data/services/leftover_files.dart';
 import 'package:Fern/features/settings/domain/usecases/sweep_unused_files_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/wipe_database_usecase.dart';
+import 'package:Fern/features/settings/domain/usecases/crop_avatar_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:Fern/features/media/data/services/import_feed.dart';
 import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
@@ -269,6 +270,9 @@ Future<void> initializeDependencies() async {
 
   // Y por donde lo piden las pantallas: elegir una imagen es cosa suya, copiarla
   // a la carpeta de avatares no.
+  getIt.registerLazySingleton<CropAvatarUseCase>(
+    () => CropAvatarUseCase(storage: getIt()),
+  );
   getIt.registerLazySingleton<StoreAvatarUseCase>(
     () => StoreAvatarUseCase(storage: getIt()),
   );

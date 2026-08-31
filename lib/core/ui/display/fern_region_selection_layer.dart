@@ -96,6 +96,15 @@ class FernRegionSelectionLayer extends StatefulWidget {
   /// ninguna, que es como se queda el visor fuera del modo de marcar.
   final double regionsOpacity;
 
+  /// Lo que se arrastra es un cuadrado, no un rectángulo libre.
+  ///
+  /// Lo enciende el recorte del avatar: el avatar es redondo, así que lo que se
+  /// marca tiene que ser exactamente lo que se va a ver. Con selección libre
+  /// habría que decidir qué hacer con un rectángulo alargado, y las dos salidas
+  /// —deformarlo o volver a recortarlo por dentro— dan un avatar distinto del
+  /// que se eligió.
+  final bool squareSelection;
+
   /// Área mínima, en tanto por uno del contenido, para que un arrastre cuente
   /// como región. Por debajo se descarta sin decir nada: es lo que evita que un
   /// clic despistado abra el menú de asignación.
@@ -151,6 +160,7 @@ class FernRegionSelectionLayer extends StatefulWidget {
     this.highlightedIndexes = const {},
     this.highlightIntensity = 0,
     this.regionsOpacity = 1,
+    this.squareSelection = false,
     this.minRegionFraction = 0.0025,
     this.minScale = 0.5,
     this.maxScale = 8.0,
@@ -358,7 +368,16 @@ class _FernRegionSelectionLayerState extends State<FernRegionSelectionLayer> {
     final cursor = _cursor;
     if (anchor == null || cursor == null) return null;
 
-    return Rect.fromPoints(anchor, cursor);
+    if (!widget.squareSelection) return Rect.fromPoints(anchor, cursor);
+
+    // El cuadrado se calcula sobre el contenido tal y como está pintado ahora
+    // mismo —con su zoom y su desplazamiento— porque es contra sus bordes contra
+    // los que hay que pararlo.
+    return squareBetween(
+      anchor,
+      cursor,
+      bounds: _toScreen(const Rect.fromLTWH(0, 0, 1, 1)),
+    );
   }
 
   Rect? get _pendingNormalized {

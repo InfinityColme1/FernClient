@@ -27,8 +27,7 @@ import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart'
 import 'package:Fern/features/media/presentation/widgets/tag_relations_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:Fern/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,7 +67,6 @@ class _TagCardState extends State<TagCard> {
   final _saveTagSourceUrls = getIt<SaveTagSourceUrlsUseCase>();
   final _setTagNsfw = getIt<SetTagNsfwUseCase>();
   final _saveTagSiblings = getIt<SaveTagSiblingsUseCase>();
-  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.tag.name);
@@ -161,20 +159,19 @@ class _TagCardState extends State<TagCard> {
     return tags.where((tag) => !_ownBranch.contains(tag.id)).toList();
   }
 
-  /// Elige la imagen del avatar y se queda con la copia que guarda la
-  /// aplicación, como en el diálogo de creación: los avatares se cargan siempre
-  /// de la carpeta de avatares.
+  /// Elige el avatar: de dónde sale la imagen, cuál, y qué trozo de ella.
+  ///
+  /// El explorador de ficheros era la única respuesta a la primera pregunta, y
+  /// obligaba a buscar por el disco una imagen que la aplicación ya tiene
+  /// guardada y sabe enseñar.
   Future<void> _pickImage() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
+    final choice = await chooseAvatarImage(context);
+    if (choice == null || !mounted) return;
 
-    final path = result?.files.single.path;
-    if (path == null) return;
-
-    // La copia a la carpeta de avatares sí puede tardar, así que se hace con la
-    // ficha en espera. El explorador de ficheros no: allí el tiempo lo pone el
-    // usuario.
+    // Guardar sí puede tardar, así que se hace con la ficha en espera. Elegir
+    // no: allí el tiempo lo pone el usuario.
     await _run(() async {
-      final storedPath = await _storeAvatar(params: path);
+      final storedPath = await storeChosenAvatar(choice);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);

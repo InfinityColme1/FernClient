@@ -117,7 +117,16 @@ class ClearMediaSearchEvent extends MediaEvents {
 class ScanSourceEvent extends MediaEvents {
   final int limit;
 
-  const ScanSourceEvent({this.limit = unlimitedImportLimit});
+  /// Si lo que entre queda marcado como no apto.
+  ///
+  /// Se marca **al terminar** y de una vez, no pieza a pieza: durante la
+  /// importación lo que llega se ve llegar, que es lo que dice que va bien.
+  final bool asNsfw;
+
+  const ScanSourceEvent({
+    this.limit = unlimitedImportLimit,
+    this.asNsfw = false,
+  });
 }
 
 /// Para la importación que esté en marcha.

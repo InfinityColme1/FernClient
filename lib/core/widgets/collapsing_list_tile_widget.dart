@@ -176,8 +176,15 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
   Widget _chevron() {
     if (!widget.isExpanded) return const SizedBox.shrink();
 
-    final canToggle = widget.hasChildren && widget.onToggleCollapse != null;
-    if (!canToggle) return const SizedBox(width: sidebarChevronWidth);
+    // **Sólo las filas del árbol de etiquetas reservan el hueco.** Las opciones
+    // del menú —«Gestor de etiquetas» y compañía— no se pliegan, y darles el
+    // hueco igualmente les quitaba veinte píxeles de título: los nombres largos
+    // pasaron a cortarse con puntos suspensivos.
+    if (widget.onToggleCollapse == null) return const SizedBox.shrink();
+
+    // Una etiqueta sin hijas sí lo reserva: sin él, los avatares de una rama
+    // bailarían de izquierda a derecha según quién tuviera descendencia.
+    if (!widget.hasChildren) return const SizedBox(width: sidebarChevronWidth);
 
     final texts = AppLocalizations.of(context);
 

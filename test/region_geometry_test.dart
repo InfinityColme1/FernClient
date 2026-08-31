@@ -207,4 +207,89 @@ void main() {
       expectRect(clamped, const Rect.fromLTRB(0.3, 0.4, 0.8, 0.9));
     });
   });
+
+  // El cuadrado del recorte de avatar. Va en coordenadas de pantalla porque el
+  // avatar es redondo: lo que se marca tiene que ser exactamente lo que se ve, y
+  // en coordenadas normalizadas un cuadrado de píxeles no tiene los lados
+  // iguales.
+  group('squareBetween', () {
+    const bounds = Rect.fromLTWH(0, 0, 400, 400);
+
+    test('el lado lo manda el eje que más se ha movido', () {
+      final square = squareBetween(
+        const Offset(100, 100),
+        const Offset(200, 130),
+        bounds: bounds,
+      );
+
+      expectRect(square, const Rect.fromLTWH(100, 100, 100, 100));
+    });
+
+    test('y sigue al ratón hacia arriba y a la izquierda', () {
+      final square = squareBetween(
+        const Offset(300, 300),
+        const Offset(200, 250),
+        bounds: bounds,
+      );
+
+      expectRect(square, const Rect.fromLTWH(200, 200, 100, 100));
+    });
+
+    // Lo que hay que sostener: arrastrando cerca de un borde el cuadrado deja de
+    // crecer en vez de salirse de la imagen, y sin deformarse.
+    test('no se sale de la imagen', () {
+      final square = squareBetween(
+        const Offset(350, 100),
+        const Offset(700, 700),
+        bounds: bounds,
+      );
+
+      expectRect(square, const Rect.fromLTWH(350, 100, 50, 50));
+    });
+
+    test('ni por arriba', () {
+      final square = squareBetween(
+        const Offset(200, 30),
+        const Offset(-100, -100),
+        bounds: bounds,
+      );
+
+      expectRect(square, const Rect.fromLTWH(170, 0, 30, 30));
+    });
+
+    // Las bandas de los lados no son la imagen: empezar ahí recorta la esquina en
+    // lugar de no hacer nada.
+    test('empezar fuera arranca desde el borde', () {
+      final square = squareBetween(
+        const Offset(-40, 200),
+        const Offset(100, 300),
+        bounds: bounds,
+      );
+
+      expectRect(square, const Rect.fromLTWH(0, 200, 100, 100));
+    });
+
+    test('sin mover no hay cuadrado', () {
+      final square = squareBetween(
+        const Offset(100, 100),
+        const Offset(100, 100),
+        bounds: bounds,
+      );
+
+      expect(square.width, 0);
+      expect(square.height, 0);
+    });
+
+    // Con bandas, el borde no es el del widget: es el de la imagen pintada
+    // dentro.
+    test('el borde es el de lo pintado, no el del hueco', () {
+      final square = squareBetween(
+        const Offset(200, 150),
+        const Offset(400, 400),
+        bounds: const Rect.fromLTWH(0, 100, 400, 200),
+      );
+
+      expectRect(square, const Rect.fromLTWH(200, 150, 150, 150));
+    });
+  });
 }

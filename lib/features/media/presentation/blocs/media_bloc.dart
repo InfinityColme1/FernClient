@@ -1654,7 +1654,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // el aviso del final iría sumando el de todas las anteriores.
     _blocked?.call().resetSkipped();
 
-    await _scan(emit, () async {
+    await _scan(emit, asNsfw: event.asNsfw, () async {
       // Prioridad alta: esto lo acaba de pedir el usuario y lo está mirando; no
       // puede quedarse esperando detrás de un escaneo de repetidos.
       final id = _jobs.enqueue(
@@ -1743,8 +1743,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// indicador esté puesto quedan cosas por llegar.
   Future<void> _scan(
     Emitter<MediaStates> emit,
-    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan,
-  ) async {
+    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan, {
+    /// Marca como no apto lo que haya entrado, al terminar.
+    bool asNsfw = false,
+  }) async {
     // Sin respuestas heredadas: lo que se dijo que valía "para todo" valía
     // para la importación anterior, no para ésta.
     _decisions.reset();
@@ -1753,6 +1755,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // lleva aquí**: la lista que vale es la del estado, y ésa la puede rehacer
     // cualquier otra cosa mientras esto dura.
     var arrived = 0;
+
+    // Lo que ha entrado en esta tanda, para poder marcarlo al final. Sólo se
+    // llena si hace falta: en una importación normal es una lista que nadie
+    // mira, y una biblioteca entera son miles de identificadores.
+    final arrivedIds = <int>[];
 
     final selectedIds = state.selectedIds;
     emit(MediaLoading(
@@ -1798,6 +1805,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       onData: (dataState) {
         if (dataState is DataSuccess && dataState.data != null) {
           arrived++;
+          if (asNsfw) arrivedIds.add(dataState.data!.id);
 
           // Fuera de su pantalla no se pinta nada, pero lo que llega **no se
           // pierde**: está en la base de datos, y al volver se relee de ahí.
@@ -1831,6 +1839,18 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         return state;
       },
     );
+
+    // Lo que ha entrado queda marcado, de una vez y al terminar.
+    //
+    // Al final y no pieza a pieza porque durante la importación lo que llega se
+    // ve llegar, que es lo que dice que va bien; y de una vez porque son mil
+    // escrituras contra una. Parar a mitad marca lo que hubiera entrado, que es
+    // lo que se ha traído.
+    if (arrivedIds.isNotEmpty) {
+      await _setMediaNsfwUseCase(
+        params: SetMediaNsfwParams(mediaIds: arrivedIds, isNsfw: true),
+      );
+    }
 
     // Y lo que quedó sin traerse porque hacía falta el usuario, de una vez y al
     // final. Es un resumen y no una pregunta: no para nada y no espera a nadie.

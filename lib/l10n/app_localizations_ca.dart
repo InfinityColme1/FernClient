@@ -993,6 +993,28 @@ class AppLocalizationsCa extends AppLocalizations {
   String get useCurrentImageAsAvatar => 'Usar la imatge que estàs veient';
 
   @override
+  String get avatarCropTitle => 'Tria l\'avatar';
+
+  @override
+  String get avatarCropHint =>
+      'Arrossega un quadrat sobre la imatge. Amb la roda t\'hi apropes.';
+
+  @override
+  String get avatarCropWholeImage => 'Usar la imatge sencera';
+
+  @override
+  String get avatarSourceTitle => 'D\'on surt la imatge?';
+
+  @override
+  String get avatarSourceLibrary => 'De la biblioteca de Fern';
+
+  @override
+  String get avatarSourceDevice => 'D\'un fitxer de l\'equip';
+
+  @override
+  String get avatarLibraryEmpty => 'Aquí no hi ha res que hi encaixi';
+
+  @override
   String get viewerSaveSectionTitle => 'En desar contingut importat';
 
   @override
@@ -1900,6 +1922,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get importLimitTooltip => 'Màxim d\'elements que porta una exploració';
+
+  @override
+  String get importAsNsfwTooltip => 'Marca com a NSFW tot el que s’importi';
 
   @override
   String get lastImportNever => 'Mai importat';

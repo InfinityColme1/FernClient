@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_states.dart';
-import 'fernie_mode_states.dart';
 
 abstract class FernieModeEvents {
   const FernieModeEvents();
@@ -70,12 +69,21 @@ class RegionAssignedEvent extends FernieModeEvents {
 class ProposedRegionsOfferedEvent extends FernieModeEvents {
   final List<ProposedRegion> regions;
 
+  /// De qué sugerencias salen.
+  ///
+  /// Al aceptar sus regiones, esas sugerencias quedan contestadas: ir a las
+  /// regiones de una sugerencia, darlas por buenas y tener que volver a aceptar
+  /// la sugerencia es decir dos veces lo mismo — más aún ahora que marcar la
+  /// región ya le pone la etiqueta al contenido.
+  final List<int> suggestionIds;
+
   /// Como en [EnterFernieModeEvent]: lo que hay que restaurar al salir.
   final bool infoWasOpen;
 
   const ProposedRegionsOfferedEvent({
     required this.regions,
     required this.infoWasOpen,
+    this.suggestionIds = const [],
   });
 }
 
