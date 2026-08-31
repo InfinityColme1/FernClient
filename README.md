@@ -12,6 +12,106 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.2
+
+Una versión grande: doce funciones nuevas repartidas en ocho fases, más el
+tutorial rehecho de arriba abajo.
+
+### Encontrar las cosas
+
+- **La búsqueda acumula pastillas y las cruza.** Se pueden poner varias a la vez
+  —esta etiqueta, de este creador, con esta palabra— y la rejilla enseña lo que
+  cumple **todas**. Lo escrito que no case con nada se queda como pastilla de
+  texto libre y busca en descripciones y nombres de fichero.
+- **Buscador en el menú lateral y en las listas de gestión**, con la misma regla
+  en los dos sitios: lo que encaja viene con su rama entera.
+- **Las ramas de etiquetas se pliegan**, en el menú y en la pantalla de gestión.
+  Lo plegado se recuerda, y arrastrar contenido sobre una rama cerrada la abre
+  sola para poder seguir bajando.
+
+### Organizar
+
+- **Etiquetas hermanas.** Dos etiquetas que van juntas: poner una pone la otra,
+  sin que ninguna cuelgue de la otra. Se pueden silenciar por etiqueta.
+- **Personas.** Una etiqueta se puede marcar como persona y se gestiona en su
+  propia lista, sin dejar de comportarse como una etiqueta en el resto de la
+  aplicación.
+- **Las direcciones vinculadas de una etiqueta se ven en su ficha** y ya no se
+  pierden al guardar el nombre. *(Arreglaba una pérdida de datos: guardar una
+  etiqueta le borraba sus direcciones y sus hermanas.)*
+- **Quitar una etiqueta desde el panel del contenido**, sin abrir ningún diálogo.
+- **Recientes** al asignar etiquetas y creadores: al abrir el campo se ofrecen
+  los tres últimos que se pusieron.
+- **De dónde sale cada etiqueta.** Un registro por contenido que dice, etiqueta a
+  etiqueta, por qué está puesta: la pusiste tú, casó una dirección vinculada,
+  vino de la plataforma, se heredó de la rama o de una hermana, la propuso un
+  modelo o la trajo un fernie. Lo anterior a esta versión se deduce y se dice que
+  se deduce.
+
+### Traer contenido
+
+- **No volver a importar esto.** Al descartar algo de una fuente remota se puede
+  decir que no se vuelva a ofrecer: se salta **antes de descargarlo**, y la lista
+  de lo bloqueado está en Ajustes › Base de datos para deshacerlo.
+- **Importar marcando todo como NSFW**, desde la propia cabecera de importación.
+- **Importar más rápido** cuando hay mucho bloqueado: lo saltado ya no se
+  descarga para descartarse después.
+
+### Fernies y reconocimiento
+
+- **Marcar el fotograma entero** con un botón, sin arrastrar.
+- **Una etiqueta entera como regiones de un fernie**: se marca todo su contenido
+  de una vez, por la cola de tareas y con muestreo de fotogramas en los vídeos.
+- **Marcar una región etiqueta el contenido** con lo que el fernie enlaza. El
+  creador, sólo si no tenía uno propio.
+- **Aceptar lo que propone un modelo como regiones**: se dibuja lo que vio y se
+  aceptan las que estén bien, una a una o todas de golpe. Un modelo puede
+  proponer varias detecciones del mismo fernie en un contenido.
+- **Creadores NSFW**: marcar un creador esconde también todo lo suyo.
+- **Olvidar el entrenamiento de un modelo** sin perder sus fernies, sus
+  hiperparámetros ni su sitio en el árbol.
+- **Cancelar un entrenamiento funciona de verdad.** La señal llega hasta el
+  proceso de Python, que ahora la atiende mientras entrena; si no para en un
+  minuto, se cierra a la fuerza.
+
+### Ficheros y mantenimiento
+
+- **Recortar el avatar.** Al elegir la imagen de una etiqueta, un creador, un
+  fernie o un modelo se puede escoger **de la propia biblioteca de FeRN** —con su
+  rejilla, su buscador y su árbol de etiquetas— o del equipo, y en los dos casos
+  recortar un cuadrado o quedarse con la imagen entera.
+- **Sin avatares huérfanos**: al reemplazar uno, el anterior se borra si no lo usa
+  nadie.
+- **Limpieza** en Ajustes › Base de datos: encuentra los ficheros sueltos del
+  directorio de trabajo —avatares sin dueño, descargas cuya ficha ya no está,
+  pesos de modelos que no existen—, dice cuánto ocupan y pregunta antes.
+- **Vaciar la base de datos con opciones**: todo o **sólo lo marcado como NSFW**,
+  y con la posibilidad de llevarse también los ficheros del disco, que se borran
+  por la cola de tareas con su progreso.
+
+### Tutoriales
+
+- **De seis recorridos a diez, y de 36 pasos a 88.** Entre todos explican la
+  aplicación entera: siguiéndolos no queda ningún concepto sin contar.
+- Cuatro recorridos nuevos: **la biblioteca y el visor**, **buscar y filtrar**,
+  **el bloqueo de contenido** y **ficheros y mantenimiento**. Los seis anteriores
+  se han reescrito y ampliado.
+
+### Y además
+
+- **Los ajustes están ordenados por familias**: cómo se ve la aplicación, dónde
+  vive el contenido, lo que hace sola con él, y al final la ayuda y lo que
+  destruye. El instalador del entorno de reconocimiento ya no está al fondo de su
+  sección.
+- **Los contenidos bloqueados de la lista de Ajustes se abren en el navegador**
+  al pulsarlos.
+- Arreglos: guardar y pasar al siguiente ya no acumula pantallas; ese salto sólo
+  ocurre revisando una importación; el panel del contenido se actualiza al
+  instante cuando algo lo etiqueta solo; y el texto de la interfaz ya no se corta
+  en el menú lateral.
+
+---
+
 ## Novedades de la 2.1.2
 
 - **El filtro NSFW ya no se salta por los fernies.** Marcar contenido y luego
@@ -109,7 +209,8 @@ que llega.
 
 ### Filtro NSFW
 
-- **El origen del marcado son las etiquetas**, y se propaga a toda su rama de hijas.
+- **Se marcan etiquetas, creadores y contenido suelto**: lo de una etiqueta se propaga a toda su
+  rama de hijas, y lo de un creador, a todo lo suyo.
 - Con el filtro puesto, ese contenido es **invisible en todas partes**: rejillas, búsqueda,
   favoritos y contadores.
 - Contraseña con **sal y hash**, frase clave de pista y **código de recuperación de un solo uso**,
@@ -133,8 +234,9 @@ que llega.
 - **Arrastrar contenido sobre una etiqueta** del menú para etiquetar de golpe, con la miniatura
   siguiendo al ratón.
 - **Tutoriales guiados**: uno general que se ofrece la primera vez que se abre la aplicación, y
-  cinco por materia —importar, gestores, fernies, modelos y repetidos— disponibles siempre desde
-  Ajustes › Ayuda.
+  nueve por materia —importar, la biblioteca y el visor, etiquetas y creadores, buscar, fernies,
+  modelos, repetidos, el bloqueo de contenido y los ficheros— disponibles siempre desde
+  Ajustes › Ayuda. Entre todos explican la aplicación entera.
 
 ---
 
@@ -160,7 +262,8 @@ que llega.
 - **Etiquetado automático por dirección**: una etiqueta guarda las direcciones de las que sale su
   contenido (`reddit.com/r/gifs`, por ejemplo) y todo lo que se importe desde ahí la recibe sola.
   La comparación es por tramos de la ruta, no por texto.
-- **Buscador** con sugerencias y resultados agrupados, y **filtros** por tipo de contenido,
+- **Buscador acumulativo**: cada etiqueta, creador o texto que se elige se queda como una pastilla,
+  y con varias puestas se enseña lo que las cumple **todas**. Con **filtros** por tipo de contenido,
   etiquetas, creadores y fuente de origen.
 
 ### Importación
