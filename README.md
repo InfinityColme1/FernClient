@@ -12,6 +12,37 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.2.1
+
+Tres arreglos: dos del reconocimiento, que se rompió en la 2.2.0, y uno del
+etiquetado automático que venía de antes.
+
+- **El enlace de un artista de Pixiv no asignaba nada.** FeRN pone en cada obra
+  la dirección del perfil (`pixiv.net/users/123`), y lo que copia el navegador
+  trae el idioma con el que se estaba viendo la página (`/en/users/123`), la
+  pestaña del perfil que estaba abierta (`/users/123/artworks`), o las dos cosas.
+  Para una persona son el mismo artista; comparados como texto, direcciones
+  distintas, así que el contenido entraba con el creador desconocido. Ahora esos
+  dos tramos se descartan al comparar —sólo en Pixiv—, y **el enlace que ya
+  tuvieras puesto empieza a funcionar sin volver a escribirlo**. Las etiquetas
+  vinculadas por dirección tenían el mismo problema y se arreglan igual.
+
+- **El reconocimiento se quedaba pensando y no hacía nada.** El proceso de Python
+  leía las peticiones en un hilo aparte —lo que se añadió en la 2.2 para poder
+  cancelar un entrenamiento en marcha— y en Windows un hilo bloqueado leyendo la
+  entrada **cuelga la carga de numpy y de torch**: sin error, sin gastar
+  procesador y para siempre. Ya no hay hilo, y la señal de parada va ahora por un
+  fichero que el proceso mira entre imagen e imagen y entre época y época, que es
+  justo cuando puede parar. Cancelar sigue funcionando igual.
+- **«No se puede encontrar la ruta especificada: runs\detect\predict».**
+  Ultralytics crea siempre su carpeta de salida al preparar una predicción,
+  aunque no vaya a guardar nada, y sin decirle dónde la ponía en una ruta
+  relativa al directorio de trabajo. Ahora se le dice, en absoluto y dentro de la
+  carpeta de reconocimiento, y es siempre la misma en vez de una nueva por cada
+  imagen mirada.
+
+---
+
 ## Novedades de la 2.2
 
 Una versión grande: doce funciones nuevas repartidas en ocho fases, más el

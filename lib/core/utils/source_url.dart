@@ -69,11 +69,46 @@ String normalizedSourceUrl(String url) {
   if (host.startsWith('www.')) host = host.substring(4);
   if (host.isEmpty) return '';
 
-  final path = uri.path.replaceAll(RegExp(r'/+$'), '');
+  final path = _platformPath(host, uri.path.replaceAll(RegExp(r'/+$'), ''));
   final query = _normalizedQuery(uri);
 
   return '$host$path$query';
 }
+
+/// Quita de la ruta lo que es **cómo se está mirando** y no **a qué apunta**.
+///
+/// Un enlace copiado del navegador trae dos cosas que no identifican nada: el
+/// idioma en el que se estaba viendo la página y la pestaña del perfil que
+/// estaba abierta. Para una persona son el mismo artista; comparados como texto,
+/// tres direcciones distintas:
+///
+/// - `pixiv.net/en/users/123`
+/// - `pixiv.net/users/123/artworks`
+/// - `pixiv.net/users/123`
+///
+/// Sin esto, vincular a un creador el enlace que da el botón de compartir no
+/// asignaba nada: lo que FeRN pone en el contenido es siempre la tercera forma.
+///
+/// Va por plataforma a propósito. Quitar el primer tramo de dos letras en
+/// cualquier sitio se llevaría por delante direcciones donde eso significa algo.
+String _platformPath(String host, String path) {
+  if (!_pixivHosts.contains(host)) return path;
+
+  var value = path;
+
+  // El idioma con el que se estaba viendo la página.
+  value = value.replaceFirst(RegExp(r'^/[a-z]{2}(?=/)'), '');
+
+  // Y la pestaña del perfil que estuviera abierta. Con `replaceFirstMapped`
+  // porque el reemplazo de texto de Dart no entiende los grupos: puesto como
+  // cadena, el resultado era un literal «$1».
+  return value.replaceFirstMapped(
+    RegExp(r'^(/users/\d+)/(artworks|illustrations|manga|novels|bookmarks).*$'),
+    (match) => match.group(1) ?? '',
+  );
+}
+
+const _pixivHosts = {'pixiv.net'};
 
 /// Los parámetros que identifican a dónde apunta el enlace, ordenados y con el
 /// `?` delante. Cadena vacía si no queda ninguno.

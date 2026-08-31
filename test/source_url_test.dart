@@ -221,5 +221,63 @@ void main() {
       );
     });
   });
-}
 
+  // El enlace de un artista de Pixiv, copiado del navegador, no asignaba el
+  // creador: FeRN pone en el contenido `pixiv.net/users/123`, y lo que da el
+  // navegador trae el idioma con el que se estaba viendo la pagina, la pestaña
+  // del perfil que estaba abierta, o las dos cosas. Para una persona son el
+  // mismo artista; comparados como texto, direcciones distintas.
+  group('las formas en las que Pixiv da un perfil', () {
+    const perfil = 'https://www.pixiv.net/users/123';
+
+    test('con el idioma delante', () {
+      expect(normalizedSourceUrl('https://www.pixiv.net/en/users/123'),
+          normalizedSourceUrl(perfil));
+    });
+
+    test('con la pestaña detras', () {
+      expect(normalizedSourceUrl('https://www.pixiv.net/users/123/artworks'),
+          normalizedSourceUrl(perfil));
+    });
+
+    test('con las dos cosas', () {
+      expect(
+        normalizedSourceUrl('https://www.pixiv.net/ja/users/123/illustrations'),
+        normalizedSourceUrl(perfil),
+      );
+    });
+
+    test('y en cualquiera de sus pestañas', () {
+      for (final tab in const ['artworks', 'manga', 'novels', 'bookmarks']) {
+        expect(
+          normalizedSourceUrl('https://www.pixiv.net/users/123/$tab'),
+          normalizedSourceUrl(perfil),
+          reason: tab,
+        );
+      }
+    });
+
+    test('la obra tambien pierde el idioma', () {
+      expect(normalizedSourceUrl('https://www.pixiv.net/en/artworks/987'),
+          normalizedSourceUrl('https://www.pixiv.net/artworks/987'));
+    });
+
+    // Lo que no puede pasar: que dos artistas distintos se confundan.
+    test('pero dos artistas siguen siendo dos', () {
+      expect(
+        covers('https://www.pixiv.net/en/users/123',
+            'https://www.pixiv.net/users/999'),
+        isFalse,
+      );
+    });
+
+    // Y que la limpieza no se lleve por delante lo que en otro sitio significa
+    // algo: quitar el primer tramo de dos letras en cualquier sitio seria eso.
+    test('y en otras plataformas no se toca nada', () {
+      expect(normalizedSourceUrl('https://www.reddit.com/es/r/gifs'),
+          'reddit.com/es/r/gifs');
+      expect(normalizedSourceUrl('https://pawchive.com/en/creadora'),
+          'pawchive.com/en/creadora');
+    });
+  });
+}

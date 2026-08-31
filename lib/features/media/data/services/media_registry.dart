@@ -306,10 +306,7 @@ class MediaRegistry {
 
     return [
       for (final tag in candidates)
-        if (tag.sourceUrls.any(
-          (rule) => normalized.any((url) => sourceUrlMatches(url, rule)),
-        ))
-          tag,
+        if (_matchesAny(tag.sourceUrls, normalized)) tag,
     ];
   }
 
@@ -331,13 +328,30 @@ class MediaRegistry {
         .findAll();
 
     for (final creator in candidates) {
-      final matches = creator.sourceUrls.any(
-        (rule) => normalized.any((url) => sourceUrlMatches(url, rule)),
-      );
-      if (matches) return creator;
+      if (_matchesAny(creator.sourceUrls, normalized)) return creator;
     }
 
     return null;
+  }
+
+  /// Si alguna de [rules] recoge alguna de [urls], que ya vienen normalizadas.
+  ///
+  /// **Las reglas se normalizan aquí también**, aunque se guardaran ya
+  /// normalizadas: la forma de normalizar cambia cuando se aprende algo nuevo
+  /// —que el idioma de Pixiv no identifica a nadie, por ejemplo— y las que se
+  /// guardaron antes seguirían escritas como se escribían entonces. Hacerlo al
+  /// comparar las arregla sin tocar la base de datos.
+  bool _matchesAny(List<String> rules, List<String> urls) {
+    for (final rule in rules) {
+      final normalized = normalizedSourceUrl(rule);
+      if (normalized.isEmpty) continue;
+
+      for (final url in urls) {
+        if (sourceUrlMatches(url, normalized)) return true;
+      }
+    }
+
+    return false;
   }
 
   /// La etiqueta que se llama [name], creándola la primera vez.

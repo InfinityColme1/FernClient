@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
@@ -72,6 +73,11 @@ class RecognitionEngine {
       paths.venvPython,
       [paths.sidecarScript],
       environment: environment,
+      // **En su propia carpeta.** Sin decirlo, el proceso hereda el directorio
+      // de trabajo de la aplicación, y lo que las librerías escriben en rutas
+      // relativas —ultralytics guarda ahí sus salidas— acaba en un sitio
+      // cualquiera, o revienta si ese sitio ya no existe.
+      workingDirectory: paths.runtimeDirectory,
     );
   }
 
@@ -164,6 +170,12 @@ class RecognitionEngine {
     // uno nuevo sin que haya que reinstalar el entorno.
     await provisioner?.writeScript();
 
+    // Y las señales de parada de la sesión anterior se tiran. El sidecar borra
+    // la suya al terminar, pero uno que se mató a mitad las deja puestas — y los
+    // identificadores se repiten entre arranques, así que una olvidada pararía
+    // sola la primera petición de ahora.
+    await _clearCancelSignals(paths);
+
     final channel = await _launch(paths, {
       // Que ultralytics no escriba su configuración en la carpeta personal del
       // usuario: todo lo suyo se queda dentro de la de reconocimiento.
@@ -173,10 +185,22 @@ class RecognitionEngine {
       'PYTHONUNBUFFERED': '1',
     });
 
-    final fresh = SidecarClient(channel);
+    final fresh = SidecarClient(channel, cancelDirectory: paths.cancelDirectory);
     _client = fresh;
 
     return fresh;
+  }
+
+  /// Se lleva las señales de parada que hayan quedado de antes.
+  Future<void> _clearCancelSignals(SidecarPaths paths) async {
+    try {
+      final directory = Directory(paths.cancelDirectory);
+      if (await directory.exists()) await directory.delete(recursive: true);
+    } on FileSystemException {
+      // Que no se puedan borrar no puede impedir arrancar: como mucho se para
+      // sola una petición, y eso se ve y se vuelve a pedir.
+      return;
+    }
   }
 
   /// Reinicia el contador de inactividad. El sidecar se cierra solo si nadie lo

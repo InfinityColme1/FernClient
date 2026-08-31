@@ -19,14 +19,8 @@ un equipo cualquiera.
 import json
 import os
 import sys
-import threading
 import time
 import traceback
-
-try:
-    import queue
-except ImportError:  # Python 2, que no se usa pero no cuesta nada
-    import Queue as queue
 
 SIDECAR_VERSION = "1"
 
@@ -108,18 +102,9 @@ def _device():
     return "cuda:0" if _cuda_works() else "cpu"
 
 
-# Escriben dos hilos: el que atiende las peticiones y el que lee stdin,
-# que contesta el "cancel" por su cuenta. Sin cerrojo, dos lineas podrian
-# entrelazarse y el otro lado leeria un JSON roto.
-_stdout_lock = threading.Lock()
-
-
 def _send(payload):
-    line = json.dumps(payload) + "\n"
-
-    with _stdout_lock:
-        sys.stdout.write(line)
-        sys.stdout.flush()
+    sys.stdout.write(json.dumps(payload) + "\n")
+    sys.stdout.flush()
 
 
 def _ok(request_id, result):
@@ -233,7 +218,7 @@ def handle_train(request_id, params):
     epochs = int(params.get("epochs", 100))
 
     def on_epoch_end(trainer):
-        if request_id in _cancelled:
+        if _is_cancelled(request_id):
             # Es la unica forma de parar por dentro: ultralytics comprueba esto
             # al cerrar cada epoca y sale del bucle.
             trainer.stop_training = True
@@ -286,7 +271,7 @@ def handle_train(request_id, params):
             raise SidecarError("OUT_OF_MEMORY", str(error))
         raise
 
-    if request_id in _cancelled:
+    if _is_cancelled(request_id):
         raise SidecarError("CANCELLED", "Training cancelled")
 
     save_dir = str(getattr(results, "save_dir", params.get("project") or ""))
@@ -377,6 +362,21 @@ def _detections_of(result, conf):
     return detections
 
 
+def _runs_directory():
+    """Donde ultralytics puede escribir lo suyo, en absoluto.
+
+    Ultralytics **siempre** crea la carpeta de salida al armar el predictor,
+    aunque no se guarde nada, y sin decirle nada la pone en `runs/detect`
+    **relativa al directorio de trabajo**. Eso reventaba con "no se puede
+    encontrar la ruta" en cuanto ese directorio no servia -no existir, no dejar
+    escribir- y el fallo no tenia nada que ver con el reconocimiento.
+
+    Al lado del propio script: es la unica carpeta que seguro existe, porque es
+    de donde se esta ejecutando esto.
+    """
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "runs")
+
+
 def _predict_one(weights, model, image, conf, imgsz):
     """Mira una imagen, cayendo al procesador si la tarjeta no puede.
 
@@ -394,6 +394,13 @@ def _predict_one(weights, model, image, conf, imgsz):
             imgsz=imgsz,
             device=_device(),
             verbose=False,
+            # Absoluto y siempre el mismo: sin esto se escribe en `runs/detect`
+            # relativo al directorio de trabajo, y ademas una carpeta nueva
+            # -predict2, predict3...- por cada imagen mirada.
+            project=_runs_directory(),
+            name="predict",
+            exist_ok=True,
+            save=False,
         )[0]
     except RuntimeError as error:
         if _cuda_broken or not _cuda_unusable(error):
@@ -411,6 +418,10 @@ def _predict_one(weights, model, image, conf, imgsz):
             imgsz=imgsz,
             device="cpu",
             verbose=False,
+            project=_runs_directory(),
+            name="predict",
+            exist_ok=True,
+            save=False,
         )[0]
 
 
@@ -428,7 +439,7 @@ def handle_predict(request_id, params):
     total = len(images)
 
     for index, image in enumerate(images):
-        if request_id in _cancelled:
+        if _is_cancelled(request_id):
             raise SidecarError("CANCELLED", "Prediction cancelled")
 
         if not os.path.exists(image):
@@ -461,6 +472,51 @@ def handle_export(request_id, params):
     return {"path": str(path)}
 
 
+def _cancel_directory():
+    """Donde FeRN deja la senal de que algo hay que pararlo.
+
+    **Un fichero y no un mensaje.** Mientras se entrena o se reconoce, este
+    proceso esta dentro de ultralytics durante horas y no lee stdin, asi que un
+    "cancel" por ahi no se leeria hasta que hubiera terminado - justo lo que se
+    queria evitar. Leerlo desde otro hilo tampoco vale: un hilo bloqueado en
+    stdin **cuelga la importacion de numpy y de torch** en Windows, y entonces no
+    se reconoce nada en absoluto.
+
+    Un fichero lo ve cualquiera sin leer nada, y se mira entre imagen e imagen y
+    entre epoca y epoca, que es justo cuando se puede parar.
+    """
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "cancel"
+    )
+
+
+def _cancel_path(request_id):
+    return os.path.join(_cancel_directory(), str(request_id))
+
+
+def _is_cancelled(request_id):
+    """Si se ha pedido parar esto, por el mensaje o por el fichero."""
+    if request_id in _cancelled:
+        return True
+
+    return os.path.exists(_cancel_path(request_id))
+
+
+def _forget_cancel(request_id):
+    """Se lleva la senal al terminar.
+
+    Los identificadores se repiten entre arranques -el primero siempre es `r0`-,
+    asi que una senal olvidada pararia sola la primera peticion de la proxima
+    sesion.
+    """
+    _cancelled.discard(request_id)
+
+    try:
+        os.remove(_cancel_path(request_id))
+    except OSError:
+        pass
+
+
 def handle_cancel(request_id, params):
     target = params.get("target")
     if target:
@@ -481,16 +537,17 @@ HANDLERS = {
 }
 
 
-def _read_stdin(pending):
-    """Lee peticiones y las pone en la cola, **menos las de cancelar**.
+def main():
+    """Un mensaje por linea, uno detras de otro y en un solo hilo.
 
-    Las de cancelar se contestan aqui mismo, en este hilo. Es todo el motivo de
-    que este hilo exista: mientras se entrena, el principal esta dentro de
-    ultralytics durante horas, asi que un "cancel" encolado no se leeria hasta
-    que el entrenamiento hubiera terminado - justo lo que se queria evitar.
+    **Sin hilos a proposito.** Hubo una version que leia stdin en un hilo aparte
+    para poder atender el "cancel" mientras se entrenaba, y en Windows eso
+    colgaba la importacion de numpy y de torch: un hilo bloqueado leyendo stdin
+    deja la carga de las extensiones nativas esperando para siempre, sin gastar
+    procesador y sin decir nada. No se reconocia nada en absoluto.
 
-    Se puede atender desde aqui porque lo unico que hace el manejador es
-    levantar una bandera que los callbacks miran entre epoca y epoca.
+    Lo que se queria de aquel hilo lo hace ahora [_cancel_directory]: la senal de
+    parada llega por fichero, que se puede mirar sin leer nada.
     """
     for line in sys.stdin:
         line = line.strip()
@@ -502,37 +559,6 @@ def _read_stdin(pending):
         except ValueError as error:
             _error("", "INTERNAL", "Bad request: %s" % error)
             continue
-
-        if request.get("method") == "cancel":
-            request_id = request.get("id", "")
-            try:
-                _ok(
-                    request_id,
-                    handle_cancel(request_id, request.get("params") or {}),
-                )
-            except Exception:
-                _error(request_id, "INTERNAL", traceback.format_exc())
-            continue
-
-        pending.put(request)
-
-    # stdin cerrado: el otro lado se ha ido y no va a llegar nada mas.
-    pending.put(None)
-
-
-def main():
-    pending = queue.Queue()
-
-    # Demonio: si el hilo principal se va, este no puede quedarse esperando una
-    # linea que ya no va a llegar y dejar el proceso vivo.
-    reader = threading.Thread(target=_read_stdin, args=(pending,))
-    reader.daemon = True
-    reader.start()
-
-    while True:
-        request = pending.get()
-        if request is None:
-            return
 
         request_id = request.get("id", "")
         method = request.get("method", "")
@@ -556,7 +582,7 @@ def main():
         except Exception:
             _error(request_id, "INTERNAL", traceback.format_exc())
         finally:
-            _cancelled.discard(request_id)
+            _forget_cancel(request_id)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@
 // deja a nadie esperando para siempre.
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:convert';
 
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
@@ -268,6 +269,67 @@ void main() {
         client.call('ping', timeout: const Duration(milliseconds: 20)),
         throwsA(isA<SidecarException>()),
       );
+    });
+
+    // **Y ademas se deja un fichero.** El mensaje solo se lee entre peticion y
+    // peticion: mientras se entrena o se reconoce, el sidecar esta dentro de
+    // ultralytics durante horas y no lee nada. El fichero se mira entre epoca y
+    // epoca y entre imagen e imagen, que es cuando se puede parar de verdad.
+    //
+    // Leerlo desde otro hilo era la otra salida, y no vale: un hilo bloqueado
+    // en la entrada cuelga la carga de numpy y de torch en Windows, y entonces
+    // no se reconoce nada en absoluto.
+    test('cancelar deja ademas su senal en el disco', () async {
+      final directory = await Directory.systemTemp.createTemp('fern_cancel');
+      addTearDown(() async {
+        if (await directory.exists()) await directory.delete(recursive: true);
+      });
+
+      final channel = _FakeChannel();
+      final client = SidecarClient(channel, cancelDirectory: directory.path);
+
+      unawaited(client.call('train', timeout: Duration.zero));
+      await Future<void>.delayed(Duration.zero);
+      final trainingId = channel.last['id'] as String;
+
+      // Sin esperar a que termine: `cancel` espera su propia respuesta, y lo
+      // que se mide aqui es lo que deja antes de mandarla.
+      unawaited(client.cancel(trainingId));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(File(p.join(directory.path, trainingId)).existsSync(), isTrue);
+    });
+
+    test('sin carpeta donde dejarla, se manda el mensaje igual', () async {
+      final channel = _FakeChannel();
+      final client = SidecarClient(channel);
+
+      unawaited(client.call('train', timeout: Duration.zero));
+      await Future<void>.delayed(Duration.zero);
+      final trainingId = channel.last['id'] as String;
+
+      unawaited(client.cancel(trainingId));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(channel.last['method'], 'cancel');
+    });
+
+    // Lo que ya contesto no se para: dejar la senal ahi la encontraria la
+    // proxima peticion que reusara el identificador.
+    test('lo que ya termino no deja senal', () async {
+      final directory = await Directory.systemTemp.createTemp('fern_cancel');
+      addTearDown(() async {
+        if (await directory.exists()) await directory.delete(recursive: true);
+      });
+
+      final channel = _FakeChannel();
+      final client = SidecarClient(channel, cancelDirectory: directory.path);
+
+      // No hay nada pendiente con ese identificador: ni mensaje ni fichero.
+      await client.cancel('r404');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(directory.listSync(), isEmpty);
     });
 
     test('cancelar se manda como su propia petición', () async {

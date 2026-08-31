@@ -107,6 +107,16 @@ class SidecarPaths {
   /// El script que se lanza como proceso hijo.
   String get sidecarScript => p.join(runtimeDirectory, 'fern_sidecar.py');
 
+  /// Donde se deja la señal de que algo hay que pararlo: un fichero vacío por
+  /// petición.
+  ///
+  /// **Un fichero y no un mensaje.** Mientras entrena o reconoce, el sidecar
+  /// está dentro de ultralytics durante horas y no lee lo que se le manda; y
+  /// leerlo desde otro hilo no vale, porque un hilo bloqueado en la entrada
+  /// cuelga la carga de numpy y de torch en Windows. Un fichero se mira sin
+  /// leer nada, entre imagen e imagen y entre época y época.
+  String get cancelDirectory => p.join(runtimeDirectory, 'cancel');
+
   /// La versión del script que hay escrita en disco, para saber si la de la
   /// aplicación es más nueva y hay que reescribirlo.
   String get sidecarVersionFile => p.join(runtimeDirectory, 'sidecar.version');

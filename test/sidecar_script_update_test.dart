@@ -130,4 +130,89 @@ void main() {
 
     expect(script().existsSync(), isTrue);
   });
+
+  // Reconocer reventaba con «no se puede encontrar la ruta especificada:
+  // runs\detect\predict». No era del reconocimiento: ultralytics **siempre**
+  // crea su carpeta de salida al armar el predictor, aunque no se guarde nada, y
+  // sin decirle donde la pone en `runs/detect` **relativa al directorio de
+  // trabajo**. Con un directorio de trabajo que no servia, mkdir fallaba y el
+  // fallo salia como si el modelo estuviera roto.
+  group('donde escribe ultralytics', () {
+    test('se le dice en cada prediccion', () async {
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      // Tantas veces como se llama a predict: la segunda es la que cae al
+      // procesador cuando la tarjeta no puede, y olvidarla ahi dejaria el fallo
+      // esperando justo en el equipo sin tarjeta.
+      expect(
+        'project=_runs_directory()'.allMatches(script).length,
+        // Dos: la normal y la que cae al procesador cuando la tarjeta no
+        // puede. Olvidar la segunda dejaria el fallo esperando justo en el
+        // equipo sin tarjeta.
+        2,
+      );
+    });
+
+    test('y es una ruta absoluta, no relativa al directorio de trabajo',
+        () async {
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      expect(script, contains('def _runs_directory():'));
+      expect(script, contains('os.path.dirname(os.path.abspath(__file__))'));
+    });
+
+    test('siempre la misma carpeta', () async {
+      // Sin `exist_ok`, ultralytics crea predict2, predict3, predict4... una por
+      // imagen mirada, y reconocer la biblioteca deja miles de carpetas vacias.
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      expect(script, contains('exist_ok=True'));
+    });
+  });
+
+  // **El fallo que dejo el reconocimiento sin funcionar entero.**
+  //
+  // Hubo una version que leia la entrada en un hilo aparte, para poder atender
+  // el "cancel" mientras se entrenaba. En Windows eso cuelga la importacion de
+  // numpy y de torch: con un hilo bloqueado leyendo la entrada, cargar las
+  // extensiones nativas se queda esperando para siempre, sin gastar procesador y
+  // sin decir nada. Reconocer no daba error: se quedaba pensando.
+  //
+  // Se comprobo con las tres formas de leer —iterando, `sys.stdin.buffer` y
+  // `os.read`— y las tres cuelgan. Asi que la regla es la que dice el nombre: en
+  // el sidecar no hay hilos.
+  group('un solo hilo', () {
+    test('el script no importa threading', () async {
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      expect(script, isNot(contains('import threading')));
+      expect(script, isNot(contains('threading.Thread')));
+    });
+
+    test('ni lee la entrada desde ninguno', () async {
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      // La entrada se lee en un sitio y sólo en uno: el bucle principal.
+      expect('sys.stdin'.allMatches(script).length, 1);
+    });
+
+    // Lo que se queria de aquel hilo: poder parar algo que lleva horas dentro de
+    // ultralytics. Ahora la senal llega por fichero, que se mira sin leer nada.
+    test('y la parada se mira por fichero', () async {
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      expect(script, contains('def _cancel_directory():'));
+      expect(script, contains('os.path.exists(_cancel_path(request_id))'));
+    });
+
+    test('que se borra al terminar', () async {
+      // Los identificadores se repiten entre arranques —el primero siempre es
+      // `r0`—, asi que una senal olvidada pararia sola la primera peticion de la
+      // proxima sesion.
+      final script = await rootBundle.loadString(sidecarScriptAsset);
+
+      expect(script, contains('def _forget_cancel(request_id):'));
+      expect(script, contains('_forget_cancel(request_id)'));
+    });
+  });
 }

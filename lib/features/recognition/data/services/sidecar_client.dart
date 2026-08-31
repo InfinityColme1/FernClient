@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'dart:convert';
 
 import 'package:Fern/core/services/jobs/cancellation_token.dart';
@@ -55,9 +58,17 @@ class SidecarClient {
   var _sequence = 0;
   var _isClosed = false;
 
+  /// Dónde dejar la señal de parada, si se puede dejar en alguna parte.
+  ///
+  /// Las pruebas montan el cliente sin ella: allí lo que se comprueba es el
+  /// mensaje, y escribir en el disco sólo añadiría una carpeta temporal a cada
+  /// una.
+  final String? cancelDirectory;
+
   SidecarClient(
     this._channel, {
     this.timeout = const Duration(seconds: 60),
+    this.cancelDirectory,
   }) {
     _channel.lines.listen(_onLine, onDone: _onChannelClosed);
     _channel.exited.then((_) => _onChannelClosed());
@@ -127,6 +138,13 @@ class SidecarClient {
     // el sidecar para siempre: la limpia al terminar la petición, no después.
     if (!_pending.containsKey(requestId)) return;
 
+    // **Primero el fichero.** El mensaje sólo se lee entre petición y petición,
+    // así que mientras se entrena o se reconoce no llega; el fichero se mira
+    // entre época y época y entre imagen e imagen, que es cuando se puede parar
+    // de verdad. El mensaje se manda igual: es lo que para lo que todavía no ha
+    // empezado.
+    await _writeCancelSignal(requestId);
+
     try {
       await call('cancel', params: {'target': requestId});
     } on SidecarException {
@@ -182,6 +200,23 @@ class SidecarClient {
 
   /// El sidecar se ha ido. Lo que estuviera esperando no va a llegar nunca, así
   /// que se corta aquí en vez de dejarlo colgado hasta el tiempo límite.
+  /// Deja la señal de parada de [requestId] donde el sidecar la mira.
+  ///
+  /// Es un mejor esfuerzo: si no se puede escribir, queda el mensaje, que sirve
+  /// para todo lo que no sea un trabajo largo. Fallar aquí no puede impedir que
+  /// se pida parar.
+  Future<void> _writeCancelSignal(String requestId) async {
+    final directory = cancelDirectory;
+    if (directory == null) return;
+
+    try {
+      await Directory(directory).create(recursive: true);
+      await File(p.join(directory, requestId)).writeAsString('');
+    } on FileSystemException {
+      return;
+    }
+  }
+
   void _onChannelClosed() {
     if (_isClosed) return;
     _isClosed = true;
