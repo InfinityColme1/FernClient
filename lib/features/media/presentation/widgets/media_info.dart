@@ -25,8 +25,8 @@ import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
+import 'package:Fern/features/recognition/domain/services/suggestion_groups.dart';
 import 'package:Fern/features/recognition/domain/usecases/adopt_fernie_tag_usecase.dart';
-import 'package:Fern/features/recognition/domain/usecases/turn_detection_into_region_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -241,6 +241,7 @@ class _InfoContent extends StatelessWidget {
               _CreatorRow(media: media),
               _SuggestionList(
                 bloc: suggestions,
+                fernieMode: fernieMode,
                 pick: (state) => state.creatorSuggestions,
                 fallbackIcon: Symbols.person,
                 title: texts.suggestionCreatorTitle,
@@ -304,6 +305,7 @@ class _InfoContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: _SuggestionList(
             bloc: suggestions,
+            fernieMode: fernieMode,
             // Las que no proponen nada van aquí también: no se pueden
             // aceptar, pero sí rechazar, que es lo que las quita de en medio y
             // deja de señalar el contenido como pendiente.
@@ -556,6 +558,12 @@ class _CreatorRow extends StatelessWidget {
 class _SuggestionList extends StatelessWidget {
   final SuggestionsBloc bloc;
 
+  /// El modo de marcar del visor, para poder abrirlo con lo que el modelo vio.
+  ///
+  /// Llega por parámetro y no por el árbol, como en el resto del panel: lo crea
+  /// el visor y muere con él.
+  final FernieModeBloc fernieMode;
+
   /// Cuáles de las que hay le tocan a esta lista.
   final List<MediaSuggestionEntity> Function(SuggestionsState) pick;
 
@@ -581,6 +589,7 @@ class _SuggestionList extends StatelessWidget {
 
   const _SuggestionList({
     required this.bloc,
+    required this.fernieMode,
     required this.pick,
     required this.fallbackIcon,
     this.apply,
@@ -663,62 +672,76 @@ class _SuggestionList extends StatelessWidget {
   }
 
   /// Enseña sobre el contenido dónde vio el modelo lo que propone esta fila.
-  void _spotlight(MediaSuggestionEntity? suggestion) {
+  ///
+  /// **Todas las veces que lo vio.** Cuatro coches en una foto son cuatro cajas
+  /// de la misma fila, y enseñar sólo una dejaba las otras tres sin forma de
+  /// verse.
+  void _spotlight(SuggestionGroup? group) {
     final spotlight = getIt<SuggestionSpotlight>();
-    final box = suggestion?.box;
 
-    if (suggestion == null || box == null) {
+    if (group == null) {
       spotlight.clear();
 
       return;
     }
 
-    spotlight.show(
-      id: suggestion.id,
-      box: box,
-      label: suggestion.label,
-      frameMs: suggestion.frameMs,
-    );
+    spotlight.show(_boxesOf(group));
   }
 
-  /// Deja la caja puesta, o la quita si ya lo estaba.
-  void _pin(MediaSuggestionEntity suggestion) {
-    final box = suggestion.box;
-    if (box == null) return;
+  /// Deja las cajas puestas, o las quita si ya lo estaban.
+  void _pin(SuggestionGroup group) {
+    final boxes = _boxesOf(group);
+    if (boxes.isEmpty) return;
 
-    getIt<SuggestionSpotlight>().pin(
-      id: suggestion.id,
-      box: box,
-      label: suggestion.label,
-      frameMs: suggestion.frameMs,
-    );
+    getIt<SuggestionSpotlight>().pin(boxes);
   }
 
-  /// Guarda lo que el modelo vio como región del fernie que lo vio.
+  /// Las cajas de un grupo, las que tengan.
+  ///
+  /// Un modelo booleano dice que algo está pero no dónde: esas detecciones no se
+  /// pueden pintar, pero siguen contando en la fila.
+  List<SpottedBox> _boxesOf(SuggestionGroup group) => [
+        for (final one in group.located)
+          (
+            id: one.id,
+            box: one.box!,
+            label: one.label,
+            frameMs: one.frameMs,
+          ),
+      ];
+
+  /// Abre el modo de marcar con lo que el modelo vio, para confirmarlo.
+  ///
+  /// **No lo guarda a ciegas**, que es lo que hacía antes. Un modelo que ve
+  /// cuatro coches puede estar acertando en tres, y guardar los cuatro deja tres
+  /// regiones buenas y una que hay que buscar y borrar. Así se ven dibujados y
+  /// se pulsa lo que esté bien, o se aceptan todos de una vez.
   ///
   /// No contesta la sugerencia: marcar dónde está algo y decir que la etiqueta
-  /// es correcta son dos cosas, y quien acaba de guardar la región puede querer
+  /// es correcta son dos cosas, y quien acaba de marcar la región puede querer
   /// rechazar la etiqueta igualmente.
-  Future<void> _markRegion(
-    BuildContext context,
-    MediaSuggestionEntity suggestion,
-  ) async {
-    final result =
-        await getIt<TurnDetectionIntoRegionUseCase>()(params: suggestion);
+  void _markRegion(BuildContext context, SuggestionGroup group) {
+    final located = group.located;
+    if (located.isEmpty) return;
 
-    if (!context.mounted) return;
-
-    final texts = AppLocalizations.of(context);
-
-    showFernToast(
-      context,
-      result is DataSuccess
-          ? texts.suggestionRegionSaved
-          : texts.suggestionRegionFailed,
-      icon: result is DataSuccess
-          ? Symbols.info
-          : Symbols.error,
-    );
+    fernieMode.add(ProposedRegionsOfferedEvent(
+      infoWasOpen: context.read<MediaBloc>().state.showInfo,
+      regions: [
+        for (final one in located)
+          ProposedRegion(
+            rect: Rect.fromLTWH(
+              one.box!.x,
+              one.box!.y,
+              one.box!.w,
+              one.box!.h,
+            ),
+            fernieId: one.fernie.id,
+            confidence: one.confidence,
+            label: one.label,
+            frameMs: one.frameMs,
+          ),
+      ],
+    ));
   }
 
   @override
@@ -731,6 +754,11 @@ class _SuggestionList extends StatelessWidget {
         final suggestions = pick(state);
         if (suggestions.isEmpty) return const SizedBox.shrink();
 
+        // Lo mismo visto varias veces es **una fila**: es la misma etiqueta, y
+        // ponerla cuatro veces no significa nada. Las cuatro cajas siguen ahí
+        // para señalarlas y para poder marcarlas como regiones.
+        final groups = groupSuggestions(suggestions);
+
         final label = title;
 
         // Con una sola no hay nada que agrupar: los dos botones de la fila ya
@@ -738,6 +766,7 @@ class _SuggestionList extends StatelessWidget {
         // encima sólo haría dudar de si son distintos.
         final canAnswerAll = suggestions.length > 1;
         final canAcceptAll = suggestions.any(_canAccept);
+        final canAnswerGroups = groups.length > 1;
 
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.m),
@@ -754,22 +783,26 @@ class _SuggestionList extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s),
               ],
-              for (final suggestion in suggestions)
+              for (final group in groups)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.m),
                   child: SuggestionRow(
-                    suggestion: suggestion,
+                    suggestion: group.best,
+                    group: group,
                     fallbackIcon: fallbackIcon,
-                    onAccept: _canAccept(suggestion)
-                        ? () => _accept(context, [suggestion])
+                    // La cruz y el visto van sobre el grupo entero: aceptar pone
+                    // la etiqueta una vez —es la misma— y da por contestadas
+                    // todas. Las regiones se eligen aparte.
+                    onAccept: _canAccept(group.best)
+                        ? () => _accept(context, group.instances)
                         : null,
-                    onReject: () => _reject([suggestion]),
-                    onMarkRegion: () => _markRegion(context, suggestion),
+                    onReject: () => _reject(group.instances),
+                    onMarkRegion: () => _markRegion(context, group),
                     onSpotlight: _spotlight,
                     onSpotlightPinned: _pin,
                   ),
                 ),
-              if (canAnswerAll)
+              if (canAnswerAll && canAnswerGroups)
                 Row(
                   children: [
                     TextButton(

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernie_mode_states.dart';
+import 'fernie_mode_states.dart';
 
 abstract class FernieModeEvents {
   const FernieModeEvents();
@@ -58,6 +59,40 @@ class RegionAssignedEvent extends FernieModeEvents {
     required this.fernie,
     this.frameMs,
   });
+}
+
+/// Entra al modo con lo que un modelo ha detectado, **sin marcar**.
+///
+/// Es lo que hace el botón de «guardar como región» de una sugerencia: en vez de
+/// guardar a ciegas lo que el modelo vio, abre el modo con sus rectángulos
+/// dibujados para poder quedarse sólo con los que estén bien. Un modelo que ve
+/// cuatro coches puede estar acertando en tres.
+class ProposedRegionsOfferedEvent extends FernieModeEvents {
+  final List<ProposedRegion> regions;
+
+  /// Como en [EnterFernieModeEvent]: lo que hay que restaurar al salir.
+  final bool infoWasOpen;
+
+  const ProposedRegionsOfferedEvent({
+    required this.regions,
+    required this.infoWasOpen,
+  });
+}
+
+/// Da por buena una de las propuestas: pasa a estar marcada.
+class ProposedRegionAcceptedEvent extends FernieModeEvents {
+  final int index;
+
+  const ProposedRegionAcceptedEvent(this.index);
+}
+
+/// Da por buenas todas las que queden.
+///
+/// El botón de «todas» existe porque el caso normal es que el modelo acierte:
+/// con doce coches bien detectados, pulsarlos de uno en uno es el trabajo que
+/// esto venía a ahorrar.
+class AllProposedRegionsAcceptedEvent extends FernieModeEvents {
+  const AllProposedRegionsAcceptedEvent();
 }
 
 /// Cambia la herramienta del modo.

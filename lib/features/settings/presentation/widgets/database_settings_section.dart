@@ -3,6 +3,8 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/utils/file_size.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/settings/domain/usecases/sweep_unused_files_usecase.dart';
+import 'package:Fern/features/settings/presentation/widgets/cleanup_confirm_dialog.dart';
+import 'package:Fern/features/settings/data/services/leftover_files.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
@@ -16,6 +18,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/data/models/blocked_import_model.dart';
 import 'package:Fern/features/media/data/services/blocked_imports.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// La base de datos: por ahora, vaciarla.
@@ -63,20 +66,18 @@ class _DatabaseSettingsSectionState extends State<DatabaseSettingsSection> {
   /// tarda, y sin esto el botón se puede pulsar tres veces seguidas.
   bool _isSweeping = false;
 
-  /// Se lleva los ficheros de utilidad que ya no usa nadie.
+  /// Se lleva los ficheros de la carpeta de trabajo que ya no usa nadie.
   ///
-  /// No pregunta antes, a diferencia del vaciado: esto no borra nada que esté en
-  /// uso ni nada que se pueda echar de menos —lo que se va son copias que ya no
-  /// apunta nadie—, así que pedir confirmación sería pedirla para nada.
-  ///
-  /// Pero sí dice qué ha hecho: una limpieza callada se ve igual haya barrido
-  /// doscientos ficheros o ninguno.
+  /// **Mira primero y pregunta.** Con los avatares no hacía falta —son copias
+  /// nuestras— pero aquí se van también descargas cuya fila ya no está, y ésas
+  /// se pueden querer rescatar antes. Un fichero borrado no vuelve.
   Future<void> _sweep(BuildContext context) async {
     if (_isSweeping) return;
 
     setState(() => _isSweeping = true);
 
-    final result = await getIt<SweepUnusedFilesUseCase>()();
+    final usecase = getIt<SweepUnusedFilesUseCase>();
+    final found = await usecase.find();
 
     if (!mounted) return;
     setState(() => _isSweeping = false);
@@ -84,7 +85,34 @@ class _DatabaseSettingsSectionState extends State<DatabaseSettingsSection> {
 
     final texts = AppLocalizations.of(context);
 
-    if (result case DataSuccess(:final data?)) {
+    if (found is! DataSuccess || found.data == null) {
+      showFernToast(context, texts.databaseCleanupFailed, icon: Symbols.error);
+      return;
+    }
+
+    final plan = found.data!;
+
+    // Nada suelto: se dice y se acaba, sin abrir un aviso para no hacer nada.
+    if (plan.isEmpty) {
+      showFernToast(
+        context,
+        texts.databaseCleanupDone(0, formatFileWeight(0)),
+        icon: Symbols.mop,
+      );
+      return;
+    }
+
+    final confirmed = await showFernDialog<bool, MediaBloc>(
+      context: context,
+      builder: (_) => CleanupConfirmDialog(plan: plan),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final swept = await usecase.sweep(plan);
+    if (!context.mounted) return;
+
+    if (swept case DataSuccess(:final data?)) {
       showFernToast(
         context,
         texts.databaseCleanupDone(data.files, formatFileWeight(data.bytes)),
@@ -221,22 +249,65 @@ class _DatabaseSettingsSectionState extends State<DatabaseSettingsSection> {
     );
   }
 
+  /// Abre la página de la que salió, en el navegador del sistema.
+  ///
+  /// Se le pone `https://` a lo que no traiga protocolo, como el resto de
+  /// enlaces de la aplicación: sin él el sistema no sabe a qué aplicación
+  /// dárselo.
+  Future<void> _open(String link) async {
+    final value = link.trim();
+    if (value.isEmpty) return;
+
+    final uri = Uri.tryParse(value.contains('://') ? value : 'https://$value');
+    if (uri == null) return;
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Widget _blockedRow(BuildContext context, BlockedImportModel row) {
     final theme = Theme.of(context);
+
+    // Se puede volver a ver lo que se olvidó, si se guardó de dónde salía. Por
+    // el nombre del fichero no se reconoce nada, y si se olvidó por error hacía
+    // falta poder mirarlo antes de decidir si se recupera.
+    //
+    // Lo bloqueado antes de que esto se guardara no lleva dirección: esa fila se
+    // queda como estaba, sin pulsar. Prometer un enlace que no lleva a ninguna
+    // parte sería peor.
+    final url = row.sourceUrl;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              // De dónde era y qué era: el identificador a secas no le dice nada
-              // a nadie.
-              '${row.source} · ${row.description ?? row.remoteId}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium,
-            ),
+            child: url == null
+                ? Text(
+                    '${row.source} · ${row.description ?? row.remoteId}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  )
+                : Tooltip(
+                    message: texts(context).blockedImportsOpen,
+                    child: InkWell(
+                      onTap: () => _open(url),
+                      borderRadius:
+                          BorderRadius.circular(AppSizes.radiusSmall),
+                      child: Text(
+                        // De dónde era y qué era: el identificador a secas no le
+                        // dice nada a nadie.
+                        '${row.source} · ${row.description ?? row.remoteId}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: context.colors.primary,
+                          decoration: TextDecoration.underline,
+                          decorationColor: context.colors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
           ),
           IconButton(
             icon: const Icon(Symbols.close, size: AppSizes.iconCompact),

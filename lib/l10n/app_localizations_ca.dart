@@ -1995,6 +1995,30 @@ class AppLocalizationsCa extends AppLocalizations {
   String get databaseCleanupAction => 'Neteja';
 
   @override
+  String databaseCleanupFound(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fitxers solts, $size',
+      one: '1 fitxer solt, $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get databaseCleanupAvatars => 'Avatars sense amo';
+
+  @override
+  String get databaseCleanupDownloads => 'Baixades que ja no són a la base';
+
+  @override
+  String get databaseCleanupWeights => 'Pesos que cap model no assenyala';
+
+  @override
+  String get databaseCleanupKeeps =>
+      'No es toquen l’entorn de Python, els conjunts d’entrenament ni les memòries cau.';
+
+  @override
   String get databaseCleanupFailed => 'La neteja no ha pogut acabar';
 
   @override
@@ -2021,6 +2045,9 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get blockedImportsUnblock => 'Torna a importar això';
+
+  @override
+  String get blockedImportsOpen => 'Obre la pàgina d’on va sortir';
 
   @override
   String get blockedImportsClear => 'Oblida’ls tots';
@@ -2590,6 +2617,60 @@ class AppLocalizationsCa extends AppLocalizations {
   String get fernieToolEdit => 'Editar regions';
 
   @override
+  String get jobTagRegions => 'Marcant el contingut d’una etiqueta';
+
+  @override
+  String get fernieImportTagTitle => 'Marca una etiqueta sencera';
+
+  @override
+  String get fernieImportTagNote =>
+      'Tot el que porti aquesta etiqueta rep una regió amb el fotograma sencer, per a aquest fernie. És el que faríes a mà, un per un.';
+
+  @override
+  String get fernieImportTagAction => 'Marca’ls';
+
+  @override
+  String get fernieImportTagTooltip =>
+      'Marca una etiqueta sencera com a regions';
+
+  @override
+  String get fernieImportTagFrames => 'Fotogrames per vídeo';
+
+  @override
+  String get fernieImportTagFramesNote =>
+      'L’entrenament treu una imatge per regió, de manera que un vídeo sencer serien milers de retalls gairebé idèntics.';
+
+  @override
+  String fernieImportTagCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count continguts',
+      one: '1 contingut',
+      zero: 'Res no porta aquesta etiqueta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fernieImportTagStarted =>
+      'El marcatge ha començat; el pots seguir a la llista de tasques';
+
+  @override
+  String get fernieToolWholeFrame => 'Marca el fotograma sencer';
+
+  @override
+  String fernieAcceptAllProposed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Accepta les $count regions detectades',
+      one: 'Accepta la regió detectada',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get fernieRegionConfirm => 'Desar els canvis d’aquesta regió';
 
   @override
@@ -2716,6 +2797,11 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String suggestionConfidence(int percent) {
     return '$percent%';
+  }
+
+  @override
+  String suggestionInstances(int count) {
+    return '×$count';
   }
 
   @override
@@ -2928,6 +3014,13 @@ class AppLocalizationsCa extends AppLocalizations {
   @override
   String get returnRecognizedLabel =>
       'Retorna a importació el contingut reconegut';
+
+  @override
+  String get maxDetectionsLabel => 'Quantes vegades es desa el mateix';
+
+  @override
+  String get maxDetectionsDescription =>
+      'Un model pot veure quatre cotxes en una foto. Cadascun és una regió diferent que es pot marcar, així que es desen tots — fins a aquest nombre. Un aparcament en podria donar cinquanta.';
 
   @override
   String get returnRecognizedDescription =>

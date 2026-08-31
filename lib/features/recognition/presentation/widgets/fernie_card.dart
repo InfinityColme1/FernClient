@@ -3,6 +3,12 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/core/services/jobs/job.dart';
+import 'package:Fern/core/services/jobs/job_queue.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_by_tag_usecase.dart';
+import 'package:Fern/features/recognition/data/services/tag_regions_job_runner.dart';
+import 'package:Fern/features/recognition/presentation/widgets/import_tag_regions_dialog.dart';
+import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
@@ -223,6 +229,64 @@ class _FernieCardState extends State<FernieCard> {
   // Pintado
   // ---------------------------------------------------------------------------
 
+  /// Marca de una vez todo el contenido de una etiqueta como regiones de este
+  /// fernie.
+  ///
+  /// Montar un fernie desde cero era abrir contenido a contenido y marcar el
+  /// fotograma entero en cada uno. Cuando la etiqueta ya dice de qué va todo lo
+  /// que lleva, ese trabajo es mecánico y se puede pedir de una vez.
+  Widget _importTagButton(AppLocalizations texts) {
+    return IconButton(
+      tooltip: texts.fernieImportTagTooltip,
+      // La medida de las acciones de una ficha, la misma que la de al lado: con
+      // el tamaño grande este icono se comía al otro.
+      icon: const Icon(Symbols.library_add, size: AppSizes.iconCardAction),
+      onPressed: _importTag,
+    );
+  }
+
+  Future<void> _importTag() async {
+    final request = await showFernDialog<TagRegionsRequest, Never>(
+      context: context,
+      builder: (_) => ImportTagRegionsDialog(
+        fernieName: widget.fernie.name,
+        defaultSamples:
+            getIt<SettingsRepository>().getSettings().frameSamples,
+        searchTags: (query) async {
+          final result = await _searchTags(params: query);
+
+          return result.data ?? const [];
+        },
+        countOf: (tag) async {
+          final result = await getIt<GetMediaByTagUseCase>()(params: tag.id);
+
+          return result.data?.length ?? 0;
+        },
+      ),
+    );
+
+    if (request == null || !mounted) return;
+
+    // Por la cola y no aquí: doscientos vídeos son doscientas aperturas de
+    // fichero para saber cuánto duran, y eso no puede dejar la pantalla
+    // esperando ni perderse al cambiar de sitio.
+    getIt<JobQueue>().enqueue(
+      type: JobType.tagRegions,
+      payload: {
+        TagRegionsJobRunner.fernieKey: widget.fernie.id,
+        TagRegionsJobRunner.tagKey: request.tag.id,
+        TagRegionsJobRunner.samplesKey: request.frameSamples,
+        Job.nameKey: request.tag.name,
+      },
+    );
+
+    if (!mounted) return;
+
+    showFernToast(context, texts(context).fernieImportTagStarted);
+  }
+
+  AppLocalizations texts(BuildContext context) => AppLocalizations.of(context);
+
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
@@ -241,7 +305,7 @@ class _FernieCardState extends State<FernieCard> {
             // acción y se busca en el mismo sitio.
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [_nsfwButton(texts)],
+              children: [_importTagButton(texts), _nsfwButton(texts)],
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,

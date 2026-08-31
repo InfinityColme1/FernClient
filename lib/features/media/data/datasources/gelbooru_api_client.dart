@@ -48,9 +48,22 @@ class GelbooruApiClient {
   ///
   /// [stopAt] es la publicación en la que se quedó la importación anterior:
   /// cuando se vuelve a encontrar, se para. Vacío para traerse todo.
+  /// [skip] dice si una pieza no hace falta, **por su identificador y antes de
+  /// pedirla**.
+  ///
+  /// Aquí importa más que en las demás fuentes: el listado de favoritos de
+  /// Gelbooru no trae las publicaciones, sólo referencias, así que cada una
+  /// cuesta su propia petición. Preguntando después de pedirla, saltarse cien
+  /// bloqueadas costaba cien viajes al servidor para tirar lo que llegaba.
+  ///
+  /// El identificador se puede componer aquí porque sale del propio favorito.
+  /// Va con el de la publicación porque quien pregunta lleva la cuenta de por
+  /// dónde se quedó, y ésa avanza también con lo que se salta: es contenido que
+  /// ya se ha mirado.
   Stream<RemoteMediaItem> favoriteMedia(
     GelbooruSettingsEntity credentials, {
     String? stopAt,
+    bool Function(String remoteId, String postId)? skip,
   }) async* {
     final newestFirst = await _isNewestFirst(credentials);
 
@@ -71,6 +84,10 @@ class GelbooruApiClient {
       // Aquí se quedó la vez anterior: de este punto para atrás ya se miró.
       if (postId == stopAt) return;
 
+      // Antes de pedirla: es lo que convierte cien bloqueadas en cien
+      // comprobaciones en memoria en vez de cien peticiones.
+      if (skip?.call(_remoteIdOf(postId), postId) ?? false) continue;
+
       asked++;
       final item = await _post(postId, credentials: credentials);
 
@@ -88,6 +105,13 @@ class GelbooruApiClient {
       yield item;
     }
   }
+
+  /// Con qué nombre se conoce aquí una publicación.
+  ///
+  /// En un solo sitio a propósito: se compone antes de pedirla —para saber si
+  /// hace falta— y al construirla, y dos formas distintas de escribirlo harían
+  /// que el salto nunca coincidiera con lo guardado.
+  static String _remoteIdOf(String postId) => 'gelbooru_$postId';
 
   /// En qué orden devuelve esta cuenta sus favoritos.
   ///
@@ -209,7 +233,7 @@ class GelbooruApiClient {
     final source = post['source'] as String? ?? '';
 
     return RemoteMediaItem(
-      id: 'gelbooru_$postId',
+      id: _remoteIdOf('$postId'),
       url: url,
       title: '',
       postId: postId,

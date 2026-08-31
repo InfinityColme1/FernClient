@@ -365,7 +365,11 @@ class _FakeLibrary implements LocalMediaRepository {
   }
 
   @override
-  Future<DataState<bool>> setMediaCreator(int mediaId, int creatorId) async {
+  Future<DataState<bool>> setMediaCreator(
+    int mediaId,
+    int creatorId, {
+    bool onlyIfMissing = false,
+  }) async {
     creatorOf[mediaId] = creatorId;
 
     return const DataSuccess(true);

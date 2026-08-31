@@ -3,6 +3,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_region_entity.dart';
 import 'package:Fern/features/recognition/domain/usecases/add_fernie_regions_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/apply_fernie_link_to_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_region_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_regions_of_media_usecase.dart';
@@ -31,17 +32,24 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
   final UpdateFernieRegionUseCase _updateRegion;
   final DeleteFernieRegionUseCase _deleteRegion;
 
+  /// Le pone al contenido lo que el fernie enlaza. Opcional: sin esto el modo
+  /// sigue funcionando y lo único que no pasa es el etiquetado automático, que
+  /// es lo que se quiere en las pruebas que miden el marcado de regiones.
+  final ApplyFernieLinkToMediaUseCase? _applyLink;
+
   FernieModeBloc({
     required GetRegionsOfMediaUseCase getRegions,
     required GetFerniesOfMediaUseCase getFernies,
     required AddFernieRegionsUseCase addRegions,
     required UpdateFernieRegionUseCase updateRegion,
     required DeleteFernieRegionUseCase deleteRegion,
+    ApplyFernieLinkToMediaUseCase? applyLink,
   })  : _getRegions = getRegions,
         _getFernies = getFernies,
         _addRegions = addRegions,
         _updateRegion = updateRegion,
         _deleteRegion = deleteRegion,
+        _applyLink = applyLink,
         super(const FernieModeState()) {
     on<LoadMediaRegionsEvent>(_onLoadMediaRegions);
     on<EnterFernieModeEvent>(_onEnterFernieMode);
@@ -55,6 +63,9 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     on<RegionEditsDiscardedEvent>(_onEditsDiscarded);
     on<RegionDeletedEvent>(_onRegionDeleted);
     on<UndoLastRegionEvent>(_onUndoLastRegion);
+    on<ProposedRegionsOfferedEvent>(_onProposedRegionsOffered);
+    on<ProposedRegionAcceptedEvent>(_onProposedRegionAccepted);
+    on<AllProposedRegionsAcceptedEvent>(_onAllProposedRegionsAccepted);
   }
 
   /// Lee de la base de datos lo que este contenido tiene marcado.
@@ -76,6 +87,72 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     if (state.mediaId != event.mediaId) return;
 
     emit(state.copyWith(saved: regions, fernies: fernies, isBusy: false));
+  }
+
+  /// Entra al modo con lo que el modelo ha detectado, dibujado y sin marcar.
+  ///
+  /// **Sin marcar** es la decisión: un modelo que ve cuatro coches puede estar
+  /// acertando en tres, y que entraran solas obligaría a repasarlas para quitar
+  /// las malas. Salir sin mirar no puede dejar marcado lo que nadie confirmó.
+  ///
+  /// Lo ya propuesto se sustituye, no se suma: cada fila del panel ofrece **sus**
+  /// detecciones, y arrastrar las de la anterior mezclaría dos cosas distintas
+  /// sobre el mismo contenido.
+  void _onProposedRegionsOffered(
+    ProposedRegionsOfferedEvent event,
+    Emitter<FernieModeState> emit,
+  ) {
+    final entering = !state.isFernieMode;
+
+    emit(state
+        .copyWith(
+          mode: ViewerMode.fernie,
+          tool: FernieTool.mark,
+          proposed: event.regions,
+          // Al entrar se suelta lo de la sesión anterior, como hace entrar a
+          // mano; ya dentro, lo que se lleve marcado se queda.
+          infoWasOpen: entering ? event.infoWasOpen : state.infoWasOpen,
+          pending: entering ? const [] : state.pending,
+          edited: entering ? const {} : state.edited,
+          reassigned: entering ? const {} : state.reassigned,
+          deleted: entering ? const {} : state.deleted,
+        )
+        .withSelection());
+  }
+
+  void _onProposedRegionAccepted(
+    ProposedRegionAcceptedEvent event,
+    Emitter<FernieModeState> emit,
+  ) {
+    final index = event.index;
+    if (index < 0 || index >= state.proposed.length) return;
+
+    final one = state.proposed[index];
+
+    emit(state.copyWith(
+      pending: [...state.pending, one.accepted],
+      proposed: [
+        for (final (position, each) in state.proposed.indexed)
+          if (position != index) each,
+      ],
+    ));
+  }
+
+  /// El caso normal es que el modelo acierte: con doce coches bien detectados,
+  /// pulsarlos de uno en uno es el trabajo que esto venía a ahorrar.
+  void _onAllProposedRegionsAccepted(
+    AllProposedRegionsAcceptedEvent event,
+    Emitter<FernieModeState> emit,
+  ) {
+    if (state.proposed.isEmpty) return;
+
+    emit(state.copyWith(
+      pending: [
+        ...state.pending,
+        for (final one in state.proposed) one.accepted,
+      ],
+      proposed: const [],
+    ));
   }
 
   void _onEnterFernieMode(
@@ -112,6 +189,9 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
       emit(state
           .copyWith(
             mode: ViewerMode.viewing,
+            // Lo que quede propuesto se va con el modo: proponer no es marcar, y
+            // guardar lo que nadie ha confirmado sería marcar por él.
+            proposed: const [],
             pending: const [],
             edited: const {},
             reassigned: const {},
@@ -126,7 +206,11 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     // de filas, y dejar los rectángulos encima del contenido hasta que acabe la
     // escritura hace que parezca que el visor se ha quedado colgado. De que se
     // sabe que sigue habiendo trabajo se encarga [isBusy].
-    emit(state.copyWith(mode: ViewerMode.viewing, isBusy: true));
+    emit(state.copyWith(
+      mode: ViewerMode.viewing,
+      isBusy: true,
+      proposed: const [],
+    ));
 
     if (state.pending.isNotEmpty) {
       await _addRegions(
@@ -176,11 +260,53 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     final regions = await _regionsOf(mediaId);
     final fernies = await _ferniesOf(mediaId);
 
+    // Y lo que los fernies marcados enlazan se le pone al contenido: marcar a
+    // «Marinette» en una imagen es decir que sale ahí, así que ponerle la
+    // etiqueta es la consecuencia evidente. Antes había que ir a ponerla a mano
+    // justo después de haber dicho de qué se trataba.
+    final applied = await _applyLinksOf(mediaId, fernies);
+
     emit(FernieModeState(
       mediaId: mediaId,
       saved: regions,
       fernies: fernies,
+      // Se cuenta para que el visor pueda enterarse: acaba de cambiar lo que el
+      // contenido lleva puesto, y el panel seguiría enseñando lo de antes.
+      appliedLinks: state.appliedLinks + (applied ? 1 : 0),
     ));
+  }
+
+  /// Los fernies que acaban de recibir una región en este contenido, y lo que
+  /// cada uno enlaza.
+  ///
+  /// Sólo los tocados en esta sesión: los que ya estaban marcados de antes no
+  /// vuelven a etiquetar nada. Si lo hicieran, mover un rectángulo un píxel
+  /// devolvería una etiqueta que alguien acababa de quitar a mano.
+  /// Devuelve si ha llegado a ponerse algo, que es lo que el visor necesita
+  /// saber para volver a leer las etiquetas del panel.
+  Future<bool> _applyLinksOf(int mediaId, List<FernieEntity> fernies) async {
+    final apply = _applyLink;
+    if (apply == null) return false;
+
+    final touched = {
+      for (final region in state.pending) region.fernieId,
+      ...state.reassigned.values,
+    };
+    if (touched.isEmpty) return false;
+
+    var applied = false;
+
+    for (final fernie in fernies) {
+      if (!touched.contains(fernie.id)) continue;
+      if (fernie.linkKind == FernieLinkKind.none) continue;
+
+      await apply(
+        params: ApplyFernieLinkParams(fernie: fernie, mediaIds: [mediaId]),
+      );
+      applied = true;
+    }
+
+    return applied;
   }
 
   void _onRegionAssigned(

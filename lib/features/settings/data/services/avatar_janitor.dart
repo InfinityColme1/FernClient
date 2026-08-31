@@ -35,6 +35,9 @@ class AvatarJanitor {
   })  : _database = database,
         _storage = storage;
 
+  /// La carpeta en la que la aplicación guarda sus copias de avatar.
+  String get storageDirectory => _storage.avatarsDirectory;
+
   /// Todas las imágenes que alguien está usando ahora mismo.
   ///
   /// Las cinco colecciones que tienen avatar. Que estén todas es lo único que

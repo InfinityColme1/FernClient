@@ -254,7 +254,14 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
     try {
       await for (final item
-          in _pixiv.bookmarkedMedia(credentials, stopAt: markers)) {
+          in _pixiv.bookmarkedMedia(
+        credentials,
+        stopAt: markers,
+        // Antes de resolver la obra: una animación baja aquí dentro su paquete
+        // de fotogramas para armar el GIF, y hacerlo para tirarlo después es el
+        // viaje más caro de esta fuente.
+        skip: (remoteId, postId) => _skips(ImportSource.pixiv, remoteId),
+      )) {
         final collection = item.collection;
         if (collection != null) newest.putIfAbsent(collection, () => item.postId);
 
@@ -422,8 +429,20 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     var failed = 0;
 
     try {
-      await for (final item
-          in _gelbooru.favoriteMedia(credentials, stopAt: marker)) {
+      await for (final item in _gelbooru.favoriteMedia(
+        credentials,
+        stopAt: marker,
+        // Se pregunta **dentro del cliente**, antes de pedir la publicación: el
+        // listado de favoritos sólo trae referencias, así que cada una cuesta su
+        // propia petición y preguntarlo aquí llegaba tarde.
+        skip: (remoteId, postId) {
+          // La marca avanza también con lo que se salta: es contenido que ya se
+          // ha mirado, y dejarla atrás obligaría a recorrerlo otra vez.
+          newest ??= postId;
+
+          return _skips(ImportSource.gelbooru, remoteId);
+        },
+      )) {
         newest ??= item.postId;
 
         // Lo que el usuario dijo que no quería volver a ver. Se mira **antes de
@@ -470,12 +489,27 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
       return;
     }
 
-    if (newest != null) {
+    // En una variable aparte: la escribe también el salto de dentro del cliente,
+    // y una capturada por un cierre no se puede dar por no nula sin copiarla.
+    if (newest case final marker?) {
       await _preferencesService.setLastImportMarker(
         ImportSource.gelbooru,
-        newest,
+        marker,
       );
     }
+  }
+
+  /// Si esta pieza está bloqueada, apuntándola como saltada.
+  ///
+  /// Lo llaman los clientes que pueden preguntarlo **antes de pedirla**, que es
+  /// donde de verdad ahorra: saltarse cien bloqueadas después de traerlas son
+  /// cien viajes al servidor para tirar lo que llega.
+  bool _skips(ImportSource source, String remoteId) {
+    if (!_blocked.blocks(source.id, remoteId)) return false;
+
+    _blocked.noteSkipped();
+
+    return true;
   }
 
   /// El fallo que hay que contar cuando se ha encontrado contenido y no ha

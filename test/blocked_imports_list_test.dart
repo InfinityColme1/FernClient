@@ -33,12 +33,17 @@ Future<void> _loadAppFont() async {
   await loader.load();
 }
 
-BlockedImportModel _row(String remoteId, {String? description}) =>
+BlockedImportModel _row(
+  String remoteId, {
+  String? description,
+  String? sourceUrl,
+}) =>
     BlockedImportModel()
       ..id = BlockedImportModel.idOf('reddit', remoteId)
       ..source = 'reddit'
       ..remoteId = remoteId
       ..description = description
+      ..sourceUrl = sourceUrl
       ..at = DateTime(2026, 8, 30);
 
 /// La sección con el ancho que tiene de verdad dentro del diálogo de ajustes.
@@ -162,6 +167,45 @@ void main() {
         reason: 'la lista desborda en ${locale.languageCode}',
       );
     }
+  });
+
+  // Por el nombre del fichero no se reconoce lo que se olvidó, y si se olvidó
+  // por error no había forma de mirarlo antes de decidir si se recupera.
+  group('volver a ver lo que se olvidó', () {
+    testWidgets('con dirección, la fila se pulsa', (tester) async {
+      await _pump(tester, rows: [
+        _row('uno', sourceUrl: 'https://reddit.com/comments/abc'),
+      ]);
+
+      expect(
+        find.ancestor(
+          of: find.text('reddit · uno'),
+          matching: find.byType(InkWell),
+        ),
+        findsWidgets,
+      );
+    });
+
+    // Lo bloqueado antes de que la dirección se guardara no la tiene. Prometer
+    // un enlace que no lleva a ninguna parte sería peor que no ofrecerlo.
+    testWidgets('sin dirección, se queda como estaba', (tester) async {
+      final texts = await AppLocalizations.delegate.load(const Locale('es'));
+
+      await _pump(tester, rows: [_row('uno')]);
+
+      expect(find.text('reddit · uno'), findsOneWidget);
+      expect(find.byTooltip(texts.blockedImportsOpen), findsNothing);
+    });
+
+    testWidgets('y con ella se dice qué hace', (tester) async {
+      final texts = await AppLocalizations.delegate.load(const Locale('es'));
+
+      await _pump(tester, rows: [
+        _row('uno', sourceUrl: 'https://reddit.com/comments/abc'),
+      ]);
+
+      expect(find.byTooltip(texts.blockedImportsOpen), findsOneWidget);
+    });
   });
 }
 

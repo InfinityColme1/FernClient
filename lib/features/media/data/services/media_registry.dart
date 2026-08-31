@@ -137,6 +137,10 @@ class MediaRegistry {
       ..isImported = false
       ..importSource = source.id
       ..remoteId = remoteId
+      // La primera de las que trae la fuente: es la de la publicación, que es la
+      // que sirve para volver a verla. Las siguientes son la del fichero suelto
+      // y las que la publicación enlazara.
+      ..sourceUrl = sourceUrls.firstOrNull
       ..mediaWidth = size?.width
       ..mediaHeight = size?.height;
 

@@ -125,6 +125,16 @@ class RecognizeOnImportToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Cuántas veces se guarda lo mismo detectado en un contenido.
+class MaxDetectionsChangedEvent extends SettingsEvents {
+  final int value;
+
+  const MaxDetectionsChangedEvent(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
 class ReturnRecognizedToggledEvent extends SettingsEvents {
   final bool enabled;
 

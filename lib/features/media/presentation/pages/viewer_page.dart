@@ -12,6 +12,7 @@ import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/recognition/domain/usecases/add_fernie_regions_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/apply_fernie_link_to_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_region_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_regions_of_media_usecase.dart';
@@ -107,6 +108,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     addRegions: getIt<AddFernieRegionsUseCase>(),
     updateRegion: getIt<UpdateFernieRegionUseCase>(),
     deleteRegion: getIt<DeleteFernieRegionUseCase>(),
+    applyLink: getIt<ApplyFernieLinkToMediaUseCase>(),
   );
 
   /// Lo que los modelos proponen sobre lo que se está viendo, y el botón de
@@ -622,6 +624,43 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     });
   }
 
+  /// Si esta propuesta es de lo que se está viendo ahora mismo.
+  ///
+  /// Las de otro fotograma se esconden, como las regiones marcadas: son el mismo
+  /// objeto en otro momento, y verlas todas a la vez llena la imagen de cajas
+  /// que se pisan.
+  bool _isProposedVisible(ProposedRegion one, int currentFrame) {
+    final frameMs = one.frameMs;
+    if (frameMs == null) return true;
+    if (!_playback.isPlayable) return true;
+
+    return _playback.isSameFrame(frameMs, currentFrame);
+  }
+
+  /// Marca el fotograma **entero** como región, sin tener que arrastrarlo.
+  ///
+  /// Es el caso más repetido y el más incómodo de hacer a mano: cuando lo que
+  /// hay en la imagen es justo lo que se quiere marcar, arrastrar de esquina a
+  /// esquina obliga a apuntar a dos bordes con precisión para acabar diciendo
+  /// «todo».
+  ///
+  /// Entra por el mismo sitio que el arrastre —el menú de asignar y
+  /// [_assignPendingRegion]—, así que hereda el fotograma en el que se está y el
+  /// guardado del modo. Como no hay ratón que haya soltado nada, el menú se abre
+  /// en el centro del visor.
+  void _markWholeFrame() {
+    _pauseForWork();
+
+    final box = _stackKey.currentContext?.findRenderObject();
+    final size = box is RenderBox && box.hasSize ? box.size : Size.zero;
+
+    setState(() {
+      _isReassigning = false;
+      _pendingRect = const Rect.fromLTWH(0, 0, 1, 1);
+      _menuPosition = Offset(size.width / 2, size.height / 2);
+    });
+  }
+
   /// Lleva un punto de la ventana a coordenadas del área del visor, que es
   /// donde se coloca el menú.
   Offset _toStackPosition(Offset globalPosition) {
@@ -990,6 +1029,17 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           listenWhen: (previous, current) => previous.saved != current.saved,
           listener: (context, state) => _maybeHighlight(state),
         ),
+        // Marcar una región le ha puesto al contenido lo que el fernie enlaza,
+        // así que el panel tiene que enseñarlo ya. Sin esto había que salir del
+        // visor y volver a entrar, y eso hacía dudar de si se había puesto.
+        BlocListener<FernieModeBloc, FernieModeState>(
+          bloc: _fernieMode,
+          listenWhen: (previous, current) =>
+              previous.appliedLinks != current.appliedLinks,
+          listener: (context, _) => context
+              .read<MediaBloc>()
+              .add(const RefreshCurrentMediaTagsEvent()),
+        ),
       ],
       child: BlocBuilder<MediaBloc, MediaStates>(
         builder: (context, state) =>
@@ -1257,22 +1307,25 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// En contenido que se mueve sólo se enseña si es de este fotograma: una caja
   /// dibujada sobre el fotograma equivocado dice que el modelo vio algo donde no
   /// lo vio.
-  RegionVisual? _spotlightVisual(int currentFrame) {
-    final box = _spotlight.box;
-    if (box == null) return null;
+  List<RegionVisual> _spotlightVisuals(int currentFrame) {
+    return [
+      for (final one in _spotlight.spotted)
+        if (_isSpottedHere(one, currentFrame))
+          RegionVisual(
+            rect: Rect.fromLTWH(one.box.x, one.box.y, one.box.w, one.box.h),
+            label: one.label,
+            isDimmed: true,
+          ),
+    ];
+  }
 
-    final frameMs = _spotlight.frameMs;
-    if (frameMs != null &&
-        _playback.isPlayable &&
-        !_playback.isSameFrame(frameMs, currentFrame)) {
-      return null;
-    }
+  /// Si esta detección es de lo que se está viendo ahora mismo.
+  bool _isSpottedHere(SpottedBox one, int currentFrame) {
+    final frameMs = one.frameMs;
+    if (frameMs == null) return true;
+    if (!_playback.isPlayable) return true;
 
-    return RegionVisual(
-      rect: Rect.fromLTWH(box.x, box.y, box.w, box.h),
-      label: _spotlight.label,
-      isDimmed: true,
-    );
+    return _playback.isSameFrame(frameMs, currentFrame);
   }
 
   List<RegionVisual> _buildTracks(List<RegionView> views, int currentFrame) {
@@ -1397,7 +1450,11 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // Se repinta con las dos animaciones y con la reproducción: el resaltado
     // mueve el velo, el desvanecido enseña y esconde las regiones, y la posición
     // decide cuáles son de este fotograma.
-    final spottedIndex = views.length + onionViews.length;
+    // El orden de la lista manda: primero las regiones de verdad, luego el
+    // papel cebolla, luego lo que el modelo propone y al final lo señalado. De
+    // ahí sale a qué corresponde cada índice al pulsarlo.
+    final proposedFrom = views.length + onionViews.length;
+    final spottedFrom = proposedFrom + fernieState.proposed.length;
 
     return AnimatedBuilder(
       animation: Listenable.merge(
@@ -1412,7 +1469,14 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         // que una caja más en la lista no se vería. El resaltado sí manda sobre
         // esa opacidad —es lo que hace visible una región al llegar desde la
         // rejilla de fernies—, y es por donde tiene que ir ésta.
-        final spotted = _spotlightVisual(currentFrame);
+        final spotted = _spotlightVisuals(currentFrame);
+        // Los índices que ocupan al final de la lista, para poder resaltarlos
+        // todos: son cajas de mirar y tienen que verse aunque las regiones estén
+        // escondidas.
+        final spottedIndexes = {
+          for (var offset = 0; offset < spotted.length; offset++)
+            spottedFrom + offset,
+        };
 
         return FernRegionSelectionLayer(
         enabled: fernieState.isFernieMode,
@@ -1446,17 +1510,31 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           // se muevan: lo que pase de ahí es una copia por hacer, no una región.
           for (final onion in onionViews)
             RegionVisual(rect: onion.rect, label: onion.label, isDimmed: true),
+          // Lo que el modelo propone: dibujado y **sin marcar**, con su
+          // porcentaje en la pestaña. Con cuatro rectángulos delante, saber cuál
+          // es el del 94 % y cuál el del 51 % es lo que permite elegir bien.
+          for (final one in fernieState.proposed)
+            RegionVisual(
+              rect: one.rect,
+              label: '${one.label} '
+                  '${AppLocalizations.of(context).suggestionConfidence(
+                    (one.confidence * 100).round(),
+                  )}',
+              isDimmed: true,
+              isVisible: _isProposedVisible(one, currentFrame),
+            ),
           // Dónde vio el modelo lo que el panel está señalando. Va al final por
           // lo mismo que el papel cebolla: es una caja de mirar, no una región,
           // y no puede moverle el índice a las que sí lo son.
-          if (spotted != null) spotted,
+          ...spotted,
         ],
         previews: _buildTracks(views, currentFrame),
         // Señalar una detección manda sobre el resaltado que venga de la
         // rejilla de fernies: es lo que el usuario está mirando ahora mismo.
-        highlightedIndex:
-            spotted != null ? spottedIndex : _highlightIndexIn(fernieState),
-        highlightIntensity: spotted != null ? 1 : _highlight.value,
+        highlightedIndexes: spotted.isNotEmpty
+            ? spottedIndexes
+            : {?_highlightIndexIn(fernieState)},
+        highlightIntensity: spotted.isNotEmpty ? 1 : _highlight.value,
         regionsOpacity: _regionsFade.value,
         // Un toque sobre el contenido reproduce y para, como en cualquier
         // reproductor. Sólo mirando: marcando, un toque significa otra cosa.
@@ -1471,6 +1549,18 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           setState(() => _isDrawingRegion = isDrawing);
         },
         onSelectionRequested: (index) {
+          if (index != null && index >= spottedFrom) {
+            // Lo señalado es una caja de mirar: pulsarla no hace nada.
+            return;
+          }
+
+          // Lo que el modelo propone se acepta al pulsarlo: es la forma de
+          // quedarse con los que estén bien y dejar los demás.
+          if (index != null && index >= proposedFrom) {
+            _fernieMode.add(ProposedRegionAcceptedEvent(index - proposedFrom));
+            return;
+          }
+
           // Lo que cae más allá de las regiones de verdad es papel cebolla:
           // pulsarlo no elige nada, copia.
           if (index != null && index >= views.length) {
@@ -1683,6 +1773,39 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                     tool: FernieTool.edit,
                     current: fernieState.tool,
                   ),
+
+                  // El fotograma entero. **No es una herramienta**: no cambia lo
+                  // que hace el ratón, hace algo y se acaba — por eso no se
+                  // queda encendido ni se pinta con el acento.
+                  IconButton(
+                    tooltip: l10n.fernieToolWholeFrame,
+                    onPressed: _markWholeFrame,
+                    icon: const Icon(
+                      Symbols.select_all,
+                      color: Colors.white,
+                      size: AppSizes.iconExtraLarge,
+                      weight: viewerIconWeight,
+                    ),
+                  ),
+
+                  // Aceptar todo lo que el modelo propone. Sólo sale cuando
+                  // hay algo propuesto: el caso normal es que acierte, y con
+                  // doce coches bien detectados pulsarlos de uno en uno es el
+                  // trabajo que esto venía a ahorrar.
+                  if (fernieState.proposed.isNotEmpty)
+                    IconButton(
+                      tooltip: l10n.fernieAcceptAllProposed(
+                        fernieState.proposed.length,
+                      ),
+                      onPressed: () => _fernieMode
+                          .add(const AllProposedRegionsAcceptedEvent()),
+                      icon: const Icon(
+                        Symbols.done_all,
+                        color: Colors.white,
+                        size: AppSizes.iconExtraLarge,
+                        weight: viewerIconWeight,
+                      ),
+                    ),
 
                   // Deshacer no es una herramienta: no cambia lo que hace el
                   // ratón, hace algo y se acaba. Va en el mismo panel porque es

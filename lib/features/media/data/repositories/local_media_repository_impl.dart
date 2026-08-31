@@ -2003,12 +2003,29 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
   @override
-  Future<DataState<bool>> setMediaCreator(int mediaId, int creatorId) async {
+  Future<DataState<bool>> setMediaCreator(
+    int mediaId,
+    int creatorId, {
+    bool onlyIfMissing = false,
+  }) async {
     try {
       final media = await _appDatabase.mediaModels.get(mediaId);
       final creator = await _appDatabase.creatorModels.get(creatorId);
 
       if (media == null || creator == null) return const DataSuccess(false);
+
+      if (onlyIfMissing) {
+        await media.creator.load();
+
+        // El «desconocido» cuenta como no tener: es el de reserva que se pone al
+        // dar de alta lo que llega sin saber de quién es. Uno puesto a mano, en
+        // cambio, no se toca — lo automático no puede pisar una decisión.
+        final current = media.creator.value;
+        final isMissing =
+            current == null || current.name == unknownCreator.name;
+
+        if (!isMissing) return const DataSuccess(false);
+      }
 
       await _appDatabase.writeTxn(() async {
         media.creator.value = creator;

@@ -100,6 +100,10 @@ Future<void> blockImportOf(BuildContext context, List<int> mediaIds) async {
       // de la pieza, y en la lista de Ajustes es más útil que el identificador
       // pelado repetido dos veces.
       description: p.basename(summary.path),
+      // Y de dónde salió, para poder volver a verla desde Ajustes. Por el
+      // nombre del fichero no se reconoce lo que se olvidó, y si se olvidó por
+      // error no habría forma de recuperarlo.
+      sourceUrl: summary.sourceUrl,
     );
   }
 }

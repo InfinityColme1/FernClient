@@ -79,7 +79,12 @@ class RegionPainter extends CustomPainter {
   /// Manda sobre [regionsOpacity]: la región señalada se ve aunque las demás
   /// estén escondidas, que es justo lo que pasa al abrir el visor desde la
   /// rejilla de fernies.
-  final int? highlightedIndex;
+  ///
+  /// **Varias y no una**: un modelo puede ver cuatro coches en una foto, y
+  /// señalar la fila del panel tiene que enseñar los cuatro rectángulos. Con un
+  /// solo índice se veía uno y los otros tres quedaban escondidos bajo la
+  /// opacidad de las regiones.
+  final Set<int> highlightedIndexes;
   final double highlightIntensity;
 
   /// Por dónde va cada fernie ahora mismo, en el contenido que se mueve.
@@ -120,7 +125,7 @@ class RegionPainter extends CustomPainter {
     this.pending,
     this.previews = const [],
     this.selectedIndex,
-    this.highlightedIndex,
+    this.highlightedIndexes = const {},
     this.highlightIntensity = 0,
     this.regionsOpacity = 1,
     this.handleSize = AppSpacing.m,
@@ -150,7 +155,7 @@ class RegionPainter extends CustomPainter {
       final region = regions[index];
       if (!region.isVisible) continue;
 
-      final isHighlighted = index == highlightedIndex;
+      final isHighlighted = highlightedIndexes.contains(index);
 
       // La resaltada se ve aunque las demás estén escondidas: es la única razón
       // por la que se ha abierto el visor.
@@ -189,11 +194,18 @@ class RegionPainter extends CustomPainter {
     }
   }
 
-  /// La región resaltada, si la hay y sigue existiendo.
+  /// La región resaltada, si hay **una sola** y sigue existiendo.
+  ///
+  /// El velo oscurece todo menos un hueco, así que sólo tiene sentido con una:
+  /// señalando cuatro coches a la vez, recortar cuatro huecos dejaría la imagen
+  /// hecha un queso y no ayudaría a mirar ninguno. Con varias no se oscurece
+  /// nada — se ven los cuatro rectángulos sobre el contenido tal cual.
   Rect? get _highlighted {
-    final index = highlightedIndex;
-    if (index == null || index < 0 || index >= regions.length) return null;
+    if (highlightedIndexes.length != 1) return null;
     if (highlightIntensity <= 0) return null;
+
+    final index = highlightedIndexes.first;
+    if (index < 0 || index >= regions.length) return null;
 
     return regions[index].rect;
   }
@@ -370,7 +382,7 @@ class RegionPainter extends CustomPainter {
         !listEquals(oldDelegate.previews, previews) ||
         oldDelegate.pending != pending ||
         oldDelegate.selectedIndex != selectedIndex ||
-        oldDelegate.highlightedIndex != highlightedIndex ||
+        !setEquals(oldDelegate.highlightedIndexes, highlightedIndexes) ||
         oldDelegate.highlightIntensity != highlightIntensity ||
         oldDelegate.regionsOpacity != regionsOpacity ||
         oldDelegate.contentSize != contentSize ||

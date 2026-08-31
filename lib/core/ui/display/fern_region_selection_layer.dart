@@ -86,8 +86,10 @@ class FernRegionSelectionLayer extends StatefulWidget {
   /// capa: aquí sólo se pide cambiarla.
   final int? selectedIndex;
 
-  /// La región que está resaltando ahora mismo el visor, y con qué intensidad.
-  final int? highlightedIndex;
+  /// Las regiones que está resaltando ahora mismo el visor, y con qué
+  /// intensidad. Varias porque el panel puede estar señalando un grupo de
+  /// detecciones: lo mismo visto cuatro veces son cuatro rectángulos.
+  final Set<int> highlightedIndexes;
   final double highlightIntensity;
 
   /// Cuánto se ven las regiones guardadas, de 0 a 1. A cero no se pinta
@@ -146,7 +148,7 @@ class FernRegionSelectionLayer extends StatefulWidget {
     this.regions = const [],
     this.previews = const [],
     this.selectedIndex,
-    this.highlightedIndex,
+    this.highlightedIndexes = const {},
     this.highlightIntensity = 0,
     this.regionsOpacity = 1,
     this.minRegionFraction = 0.0025,
@@ -740,7 +742,7 @@ class _FernRegionSelectionLayerState extends State<FernRegionSelectionLayer> {
                         previews: widget.previews,
                         pending: _pendingNormalized,
                         selectedIndex: _isEditing ? _selected : null,
-                        highlightedIndex: widget.highlightedIndex,
+                        highlightedIndexes: widget.highlightedIndexes,
                         highlightIntensity: widget.highlightIntensity,
                         regionsOpacity: widget.regionsOpacity,
                         contentSize: contentSize,

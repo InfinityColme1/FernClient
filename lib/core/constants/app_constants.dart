@@ -1433,6 +1433,27 @@ const fernieMinDistinctMedia = 5;
 /// no cuele.
 const fernieMinRegionFraction = 0.0025;
 
+/// Cuántas regiones se escriben de una vez al marcar el contenido de una
+/// etiqueta entera.
+///
+/// Por tandas y no todo al final: con un tag de miles de contenidos, una sola
+/// escritura al terminar significa tenerlo todo en memoria y que cancelar a
+/// mitad no deje nada. Así lo hecho está hecho.
+const tagRegionsBatchSize = 200;
+
+/// Cuántas veces se guarda lo mismo detectado en un contenido.
+///
+/// Un modelo puede ver cuatro coches en una foto: son cuatro detecciones de la
+/// clase «coche» y las cuatro valen, porque cada una es una región distinta que
+/// se puede marcar. Antes se guardaba sólo la mejor y las demás se perdían.
+///
+/// El tope existe porque una foto de un aparcamiento puede dar cincuenta, y eso
+/// son cincuenta filas por contenido en la base y un panel imposible de leer.
+const defaultMaxDetectionsPerClass = 25;
+
+/// Entre cuántas puede elegir el usuario en los ajustes.
+const maxDetectionsPerClassOptions = [1, 5, 10, 25, 50, 100];
+
 /// Por debajo de esta parte del contenido se avisa de que la región es muy
 /// pequeña. No impide guardarla: el aviso es informativo.
 const fernieTinyRegionFraction = 0.02;
@@ -1761,6 +1782,7 @@ const recognitionImportBatchMax = 200;
 
 /// Con qué clave se guarda cuántos fotogramas se miran de un vídeo.
 const frameSamplesPreferenceKey = 'recognition_frame_samples';
+const maxDetectionsPreferenceKey = 'recognition_max_detections';
 
 /// Cuántos fotogramas se miran de un contenido que se mueve, al reconocer.
 ///

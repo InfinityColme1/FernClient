@@ -9,6 +9,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/features/settings/presentation/settings_status_labels.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -96,6 +97,31 @@ class RecognitionSettingsSection extends StatelessWidget {
               onChanged: (value) => context
                   .read<SettingsBloc>()
                   .add(ReturnRecognizedToggledEvent(value)),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(),
+            ),
+            // Cuántas veces se guarda lo mismo en un contenido. Un modelo puede
+            // ver cuatro coches en una foto, y las cuatro detecciones valen
+            // porque cada una es una región distinta que se puede marcar.
+            _title(context, texts.maxDetectionsLabel),
+            Text(
+              texts.maxDetectionsDescription,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colors.gray,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.m),
+            FernDropdownPill<int>(
+              value: state.settings.maxDetectionsPerClass,
+              items: maxDetectionsPerClassOptions,
+              labelBuilder: (value) => '$value',
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(MaxDetectionsChangedEvent(
+                    value ?? defaultMaxDetectionsPerClass,
+                  )),
             ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),

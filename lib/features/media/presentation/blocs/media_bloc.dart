@@ -209,6 +209,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
     on<ReloadCurrentMediaEvent>(onReloadCurrent);
+    on<RefreshCurrentMediaTagsEvent>(onRefreshCurrentMediaTags);
     on<LoadDeletedMediaEvent>(onLoadDeletedMedia);
     on<LoadFavoriteMediaEvent>(onLoadFavoriteMedia);
     on<LoadMediaByTagEvent>(onLoadMediaByTag);
@@ -296,6 +297,31 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     Emitter<MediaStates> emit,
   ) async {
     add(_lastListing ?? const LoadMediaLibraryEvent());
+  }
+
+  /// Vuelve a leer las etiquetas del contenido que se está viendo.
+  ///
+  /// Lo pide el visor al salir del modo fernie: lo que los fernies marcados
+  /// enlazan se le acaba de poner al contenido en la base de datos, y el panel
+  /// seguía enseñando las de antes.
+  ///
+  /// **Se sustituyen sólo las etiquetas.** Lo demás del contenido se queda como
+  /// está en el estado, que es donde viven los cambios del panel sin guardar: una
+  /// descripción a medio escribir no puede perderse por haber marcado una región.
+  Future<void> onRefreshCurrentMediaTags(
+    RefreshCurrentMediaTagsEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final current = state.currentMedia;
+    if (current == null) return;
+
+    final result = await _getMediaDetailsUsecase(params: current.id);
+    if (result is! DataSuccess || result.data == null) return;
+
+    emit(state.copyWith(currentMedia: current.copyWith(
+      tags: result.data!.tags,
+      creator: result.data!.creator,
+    )));
   }
 
   /// Al entrar en la pantalla de importación.

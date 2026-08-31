@@ -33,6 +33,9 @@ enum JobType {
 
   /// Traerse los enlaces que alguien ya ha elegido.
   linkImport,
+
+  /// Marcar todo el contenido de una etiqueta como regiones de un fernie.
+  tagRegions,
 }
 
 extension JobTypeBehaviour on JobType {

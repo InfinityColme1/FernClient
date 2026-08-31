@@ -3198,6 +3198,36 @@ abstract class AppLocalizations {
   /// **'Clean up'**
   String get databaseCleanupAction;
 
+  /// No description provided for @databaseCleanupFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 loose file, {size}} other{{count} loose files, {size}}}'**
+  String databaseCleanupFound(int count, String size);
+
+  /// No description provided for @databaseCleanupAvatars.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatars with no owner'**
+  String get databaseCleanupAvatars;
+
+  /// No description provided for @databaseCleanupDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads no longer in the database'**
+  String get databaseCleanupDownloads;
+
+  /// No description provided for @databaseCleanupWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'Weights no model points to'**
+  String get databaseCleanupWeights;
+
+  /// No description provided for @databaseCleanupKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'The Python environment, the training sets and the caches are not touched.'**
+  String get databaseCleanupKeeps;
+
   /// No description provided for @databaseCleanupFailed.
   ///
   /// In en, this message translates to:
@@ -3233,6 +3263,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import this again'**
   String get blockedImportsUnblock;
+
+  /// No description provided for @blockedImportsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the page it came from'**
+  String get blockedImportsOpen;
 
   /// No description provided for @blockedImportsClear.
   ///
@@ -4218,6 +4254,72 @@ abstract class AppLocalizations {
   /// **'Edit regions'**
   String get fernieToolEdit;
 
+  /// No description provided for @jobTagRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking a tag’s content'**
+  String get jobTagRegions;
+
+  /// No description provided for @fernieImportTagTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a whole tag'**
+  String get fernieImportTagTitle;
+
+  /// No description provided for @fernieImportTagNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Every piece with that tag gets a region covering the whole frame, for this fernie. It is what you would do by hand, one by one.'**
+  String get fernieImportTagNote;
+
+  /// No description provided for @fernieImportTagAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark them'**
+  String get fernieImportTagAction;
+
+  /// No description provided for @fernieImportTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a whole tag as regions'**
+  String get fernieImportTagTooltip;
+
+  /// No description provided for @fernieImportTagFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'Frames per video'**
+  String get fernieImportTagFrames;
+
+  /// No description provided for @fernieImportTagFramesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Training takes one image per region, so a whole video would be thousands of near-identical crops.'**
+  String get fernieImportTagFramesNote;
+
+  /// No description provided for @fernieImportTagCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing has that tag} =1{1 piece} other{{count} pieces}}'**
+  String fernieImportTagCount(int count);
+
+  /// No description provided for @fernieImportTagStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking has started; you can follow it in the task list'**
+  String get fernieImportTagStarted;
+
+  /// No description provided for @fernieToolWholeFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the whole frame'**
+  String get fernieToolWholeFrame;
+
+  /// No description provided for @fernieAcceptAllProposed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Accept the detected region} other{Accept the {count} detected regions}}'**
+  String fernieAcceptAllProposed(int count);
+
   /// No description provided for @fernieRegionConfirm.
   ///
   /// In en, this message translates to:
@@ -4397,6 +4499,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}%'**
   String suggestionConfidence(int percent);
+
+  /// No description provided for @suggestionInstances.
+  ///
+  /// In en, this message translates to:
+  /// **'×{count}'**
+  String suggestionInstances(int count);
 
   /// No description provided for @suggestionFromModel.
   ///
@@ -4709,6 +4817,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send recognised content back to importing'**
   String get returnRecognizedLabel;
+
+  /// No description provided for @maxDetectionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many times the same thing is kept'**
+  String get maxDetectionsLabel;
+
+  /// No description provided for @maxDetectionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A model can see four cars in one photo. Each one is a separate region you can mark, so all of them are kept — up to this many. A car park could give fifty.'**
+  String get maxDetectionsDescription;
 
   /// No description provided for @returnRecognizedDescription.
   ///

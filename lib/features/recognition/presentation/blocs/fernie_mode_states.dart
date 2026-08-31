@@ -30,6 +30,45 @@ enum FernieTool {
 }
 
 /// Una región marcada en esta sesión y todavía sin guardar.
+/// Una región que **el modelo propone** y que todavía nadie ha aceptado.
+///
+/// Llega de una detección: el modelo dice que ahí hay algo y con cuánta
+/// seguridad. Se dibuja sobre el contenido pero **no está marcada** — hay que
+/// pulsarla para que cuente, o aceptarlas todas de una vez.
+///
+/// Ninguna puesta de entrada, a propósito: un modelo que ve cuatro coches puede
+/// estar acertando en tres. Que entren solas obligaría a repasarlas para quitar
+/// las malas, y salir sin mirar dejaría marcado lo que nadie ha confirmado.
+class ProposedRegion extends Equatable {
+  final Rect rect;
+  final int fernieId;
+  final int? frameMs;
+
+  /// Lo seguro que estaba el modelo, de 0 a 1.
+  ///
+  /// Se enseña en la pestaña de cada una: con cuatro rectángulos delante, saber
+  /// cuál es el del 94 % y cuál el del 51 % es lo que permite elegir bien.
+  final double confidence;
+
+  /// Cómo se llama lo que el modelo dice que hay ahí.
+  final String label;
+
+  const ProposedRegion({
+    required this.rect,
+    required this.fernieId,
+    required this.confidence,
+    required this.label,
+    this.frameMs,
+  });
+
+  /// La misma, ya marcada.
+  PendingRegion get accepted =>
+      PendingRegion(rect: rect, fernieId: fernieId, frameMs: frameMs);
+
+  @override
+  List<Object?> get props => [rect, fernieId, frameMs, confidence, label];
+}
+
 class PendingRegion extends Equatable {
   final Rect rect;
   final int fernieId;
@@ -164,6 +203,8 @@ class FernieModeState extends Equatable {
     this.draftFernie,
     this.infoWasOpen = false,
     this.isBusy = false,
+    this.proposed = const [],
+    this.appliedLinks = 0,
   });
 
   bool get isFernieMode => mode == ViewerMode.fernie;
@@ -281,6 +322,20 @@ class FernieModeState extends Equatable {
     ];
   }
 
+  /// Lo que el modelo propone y nadie ha aceptado todavía.
+  ///
+  /// Se dibuja sobre el contenido sin estar marcado: pulsar una la marca, y hay
+  /// un botón para aceptarlas todas. Lo que quede aquí al salir **no se
+  /// guarda** — proponer no es marcar.
+  final List<ProposedRegion> proposed;
+
+  /// Cuántas veces se le ha puesto al contenido lo que los fernies enlazan.
+  ///
+  /// Un contador y no un interruptor: el visor lo escucha para volver a leer las
+  /// etiquetas, y con un booleano la segunda vez seguida no habría cambio que
+  /// escuchar. Lo que importa no es el número sino que **haya cambiado**.
+  final int appliedLinks;
+
   FernieModeState copyWith({
     ViewerMode? mode,
     FernieTool? tool,
@@ -293,6 +348,8 @@ class FernieModeState extends Equatable {
     Set<int>? deleted,
     bool? infoWasOpen,
     bool? isBusy,
+    List<ProposedRegion>? proposed,
+    int? appliedLinks,
   }) {
     return FernieModeState(
       mode: mode ?? this.mode,
@@ -309,6 +366,8 @@ class FernieModeState extends Equatable {
       // dejarlos en nada. Quien los quiera conservar usa [withSelection].
       infoWasOpen: infoWasOpen ?? this.infoWasOpen,
       isBusy: isBusy ?? this.isBusy,
+      proposed: proposed ?? this.proposed,
+      appliedLinks: appliedLinks ?? this.appliedLinks,
     );
   }
 
@@ -333,6 +392,8 @@ class FernieModeState extends Equatable {
       draftFernie: draftFernie,
       infoWasOpen: infoWasOpen,
       isBusy: isBusy,
+      proposed: proposed,
+      appliedLinks: appliedLinks,
     );
   }
 
@@ -352,5 +413,7 @@ class FernieModeState extends Equatable {
         draftFernie,
         infoWasOpen,
         isBusy,
+        proposed,
+        appliedLinks,
       ];
 }

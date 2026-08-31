@@ -29,6 +29,10 @@ class MediaSummaryEntity extends Equatable {
   /// `null` en lo local y en lo que entró antes de que esto se guardara.
   final String? remoteId;
 
+  /// La página de la que salió, si se sabe. Es lo que permite volver a verla
+  /// desde la lista de lo que se ha dicho que no se vuelva a importar.
+  final String? sourceUrl;
+
   /// Si algún modelo ha propuesto algo sobre esto y nadie lo ha contestado.
   ///
   /// Está en el sumario y no se pregunta por las sugerencias de cada celda a
@@ -68,6 +72,7 @@ class MediaSummaryEntity extends Equatable {
     this.deletedAt,
     this.importSource = ImportSource.local,
     this.remoteId,
+    this.sourceUrl,
     this.hasPendingSuggestions = false,
     this.recognizedAt,
     this.width,
@@ -83,6 +88,7 @@ class MediaSummaryEntity extends Equatable {
         deletedAt,
         importSource,
         remoteId,
+        sourceUrl,
         hasPendingSuggestions,
         recognizedAt,
         width,

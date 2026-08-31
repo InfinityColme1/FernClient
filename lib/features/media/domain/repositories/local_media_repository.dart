@@ -66,7 +66,18 @@ abstract class LocalMediaRepository {
   ///
   /// Por lo mismo que lo anterior: poner un creador no es dar el contenido por
   /// revisado.
-  Future<DataState<bool>> setMediaCreator(int mediaId, int creatorId);
+  /// Le pone [creatorId] al contenido.
+  ///
+  /// Con [onlyIfMissing] sólo si no tiene ninguno o tiene el «desconocido», que
+  /// es el que se le pone al darlo de alta cuando no se sabe de quién es.
+  /// Devuelve si ha llegado a cambiarlo: quien lo pide automáticamente necesita
+  /// distinguir «se lo he puesto» de «ya tenía uno suyo», porque lo segundo no
+  /// es un fallo y no hay nada que decir.
+  Future<DataState<bool>> setMediaCreator(
+    int mediaId,
+    int creatorId, {
+    bool onlyIfMissing = false,
+  });
 
   Future<DataState<List<int>>> getRecognizableMediaIds({
     bool onlyUnrecognized = true,

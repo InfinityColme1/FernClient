@@ -83,19 +83,49 @@ List<T> bestPerFernie<T>(
   Iterable<T> detections, {
   required int Function(T) fernieOf,
   required double Function(T) confidenceOf,
+}) =>
+    topPerFernie(
+      detections,
+      fernieOf: fernieOf,
+      confidenceOf: confidenceOf,
+      limit: 1,
+    );
+
+/// Lo mismo, pero quedándose con las [limit] mejores de cada fernie.
+///
+/// Un modelo puede ver **lo mismo varias veces** en un contenido: cuatro coches
+/// en una foto son cuatro detecciones de la clase «coche». Quedarse sólo con la
+/// mejor tiraba las otras tres antes de que llegaran a la pantalla, y con ellas
+/// la posibilidad de marcarlas como regiones.
+///
+/// **Con tope**, y por eso hay un tope: una foto de un aparcamiento puede dar
+/// cincuenta, y eso son cincuenta filas por contenido en la base y un panel
+/// imposible de leer. Lo elige el usuario en los ajustes.
+///
+/// Salen ordenadas de más a menos confianza: la primera es la que manda cuando
+/// hay que enseñar un solo número.
+List<T> topPerFernie<T>(
+  Iterable<T> detections, {
+  required int Function(T) fernieOf,
+  required double Function(T) confidenceOf,
+  required int limit,
 }) {
-  final best = <int, T>{};
+  if (limit <= 0) return const [];
+
+  final byFernie = <int, List<T>>{};
 
   for (final detection in detections) {
-    final fernie = fernieOf(detection);
-    final current = best[fernie];
-
-    if (current == null || confidenceOf(detection) > confidenceOf(current)) {
-      best[fernie] = detection;
-    }
+    byFernie.putIfAbsent(fernieOf(detection), () => []).add(detection);
   }
 
-  return best.values.toList();
+  final kept = <T>[];
+
+  for (final group in byFernie.values) {
+    group.sort((a, b) => confidenceOf(b).compareTo(confidenceOf(a)));
+    kept.addAll(group.take(limit));
+  }
+
+  return kept;
 }
 
 /// La caja de una detección, tal y como hay que guardarla.

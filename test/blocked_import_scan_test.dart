@@ -40,7 +40,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Se recorre Gelbooru porque su listado es el más corto de fingir: unas cuantas
 /// referencias y una publicación por cada una. La guarda es la misma en las seis
 /// fuentes.
-http.Client _fakeGelbooru(List<int> postIds) {
+http.Client _fakeGelbooru(List<int> postIds, {List<String>? postsAsked}) {
   return MockClient((request) async {
     final params = request.url.queryParameters;
 
@@ -61,6 +61,7 @@ http.Client _fakeGelbooru(List<int> postIds) {
     }
 
     final id = params['id'] ?? '';
+    postsAsked?.add(id);
 
     return http.Response(
       jsonEncode({
@@ -151,7 +152,10 @@ void main() {
   /// Un bloqueo de mentira sin base de datos detrás: aquí no se prueba dónde se
   /// guarda —eso es de `blocked_imports_test`— sino qué hace el recorrido con la
   /// respuesta.
-  Future<RemoteMediaRepositoryImpl> scanning(List<int> postIds) async {
+  Future<RemoteMediaRepositoryImpl> scanning(
+    List<int> postIds, {
+    List<String>? postsAsked,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     preferences = PreferencesService(await SharedPreferences.getInstance());
     downloader = _Downloader();
@@ -161,7 +165,9 @@ void main() {
       reddit: RedditApiClient(),
       pixiv: PixivApiClient(),
       danbooru: DanbooruApiClient(),
-      gelbooru: GelbooruApiClient(client: _fakeGelbooru(postIds)),
+      gelbooru: GelbooruApiClient(
+        client: _fakeGelbooru(postIds, postsAsked: postsAsked),
+      ),
       pinterest: PinterestApiClient(),
       pawchive: PawchiveApiClient(),
       decisions: ImportDecisions(),
@@ -317,6 +323,67 @@ void main() {
 
       final repository = await scanning([2, 1]);
 
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(preferences.getLastImportMarker(ImportSource.gelbooru), '2');
+    });
+  });
+
+  // El listado de favoritos de Gelbooru no trae las publicaciones, sólo
+  // referencias: cada una cuesta su propia petición. Preguntando por el bloqueo
+  // después de pedirla, saltarse cien eran cien viajes al servidor para tirar lo
+  // que llegaba — y eso es lo que hacía lenta la importación de quien tenía
+  // muchas marcadas.
+  group('lo bloqueado ni se pide', () {
+    test('una bloqueada no cuesta una petición', () async {
+      (blocked as _MemoryBlocked).add('gelbooru_1');
+
+      final asked = <String>[];
+      final repository = await scanning([1, 2], postsAsked: asked);
+
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(asked, ['2'], reason: 'de la bloqueada ni se pregunta');
+    });
+
+    test('con todas bloqueadas no se pide ninguna', () async {
+      for (final id in [1, 2, 3]) {
+        (blocked as _MemoryBlocked).add('gelbooru_$id');
+      }
+
+      final asked = <String>[];
+      final repository = await scanning([1, 2, 3], postsAsked: asked);
+
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(asked, isEmpty);
+    });
+
+    test('y se siguen contando como saltadas', () async {
+      (blocked as _MemoryBlocked).add('gelbooru_1');
+
+      final repository = await scanning([1, 2]);
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(blocked.skipped, 1);
+    });
+
+    // Sin bloquear nada, todo igual que siempre.
+    test('sin nada bloqueado se piden todas', () async {
+      final asked = <String>[];
+      final repository = await scanning([1, 2], postsAsked: asked);
+
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(asked, unorderedEquals(['1', '2']));
+    });
+
+    // La marca dice «de aquí para atrás ya está mirado», y lo saltado está
+    // mirado: dejarla atrás obligaría a recorrerlo otra vez en cada importación.
+    test('la marca avanza aunque la primera esté bloqueada', () async {
+      (blocked as _MemoryBlocked).add('gelbooru_2');
+
+      final repository = await scanning([2, 1]);
       await repository.scanRemoteSource(ImportSource.gelbooru).toList();
 
       expect(preferences.getLastImportMarker(ImportSource.gelbooru), '2');

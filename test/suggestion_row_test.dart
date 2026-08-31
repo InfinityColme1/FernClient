@@ -20,6 +20,7 @@ import 'package:Fern/features/recognition/presentation/widgets/suggestion_row.da
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:Fern/features/recognition/domain/services/suggestion_groups.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -59,7 +60,7 @@ Future<AppPalette> _pump(
   VoidCallback? onAccept,
   VoidCallback? onReject,
   VoidCallback? onMarkRegion,
-  void Function(MediaSuggestionEntity?)? onSpotlight,
+  void Function(SuggestionGroup?)? onSpotlight,
 }) async {
   late AppPalette palette;
 
@@ -77,6 +78,9 @@ Future<AppPalette> _pump(
             width: 320,
             child: SuggestionRow(
               suggestion: suggestion,
+              // La fila recibe el grupo entero: lo mismo visto varias veces es
+              // una sola fila, y las cajas de todas son lo que se señala.
+              group: SuggestionGroup([suggestion]),
               onAccept: onAccept,
               onReject: onReject,
               onMarkRegion: onMarkRegion,
@@ -283,7 +287,7 @@ void main() {
     });
 
     testWidgets('pasar por encima avisa con la sugerencia', (tester) async {
-      final seen = <MediaSuggestionEntity?>[];
+      final seen = <SuggestionGroup?>[];
 
       await _pump(
         tester,
@@ -311,7 +315,7 @@ void main() {
     });
 
     testWidgets('sin caja no se señala nada', (tester) async {
-      final seen = <MediaSuggestionEntity?>[];
+      final seen = <SuggestionGroup?>[];
 
       await _pump(tester, _suggestion(), onSpotlight: seen.add);
 

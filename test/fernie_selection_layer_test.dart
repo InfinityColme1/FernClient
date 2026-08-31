@@ -50,7 +50,7 @@ Future<TransformationController> pumpLayer(
             controller: controller,
             regions: regions,
             regionsOpacity: regionsOpacity,
-            highlightedIndex: highlightedIndex,
+            highlightedIndexes: {?highlightedIndex},
             highlightIntensity: highlightIntensity,
             tool: tool,
             selectedIndex: selectedIndex,
@@ -623,7 +623,7 @@ void main() {
       final painter = painterOf(tester);
       expect(painter.regionsOpacity, 0);
       expect(painter.highlightIntensity, 1);
-      expect(painter.highlightedIndex, 0);
+      expect(painter.highlightedIndexes, {0});
     });
   });
 

@@ -205,6 +205,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       frameSamples:
           (_preferences.getInt(frameSamplesPreferenceKey) ?? defaultFrameSamples)
               .clamp(minFrameSamples, maxFrameSamples),
+      maxDetectionsPerClass:
+          _preferences.getInt(maxDetectionsPreferenceKey) ??
+              defaultMaxDetectionsPerClass,
       recognitionPath: _preferences.getString(recognitionPathPreferenceKey) ??
           defaultRecognitionPath,
       organization: FileOrganizationCriteria.fromId(
@@ -340,6 +343,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
       settings.frameSamples.clamp(minFrameSamples, maxFrameSamples),
     );
 
+    await _preferences.setInt(
+      maxDetectionsPreferenceKey,
+      settings.maxDetectionsPerClass,
+    );
     await _preferences.setBool(
       autoTagRemoteSourcePreferenceKey,
       settings.autoTagRemoteSource,

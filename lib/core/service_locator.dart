@@ -74,6 +74,8 @@ import 'package:Fern/features/recognition/presentation/blocs/models_events.dart'
 import 'package:Fern/features/recognition/data/services/recognition_engine.dart';
 import 'package:Fern/features/recognition/domain/repositories/fernie_repository.dart';
 import 'package:Fern/features/recognition/domain/usecases/adopt_fernie_tag_usecase.dart';
+import 'package:Fern/features/recognition/data/services/tag_regions_job_runner.dart';
+import 'package:Fern/features/recognition/domain/usecases/apply_fernie_link_to_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/add_fernie_regions_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_region_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_usecase.dart';
@@ -103,6 +105,7 @@ import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/settings/data/services/database_maintenance_service.dart';
 import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
+import 'package:Fern/features/settings/data/services/leftover_files.dart';
 import 'package:Fern/features/settings/domain/usecases/sweep_unused_files_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/wipe_database_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
@@ -288,8 +291,22 @@ Future<void> initializeDependencies() async {
     () => AvatarJanitor(database: getIt<Isar>(), storage: getIt()),
   );
 
+  // Los ficheros sueltos de la carpeta de trabajo: avatares sin dueño,
+  // descargas cuya fila ya no está y pesos que no apunta ningún modelo. **No**
+  // el entorno de Python ni los conjuntos de entrenamiento: lo primero no está
+  // en la base de datos y llevárselo rompería el reconocimiento.
+  getIt.registerLazySingleton<LeftoverFiles>(
+    () => LeftoverFiles(
+      database: getIt<Isar>(),
+      avatars: getIt<AvatarJanitor>(),
+      downloadsPath: () => getIt<RemoteMediaDownloader>().downloadsPath,
+      recognitionPath: () =>
+          getIt<SettingsRepository>().getSettings().recognitionPath,
+    ),
+  );
+
   getIt.registerLazySingleton<SweepUnusedFilesUseCase>(
-    () => SweepUnusedFilesUseCase(janitor: getIt()),
+    () => SweepUnusedFilesUseCase(leftovers: getIt()),
   );
 
   getIt.registerLazySingleton<WipeDatabaseUseCase>(
@@ -635,6 +652,13 @@ Future<void> initializeDependencies() async {
 
   // Darle a un fernie sin enlace la etiqueta que se llama como el: es lo que
   // hace aceptable su sugerencia, que hasta ahora solo se podia rechazar.
+  // Le pone al contenido lo que el fernie enlaza al marcarle una región: decir
+  // que ahí sale «Marinette» y no ponerle la etiqueta era dejar el trabajo a
+  // medias.
+  getIt.registerLazySingleton<ApplyFernieLinkToMediaUseCase>(
+    () => ApplyFernieLinkToMediaUseCase(getIt<LocalMediaRepository>()),
+  );
+
   getIt.registerLazySingleton<AdoptFernieTagUseCase>(() =>
     AdoptFernieTagUseCase(
       media: getIt<LocalMediaRepository>(),
@@ -1049,6 +1073,11 @@ Future<void> initializeDependencies() async {
       // que reconocer una biblioteca no sean tres peticiones por contenido.
       predictMany: _predictManyWith,
       durationOf: _durationOf,
+      // Cuántas veces se guarda lo mismo visto en un contenido. Se lee al
+      // reconocer y no al arrancar: cambiarlo en Ajustes vale para el siguiente
+      // trabajo, sin reiniciar.
+      maxDetections: () =>
+          getIt<SettingsRepository>().getSettings().maxDetectionsPerClass,
       extractFrames: _extractFrames,
     ),
   );
@@ -1214,6 +1243,23 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Marcar de una vez todo el contenido de una etiqueta como regiones de un
+  // fernie. Va por la cola porque saber cuánto dura cada vídeo es abrir su
+  // fichero, y con una etiqueta grande eso son minutos.
+  getIt.registerLazySingleton<TagRegionsJobRunner>(
+    () => TagRegionsJobRunner(
+      media: getIt<LocalMediaRepository>(),
+      fernies: getIt<FernieRepository>(),
+      durationOf: _durationOf,
+      onFinished: _notifyTagRegionsFinished,
+    ),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.tagRegions,
+    (context) => getIt<TagRegionsJobRunner>().run(context),
+  );
+
   getIt<JobQueue>().register(
     JobType.duplicateScan,
     (context) => getIt<DuplicateScanRunner>().run(context),
@@ -1346,6 +1392,25 @@ Future<void> _notifyRecognitionFinished(Set<int> mediaIds) async {
     count: mediaIds.length,
     route: route,
   );
+}
+
+/// Marcar una etiqueta entera ha terminado: la pantalla de fernies tiene que
+/// enseñar lo que se acaba de escribir.
+///
+/// El trabajo corre en la cola, así que quien lo pidió puede seguir con la ficha
+/// del fernie delante. Sin esto, las regiones estaban en la base y no en la
+/// rejilla, y había que salir de la pantalla y volver a entrar.
+Future<void> _notifyTagRegionsFinished(int fernieId) async {
+  final fernies = getIt<FerniesBloc>();
+
+  // La lista, por el recuento de regiones de cada fernie.
+  fernies.add(const LoadFerniesEvent());
+
+  // Y la rejilla, sólo si es el fernie que se está mirando: recargarla estando
+  // en otro sería leer de más para no enseñar nada.
+  if (fernies.state.selectedFernieId == fernieId) {
+    fernies.add(const ReloadFernieRegionsEvent());
+  }
 }
 
 /// Si alguno de estos contenidos está todavía pendiente de revisar.

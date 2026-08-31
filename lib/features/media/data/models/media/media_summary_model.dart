@@ -36,6 +36,17 @@ class MediaSummaryModel {
   /// llaman como venían dentro—, y de ahí que se guarde.
   String? remoteId;
 
+  /// La página de la que salió, para poder volver a verla.
+  ///
+  /// Es la dirección que la fuente daba junto con el fichero: la de la
+  /// publicación, no la del fichero suelto. Hace falta para que la lista de «no
+  /// volver a importar» sea algo más que un nombre — por el nombre no se
+  /// reconoce lo que se olvidó, y si se olvidó por error no hay forma de
+  /// recuperarlo.
+  ///
+  /// `null` en lo local y en lo que entró antes de guardarse.
+  String? sourceUrl;
+
   /// Contenido marcado para borrar: sigue en la base de datos, pero sólo se ve
   /// en la pantalla de eliminados hasta que se restablezca o se fuerce el
   /// borrado definitivo.
@@ -116,6 +127,7 @@ class MediaSummaryModel {
         deletedAt: deletedAt,
         importSource: ImportSource.fromId(importSource),
         remoteId: remoteId,
+        sourceUrl: sourceUrl,
         hasPendingSuggestions: hasPendingSuggestions,
         recognizedAt: recognizedAt,
         width: mediaWidth,
@@ -132,6 +144,7 @@ class MediaSummaryModel {
       ..deletedAt = entity.deletedAt
       ..importSource = entity.importSource.id
       ..remoteId = entity.remoteId
+      ..sourceUrl = entity.sourceUrl
       ..mediaWidth = entity.width
       ..mediaHeight = entity.height;
     return model;

@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/media_suggestion_entity.dart';
+import 'package:Fern/features/recognition/domain/services/suggestion_groups.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -26,6 +27,15 @@ class SuggestionRow extends StatelessWidget {
   /// Qué avatar poner cuando lo propuesto no tiene imagen.
   final IconData fallbackIcon;
 
+  /// Todas las veces que el modelo lo ha visto en este contenido.
+  ///
+  /// Una sola fila para todas —es la misma etiqueta, y ponerla cuatro veces no
+  /// significa nada— pero hacen falta enteras: el número se enseña al lado del
+  /// porcentaje, y las cajas son lo que se señala al pasar por encima.
+  final SuggestionGroup? group;
+
+  int get instances => group?.count ?? 1;
+
   /// Qué pasa al decir que sí. Vacío cuando no hay nada que proponer.
   final VoidCallback? onAccept;
 
@@ -40,12 +50,12 @@ class SuggestionRow extends StatelessWidget {
   /// servicio en sí: la fila no tiene por qué saber quién pinta encima del
   /// contenido, y un widget que va a buscarlo al localizador no se puede montar
   /// en una prueba sin montar medio programa.
-  final void Function(MediaSuggestionEntity?)? onSpotlight;
+  final void Function(SuggestionGroup?)? onSpotlight;
 
   /// Dejar la caja puesta, o quitarla si ya lo estaba.
   ///
   /// Al pulsar la fila. Lo que enseña el ratón se va con él; esto se queda.
-  final void Function(MediaSuggestionEntity)? onSpotlightPinned;
+  final void Function(SuggestionGroup)? onSpotlightPinned;
 
   /// Guardar esta detección como región del fernie que la vio.
   ///
@@ -57,6 +67,7 @@ class SuggestionRow extends StatelessWidget {
     super.key,
     required this.suggestion,
     this.fallbackIcon = Symbols.label,
+    this.group,
     this.onAccept,
     this.onReject,
     this.onMarkRegion,
@@ -96,16 +107,16 @@ class SuggestionRow extends StatelessWidget {
       // pero se va en cuanto el ratón se mueve, y mirar dónde está algo y
       // decidir si la etiqueta es correcta se hacen a la vez: hay que poder
       // dejarla quieta mientras se piensa.
-      onTap: box == null || onSpotlightPinned == null
+      onTap: box == null || onSpotlightPinned == null || group == null
           ? null
-          : () => onSpotlightPinned!(suggestion),
+          : () => onSpotlightPinned!(group!),
       child: MouseRegion(
       // Pasar por encima enseña dónde lo vio. Es la pregunta inmediata al leer
       // «Estrella 66 %», y hasta ahora no tenía respuesta: el rectángulo se
       // guardaba al detectar y no se enseñaba en ninguna parte.
-      onEnter: box == null || onSpotlight == null
+      onEnter: box == null || onSpotlight == null || group == null
           ? null
-          : (_) => onSpotlight!(suggestion),
+          : (_) => onSpotlight!(group),
       onExit: box == null || onSpotlight == null
           ? null
           : (_) => onSpotlight!(null),
@@ -139,6 +150,19 @@ class SuggestionRow extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+          // Cuántas veces lo ha visto, cuando ha sido más de una. El porcentaje
+          // sigue siendo el de la mejor: es lo que ha significado siempre, y
+          // cambiarlo por una media haría que una detección mala arrastrara la
+          // fila hacia abajo.
+          if (instances > 1) ...[
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              texts.suggestionInstances(instances),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: context.colors.unremarked,
+              ),
+            ),
+          ],
           // Lo que el modelo acierta se puede guardar como región con un
           // clic. Es lo que cierra el círculo: sin esto, cada acierto se pierde
           // y hay que volver a marcar a mano lo que ya estaba bien marcado.

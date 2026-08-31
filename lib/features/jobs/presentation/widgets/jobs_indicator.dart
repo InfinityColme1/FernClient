@@ -19,6 +19,7 @@ extension JobTypeLabels on JobType {
         JobType.mediaImport => texts.jobImport,
         JobType.linkReview => texts.jobLinkReview,
         JobType.linkImport => texts.jobLinkImport,
+        JobType.tagRegions => texts.jobTagRegions,
       };
 
   /// Con qué se reconoce cada clase de trabajo en la lista.
@@ -34,6 +35,7 @@ extension JobTypeLabels on JobType {
         JobType.mediaImport => Symbols.move_to_inbox,
         JobType.linkReview => Symbols.help,
         JobType.linkImport => Symbols.link,
+        JobType.tagRegions => Symbols.select_all,
       };
 }
 

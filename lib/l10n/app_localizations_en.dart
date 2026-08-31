@@ -1993,6 +1993,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get databaseCleanupAction => 'Clean up';
 
   @override
+  String databaseCleanupFound(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count loose files, $size',
+      one: '1 loose file, $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get databaseCleanupAvatars => 'Avatars with no owner';
+
+  @override
+  String get databaseCleanupDownloads => 'Downloads no longer in the database';
+
+  @override
+  String get databaseCleanupWeights => 'Weights no model points to';
+
+  @override
+  String get databaseCleanupKeeps =>
+      'The Python environment, the training sets and the caches are not touched.';
+
+  @override
   String get databaseCleanupFailed => 'The clean-up could not finish';
 
   @override
@@ -2019,6 +2043,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockedImportsUnblock => 'Import this again';
+
+  @override
+  String get blockedImportsOpen => 'Open the page it came from';
 
   @override
   String get blockedImportsClear => 'Forget them all';
@@ -2583,6 +2610,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fernieToolEdit => 'Edit regions';
 
   @override
+  String get jobTagRegions => 'Marking a tag’s content';
+
+  @override
+  String get fernieImportTagTitle => 'Mark a whole tag';
+
+  @override
+  String get fernieImportTagNote =>
+      'Every piece with that tag gets a region covering the whole frame, for this fernie. It is what you would do by hand, one by one.';
+
+  @override
+  String get fernieImportTagAction => 'Mark them';
+
+  @override
+  String get fernieImportTagTooltip => 'Mark a whole tag as regions';
+
+  @override
+  String get fernieImportTagFrames => 'Frames per video';
+
+  @override
+  String get fernieImportTagFramesNote =>
+      'Training takes one image per region, so a whole video would be thousands of near-identical crops.';
+
+  @override
+  String fernieImportTagCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pieces',
+      one: '1 piece',
+      zero: 'Nothing has that tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fernieImportTagStarted =>
+      'Marking has started; you can follow it in the task list';
+
+  @override
+  String get fernieToolWholeFrame => 'Mark the whole frame';
+
+  @override
+  String fernieAcceptAllProposed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Accept the $count detected regions',
+      one: 'Accept the detected region',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get fernieRegionConfirm => 'Save the changes to this region';
 
   @override
@@ -2707,6 +2787,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String suggestionConfidence(int percent) {
     return '$percent%';
+  }
+
+  @override
+  String suggestionInstances(int count) {
+    return '×$count';
   }
 
   @override
@@ -2916,6 +3001,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get returnRecognizedLabel =>
       'Send recognised content back to importing';
+
+  @override
+  String get maxDetectionsLabel => 'How many times the same thing is kept';
+
+  @override
+  String get maxDetectionsDescription =>
+      'A model can see four cars in one photo. Each one is a separate region you can mark, so all of them are kept — up to this many. A car park could give fifty.';
 
   @override
   String get returnRecognizedDescription =>

@@ -235,6 +235,21 @@ class ReloadCurrentMediaEvent extends MediaEvents {
   const ReloadCurrentMediaEvent();
 }
 
+/// Vuelve a leer **sólo las etiquetas** del contenido que se está viendo.
+///
+/// Hace falta cuando algo se las cambia por detrás sin pasar por el panel: al
+/// salir del modo fernie, lo que los fernies marcados enlazan se le pone al
+/// contenido, y el panel seguía enseñando las de antes. Había que salir del
+/// visor y volver a entrar para verlo, y eso hacía dudar de si se había puesto.
+///
+/// **Sólo las etiquetas, a propósito.** Releer el contenido entero se llevaría
+/// por delante lo que el panel tenga sin guardar —una descripción a medio
+/// escribir, un creador recién elegido—, y recargar el listado (que es lo que
+/// hace [ReloadCurrentMediaEvent]) es mucho más de lo que hace falta.
+class RefreshCurrentMediaTagsEvent extends MediaEvents {
+  const RefreshCurrentMediaTagsEvent();
+}
+
 /// Carga el contenido marcado como favorito: el de la pantalla de favoritos.
 class LoadFavoriteMediaEvent extends MediaEvents {
   const LoadFavoriteMediaEvent();

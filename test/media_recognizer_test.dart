@@ -21,6 +21,7 @@ import 'package:Fern/features/recognition/domain/entities/model_tree_entity.dart
 import 'package:Fern/features/recognition/domain/entities/recognition_model_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/recognition_result_entity.dart';
 import 'package:Fern/features/recognition/domain/repositories/model_repository.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Un repositorio que sabe qué fernie es cada número de clase.
@@ -75,6 +76,22 @@ RawDetection _seen(int classIndex, [double confidence = 0.9]) => RawDetection(
       h: 0.4,
     );
 
+/// Lo mismo, pero **en otro sitio**: es lo que distingue dos instancias de la
+/// misma cosa de la misma cosa vista dos veces.
+RawDetection _seenAt(
+  int classIndex,
+  double x, {
+  double confidence = 0.9,
+}) =>
+    RawDetection(
+      classIndex: classIndex,
+      confidence: confidence,
+      x: x,
+      y: 0.2,
+      w: 0.1,
+      h: 0.1,
+    );
+
 void main() {
   /// Un reconocedor al que se le dice qué ve cada modelo en cada imagen.
   MediaRecognizer recognizer({
@@ -86,10 +103,12 @@ void main() {
     List<SampledFrame> frames = const [],
     List<String>? asked,
     int samples = 5,
+    int maxDetections = defaultMaxDetectionsPerClass,
   }) {
     return MediaRecognizer(
       models: _FakeModels(classes),
       frameSamples: () => samples,
+      maxDetections: () => maxDetections,
       durationOf: (_) async => duration,
       extractFrames: (_, at) async => frames,
       predict: (model, imagePath, conf) async {
@@ -378,8 +397,9 @@ void main() {
         ModelTreeEntity(nodes: [_node(1)]),
       );
 
-      // Dos propuestas del mismo modelo sobre el mismo fernie son la misma
-      // sugerencia dos veces: obligarian a decir que si dos veces.
+      // Dos clases que apuntan al mismo fernie **sobre el mismo sitio** son la
+      // misma cosa vista dos veces: contarla dos veces obligaría a decir que sí
+      // dos veces sobre el mismo rectángulo.
       expect(found, hasLength(1));
       expect(found.single.confidence, 0.8);
     });
@@ -640,6 +660,92 @@ void main() {
           token: token,
         ),
         throwsA(isA<JobCancelledException>()),
+      );
+    });
+  });
+
+  // Un modelo puede ver **lo mismo varias veces**: cuatro coches en una foto son
+  // cuatro detecciones de la clase «coche», y las cuatro valen porque cada una es
+  // una región distinta que se puede marcar. Antes se guardaba sólo la mejor y
+  // las otras tres se perdían antes de llegar a la pantalla.
+  group('varias veces lo mismo', () {
+    test('cada instancia se queda', () async {
+      final found = await run(
+        recognizer(
+          classes: const {
+            1: {0: 10},
+          },
+          sees: {
+            1: [_seenAt(0, 0.1), _seenAt(0, 0.4), _seenAt(0, 0.7)],
+          },
+        ),
+        ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect(found, hasLength(3));
+      expect(found.every((each) => each.fernieId == 10), isTrue);
+    });
+
+    test('con su sitio cada una', () async {
+      final found = await run(
+        recognizer(
+          classes: const {
+            1: {0: 10},
+          },
+          sees: {
+            1: [_seenAt(0, 0.1), _seenAt(0, 0.4)],
+          },
+        ),
+        ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect({for (final each in found) each.x}, {0.1, 0.4});
+    });
+
+    // Una foto de un aparcamiento puede dar cincuenta: sin tope son cincuenta
+    // filas por contenido y un panel imposible de leer.
+    test('hasta el tope que se diga', () async {
+      final found = await run(
+        recognizer(
+          classes: const {
+            1: {0: 10},
+          },
+          sees: {
+            1: [
+              for (var index = 0; index < 10; index++)
+                _seenAt(0, index / 20, confidence: 0.5 + index / 100),
+            ],
+          },
+          maxDetections: 4,
+        ),
+        ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect(found, hasLength(4));
+    });
+
+    // Y las que se quedan son las mejores, no las primeras que llegaron.
+    test('y son las más seguras', () async {
+      final found = await run(
+        recognizer(
+          classes: const {
+            1: {0: 10},
+          },
+          sees: {
+            1: [
+              _seenAt(0, 0.1, confidence: 0.5),
+              _seenAt(0, 0.4, confidence: 0.9),
+              _seenAt(0, 0.7, confidence: 0.7),
+            ],
+          },
+          maxDetections: 2,
+        ),
+        ModelTreeEntity(nodes: [_node(1)]),
+      );
+
+      expect(
+        {for (final each in found) each.confidence},
+        {0.9, 0.7},
       );
     });
   });
