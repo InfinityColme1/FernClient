@@ -198,8 +198,13 @@ class _JobRow extends StatelessWidget {
   /// Una sola línea siempre, terminado o no. Antes el estado y el avance eran
   /// bloques distintos de alto distinto, y la lista se movía sola al cambiar
   /// cualquiera de ellos.
+  /// La línea de debajo del nombre: en qué punto está.
+  ///
+  /// Cuando ha fallado se dice **por qué** y no sólo que ha fallado. Un trabajo
+  /// en rojo que no cuenta nada obliga a mirar la consola para enterarse, y a la
+  /// consola no llega el usuario.
   String _status(AppLocalizations texts) => switch (job.status) {
-        JobStatus.failed => texts.jobFailed,
+        JobStatus.failed => job.error ?? texts.jobFailed,
         JobStatus.completed => texts.jobDone,
         JobStatus.cancelled => texts.jobCancelled,
         JobStatus.queued => texts.jobQueued,
@@ -245,12 +250,18 @@ class _JobRow extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: AppSpacing.xxs),
-                Text(
-                  _status(texts),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: _statusColor(context)),
+                // Con el motivo entero al pasar por encima: en una línea de
+                // panel no cabe una traza, pero recortarla sin dejar forma de
+                // leerla es volver a esconderla.
+                Tooltip(
+                  message: _status(texts),
+                  child: Text(
+                    _status(texts),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: _statusColor(context)),
+                  ),
                 ),
                 // La barra sólo mientras corre, y pegada a su texto. Sin total
                 // da vueltas en vez de mentir con un porcentaje.

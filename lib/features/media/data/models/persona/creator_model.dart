@@ -30,6 +30,14 @@ class CreatorModel {
   /// Cuáles de [sourceUrls] están marcadas como no aptas, también normalizadas.
   List<String> nsfwSourceUrls = const [];
 
+  /// Contenido no apto: ni el creador ni lo suyo se ven con el modo NSFW
+  /// apagado.
+  ///
+  /// Funciona igual que la marca de una etiqueta, y esconde lo mismo: el nombre
+  /// y la galería. Esconder al creador dejando su contenido a la vista no
+  /// escondería gran cosa, y además ese contenido aparecería sin creador.
+  bool isNsfw = false;
+
   CreatorModel({
     required this.id,
     required this.name,
@@ -38,6 +46,7 @@ class CreatorModel {
     this.nsfwSocialProfiles = const [],
     this.sourceUrls = const [],
     this.nsfwSourceUrls = const [],
+    this.isNsfw = false,
   });
 
   CreatorEntity toEntity() {
@@ -49,6 +58,7 @@ class CreatorModel {
         nsfwSocialProfiles: nsfwSocialProfiles,
         sourceUrls: sourceUrls,
         nsfwSourceUrls: nsfwSourceUrls,
+        isNsfw: isNsfw,
     );
   }
 
@@ -64,6 +74,7 @@ class CreatorModel {
         nsfwSocialProfiles: entity.nsfwSocialProfiles,
         sourceUrls: entity.sourceUrls,
         nsfwSourceUrls: entity.nsfwSourceUrls,
+        isNsfw: entity.isNsfw,
     );
   }
 }

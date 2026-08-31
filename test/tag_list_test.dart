@@ -380,4 +380,79 @@ void main() {
       expect(find.byTooltip('Ir a las personas'), findsNothing);
     });
   });
+
+  // La fila ha ganado un chevron, y la columna sólo mide 260 px: es donde iba a
+  // romperse. Con avatar, chevron, nombre larguísimo y sangría de tres niveles a
+  // la vez, que es la fila más llena que puede haber.
+  group('el alto y el ancho de la fila', () {
+    testWidgets('no desborda con el chevron puesto', (tester) async {
+      for (final locale in const [
+        Locale('en'),
+        Locale('es'),
+        Locale('ca'),
+        Locale('fr'),
+      ]) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        tester.takeException();
+
+        await tester.pumpWidget(MaterialApp(
+          theme: AppTheme.lightTheme,
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 260,
+              height: 600,
+              child: TagList(
+                tags: [
+                  _tag(1, 'una etiqueta madre con un nombre larguísimo',
+                      children: [
+                        _tag(2, 'y una hija que tampoco se queda corta',
+                            children: [
+                              _tag(3, 'y una nieta del mismo estilo, más aún'),
+                            ]),
+                      ]),
+                ],
+                showsBranchOnFilter: false,
+                onSelected: (_) {},
+              ),
+            ),
+          ),
+        ));
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'la fila desborda en ${locale.languageCode}',
+        );
+      }
+    });
+
+    // El hueco se reserva también en las filas sin hijas: sin él los avatares
+    // de una rama bailarían de izquierda a derecha según qué etiquetas tuvieran
+    // descendencia, y la sangría dejaría de leerse.
+    testWidgets('los avatares del mismo nivel se alinean', (tester) async {
+      await _pump(tester, tags: [
+        _tag(1, 'con hijas', children: [_tag(2, 'la hija')]),
+        _tag(3, 'sin hijas'),
+      ]);
+
+      final conHijas = tester.getTopLeft(
+        find.ancestor(
+          of: find.text('con hijas'),
+          matching: find.byType(Row),
+        ).first,
+      );
+      final sinHijas = tester.getTopLeft(
+        find.ancestor(
+          of: find.text('sin hijas'),
+          matching: find.byType(Row),
+        ).first,
+      );
+
+      expect(conHijas.dx, sinHijas.dx);
+    });
+  });
 }

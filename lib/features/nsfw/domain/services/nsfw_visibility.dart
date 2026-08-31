@@ -89,6 +89,15 @@ class NsfwVisibility extends ContentVisibility {
   @override
   bool marksTag(int tagId) => _index.hasTag(tagId);
 
+  /// Los creadores marcados se esconden con el bloqueo cerrado, igual que las
+  /// etiquetas y por lo mismo: un nombre no se puede tapar, o se lee o no está.
+  @override
+  bool hidesCreator(int creatorId) =>
+      _isActive && !_mode.isUnlocked && _index.hasCreator(creatorId);
+
+  @override
+  bool marksCreator(int creatorId) => _index.hasCreator(creatorId);
+
   /// Los fernies marcados se esconden con el bloqueo cerrado, igual que las
   /// etiquetas y por lo mismo: un fernie es un nombre y una cara, y eso no se
   /// puede tapar a medias.

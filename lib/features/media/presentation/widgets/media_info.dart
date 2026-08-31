@@ -21,15 +21,18 @@ import 'package:Fern/features/recognition/presentation/blocs/suggestions_bloc.da
 import 'package:Fern/features/recognition/presentation/blocs/suggestions_events.dart';
 import 'package:Fern/features/recognition/presentation/blocs/suggestions_states.dart';
 import 'package:Fern/features/recognition/presentation/widgets/suggestion_row.dart';
-import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
+import 'package:Fern/features/recognition/domain/usecases/adopt_fernie_tag_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/turn_detection_into_region_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/media/domain/services/viewer_save_action.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,10 +56,20 @@ class MediaInfo extends StatelessWidget {
   /// con él y muere con él.
   final SuggestionsBloc suggestions;
 
+  /// Si guardar pasa al siguiente contenido en vez de cerrar el visor.
+  ///
+  /// Sólo llega puesto desde la pantalla de importación: el salto existe para
+  /// revisar una tanda recién traída sin volver a la rejilla entre uno y otro.
+  /// Abriendo desde la biblioteca, desde una etiqueta o desde un fernie se ha
+  /// ido a **ese** contenido, y saltar al guardar sería perder de vista lo que
+  /// se estaba mirando.
+  final bool isReviewing;
+
   const MediaInfo({
     super.key,
     required this.fernieMode,
     required this.suggestions,
+    this.isReviewing = false,
   });
 
   @override
@@ -95,22 +108,24 @@ class MediaInfo extends StatelessWidget {
                   label: texts.actionSave,
                   onPressed: (state.isNew || state.isModified)
                       ? () {
-                          // El contenido pendiente de revisar se abre desde la
-                          // pantalla de importación; al darlo por definitivo
-                          // deja de estar allí, así que el visor no puede
-                          // quedarse donde estaba: o pasa al siguiente o se
-                          // cierra, según lo que el usuario tenga elegido.
-                          final goToNext = state.isNew &&
-                              context
-                                      .read<SettingsBloc>()
-                                      .state
-                                      .settings
-                                      .viewerSaveBehavior ==
-                                  ViewerSaveBehavior.goToNext;
+                          // Qué pasa después de guardar: la regla vive aparte,
+                          // en `viewerSaveActionFor`, con sus motivos escritos y
+                          // su prueba.
+                          final action = viewerSaveActionFor(
+                            isNew: state.isNew,
+                            isReviewing: isReviewing,
+                            behavior: context
+                                .read<SettingsBloc>()
+                                .state
+                                .settings
+                                .viewerSaveBehavior,
+                          );
 
-                          context
-                              .read<MediaBloc>()
-                              .add(SaveMediaEvent(media, goToNext: goToNext));
+                          context.read<MediaBloc>().add(SaveMediaEvent(
+                                media,
+                                goToNext:
+                                    action == ViewerSaveAction.goToNext,
+                              ));
 
                           // Lo aceptado pasa a estarlo de verdad justo aquí:
                           // hasta ahora sólo era una etiqueta más entre los
@@ -119,7 +134,7 @@ class MediaInfo extends StatelessWidget {
                           // vacía el estado del bloc.
                           suggestions.add(const SuggestionsCommittedEvent());
 
-                          if (state.isNew && !goToNext) context.pop();
+                          if (action == ViewerSaveAction.close) context.pop();
                         }
                       : null,
                 ),
@@ -268,6 +283,16 @@ class _InfoContent extends StatelessWidget {
                   backgroundColor: context.colors.secondary,
                 ),
                 trailing: tag.isUnderNsfw ? const NsfwTagMark() : null,
+                // Con su cruz, como las sugerencias de aquí debajo: quitar una
+                // etiqueta era lo único que había que ir a hacer a la pantalla
+                // de gestión, y encima allí se quita de lo que esté marcado en
+                // la rejilla y no del contenido que se está mirando.
+                onRemove: () => context.read<MediaBloc>().add(
+                      RemoveTagFromMediaEvent(
+                        mediaId: media.id,
+                        tagId: tag.id,
+                      ),
+                    ),
               ),
             );
           },
@@ -287,6 +312,7 @@ class _InfoContent extends StatelessWidget {
               ...state.unlinkedSuggestions,
             ],
             fallbackIcon: Symbols.label,
+            adoptsUnlinked: true,
             apply: (context, which) async => _updateMedia(
               context,
               media.copyWith(tags: await _withTags(media, which)),
@@ -462,6 +488,10 @@ class _CreatorRow extends StatelessWidget {
 
   const _CreatorRow({required this.media});
 
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -490,10 +520,24 @@ class _CreatorRow extends StatelessWidget {
                 AppLocalizations.of(context).createdBy,
                 style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
               ),
-              Text(
-                media.creator.name,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      media.creator.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  // Como con las etiquetas de aquí debajo: con el filtro quitado
+                  // hay que poder distinguir al que esconde algo.
+                  if (_visibility.marksCreator(media.creator.id)) ...[
+                    const SizedBox(width: AppSpacing.s),
+                    const NsfwTagMark(),
+                  ],
+                ],
               ),
             ],
           ),
@@ -519,9 +563,15 @@ class _SuggestionList extends StatelessWidget {
   /// lista de etiquetas y la de creador: una añade a una lista y la otra
   /// sustituye un valor.
   ///
-  /// Vacío significa que no hay nada que poner —el fernie no enlaza nada, o su
-  /// etiqueta ya no existe—, y entonces no aparece el botón de aceptar.
+  /// Vacío significa que esta lista no sabe poner nada, y entonces no aparece
+  /// el botón de aceptar.
   final void Function(BuildContext, List<MediaSuggestionEntity>)? apply;
+
+  /// Si aceptar una que no propone nada le da al fernie su etiqueta.
+  ///
+  /// Sólo en la lista de etiquetas. La de creador no lo hace ni podría: lo que
+  /// se crearía es una etiqueta, y ahí lo que hace falta es un creador.
+  final bool adoptsUnlinked;
 
   final IconData fallbackIcon;
 
@@ -535,6 +585,7 @@ class _SuggestionList extends StatelessWidget {
     required this.fallbackIcon,
     this.apply,
     this.title,
+    this.adoptsUnlinked = false,
   });
 
   /// Dice que sí: pone lo propuesto en el contenido y aparta la sugerencia.
@@ -543,23 +594,64 @@ class _SuggestionList extends StatelessWidget {
   /// sin guardar del contenido, y la sugerencia no baja a la base de datos hasta
   /// que se guarde: si se apuntara ya y el usuario se fuera sin guardar,
   /// quedaría contestada sin que la etiqueta llegara a ponerse.
-  void _accept(BuildContext context, List<MediaSuggestionEntity> which) {
-    // Aceptar en bloque salta las que no tienen nada que proponer: siguen ahí
-    // esperando a que alguien las rechace, que es lo único que se puede hacer
-    // con ellas.
+  Future<void> _accept(
+    BuildContext context,
+    List<MediaSuggestionEntity> which,
+  ) async {
     final acceptable = [for (final one in which) if (_canAccept(one)) one];
     if (acceptable.isEmpty) return;
 
-    apply!(context, acceptable);
-    bloc.add(SuggestionsAcceptedEvent(acceptable));
+    final resolved = await _adopted(acceptable);
+    if (resolved.isEmpty || !context.mounted) return;
+
+    apply!(context, resolved);
+    bloc.add(SuggestionsAcceptedEvent(resolved));
 
     getIt<SuggestionSpotlight>()
-        .releaseIf([for (final one in acceptable) one.id]);
+        .releaseIf([for (final one in resolved) one.id]);
+  }
+
+  /// Las mismas sugerencias, con las que no proponían nada ya resueltas.
+  ///
+  /// El fernie que no enlaza ninguna etiqueta se queda con la que se llama como
+  /// él —la que ya hubiera, o una nueva— y enlazado con ella. **Eso se escribe
+  /// en el momento**, a diferencia de poner la etiqueta en el contenido, que
+  /// sigue esperando a Guardar como todo lo demás del panel: la etiqueta tiene
+  /// que existir de verdad para poder ponérsela a nada.
+  ///
+  /// La que no se pueda resolver se queda sin contestar en vez de darse por
+  /// aceptada: apartarla sin haber puesto nada es perder la sugerencia y no
+  /// poner la etiqueta, que es lo peor de las dos opciones.
+  Future<List<MediaSuggestionEntity>> _adopted(
+    List<MediaSuggestionEntity> which,
+  ) async {
+    if (!adoptsUnlinked) return which;
+
+    final resolved = <MediaSuggestionEntity>[];
+
+    for (final one in which) {
+      if (one.proposes != FernieLinkKind.none) {
+        resolved.add(one);
+        continue;
+      }
+
+      final adopted =
+          await getIt<AdoptFernieTagUseCase>()(params: one.fernie);
+      if (adopted.data case final tag?) resolved.add(one.withTag(tag));
+    }
+
+    return resolved;
   }
 
   /// Si hay algo que poner en el contenido al decir que sí.
+  ///
+  /// Lo que no propone nada también, cuando la lista sabe adoptarlo: el modelo
+  /// acierta, se ve que acierta, y hasta ahora lo único que se podía hacer con
+  /// esa fila era decirle que no.
   bool _canAccept(MediaSuggestionEntity suggestion) =>
-      apply != null && suggestion.proposes != FernieLinkKind.none;
+      apply != null &&
+      (suggestion.proposes != FernieLinkKind.none ||
+          (adoptsUnlinked && suggestion.fernie.name.trim().isNotEmpty));
 
   void _reject(List<MediaSuggestionEntity> which) {
     if (which.isEmpty) return;

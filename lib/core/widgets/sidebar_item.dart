@@ -47,6 +47,28 @@ class SidebarItem {
   /// significan algo que se le pueda poner a un contenido.
   final void Function(List<int> mediaIds)? onMediaDropped;
 
+  /// La etiqueta tiene hijas y se pueden plegar.
+  ///
+  /// Sin hijas no se pinta chevron: uno que no hace nada en la mitad de las
+  /// filas es ruido. En su sitio queda un hueco del mismo ancho, que es lo que
+  /// mantiene alineados los iconos de toda la lista.
+  final bool hasChildren;
+
+  /// Si su rama está plegada ahora mismo.
+  final bool isCollapsed;
+
+  /// Plegar o desplegar. Sin esto la fila no ofrece chevron aunque tenga hijas,
+  /// que es lo que pasa con todo lo que no es una etiqueta.
+  final VoidCallback? onToggleCollapse;
+
+  /// Abrir la rama por posarse encima arrastrando, y volver a cerrarla al
+  /// soltar.
+  ///
+  /// Son dos porque lo que abre el arrastre **no se guarda**: es una ayuda del
+  /// gesto para poder bajar hasta una hija, no una decisión del usuario.
+  final VoidCallback? onSpringOpen;
+  final VoidCallback? onSpringRelease;
+
   SidebarItem({
     required this.id,
     required this.title,
@@ -57,6 +79,11 @@ class SidebarItem {
     this.badgeCount = 0,
     this.isNsfw = false,
     this.onMediaDropped,
+    this.hasChildren = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
+    this.onSpringOpen,
+    this.onSpringRelease,
   });
 }
 

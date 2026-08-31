@@ -7,6 +7,9 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
+import 'dart:async';
+
+import 'package:Fern/features/media/domain/services/recent_picks.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +46,7 @@ class AssignCreatorDialog extends StatefulWidget {
 
 class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
   final _searchCreators = getIt<SearchCreatorsUseCase>();
+  final _recents = getIt<RecentPicks>();
 
   /// Creador elegido y todavía sin confirmar.
   late CreatorEntity? _pendingCreator = widget.pendingCreator;
@@ -57,6 +61,9 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
   void _confirm(BuildContext context) {
     final creator = _pendingCreator;
     if (creator != null) {
+      // Al confirmar y no al elegir: mientras el diálogo esté abierto todavía no
+      // se le ha puesto a nadie, y cerrarlo sin confirmar no es haberlo usado.
+      unawaited(_recents.pushCreator(creator.id));
       context.read<MediaBloc>().add(
             UpdateMediaInfoEvent(widget.media.copyWith(creator: creator)),
           );
@@ -125,7 +132,12 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
             label: texts.searchCreatorLabel,
             hintText: texts.creatorSearchHint,
             search: _search,
+            recents: _recents.creators,
             labelOf: (creator) => creator.name,
+            // Los marcados se distinguen al autocompletar, como las etiquetas:
+            // elegir uno sin saberlo es esconder contenido sin querer.
+            trailingOf: (creator) =>
+                creator.isNsfw ? const NsfwTagMark() : null,
             onSelected: (creator) =>
                 setState(() => _pendingCreator = creator),
             debounce: searchDebounceDuration,

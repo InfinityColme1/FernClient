@@ -15,6 +15,9 @@ import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/models/blocked_import_model.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
+import 'package:Fern/features/media/domain/services/collapsed_tags.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
@@ -71,6 +74,7 @@ void main() {
     late Directory directory;
     late Isar isar;
     late PreferencesService preferences;
+    late BlockedImports blocked;
     late DatabaseMaintenanceService maintenance;
 
     final isarLibrary = _isarLibrary();
@@ -96,6 +100,7 @@ void main() {
           CreatorModelSchema,
           MediaSummaryModelSchema,
           MediaModelSchema,
+          BlockedImportModelSchema,
         ],
         directory: directory.path,
         inspector: false,
@@ -105,9 +110,14 @@ void main() {
       preferences =
           PreferencesService(await SharedPreferences.getInstance());
 
+      blocked = BlockedImports(database: isar);
+      await blocked.rebuild();
+
       maintenance = DatabaseMaintenanceService(
         database: isar,
         preferences: preferences,
+        blocked: blocked,
+        collapsedTags: CollapsedTags(preferences: preferences),
       );
     });
 
@@ -173,6 +183,29 @@ void main() {
 
       expect(preferences.getLastImport(ImportSource.reddit), isNull);
       expect(preferences.getLastImportMarker(ImportSource.reddit), isNull);
+    });
+
+    group('lo que se dijo que no se volviera a importar', () {
+      test('se va con todo lo demás', () async {
+        await blocked.block(source: 'reddit', remoteId: 'abc');
+
+        await maintenance.wipe();
+
+        expect(await blocked.all(), isEmpty);
+      });
+
+      // El que de verdad importa: durante una importación quien contesta es la
+      // memoria, no la base. Sin releerla se seguiría saltando contenido cuyo
+      // bloqueo ya no existe en ninguna parte —ni siquiera en la lista desde la
+      // que se podría deshacer—, y eso no habría forma de desatascarlo.
+      test('y deja de saltarse esas piezas', () async {
+        await blocked.block(source: 'reddit', remoteId: 'abc');
+        expect(blocked.blocks('reddit', 'abc'), isTrue);
+
+        await maintenance.wipe();
+
+        expect(blocked.blocks('reddit', 'abc'), isFalse);
+      });
     });
 
     test('pero no se lleva por delante el resto de los ajustes', () async {

@@ -28,6 +28,32 @@ typedef ReturnToReviewSetting = bool Function();
 /// pantalla deja al usuario delante de una rejilla de trescientas miniaturas sin
 /// saber cuáles son las suyas.
 typedef RecognitionNotifier = Future<void> Function(Set<int> mediaIds);
+/// Lo que salió mal reconociendo, dicho de una vez.
+///
+/// El texto sale tal cual en la lista de tareas, así que lleva el motivo y no
+/// sólo el recuento: «fallaron 3 de 3» no le dice a nadie que su tarjeta no sabe
+/// ejecutar el modelo, y eso es justo lo que hay que leer para arreglarlo.
+class RecognitionFailedException implements Exception {
+  /// Cuántas tandas se rompieron y cuántas se intentaron.
+  final int failed;
+  final int total;
+
+  final Object cause;
+
+  const RecognitionFailedException({
+    required this.failed,
+    required this.total,
+    required this.cause,
+  });
+
+  /// Si no funcionó ni una: entonces no es «algo se ha perdido», es que el
+  /// reconocimiento no se ha hecho.
+  bool get isTotal => failed >= total;
+
+  @override
+  String toString() => '$failed/$total: $cause';
+}
+
 
 /// Pasa el árbol de modelos por una lista de contenidos.
 ///
@@ -112,6 +138,14 @@ class RecognitionJobRunner {
 
     var suggested = 0;
 
+    // Cuántas tandas se han roto y con qué. Se levanta al final: seguir con las
+    // demás es lo correcto —un fichero ilegible no puede llevarse por delante las
+    // otras cien— pero terminar sin decirlo es lo que hacía que un fallo de la
+    // tarjeta pareciera «aquí no había nada que encontrar».
+    var failedBatches = 0;
+    var batches = 0;
+    Object? lastError;
+
     // Los que han acabado con algo que revisar. Son los que se señalan al llegar
     // a la pantalla: los demás no tienen nada que mirar.
     final withSuggestions = <int>{};
@@ -132,7 +166,13 @@ class RecognitionJobRunner {
         returnToReview: returnToReview,
       );
 
-      for (final entry in found.entries) {
+      batches++;
+      if (found.error != null) {
+        failedBatches++;
+        lastError = found.error;
+      }
+
+      for (final entry in found.saved.entries) {
         suggested += entry.value;
         if (entry.value > 0) withSuggestions.add(entry.key);
       }
@@ -143,6 +183,16 @@ class RecognitionJobRunner {
     // Sólo si hay algo que mirar. Avisar de que «ya está» cuando no ha salido
     // ninguna sugerencia manda al usuario a una pantalla donde no hay nada.
     if (suggested > 0) await _notify(withSuggestions);
+
+    // Lo guardado se queda guardado —esto va después de escribirlo—, pero el
+    // trabajo termina en rojo y contando por qué.
+    if (lastError != null) {
+      throw RecognitionFailedException(
+        failed: failedBatches,
+        total: batches,
+        cause: lastError,
+      );
+    }
   }
 
   /// Reconoce una tanda de contenidos y guarda lo que salga.
@@ -155,7 +205,13 @@ class RecognitionJobRunner {
   ///
   /// Una tanda que falle **no para el trabajo**: se cuenta y se sigue con la
   /// siguiente. Lo que sí para es que el usuario lo pida.
-  Future<Map<int, int>> _recognizeBatch(
+  ///
+  /// Pero se cuenta de verdad: devuelve también el fallo, y quien llama lo
+  /// levanta al terminar. Antes se escribía en la consola y se devolvía vacío,
+  /// así que un reconocimiento que no podía funcionar —una tarjeta que no sabe
+  /// ejecutar el modelo, unos pesos ilegibles— terminaba «bien» sin una sola
+  /// sugerencia y sin nada que mirar.
+  Future<({Map<int, int> saved, Object? error})> _recognizeBatch(
     List<int> mediaIds,
     ModelTreeEntity tree,
     JobContext context, {
@@ -173,7 +229,7 @@ class RecognitionJobRunner {
         targets.add(RecognitionTarget(mediaId: mediaId, path: path));
       }
 
-      if (targets.isEmpty) return const {};
+      if (targets.isEmpty) return (saved: const <int, int>{}, error: null);
 
       final found = await _recognizer.recognizeMany(
         targets: targets,
@@ -189,8 +245,10 @@ class RecognitionJobRunner {
       );
 
       if (found is! DataSuccess || found.data == null) {
-        debugPrint('No se pudo reconocer la tanda: ${found.exception}');
-        return const {};
+        return (
+          saved: const <int, int>{},
+          error: found.exception ?? Exception('recognizeMany'),
+        );
       }
 
       final saved = <int, int>{};
@@ -209,13 +267,12 @@ class RecognitionJobRunner {
         saved[entry.key] = written is DataSuccess ? written.data ?? 0 : 0;
       }
 
-      return saved;
+      return (saved: saved, error: null);
     } on JobCancelledException {
       // Parar sí para: es lo que el usuario acaba de pedir.
       rethrow;
     } on Object catch (error) {
-      debugPrint('No se pudo reconocer la tanda: $error');
-      return const {};
+      return (saved: const <int, int>{}, error: error);
     }
   }
 

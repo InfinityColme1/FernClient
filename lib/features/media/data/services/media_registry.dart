@@ -113,6 +113,13 @@ class MediaRegistry {
     String? description,
     String? sourceTagName,
     List<String> sourceUrls = const [],
+    /// Cómo se llamaba esto en la fuente de la que viene, si venía de una.
+    ///
+    /// Es lo que hace falta para poder decir «no me lo vuelvas a ofrecer»: se
+    /// compara con lo que la fuente da antes de descargar. Sin guardarlo habría
+    /// que deducirlo del nombre del fichero, y eso no vale para lo que sale de
+    /// un comprimido, que se llama como venía dentro.
+    String? remoteId,
   }) async {
     if (await existing(path) != null) return null;
 
@@ -129,6 +136,7 @@ class MediaRegistry {
       ..path = path
       ..isImported = false
       ..importSource = source.id
+      ..remoteId = remoteId
       ..mediaWidth = size?.width
       ..mediaHeight = size?.height;
 

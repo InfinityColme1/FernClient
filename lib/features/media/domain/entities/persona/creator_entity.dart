@@ -26,6 +26,13 @@ class CreatorEntity extends PersonaEntity {
   /// importar: esconder no es apagar.
   final List<String> nsfwSourceUrls;
 
+  /// El creador está marcado como contenido no apto.
+  ///
+  /// Con el bloqueo puesto no se ve ni él ni lo suyo: su nombre delata tanto
+  /// como el de una etiqueta marcada, y su galería es exactamente lo que la
+  /// marca esconde.
+  final bool isNsfw;
+
   const CreatorEntity({
     required super.id,
     required super.name,
@@ -34,6 +41,7 @@ class CreatorEntity extends PersonaEntity {
     this.nsfwSocialProfiles = const [],
     this.sourceUrls = const [],
     this.nsfwSourceUrls = const [],
+    this.isNsfw = false,
   });
 
   CreatorEntity copyWith({
@@ -43,6 +51,7 @@ class CreatorEntity extends PersonaEntity {
     List<String>? nsfwSocialProfiles,
     List<String>? sourceUrls,
     List<String>? nsfwSourceUrls,
+    bool? isNsfw,
   }) {
     return CreatorEntity(
       id: id,
@@ -52,6 +61,7 @@ class CreatorEntity extends PersonaEntity {
       nsfwSocialProfiles: nsfwSocialProfiles ?? this.nsfwSocialProfiles,
       sourceUrls: sourceUrls ?? this.sourceUrls,
       nsfwSourceUrls: nsfwSourceUrls ?? this.nsfwSourceUrls,
+      isNsfw: isNsfw ?? this.isNsfw,
     );
   }
 
@@ -64,6 +74,7 @@ class CreatorEntity extends PersonaEntity {
     nsfwSocialProfiles,
     sourceUrls,
     nsfwSourceUrls,
+    isNsfw,
   ];
 
 }

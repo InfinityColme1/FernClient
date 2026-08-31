@@ -849,6 +849,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagRelationsAddSibling => 'Add a related tag';
 
   @override
+  String get tagCollapseBranch => 'Collapse what hangs from this one';
+
+  @override
+  String get tagExpandBranch => 'Expand what hangs from this one';
+
+  @override
+  String get siblingDirectionBoth => 'Each one adds the other';
+
+  @override
+  String siblingDirectionOneWay(String from, String to) {
+    return '«$from» adds «$to»';
+  }
+
+  @override
+  String get siblingDirectionNone => 'Neither adds the other';
+
+  @override
+  String get siblingDirectionNote =>
+      'Being related says they go together. The direction says what happens when you add one.';
+
+  @override
   String get tagRelationsCreate => 'Create a new tag';
 
   @override
@@ -1960,6 +1981,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noSourceUrls => 'No linked addresses';
+
+  @override
+  String get databaseCleanupTitle => 'Clean up leftover files';
+
+  @override
+  String get databaseCleanupNote =>
+      'Avatars are copies Fern makes. When you change one, the previous copy stops being used by anything and stays on disk. This sweeps away everything nothing points to any more.';
+
+  @override
+  String get databaseCleanupAction => 'Clean up';
+
+  @override
+  String get databaseCleanupFailed => 'The clean-up could not finish';
+
+  @override
+  String databaseCleanupDone(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files removed, $size freed',
+      one: '1 file removed, $size freed',
+      zero: 'There was nothing left over',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockedImportsTitle => 'Not to be imported again';
+
+  @override
+  String get blockedImportsNote =>
+      'What you asked not to be offered again. It is skipped without downloading it.';
+
+  @override
+  String get blockedImportsNone => 'Nothing is blocked.';
+
+  @override
+  String get blockedImportsUnblock => 'Import this again';
+
+  @override
+  String get blockedImportsClear => 'Forget them all';
+
+  @override
+  String get blockImportAgain => 'Do not import this again';
+
+  @override
+  String get blockImportAgainDescription =>
+      'The source keeps offering what you saved there. Marked, this one is skipped without downloading it. You can undo it in Settings, under Database.';
+
+  @override
+  String importSkippedBlocked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count skipped: you asked not to see them again.',
+      one: '1 skipped: you asked not to see it again.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorNsfwAffected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Hides $count items.',
+      one: 'Hides 1 item.',
+      zero: 'This creator has no content right now.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorNsfwOnTooltip => 'Marked as NSFW · click to unmark';
+
+  @override
+  String get creatorNsfwOffTooltip => 'Mark as NSFW';
+
+  @override
+  String get searchChipDescription => 'Description';
 
   @override
   String get showsTagBranchOnFilter =>

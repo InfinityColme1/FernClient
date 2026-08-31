@@ -16,10 +16,10 @@ import 'package:material_symbols_icons/symbols.dart';
 /// que se leyera igual que algo confirmado convertiría cada equivocación del
 /// modelo en una etiqueta que nadie puso.
 ///
-/// Los dos botones sólo aparecen si hay algo que hacer con ella. Una sugerencia
-/// de un fernie que no enlaza nada —o cuya etiqueta alguien borró— no se puede
-/// aceptar: no hay nada que poner. Enseñar el botón y dar un error al pulsarlo
-/// sería peor que no enseñarlo.
+/// Cada botón aparece sólo si hay algo que hacer con él, y quien monta la fila
+/// es quien lo decide: enseñar uno que da un error al pulsarlo sería peor que no
+/// enseñarlo. El orden es región, aceptar y rechazar — los dos que dan por buena
+/// la sugerencia juntos, y el de descartarla al final.
 class SuggestionRow extends StatelessWidget {
   final MediaSuggestionEntity suggestion;
 
@@ -152,13 +152,9 @@ class SuggestionRow extends StatelessWidget {
               ),
               onPressed: onMarkRegion,
             ),
-          if (onReject != null)
-            IconButton(
-              tooltip: texts.actionReject,
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Symbols.close, size: AppSizes.iconSmall),
-              onPressed: onReject,
-            ),
+          // Aceptar entre la región y la cruz: los dos que dan por buena la
+          // sugerencia van juntos, y el de descartarla queda al final, apartado
+          // de ellos y donde ya estaba.
           if (onAccept != null)
             IconButton(
               tooltip: texts.actionAccept,
@@ -169,6 +165,13 @@ class SuggestionRow extends StatelessWidget {
               color: context.colors.terciary,
               icon: const Icon(Symbols.check, size: AppSizes.iconSmall),
               onPressed: onAccept,
+            ),
+          if (onReject != null)
+            IconButton(
+              tooltip: texts.actionReject,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Symbols.close, size: AppSizes.iconSmall),
+              onPressed: onReject,
             ),
         ],
       ),

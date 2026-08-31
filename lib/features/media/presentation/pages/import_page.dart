@@ -39,6 +39,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/features/media/presentation/widgets/select_all_button.dart';
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -615,14 +616,34 @@ class _ImportViewState extends State<_ImportView> {
   Future<void> _discardSelection(BuildContext context, int count) async {
     final bloc = context.read<MediaBloc>();
 
-    final deleteFiles = await showFernDialog<bool, MediaBloc>(
-      context: context,
-      builder: (_) =>
-          ConfirmDeleteDialog(kind: MediaDeletionKind.discard, count: count),
-    );
-    if (deleteFiles == null) return;
+    final selected = bloc.state.selectedIds.toList();
 
-    bloc.add(DeleteSelectedMediaEvent(deleteFiles: deleteFiles));
+    final decision = await showFernDialog<DeleteDecision, MediaBloc>(
+      context: context,
+      builder: (_) => ConfirmDeleteDialog(
+        kind: MediaDeletionKind.discard,
+        count: count,
+        // Sólo si hay algo que bloquear: lo local no tiene dirección en ninguna
+        // fuente, y ofrecerlo ahí sería prometer algo que no puede pasar.
+        canBlockImport: _hasRemote(bloc, selected),
+      ),
+    );
+    if (decision == null || !context.mounted) return;
+
+    // Antes de borrar: la dirección sale del nombre del fichero, y después del
+    // borrado ya no hay fila de la que leerlo.
+    if (decision.blocksImport) await blockImportOf(context, selected);
+
+    bloc.add(DeleteSelectedMediaEvent(deleteFiles: decision.deletesFiles));
+  }
+
+  /// Si algo de lo elegido viene de una fuente remota.
+  bool _hasRemote(MediaBloc bloc, List<int> ids) {
+    final summaries = bloc.state.mediaList ?? const [];
+
+    return summaries.any(
+      (each) => ids.contains(each.id) && each.importSource.isRemote,
+    );
   }
 
   @override
@@ -630,7 +651,33 @@ class _ImportViewState extends State<_ImportView> {
     final theme = Theme.of(context);
     final texts = AppLocalizations.of(context);
 
-    return BlocConsumer<MediaBloc, MediaStates>(
+    // El aviso de lo saltado va en su propio escucha, y no junto al resto, por
+    // un fallo que costó caro: se metió su condición («deja de estar ocupada»)
+    // en el `listenWhen` de abajo, y con ella el visor pasó a abrirse también al
+    // guardar y pasar al siguiente —que emite ocupada y luego libre—. Cada
+    // guardado apilaba una ruta más, y salir pedía tantos escapes como
+    // contenidos se hubieran revisado.
+    //
+    // Cada escucha con la condición de lo que hace: es lo que impide que añadir
+    // una vuelva a disparar la otra.
+    return BlocListener<MediaBloc, MediaStates>(
+      listenWhen: (previous, current) => previous.isBusy && !current.isBusy,
+      listener: (context, state) {
+        // La importación ha terminado: si se ha saltado algo bloqueado, se dice
+        // y se pone el contador a cero. Sin esto, una importación que no trae
+        // nada porque estaba todo bloqueado se ve igual que una que no encontró
+        // nada nuevo, que es lo que hace dudar de si el bloqueo funciona.
+        final blocked = getIt<BlockedImports>();
+        if (blocked.skipped == 0) return;
+
+        showFernToast(
+          context,
+          texts.importSkippedBlocked(blocked.skipped),
+          icon: Symbols.block,
+        );
+        blocked.resetSkipped();
+      },
+      child: BlocConsumer<MediaBloc, MediaStates>(
       listenWhen: (previous, current) =>
           (previous is! DetailedMedia && current is DetailedMedia) ||
           current.expiredSession != null ||
@@ -638,9 +685,10 @@ class _ImportViewState extends State<_ImportView> {
           current.emptySource != null,
       listener: (context, state) {
         if (state is DetailedMedia) {
-          // El contenido escaneado se abre con la información desplegada: es
-          // la pantalla donde se revisa antes de darlo por definitivo.
-          context.push(viewerRouteWithInfo(true));
+          // El contenido escaneado se abre con la información desplegada y en
+          // modo revisión: es la pantalla donde se revisa antes de darlo por
+          // definitivo, y la única en la que guardar pasa al siguiente.
+          context.push(viewerRouteForReview());
           return;
         }
 
@@ -918,6 +966,7 @@ class _ImportViewState extends State<_ImportView> {
                 ),
         );
       },
+      ),
     );
   }
 }

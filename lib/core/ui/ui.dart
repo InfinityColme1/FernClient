@@ -13,6 +13,7 @@ export 'dialogs/fern_dialog.dart';
 export 'dialogs/fern_dialog_side_panel.dart';
 export 'dialogs/fern_message_dialog.dart';
 export 'dialogs/show_fern_dialog.dart';
+export 'dialogs/single_prompt.dart';
 export 'display/fast_scroll_scope.dart';
 export 'display/fern_masonry_grid.dart';
 export 'display/fern_avatar.dart';

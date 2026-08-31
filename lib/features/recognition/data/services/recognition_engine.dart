@@ -112,7 +112,7 @@ class RecognitionEngine {
   /// que hacía fallar la instalación con "Acceso denegado" en cuanto se había
   /// abierto la pantalla de ajustes una vez, porque abrirla arranca el sidecar
   /// para leer las versiones.
-  Future<bool> install({bool withCuda = false}) async {
+  Future<bool> install({bool? withCuda}) async {
     await stop();
 
     return await provisioner?.install(withCuda: withCuda) ?? false;

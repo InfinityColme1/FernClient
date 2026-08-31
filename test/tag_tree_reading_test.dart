@@ -30,10 +30,16 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
 import 'package:Fern/core/services/shuffle_seed.dart';
+
+/// Las hermanas con la dirección de fábrica: las dos se ponen la una a la otra,
+/// que es lo que hacían todas antes de poder elegirlo.
+Map<int, SiblingDirection> both(Iterable<int> ids) =>
+    {for (final id in ids) id: SiblingDirection.both};
 
 void main() {
   late Directory directory;
@@ -140,15 +146,15 @@ void main() {
     // desde las dos.
     test('trae las hermanas, se creara la relación desde donde se creara',
         () async {
-      await repository.saveTagSiblings(1, [2]);
+      await repository.saveTagSiblings(1, both([2]));
 
       expect((await fromTree(1)).siblings.map((tag) => tag.name), ['serie']);
       expect((await fromTree(2)).siblings.map((tag) => tag.name), ['ladybug']);
     });
 
     test('las hermanas llegan planas, sin las suyas', () async {
-      await repository.saveTagSiblings(1, [2]);
-      await repository.saveTagSiblings(2, [1, 3]);
+      await repository.saveTagSiblings(1, both([2]));
+      await repository.saveTagSiblings(2, both([1, 3]));
 
       final siblings = (await fromTree(1)).siblings;
 
@@ -201,12 +207,12 @@ void main() {
   // nueva. Con el árbol leyéndolas vacías, ese conjunto era siempre el de la
   // nueva a secas, y la escritura sustituía en vez de sumar.
   test('relacionar por arrastre suma, no sustituye', () async {
-    await repository.saveTagSiblings(1, [2]);
+    await repository.saveTagSiblings(1, both([2]));
 
     final dragged = await fromTree(1);
     final ids = {for (final each in dragged.siblings) each.id}..add(3);
 
-    final result = await repository.saveTagSiblings(1, ids.toList());
+    final result = await repository.saveTagSiblings(1, both(ids));
     expect(result, isA<DataSuccess>());
 
     expect(await storedSiblings(1), {2, 3});
@@ -319,7 +325,7 @@ void main() {
     // Convertirla no le quita nada de lo suyo: sigue siendo la misma etiqueta,
     // con su contenido, sus direcciones y su sitio en el arbol.
     test('convertir no toca lo demas', () async {
-      await repository.saveTagSiblings(1, [2]);
+      await repository.saveTagSiblings(1, both([2]));
 
       final tag = await fromTree(1);
       await repository.updateTag(tag.copyWith(isPerson: true));

@@ -849,6 +849,27 @@ class AppLocalizationsCa extends AppLocalizations {
   String get tagRelationsAddSibling => 'Afegir relacionada';
 
   @override
+  String get tagCollapseBranch => 'Plega el que penja d’aquesta';
+
+  @override
+  String get tagExpandBranch => 'Desplega el que penja d’aquesta';
+
+  @override
+  String get siblingDirectionBoth => 'Cadascuna posa l’altra';
+
+  @override
+  String siblingDirectionOneWay(String from, String to) {
+    return '«$from» posa «$to»';
+  }
+
+  @override
+  String get siblingDirectionNone => 'Cap posa l’altra';
+
+  @override
+  String get siblingDirectionNote =>
+      'Estar relacionades diu que van juntes. La direcció diu què passa en posar-ne una.';
+
+  @override
   String get tagRelationsCreate => 'Crear una etiqueta nova';
 
   @override
@@ -1962,6 +1983,87 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get noSourceUrls => 'Sense adreces vinculades';
+
+  @override
+  String get databaseCleanupTitle => 'Neteja fitxers solts';
+
+  @override
+  String get databaseCleanupNote =>
+      'Els avatars són còpies que fa el Fern. En canviar-ne un, la còpia anterior deixa de fer-la servir ningú i es queda al disc. Això s’emporta tot el que ja no assenyala ningú.';
+
+  @override
+  String get databaseCleanupAction => 'Neteja';
+
+  @override
+  String get databaseCleanupFailed => 'La neteja no ha pogut acabar';
+
+  @override
+  String databaseCleanupDone(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fitxers esborrats, $size alliberats',
+      one: '1 fitxer esborrat, $size alliberats',
+      zero: 'No hi havia res solt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockedImportsTitle => 'Que no es torni a importar';
+
+  @override
+  String get blockedImportsNote =>
+      'El que vas demanar que no se t’ofereixi més. Se salta sense arribar a baixar-se.';
+
+  @override
+  String get blockedImportsNone => 'No hi ha res blocat.';
+
+  @override
+  String get blockedImportsUnblock => 'Torna a importar això';
+
+  @override
+  String get blockedImportsClear => 'Oblida’ls tots';
+
+  @override
+  String get blockImportAgain => 'No tornis a importar això';
+
+  @override
+  String get blockImportAgainDescription =>
+      'La font continua oferint el que hi tens desat. Marcat, això se salta sense arribar a baixar-se. Es desfà a Configuració, a Base de dades.';
+
+  @override
+  String importSkippedBlocked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saltats: vas demanar no tornar a veure\'ls.',
+      one: '1 saltat: vas demanar no tornar a veure\'l.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorNsfwAffected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Amaga $count continguts.',
+      one: 'Amaga 1 contingut.',
+      zero: 'Ara mateix aquest creador no té contingut.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorNsfwOnTooltip =>
+      'Marcat com a NSFW · prem per desmarcar-lo';
+
+  @override
+  String get creatorNsfwOffTooltip => 'Marca com a NSFW';
+
+  @override
+  String get searchChipDescription => 'Descripció';
 
   @override
   String get showsTagBranchOnFilter =>

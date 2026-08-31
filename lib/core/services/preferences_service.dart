@@ -330,4 +330,83 @@ class PreferencesService {
   /// La página en la que se dejó el navegador, o `null` si todavía no se ha
   /// abierto ninguna.
   String? getLastBrowserUrl() => _prefs.getString(browserLastUrlPreferenceKey);
+
+
+  /// Las últimas etiquetas asignadas a un contenido, de la más reciente a la más
+  /// antigua.
+  ///
+  /// Sirven para ofrecerlas nada más pulsar el campo, antes de escribir nada:
+  /// etiquetar una tanda es poner las mismas tres una y otra vez, y escribirlas
+  /// enteras cada vez es el trabajo que esto ahorra.
+  List<int> recentTagIds() => _recent(recentTagsPreferenceKey);
+
+  List<int> recentCreatorIds() => _recent(recentCreatorsPreferenceKey);
+
+  /// Los últimos fernies a los que se les marchó una región.
+  ///
+  /// El menú que sale al marcar los pone arriba del todo: marcar es un gesto que
+  /// se repite mucho y casi siempre sobre el mismo, y la lista salía por orden
+  /// de creación —con el recién creado arriba—, que es justo el orden que deja
+  /// de valer en cuanto se han creado tres.
+  List<int> recentFernieIds() => _recent(recentFerniesPreferenceKey);
+
+  Future<void> pushRecentTag(int id) =>
+      _pushRecent(recentTagsPreferenceKey, id);
+
+  Future<void> pushRecentCreator(int id) =>
+      _pushRecent(recentCreatorsPreferenceKey, id);
+
+  /// Si la casilla de «no volver a importar» quedó marcada.
+  ///
+  /// Apagada de fábrica: descartar algo es lo normal y no querer volver a verlo
+  /// nunca más es la excepción, así que la que se repite sin pensar tiene que
+  /// ser la que no bloquea.
+  bool getBlocksImportOnDiscard() =>
+      _prefs.getBool(blocksImportOnDiscardPreferenceKey) ?? false;
+
+  Future<bool> setBlocksImportOnDiscard(bool value) =>
+      _prefs.setBool(blocksImportOnDiscardPreferenceKey, value);
+
+  Future<void> pushRecentFernie(int id) =>
+      _pushRecent(recentFerniesPreferenceKey, id);
+
+  /// Las ramas de etiquetas que están plegadas en el menú y en la lista.
+  ///
+  /// Se guardan las plegadas: sin nada guardado el árbol sale entero, que es lo
+  /// que hacía antes de poder plegarlo.
+  Set<int> collapsedTagIds() => {
+        for (final each
+            in _prefs.getStringList(collapsedTagsPreferenceKey) ??
+                const <String>[])
+          if (int.tryParse(each) case final id?) id,
+      };
+
+  Future<void> setCollapsedTagIds(Set<int> ids) => _prefs.setStringList(
+        collapsedTagsPreferenceKey,
+        [for (final id in ids) '$id'],
+      );
+
+  List<int> _recent(String key) => [
+        for (final each in _prefs.getStringList(key) ?? const <String>[])
+          if (int.tryParse(each) case final id?) id,
+      ];
+
+  /// Pone [id] el primero y quita el que sobre por el final.
+  ///
+  /// Si ya estaba, sube: lo que interesa es el orden de uso, no el de la primera
+  /// vez que se usó.
+  Future<void> _pushRecent(String key, int id) async {
+    final kept = [
+      id,
+      for (final each in _recent(key))
+        if (each != id) each,
+    ];
+
+    await _prefs.setStringList(
+      key,
+      [
+        for (final each in kept.take(recentPicksStored)) '$each',
+      ],
+    );
+  }
 }

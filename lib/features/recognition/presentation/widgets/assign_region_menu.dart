@@ -4,10 +4,12 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/debouncer.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
+import 'package:Fern/features/recognition/domain/services/recent_fernies.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/search_fernies_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/fernies_bloc.dart';
@@ -21,6 +23,10 @@ import 'package:material_symbols_icons/symbols.dart';
 /// Arranca enseñando todos los fernies que hay, sin escribir nada: lo normal es
 /// tener unos pocos y querer el mismo de la vez anterior, así que obligar a
 /// escribir para ver algo sería un paso de más en un gesto que se repite mucho.
+///
+/// Y **los últimos usados van arriba**. Antes salían por orden de creación, con
+/// el recién creado el primero: ese orden vale la primera vez y deja de valer en
+/// cuanto hay tres fernies, porque el de arriba pasa a ser el que menos se usa.
 class AssignRegionMenu extends StatefulWidget {
   /// El fernie elegido. Quien lo recibe asigna la región y cierra el menú.
   final ValueChanged<FernieEntity> onSelected;
@@ -34,6 +40,7 @@ class AssignRegionMenu extends StatefulWidget {
 class _AssignRegionMenuState extends State<AssignRegionMenu> {
   final _getFernies = getIt<GetFerniesUseCase>();
   final _searchFernies = getIt<SearchFerniesUseCase>();
+  final _preferences = getIt<PreferencesService>();
 
   late final Debouncer _debouncer = Debouncer(searchDebounceDuration);
 
@@ -58,11 +65,15 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
 
     setState(() {
       _isSearching = false;
-      _results = result is DataSuccess
+      _results = _ordered(result is DataSuccess
           ? result.data ?? const <FernieEntity>[]
-          : const <FernieEntity>[];
+          : const <FernieEntity>[]);
     });
   }
+
+  /// Con los últimos usados delante.
+  List<FernieEntity> _ordered(List<FernieEntity> fernies) =>
+      ferniesByRecent(fernies, _preferences.recentFernieIds());
 
   void _onQueryChanged(String query) {
     // Vaciar el buscador devuelve la lista entera, no una lista vacía: es la
@@ -84,9 +95,9 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
 
     setState(() {
       _isSearching = false;
-      _results = result is DataSuccess
+      _results = _ordered(result is DataSuccess
           ? result.data ?? const <FernieEntity>[]
-          : const <FernieEntity>[];
+          : const <FernieEntity>[]);
     });
   }
 

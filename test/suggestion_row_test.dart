@@ -195,14 +195,34 @@ void main() {
       expect(find.byIcon(Symbols.close), findsOneWidget);
     });
 
-    testWidgets('sin nada que poner, sólo se puede rechazar', (tester) async {
-      // Un fernie que no enlaza nada, o cuya etiqueta alguien borró: enseñar el
-      // botón de aceptar y dar un error al pulsarlo sería peor que no
-      // enseñarlo.
+    testWidgets('sin nada que hacer al aceptar, sólo se puede rechazar',
+        (tester) async {
+      // Quién puede aceptar lo decide quien monta la fila, no la fila: aquí lo
+      // único que se sostiene es que un botón sin nada detrás no se pinta.
+      // Enseñarlo y dar un error al pulsarlo sería peor que no enseñarlo.
       await _pump(tester, _suggestion(), onReject: () {});
 
       expect(find.byIcon(Symbols.check), findsNothing);
       expect(find.byIcon(Symbols.close), findsOneWidget);
+    });
+
+    // El orden importa: los dos que dan por buena la sugerencia —guardar la
+    // región y aceptarla— van juntos, y el de descartarla queda al final,
+    // apartado de ellos, para no pulsar uno por otro.
+    testWidgets('van en orden: región, aceptar y rechazar', (tester) async {
+      await _pump(
+        tester,
+        _suggestion(tag: _ladybug, withBox: true),
+        onAccept: () {},
+        onReject: () {},
+        onMarkRegion: () {},
+      );
+
+      double xOf(IconData icon) =>
+          tester.getCenter(find.byIcon(icon)).dx;
+
+      expect(xOf(Symbols.crop_free), lessThan(xOf(Symbols.check)));
+      expect(xOf(Symbols.check), lessThan(xOf(Symbols.close)));
     });
 
     testWidgets('aceptar avisa a quien lo pidió', (tester) async {

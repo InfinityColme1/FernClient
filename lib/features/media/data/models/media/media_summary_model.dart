@@ -23,6 +23,19 @@ class MediaSummaryModel {
   @Index()
   String importSource = ImportSource.local.id;
 
+  /// El identificador de la pieza en la fuente de la que vino, si se sabe.
+  ///
+  /// Es lo que hace falta para poder decir «esto no me lo vuelvas a ofrecer»:
+  /// se compara con el `RemoteMediaItem.id` que la fuente da **antes de
+  /// descargar**, así que un bloqueo se resuelve sin bajar el fichero.
+  ///
+  /// `null` en lo local y en todo lo que entró antes de que esto se guardara.
+  /// Para eso hay respaldo: en lo remoto el fichero se guarda con el propio
+  /// identificador por nombre, así que se puede recuperar de la ruta. El
+  /// respaldo no vale para lo que salió de un comprimido —esos ficheros se
+  /// llaman como venían dentro—, y de ahí que se guarde.
+  String? remoteId;
+
   /// Contenido marcado para borrar: sigue en la base de datos, pero sólo se ve
   /// en la pantalla de eliminados hasta que se restablezca o se fuerce el
   /// borrado definitivo.
@@ -102,6 +115,7 @@ class MediaSummaryModel {
         isDeleted: isDeleted,
         deletedAt: deletedAt,
         importSource: ImportSource.fromId(importSource),
+        remoteId: remoteId,
         hasPendingSuggestions: hasPendingSuggestions,
         recognizedAt: recognizedAt,
         width: mediaWidth,
@@ -117,6 +131,7 @@ class MediaSummaryModel {
       ..isDeleted = entity.isDeleted
       ..deletedAt = entity.deletedAt
       ..importSource = entity.importSource.id
+      ..remoteId = entity.remoteId
       ..mediaWidth = entity.width
       ..mediaHeight = entity.height;
     return model;

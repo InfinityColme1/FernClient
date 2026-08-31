@@ -488,21 +488,25 @@ class MediaGrid extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         for (final section in sections!) ...[
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.m,
-              AppSpacing.l,
-              AppSpacing.m,
-              AppSpacing.xs,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: SearchResultRow.header(
-                label: section.title,
-                imagePath: section.imagePath,
-                type: section.type,
+          // Un grupo sin título no lleva cabecera: es el del cruce de varias
+          // pastillas, y lo que se está buscando ya se lee en la barra. Una
+          // cabecera vacía sería una franja de nada empujando la rejilla.
+          if (section.title.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.m,
+                AppSpacing.l,
+                AppSpacing.m,
+                AppSpacing.xs,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: SearchResultRow.header(
+                  label: section.title,
+                  imagePath: section.imagePath,
+                  type: section.type,
+                ),
               ),
             ),
-          ),
           SliverPadding(
             // Mismo carril para la barra que en la rejilla normal: esto se
             // desplaza igual y esta dentro de la misma superficie.

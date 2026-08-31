@@ -10,6 +10,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:flutter/material.dart';
@@ -161,5 +162,75 @@ void main() {
 
     expect(checked, isFalse);
     expect(find.text('Tags'), findsOneWidget);
+  });
+
+  // Cruzando pastillas el resultado viene en un solo grupo, y ese grupo no
+  // pertenece a ninguna de las tres clases mas que por convenio: apagar la de
+  // contenido lo haria desaparecer entero sin que se entienda por que.
+  group('cruzando pastillas', () {
+    const crossed = [
+      SearchCriterionEntity(
+        kind: SearchCriterionKind.tag,
+        id: 1,
+        label: 'ladybug',
+      ),
+      SearchCriterionEntity(
+        kind: SearchCriterionKind.creator,
+        id: 10,
+        label: 'Pompeu',
+      ),
+    ];
+
+    final crossedSections = [
+      MediaSearchSectionEntity(
+        type: SearchResultType.media,
+        title: '',
+        media: [_media(1)],
+      ),
+    ];
+
+    test('con una sola pastilla el filtro sigue recortando', () {
+      final state = MediaLoading(
+        searchSections: _sections,
+        searchCriteria: const [SearchCriterionEntity.text('algo')],
+      ).copyWith(searchFilters: const {SearchResultType.tag});
+
+      expect(state.crossesCriteria, isFalse);
+      expect(state.visibleSearchSections, hasLength(1));
+    });
+
+    test('con dos, el filtro deja de aplicarse', () {
+      final state = MediaLoading(
+        searchSections: crossedSections,
+        searchCriteria: crossed,
+      ).copyWith(searchFilters: const {SearchResultType.tag});
+
+      expect(state.crossesCriteria, isTrue);
+      // Apagar «contenido» no puede vaciar el unico grupo que hay.
+      expect(state.visibleSearchSections, hasLength(1));
+    });
+
+    test('pero los de fuente y tipo siguen recortando', () {
+      final state = MediaLoading(
+        searchSections: crossedSections,
+        searchCriteria: crossed,
+      ).copyWith(sourceFilters: const <ImportSource>{});
+
+      expect(state.visibleSearchSections, isEmpty);
+    });
+
+    // Una pastilla vacia no cuenta: si contara, escribir un espacio pondria la
+    // rejilla en modo cruce sin que se este cruzando nada.
+    test('una pastilla vacia no cuenta como cruce', () {
+      final state = MediaLoading(
+        searchSections: _sections,
+        searchCriteria: const [
+          SearchCriterionEntity.text('algo'),
+          SearchCriterionEntity.text('   '),
+        ],
+      );
+
+      expect(state.crossesCriteria, isFalse);
+    });
   });
 }

@@ -11,6 +11,7 @@ import 'package:Fern/features/media/data/datasources/pixiv_api_client.dart';
 import 'package:Fern/features/media/data/datasources/reddit_api_client.dart';
 import 'package:Fern/features/media/data/services/archive_extractor.dart';
 import 'package:Fern/features/media/data/services/download_pool.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/remote_media_downloader.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
@@ -43,6 +44,13 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
   final SettingsRepository _settingsRepository;
   final PreferencesService _preferencesService;
 
+  /// Lo que el usuario ha dicho que no quiere volver a ver.
+  ///
+  /// Se pregunta antes de descargar, una vez por pieza, así que contesta de
+  /// memoria: una consulta por pieza convertiría importar mil cosas en mil
+  /// consultas para no hacer nada mil veces.
+  final BlockedImports _blocked;
+
   RemoteMediaRepositoryImpl({
     required RedditApiClient reddit,
     required PixivApiClient pixiv,
@@ -56,7 +64,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     required MediaRegistry registry,
     required SettingsRepository settingsRepository,
     required PreferencesService preferencesService,
+    required BlockedImports blocked,
   })  : _reddit = reddit,
+        _blocked = blocked,
         _pixiv = pixiv,
         _danbooru = danbooru,
         _gelbooru = gelbooru,
@@ -148,6 +158,14 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         // Aquí se quedó la vez anterior: de este punto para atrás ya se miró.
         if (item.postId == marker) break;
 
+        // Lo que el usuario dijo que no quería volver a ver. Se mira **antes de
+        // descargar**: el identificador se conoce aquí, así que el fichero ni se
+        // baja. No cuenta como fallo —no ha fallado nada— ni como importado.
+        if (_blocked.blocks(ImportSource.reddit.id, item.id)) {
+          _blocked.noteSkipped();
+          continue;
+        }
+
         final path = await _downloader.download(
           url: item.url,
           name: item.id,
@@ -165,6 +183,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           // La etiqueta de la plataforma sólo si el usuario la ha pedido: por
           // defecto la fuente se guarda en el sumario y se filtra por ella, sin
           // llenar el menú lateral de etiquetas que no ha creado nadie.
+          remoteId: item.id,
           sourceTagName:
               settings.autoTagRemoteSource ? redditSourceTagName : null,
           sourceUrls: item.sourceUrls,
@@ -239,6 +258,14 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         final collection = item.collection;
         if (collection != null) newest.putIfAbsent(collection, () => item.postId);
 
+        // Lo que el usuario dijo que no quería volver a ver. Se mira **antes de
+        // descargar**: el identificador se conoce aquí, así que el fichero ni se
+        // baja. No cuenta como fallo —no ha fallado nada— ni como importado.
+        if (_blocked.blocks(ImportSource.pixiv.id, item.id)) {
+          _blocked.noteSkipped();
+          continue;
+        }
+
         final path = await _downloader.download(
           url: item.url,
           name: item.id,
@@ -259,6 +286,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           path: path,
           source: ImportSource.pixiv,
           description: item.title.isEmpty ? null : item.title,
+          remoteId: item.id,
           sourceTagName:
               settings.autoTagRemoteSource ? pixivSourceTagName : null,
           sourceUrls: item.sourceUrls,
@@ -319,6 +347,14 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           in _danbooru.favoriteMedia(credentials, stopAt: marker)) {
         newest ??= item.postId;
 
+        // Lo que el usuario dijo que no quería volver a ver. Se mira **antes de
+        // descargar**: el identificador se conoce aquí, así que el fichero ni se
+        // baja. No cuenta como fallo —no ha fallado nada— ni como importado.
+        if (_blocked.blocks(ImportSource.danbooru.id, item.id)) {
+          _blocked.noteSkipped();
+          continue;
+        }
+
         final path = await _downloader.download(
           url: item.url,
           name: item.id,
@@ -332,6 +368,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         final summary = await _registry.register(
           path: path,
           source: ImportSource.danbooru,
+          remoteId: item.id,
           sourceTagName:
               settings.autoTagRemoteSource ? danbooruSourceTagName : null,
           sourceUrls: item.sourceUrls,
@@ -389,6 +426,14 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           in _gelbooru.favoriteMedia(credentials, stopAt: marker)) {
         newest ??= item.postId;
 
+        // Lo que el usuario dijo que no quería volver a ver. Se mira **antes de
+        // descargar**: el identificador se conoce aquí, así que el fichero ni se
+        // baja. No cuenta como fallo —no ha fallado nada— ni como importado.
+        if (_blocked.blocks(ImportSource.gelbooru.id, item.id)) {
+          _blocked.noteSkipped();
+          continue;
+        }
+
         final path = await _downloader.download(
           url: item.url,
           name: item.id,
@@ -404,6 +449,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         final summary = await _registry.register(
           path: path,
           source: ImportSource.gelbooru,
+          remoteId: item.id,
           sourceTagName:
               settings.autoTagRemoteSource ? gelbooruSourceTagName : null,
           sourceUrls: item.sourceUrls,
@@ -483,6 +529,14 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           in _pinterest.savedMedia(credentials, stopAt: marker)) {
         newest ??= item.postId;
 
+        // Lo que el usuario dijo que no quería volver a ver. Se mira **antes de
+        // descargar**: el identificador se conoce aquí, así que el fichero ni se
+        // baja. No cuenta como fallo —no ha fallado nada— ni como importado.
+        if (_blocked.blocks(ImportSource.pinterest.id, item.id)) {
+          _blocked.noteSkipped();
+          continue;
+        }
+
         final path = await _downloader.download(
           url: item.url,
           name: item.id,
@@ -497,6 +551,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           path: path,
           source: ImportSource.pinterest,
           description: item.title.isEmpty ? null : item.title,
+          remoteId: item.id,
           sourceTagName:
               settings.autoTagRemoteSource ? pinterestSourceTagName : null,
           sourceUrls: item.sourceUrls,
@@ -663,6 +718,13 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
       String description,
       List<String> sourceUrls,
     ) async {
+      // Aquí y no en el bucle: por este punto pasan las dos formas en las que
+      // llega algo de esta fuente, la suelta y la que sale de un comprimido.
+      if (_blocked.blocks(ImportSource.pawchive.id, name)) {
+        _blocked.noteSkipped();
+        return;
+      }
+
       final path = await _downloader.download(
         url: url,
         name: name,
@@ -677,6 +739,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         path: path,
         source: ImportSource.pawchive,
         description: description.isEmpty ? null : description,
+        remoteId: name,
         sourceTagName: tagName,
         sourceUrls: sourceUrls,
       );
@@ -849,6 +912,13 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     required List<String> sourceUrls,
     required StreamController<DataState<MediaSummaryEntity>> out,
   }) async {
+    // Lo mismo que en `bring`, y aquí hace falta igual: un comprimido bloqueado
+    // no se baja, y eso son megas que no se piden y un fichero que no se abre.
+    if (_blocked.blocks(ImportSource.pawchive.id, name)) {
+      _blocked.noteSkipped();
+      return 0;
+    }
+
     final path = await _downloader.download(
       url: url,
       name: name,
@@ -867,6 +937,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         path: file,
         source: ImportSource.pawchive,
         description: description.isEmpty ? null : description,
+        // El del comprimido, no el del fichero: lo que la fuente ofrece —y lo
+        // que se puede bloquear antes de descargar— es el comprimido entero.
+        // Sus ficheros no existen para la fuente, y se llaman como venían
+        // dentro, así que de su nombre no se saca nada.
+        remoteId: name,
         sourceTagName: tagName,
         sourceUrls: sourceUrls,
       );

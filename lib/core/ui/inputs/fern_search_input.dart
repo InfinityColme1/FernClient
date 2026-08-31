@@ -54,6 +54,20 @@ class FernSearchInput extends StatefulWidget {
   /// vaciarlo sería deshacer lo que se acaba de elegir.
   final bool clearOnSelected;
 
+  /// El desplegable se enseña también con el campo vacío.
+  ///
+  /// Apagado por defecto: hasta ahora un campo vacío no tenía nada que enseñar,
+  /// y con las sugerencias filtradas por el texto (`filterSuggestions`) un
+  /// `contains('')` las dejaría pasar todas de golpe. Lo encienden los que traen
+  /// sus propias sugerencias resueltas de fuera y tienen algo que ofrecer antes
+  /// de escribir: los últimos usados.
+  final bool showsSuggestionsWhenEmpty;
+
+  /// El campo acaba de recibir el foco estando vacío.
+  ///
+  /// Es cuándo hay que ir a buscar lo que se va a ofrecer sin escribir nada.
+  final VoidCallback? onFocusedEmpty;
+
   const FernSearchInput({
     super.key,
     required this.label,
@@ -67,6 +81,8 @@ class FernSearchInput extends StatefulWidget {
     this.filterSuggestions = true,
     this.isSearching = false,
     this.clearOnSelected = false,
+    this.showsSuggestionsWhenEmpty = false,
+    this.onFocusedEmpty,
   });
 
   @override
@@ -77,7 +93,40 @@ class _FernSearchInputState extends State<FernSearchInput> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.initialValue);
   final LayerLink _layerLink = LayerLink();
+  final FocusNode _focusNode = FocusNode();
   OverlayEntry? _overlayEntry;
+
+  /// Ata el campo con su desplegable para las pulsaciones.
+  ///
+  /// El desplegable flota en la capa de encima, así que no es hijo del campo y
+  /// pulsarlo cuenta como pulsar fuera. Con los dos en el mismo grupo, «fuera»
+  /// pasa a ser fuera de los dos, que es lo que se quiere decir.
+  final Object _tapGroup = Object();
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChanged);
+  }
+
+  /// Al entrar en el campo vacío se pide lo que haya que ofrecer.
+  ///
+  /// **Y no se cierra al salir del foco**, aunque lo pida el cuerpo. Pulsar una
+  /// sugerencia le quita el foco al campo, así que cerrarlo ahí quitaba el
+  /// desplegable de en medio entre el botón abajo y el botón arriba: la
+  /// pulsación acababa en el aire y elegir una sugerencia no hacía nada. De
+  /// cerrarlo al pulsar fuera se encarga el `TapRegion`, que sí distingue el
+  /// desplegable del resto de la pantalla.
+  void _onFocusChanged() {
+    if (!mounted) return;
+    if (!_focusNode.hasFocus) return;
+
+    if (!widget.showsSuggestionsWhenEmpty) return;
+    if (_controller.text.isNotEmpty) return;
+
+    widget.onFocusedEmpty?.call();
+    _refreshOverlay();
+  }
 
   List<String> get _visibleSuggestions {
     if (!widget.filterSuggestions) return widget.suggestions;
@@ -101,7 +150,10 @@ class _FernSearchInputState extends State<FernSearchInput> {
 
   /// Muestra, oculta o repinta el desplegable según lo que haya que enseñar.
   void _refreshOverlay() {
-    if (_controller.text.isEmpty || _visibleSuggestions.isEmpty) {
+    final isEmpty = _controller.text.isEmpty;
+
+    if ((isEmpty && !widget.showsSuggestionsWhenEmpty) ||
+        _visibleSuggestions.isEmpty) {
       _hideOverlay();
       return;
     }
@@ -125,7 +177,9 @@ class _FernSearchInputState extends State<FernSearchInput> {
           // pintan su fondo y su resalte sobre el `Material` más cercano, y con
           // una caja de color en medio quedaban tapados —pasar por encima de
           // una sugerencia no se notaba— y Flutter lo avisaba por consola.
-          child: Material(
+          child: TapRegion(
+            groupId: _tapGroup,
+            child: Material(
             elevation: 0.0,
             color: context.colors.white,
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
@@ -177,6 +231,7 @@ class _FernSearchInputState extends State<FernSearchInput> {
                     .toList(),
               ),
             ),
+            ),
           ),
         ),
       ),
@@ -199,18 +254,27 @@ class _FernSearchInputState extends State<FernSearchInput> {
   @override
   void dispose() {
     _hideOverlay();
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
+    return TapRegion(
+      groupId: _tapGroup,
+      // Pulsar en cualquier otro sitio lo cierra, que es lo que antes hacía el
+      // foco. La diferencia está en que esto sí sabe que el desplegable es parte
+      // del campo aunque viva en otra capa.
+      onTapOutside: (_) => _hideOverlay(),
+      child: CompositedTransformTarget(
       link: _layerLink,
       child: FernOutlinedField(
         label: widget.label,
         child: TextField(
           controller: _controller,
+          focusNode: _focusNode,
           onChanged: (val) {
             widget.onChanged?.call(val);
             _refreshOverlay();
@@ -254,6 +318,7 @@ class _FernSearchInputState extends State<FernSearchInput> {
             },
           ),
         ),
+      ),
       ),
     );
   }

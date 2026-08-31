@@ -53,14 +53,14 @@ class _DeleteView extends StatelessWidget {
   Future<void> _purge(BuildContext context, int count) async {
     final bloc = context.read<MediaBloc>();
 
-    final deleteFiles = await showFernDialog<bool, MediaBloc>(
+    final decision = await showFernDialog<DeleteDecision, MediaBloc>(
       context: context,
       builder: (_) =>
           ConfirmDeleteDialog(kind: MediaDeletionKind.trash, count: count),
     );
-    if (deleteFiles == null) return;
+    if (decision == null) return;
 
-    bloc.add(PurgeDeletedMediaEvent(deleteFiles: deleteFiles));
+    bloc.add(PurgeDeletedMediaEvent(deleteFiles: decision.deletesFiles));
   }
 
   @override

@@ -59,6 +59,14 @@ class TagEntity extends Equatable{
   /// otra, no recorriendo un árbol.
   final List<TagEntity> siblings;
 
+  /// De sus hermanas, a cuáles **no** arrastra ésta.
+  ///
+  /// La relación es simétrica, el arrastre no tiene por qué serlo: «ladybug»
+  /// puede poner «Marinette» sin que poner «Marinette» ponga «ladybug». Vacía
+  /// quiere decir «a todas», que es lo que hacían todas antes de que esto se
+  /// pudiera elegir.
+  final List<int> mutedSiblings;
+
   const TagEntity({
     required this.id,
     required this.name,
@@ -69,6 +77,7 @@ class TagEntity extends Equatable{
     this.isNsfw = false,
     this.isPerson = false,
     this.siblings = const [],
+    this.mutedSiblings = const [],
     bool? isUnderNsfw,
   }) : isUnderNsfw = isUnderNsfw ?? isNsfw;
 
@@ -90,6 +99,7 @@ class TagEntity extends Equatable{
     bool? isPerson,
     bool? isUnderNsfw,
     List<TagEntity>? siblings,
+    List<int>? mutedSiblings,
   }) {
     return TagEntity(
       id: id,
@@ -102,6 +112,7 @@ class TagEntity extends Equatable{
       isPerson: isPerson ?? this.isPerson,
       isUnderNsfw: isUnderNsfw ?? this.isUnderNsfw,
       siblings: siblings ?? this.siblings,
+      mutedSiblings: mutedSiblings ?? this.mutedSiblings,
     );
   }
 
@@ -117,6 +128,7 @@ class TagEntity extends Equatable{
     isPerson,
     isUnderNsfw,
     siblings,
+    mutedSiblings,
   ];
 
 }

@@ -99,6 +99,25 @@ class SidecarSetupState {
     return (start + (end - start) * within).clamp(0.0, 1.0);
   }
 }
+/// La capacidad de cálculo más alta de las que enumera `nvidia-smi`.
+///
+/// La salida es una línea por tarjeta con un número como `12.0`. Va aparte para
+/// poder probarla sin una tarjeta delante, que es lo único que no se puede tener
+/// en una prueba: lo que decide qué se instala no puede depender de la máquina en
+/// la que se ejecuten las pruebas.
+double? highestComputeCapability(String output) {
+  double? best;
+
+  for (final line in const LineSplitter().convert(output)) {
+    final value = double.tryParse(line.trim());
+    if (value == null) continue;
+
+    if (best == null || value > best) best = value;
+  }
+
+  return best;
+}
+
 
 /// Monta el entorno de Python con el que FeRN entrena y reconoce.
 ///
@@ -106,10 +125,13 @@ class SidecarSetupState {
 /// y con él un Python propio y un entorno virtual dentro de la carpeta de
 /// reconocimiento. Nada de esto toca el sistema.
 ///
-/// Se instala **siempre la rueda de CPU de torch**, que pesa una décima parte
-/// que la de CUDA. La aceleración por tarjeta gráfica es una descarga aparte que
-/// el usuario pide si quiere, y en los Mac con Apple Silicon ni siquiera hace
-/// falta: viene en la rueda normal.
+/// **Se instala la rueda que le toque a esta máquina.** Si hay una tarjeta
+/// NVIDIA se pone la de CUDA —y la de CUDA que corresponda a su arquitectura—,
+/// y si no, la de procesador. Antes se ponía siempre la de procesador y la
+/// tarjeta era una descarga aparte escondida en un panel: quien no entraba ahí
+/// se quedaba reconociendo a paso de tortuga sin saber que podía ir en coche.
+/// En los Mac con Apple Silicon no hay nada que elegir: viene en la rueda
+/// normal.
 ///
 /// **Nada de aquí puede correr con el sidecar en marcha.** Un `python.exe` del
 /// entorno virtual tiene abiertos sus propios ficheros, y en Windows eso impide
@@ -165,10 +187,13 @@ class SidecarProvisioner {
 
   /// Monta el entorno de principio a fin.
   ///
-  /// Con [withCuda] se instala directamente la rueda de la tarjeta gráfica, sin
-  /// pasar por la de procesador: quien ya sabe que quiere GPU no tiene por qué
-  /// descargarse las dos.
-  Future<bool> install({bool withCuda = false}) async {
+  /// Sin decir nada se mira la máquina: con tarjeta NVIDIA se instala la rueda de
+  /// CUDA que le corresponda, y sin ella la de procesador. Con [withCuda] puesto
+  /// a `false` se fuerza la de procesador —una descarga diez veces más corta—, y
+  /// con `true` se pide la de la tarjeta aunque luego no haya ninguna, en cuyo
+  /// caso se cae a la de procesador en lugar de fallar: el entorno queda usable,
+  /// que es lo que importa.
+  Future<bool> install({bool? withCuda}) async {
     try {
       await Directory(paths.runtimeDirectory).create(recursive: true);
 
@@ -190,8 +215,9 @@ class SidecarProvisioner {
 
       _emit(SidecarSetupStage.detectingHardware);
       // Si se pidió GPU pero no hay tarjeta, se sigue con la de procesador en
-      // lugar de fallar: el entorno queda usable, que es lo que importa.
-      final useCuda = withCuda && await detectCuda();
+      // lugar de fallar: el entorno queda usable, que es lo que importa. Y sin
+      // pedir nada, manda lo que haya en la máquina.
+      final useCuda = (withCuda ?? true) && await detectCuda();
 
       _emit(SidecarSetupStage.installingTorch);
       await _installTorch(withCuda: useCuda);
@@ -291,14 +317,24 @@ class SidecarProvisioner {
     ]);
   }
 
+  /// Instala torch, con la rueda que le toque a esta máquina.
+  ///
+  /// **Cuál le toca depende de la tarjeta**, no sólo de si hay una. Con la rueda
+  /// equivocada torch se instala, arranca y dice que hay CUDA; lo que falla es el
+  /// primer kernel, ya reconociendo, y para entonces nadie relaciona una cosa con
+  /// la otra.
   Future<void> _installTorch({required bool withCuda}) async {
+    final index = withCuda
+        ? torchCudaIndexUrlFor(await detectComputeCapability())
+        : torchCpuIndexUrl;
+
     await _run([
       'pip',
       'install',
       '--python',
       paths.venvPython,
       '--index-url',
-      withCuda ? torchCudaIndexUrl : torchCpuIndexUrl,
+      index,
       // Sin esto, `uv` da por buena la versión que ya hay instalada y no cambia
       // de rueda: el usuario pulsaría el botón y no pasaría nada.
       '--reinstall-package',
@@ -329,6 +365,31 @@ class SidecarProvisioner {
     }
 
     return false;
+  }
+
+  /// La capacidad de cálculo de la tarjeta, que es lo que dice qué rueda de
+  /// torch sirve.
+  ///
+  /// Se la pregunta al mismo `nvidia-smi` que ya dice si hay tarjeta. Los
+  /// controladores viejos no conocen la consulta y contestan con un error: en ese
+  /// caso no se sabe, y no saber se trata como «la de siempre».
+  ///
+  /// Con varias tarjetas se coge **la más capaz**: la rueda tiene que servir para
+  /// la que se vaya a usar, y una rueda más moderna sigue valiendo para las
+  /// antiguas.
+  Future<double?> detectComputeCapability() async {
+    try {
+      final result = await Process.run(
+        'nvidia-smi',
+        ['--query-gpu=compute_cap', '--format=csv,noheader'],
+      );
+
+      if (result.exitCode != 0) return null;
+
+      return highestComputeCapability(result.stdout.toString());
+    } on ProcessException {
+      return null;
+    }
   }
 
   /// Deja en disco el script del sidecar.

@@ -71,7 +71,21 @@ class ViewerPage extends StatefulWidget {
   /// contenido se abre entero y el parpadeo dice de qué trozo se trataba.
   final int? highlightRegionId;
 
-  const ViewerPage({super.key, this.openInfo = false, this.highlightRegionId});
+  /// Se está revisando una tanda recién importada.
+  ///
+  /// Es lo único que hace que guardar pase al siguiente contenido. Ese salto
+  /// existe para no volver a la rejilla entre uno y otro mientras se revisa lo
+  /// que acaba de llegar; desde cualquier otro sitio se ha abierto **ese**
+  /// contenido, y llevarse al usuario a otro al guardar sería perder de vista lo
+  /// que estaba mirando.
+  final bool isReviewing;
+
+  const ViewerPage({
+    super.key,
+    this.openInfo = false,
+    this.highlightRegionId,
+    this.isReviewing = false,
+  });
 
   @override
   State<ViewerPage> createState() => _ViewerPageState();
@@ -159,6 +173,18 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// justo la franja de arriba del contenido, que es donde más incómodo resulta
   /// no poder empezar a marcar.
   bool _isDrawingRegion = false;
+
+  /// Las preguntas del modo fernie, de una en una.
+  ///
+  /// Preguntar es esperar, y entre la pulsación y el diálogo caben más
+  /// pulsaciones: aporreando escape para salir salían tres y cuatro preguntas
+  /// idénticas apiladas, y había que contestarlas todas. Lo de borrar tenía
+  /// media protección (`isRepeat`, que sólo tapa tener la tecla pulsada); ésta
+  /// mira si ya hay una puesta, que es lo que de verdad hay que saber.
+  ///
+  /// Una para las dos: nunca se pregunta por dos cosas a la vez, y con una
+  /// bandera por pregunta habría que acordarse de añadir la siguiente.
+  final _prompts = SinglePrompt();
 
   /// Clave del área del visor, para llevar la posición del ratón (que llega en
   /// coordenadas de la ventana) a coordenadas de esa área.
@@ -467,7 +493,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     if (!_fernieMode.state.isFernieMode) return;
 
     if (!save && _fernieMode.state.hasChanges) {
-      final discard = await _confirmDiscard();
+      final discard = await _prompts.ask(_confirmDiscard) ?? false;
 
       // El diálogo se puede quedar abierto mientras la pantalla se va (el
       // contenido desaparece, alguien navega): al volver, aquí ya no hay nada
@@ -544,12 +570,14 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   Future<void> _deleteSelectedRegion(int index) async {
     final texts = AppLocalizations.of(context);
 
-    final confirmed = await showFernDialog<bool, MediaBloc>(
-      context: context,
-      builder: (_) => FernieConfirmDialog(
-        title: texts.fernieRegionDeleteTitle,
-        message: texts.fernieRegionDeleteMessage,
-        confirmLabel: texts.actionDelete,
+    final confirmed = await _prompts.ask(
+      () => showFernDialog<bool, MediaBloc>(
+        context: context,
+        builder: (_) => FernieConfirmDialog(
+          title: texts.fernieRegionDeleteTitle,
+          message: texts.fernieRegionDeleteMessage,
+          confirmLabel: texts.actionDelete,
+        ),
       ),
     );
 
@@ -617,6 +645,11 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   }
 
   void _assignPendingRegion(FernieEntity fernie) {
+    // Se apunta aquí y no en el menú: marcar y reasignar entran los dos por este
+    // punto, y los dos cuentan como haberlo usado. Sin esperar, que es una
+    // preferencia y no puede hacer esperar a un gesto que se repite tanto.
+    unawaited(getIt<PreferencesService>().pushRecentFernie(fernie.id));
+
     // Reasignar no marca nada nuevo: cambia el fernie de la región elegida y
     // queda en su borrador hasta que se confirme desde la pestaña.
     if (_isReassigning) {
@@ -1106,6 +1139,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             // LADO DERECHO: Panel de Información
             _InfoPanel(
               isOpen: state.showInfo,
+              isReviewing: widget.isReviewing,
               fernieMode: _fernieMode,
               suggestions: _suggestions,
             ),
@@ -2252,6 +2286,9 @@ class _CarouselTransition extends StatelessWidget {
 class _InfoPanel extends StatelessWidget {
   final bool isOpen;
 
+  /// Si guardar pasa al siguiente contenido. Ver [ViewerPage.isReviewing].
+  final bool isReviewing;
+
   /// El modo del visor, que la sección de fernies del panel necesita mirar.
   final FernieModeBloc fernieMode;
 
@@ -2260,6 +2297,7 @@ class _InfoPanel extends StatelessWidget {
 
   const _InfoPanel({
     required this.isOpen,
+    required this.isReviewing,
     required this.fernieMode,
     required this.suggestions,
   });
@@ -2283,7 +2321,11 @@ class _InfoPanel extends StatelessWidget {
       },
       child: SizedBox(
         width: AppSizes.infoPanelWidth,
-        child: MediaInfo(fernieMode: fernieMode, suggestions: suggestions),
+        child: MediaInfo(
+          isReviewing: isReviewing,
+          fernieMode: fernieMode,
+          suggestions: suggestions,
+        ),
       ),
     );
   }

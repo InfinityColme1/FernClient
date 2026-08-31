@@ -41,6 +41,16 @@ class MediaSuggestionEntity extends Equatable {
     this.creator,
   });
 
+  /// La misma sugerencia, ya con la etiqueta que se le acaba de dar.
+  ///
+  /// Para el fernie que no enlazaba nada: al aceptarlo se le busca o se le crea
+  /// su etiqueta, y a partir de ahí la fila propone lo mismo que cualquier otra.
+  MediaSuggestionEntity withTag(TagEntity tag) => MediaSuggestionEntity(
+        result: result,
+        fernie: fernie,
+        tag: tag,
+      );
+
   int get id => result.id;
   double get confidence => result.confidence;
   int get mediaId => result.mediaId;

@@ -27,23 +27,28 @@ const TagModelSchema = CollectionSchema(
       name: r'isPerson',
       type: IsarType.bool,
     ),
-    r'name': PropertySchema(
+    r'mutedSiblings': PropertySchema(
       id: 2,
+      name: r'mutedSiblings',
+      type: IsarType.longList,
+    ),
+    r'name': PropertySchema(
+      id: 3,
       name: r'name',
       type: IsarType.string,
     ),
     r'nsfwSourceUrls': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'nsfwSourceUrls',
       type: IsarType.stringList,
     ),
     r'picturePath': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'picturePath',
       type: IsarType.string,
     ),
     r'sourceUrls': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'sourceUrls',
       type: IsarType.stringList,
     )
@@ -95,6 +100,7 @@ int _tagModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.mutedSiblings.length * 8;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.nsfwSourceUrls.length * 3;
   {
@@ -127,10 +133,11 @@ void _tagModelSerialize(
 ) {
   writer.writeBool(offsets[0], object.isNsfw);
   writer.writeBool(offsets[1], object.isPerson);
-  writer.writeString(offsets[2], object.name);
-  writer.writeStringList(offsets[3], object.nsfwSourceUrls);
-  writer.writeString(offsets[4], object.picturePath);
-  writer.writeStringList(offsets[5], object.sourceUrls);
+  writer.writeLongList(offsets[2], object.mutedSiblings);
+  writer.writeString(offsets[3], object.name);
+  writer.writeStringList(offsets[4], object.nsfwSourceUrls);
+  writer.writeString(offsets[5], object.picturePath);
+  writer.writeStringList(offsets[6], object.sourceUrls);
 }
 
 TagModel _tagModelDeserialize(
@@ -143,10 +150,11 @@ TagModel _tagModelDeserialize(
     id: id,
     isNsfw: reader.readBoolOrNull(offsets[0]) ?? false,
     isPerson: reader.readBoolOrNull(offsets[1]) ?? false,
-    name: reader.readString(offsets[2]),
-    nsfwSourceUrls: reader.readStringList(offsets[3]) ?? const [],
-    picturePath: reader.readStringOrNull(offsets[4]),
-    sourceUrls: reader.readStringList(offsets[5]) ?? const [],
+    mutedSiblings: reader.readLongList(offsets[2]) ?? const [],
+    name: reader.readString(offsets[3]),
+    nsfwSourceUrls: reader.readStringList(offsets[4]) ?? const [],
+    picturePath: reader.readStringOrNull(offsets[5]),
+    sourceUrls: reader.readStringList(offsets[6]) ?? const [],
   );
   return object;
 }
@@ -163,12 +171,14 @@ P _tagModelDeserializeProp<P>(
     case 1:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongList(offset) ?? const []) as P;
     case 3:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
       return (reader.readStringList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -338,6 +348,151 @@ extension TagModelQueryFilter
         property: r'isPerson',
         value: value,
       ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsElementEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mutedSiblings',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsElementGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mutedSiblings',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsElementLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mutedSiblings',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsElementBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mutedSiblings',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'mutedSiblings',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'mutedSiblings',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'mutedSiblings',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'mutedSiblings',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'mutedSiblings',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TagModel, TagModel, QAfterFilterCondition>
+      mutedSiblingsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'mutedSiblings',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -1435,6 +1590,12 @@ extension TagModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<TagModel, TagModel, QDistinct> distinctByMutedSiblings() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mutedSiblings');
+    });
+  }
+
   QueryBuilder<TagModel, TagModel, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1479,6 +1640,12 @@ extension TagModelQueryProperty
   QueryBuilder<TagModel, bool, QQueryOperations> isPersonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isPerson');
+    });
+  }
+
+  QueryBuilder<TagModel, List<int>, QQueryOperations> mutedSiblingsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mutedSiblings');
     });
   }
 

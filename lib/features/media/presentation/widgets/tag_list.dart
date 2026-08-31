@@ -6,6 +6,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/services/collapsed_tags.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -117,13 +118,40 @@ class TagList extends StatefulWidget {
 
   /// Las etiquetas aplanadas en el orden en el que se pintan, cada una con su
   /// nivel.
-  static List<TagRow> flatten(List<TagEntity> tags, {int depth = 0}) {
+  ///
+  /// [collapsed] son las ramas plegadas: la madre se emite y su descendencia se
+  /// corta ahí. **Se escribe una sola vez y la usan las dos listas** —ésta y el
+  /// menú lateral—: aplanan el mismo árbol, y hacerlo por separado acabaría en
+  /// dos comportamientos distintos en cuanto se arreglara algo en uno.
+  ///
+  /// Vacío es el árbol entero, que es lo que se pintaba antes de poder plegarlo.
+  static List<TagRow> flatten(
+    List<TagEntity> tags, {
+    int depth = 0,
+    Set<int> collapsed = const {},
+  }) {
     return [
       for (final tag in tags) ...[
         (tag: tag, depth: depth),
-        ...flatten(tag.children, depth: depth + 1),
+        if (!collapsed.contains(tag.id))
+          ...flatten(tag.children, depth: depth + 1, collapsed: collapsed),
       ],
     ];
+  }
+
+  /// Las etiquetas por encima de [id], de la raíz hacia abajo.
+  ///
+  /// Es lo que hay que desplegar para que una etiqueta se vea: una elegida
+  /// dentro de una rama cerrada no está en pantalla, y la lista estaría diciendo
+  /// que hay algo marcado que no se ve por ninguna parte.
+  static List<TagEntity> ancestorsOf(List<TagEntity> tags, int id) {
+    for (final tag in tags) {
+      if (tag.id == id) return const [];
+
+      if (contains(tag, id)) return [tag, ...ancestorsOf(tag.children, id)];
+    }
+
+    return const [];
   }
 
   /// De quién cuelga [id], o `null` si es raíz.
@@ -162,6 +190,67 @@ class _TagListState extends State<TagList> {
   /// Lo escrito en el filtro. Vacío es el árbol entero.
   String _query = '';
 
+  /// Las ramas plegadas. Se escucha en vez de leerse al montar: plegar desde el
+  /// menú lateral tiene que verse aquí sin salir de la pantalla y volver.
+  late final CollapsedTags? _collapsed = getIt.isRegistered<CollapsedTags>()
+      ? getIt<CollapsedTags>()
+      : null;
+
+  @override
+  void initState() {
+    super.initState();
+    _collapsed?.addListener(_onCollapsedChanged);
+    _revealSelected();
+  }
+
+  @override
+  void didUpdateWidget(TagList old) {
+    super.didUpdateWidget(old);
+
+    if (old.selectedTagId != widget.selectedTagId ||
+        old.tags != widget.tags) {
+      _revealSelected();
+    }
+  }
+
+  /// Abre las ramas que hagan falta para que la etiqueta elegida se vea.
+  ///
+  /// Pasa al crear una hija bajo una madre plegada, y al mover una etiqueta a
+  /// una rama cerrada: sin esto la fila marcada no está en pantalla y parece que
+  /// no se ha hecho nada.
+  void _revealSelected() {
+    final collapsed = _collapsed;
+    final id = widget.selectedTagId;
+    if (collapsed == null || id == null) return;
+
+    final hidden = [
+      for (final ancestor in TagList.ancestorsOf(_tree, id))
+        if (collapsed.isCollapsed(ancestor.id)) ancestor.id,
+    ];
+    if (hidden.isEmpty) return;
+
+    // Después del fotograma: esto se llama desde `initState` y desde
+    // `didUpdateWidget`, y avisar a quien escucha en mitad de una construcción
+    // la deja a medias.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      for (final tagId in hidden) {
+        await collapsed.expand(tagId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _collapsed?.removeListener(_onCollapsedChanged);
+    super.dispose();
+  }
+
+  void _onCollapsedChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Set<int> get _collapsedIds => _collapsed?.ids ?? const {};
+
   /// El menú de soltar, mientras está abierto.
   _Drop? _drop;
 
@@ -191,8 +280,13 @@ class _TagListState extends State<TagList> {
     final needle = _query.trim().toLowerCase();
     final tree = _tree;
 
-    if (needle.isEmpty) return TagList.flatten(tree);
+    if (needle.isEmpty) {
+      return TagList.flatten(tree, collapsed: _collapsedIds);
+    }
 
+    // Buscando **manda el filtro sobre lo plegado**: encontrar una etiqueta y no
+    // verla porque su madre está cerrada sería un buscador que miente. Con el
+    // campo vacío vuelve a mandar lo plegado.
     final all = TagList.flatten(tree);
 
     if (!_showsBranch) {
@@ -319,6 +413,14 @@ class _TagListState extends State<TagList> {
                   accepts: (dragged) => _accepts(dragged, rows[index].tag),
                   onDropped: (dragged, at) =>
                       _onDropped(dragged, rows[index].tag, at),
+                  hasChildren: rows[index].tag.children.isNotEmpty,
+                  isCollapsed: _collapsedIds.contains(rows[index].tag.id),
+                  // Buscando no se pliega: lo que se está viendo es el
+                  // resultado de una búsqueda, no el árbol, y plegar ahí
+                  // escondería coincidencias.
+                  onToggleCollapse: _collapsed == null || _query.isNotEmpty
+                      ? null
+                      : () => _collapsed.toggle(rows[index].tag.id),
                 ),
               ),
             ),
@@ -398,6 +500,15 @@ class _TagTile extends StatelessWidget {
   final bool Function(TagEntity dragged) accepts;
   final void Function(TagEntity dragged, Offset at) onDropped;
 
+  /// Si la etiqueta tiene hijas, y si están plegadas.
+  ///
+  /// Sin hijas no se pinta chevron: uno que no hace nada en la mitad de las
+  /// filas es ruido, y además desalinearía los nombres. En su sitio va un hueco
+  /// del mismo ancho, que es lo que mantiene la columna.
+  final bool hasChildren;
+  final bool isCollapsed;
+  final VoidCallback? onToggleCollapse;
+
   const _TagTile({
     required this.row,
     required this.isSelected,
@@ -405,7 +516,34 @@ class _TagTile extends StatelessWidget {
     required this.isDraggable,
     required this.accepts,
     required this.onDropped,
+    this.hasChildren = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
   });
+
+  /// El chevron que pliega la rama, o el hueco que ocupa cuando no hay ninguna.
+  Widget _chevron(BuildContext context) {
+    if (!hasChildren || onToggleCollapse == null) {
+      return const SizedBox(width: tagListChevronWidth);
+    }
+
+    final texts = AppLocalizations.of(context);
+
+    return SizedBox(
+      width: tagListChevronWidth,
+      child: IconButton(
+        tooltip: isCollapsed ? texts.tagExpandBranch : texts.tagCollapseBranch,
+        iconSize: AppSizes.iconSmall,
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: onToggleCollapse,
+        icon: Icon(
+          isCollapsed ? Symbols.chevron_right : Symbols.expand_more,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -492,6 +630,11 @@ class _TagTile extends StatelessWidget {
         // nombre largo desbordaría la fila.
         child: Row(
           children: [
+            // El chevron va delante del avatar: al final se pisaría con lo que
+            // ya vive ahí en el menú —el distintivo NSFW y el contador— y las
+            // dos listas tienen que plegarse con el mismo gesto en el mismo
+            // sitio.
+            _chevron(context),
             FernAvatar(
               imagePath: tag.picturePath,
               fallbackIcon: Symbols.label,

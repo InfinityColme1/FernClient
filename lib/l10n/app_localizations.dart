@@ -1416,6 +1416,42 @@ abstract class AppLocalizations {
   /// **'Add a related tag'**
   String get tagRelationsAddSibling;
 
+  /// No description provided for @tagCollapseBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse what hangs from this one'**
+  String get tagCollapseBranch;
+
+  /// No description provided for @tagExpandBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand what hangs from this one'**
+  String get tagExpandBranch;
+
+  /// No description provided for @siblingDirectionBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Each one adds the other'**
+  String get siblingDirectionBoth;
+
+  /// No description provided for @siblingDirectionOneWay.
+  ///
+  /// In en, this message translates to:
+  /// **'«{from}» adds «{to}»'**
+  String siblingDirectionOneWay(String from, String to);
+
+  /// No description provided for @siblingDirectionNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither adds the other'**
+  String get siblingDirectionNone;
+
+  /// No description provided for @siblingDirectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Being related says they go together. The direction says what happens when you add one.'**
+  String get siblingDirectionNote;
+
   /// No description provided for @tagRelationsCreate.
   ///
   /// In en, this message translates to:
@@ -3143,6 +3179,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No linked addresses'**
   String get noSourceUrls;
+
+  /// No description provided for @databaseCleanupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up leftover files'**
+  String get databaseCleanupTitle;
+
+  /// No description provided for @databaseCleanupNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatars are copies Fern makes. When you change one, the previous copy stops being used by anything and stays on disk. This sweeps away everything nothing points to any more.'**
+  String get databaseCleanupNote;
+
+  /// No description provided for @databaseCleanupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up'**
+  String get databaseCleanupAction;
+
+  /// No description provided for @databaseCleanupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The clean-up could not finish'**
+  String get databaseCleanupFailed;
+
+  /// No description provided for @databaseCleanupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{There was nothing left over} =1{1 file removed, {size} freed} other{{count} files removed, {size} freed}}'**
+  String databaseCleanupDone(int count, String size);
+
+  /// No description provided for @blockedImportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not to be imported again'**
+  String get blockedImportsTitle;
+
+  /// No description provided for @blockedImportsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What you asked not to be offered again. It is skipped without downloading it.'**
+  String get blockedImportsNote;
+
+  /// No description provided for @blockedImportsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is blocked.'**
+  String get blockedImportsNone;
+
+  /// No description provided for @blockedImportsUnblock.
+  ///
+  /// In en, this message translates to:
+  /// **'Import this again'**
+  String get blockedImportsUnblock;
+
+  /// No description provided for @blockedImportsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget them all'**
+  String get blockedImportsClear;
+
+  /// No description provided for @blockImportAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not import this again'**
+  String get blockImportAgain;
+
+  /// No description provided for @blockImportAgainDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The source keeps offering what you saved there. Marked, this one is skipped without downloading it. You can undo it in Settings, under Database.'**
+  String get blockImportAgainDescription;
+
+  /// No description provided for @importSkippedBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 skipped: you asked not to see it again.} other{{count} skipped: you asked not to see them again.}}'**
+  String importSkippedBlocked(int count);
+
+  /// No description provided for @creatorNsfwAffected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{This creator has no content right now.} =1{Hides 1 item.} other{Hides {count} items.}}'**
+  String creatorNsfwAffected(int count);
+
+  /// No description provided for @creatorNsfwOnTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as NSFW · click to unmark'**
+  String get creatorNsfwOnTooltip;
+
+  /// No description provided for @creatorNsfwOffTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as NSFW'**
+  String get creatorNsfwOffTooltip;
+
+  /// No description provided for @searchChipDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get searchChipDescription;
 
   /// No description provided for @showsTagBranchOnFilter.
   ///

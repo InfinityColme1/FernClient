@@ -17,33 +17,38 @@ const CreatorModelSchema = CollectionSchema(
   name: r'Creators',
   id: -6964830080466276249,
   properties: {
-    r'name': PropertySchema(
+    r'isNsfw': PropertySchema(
       id: 0,
+      name: r'isNsfw',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 1,
       name: r'name',
       type: IsarType.string,
     ),
     r'nsfwSocialProfiles': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'nsfwSocialProfiles',
       type: IsarType.stringList,
     ),
     r'nsfwSourceUrls': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'nsfwSourceUrls',
       type: IsarType.stringList,
     ),
     r'picturePath': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'picturePath',
       type: IsarType.string,
     ),
     r'socialProfiles': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'socialProfiles',
       type: IsarType.stringList,
     ),
     r'sourceUrls': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'sourceUrls',
       type: IsarType.stringList,
     )
@@ -117,12 +122,13 @@ void _creatorModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.name);
-  writer.writeStringList(offsets[1], object.nsfwSocialProfiles);
-  writer.writeStringList(offsets[2], object.nsfwSourceUrls);
-  writer.writeString(offsets[3], object.picturePath);
-  writer.writeStringList(offsets[4], object.socialProfiles);
-  writer.writeStringList(offsets[5], object.sourceUrls);
+  writer.writeBool(offsets[0], object.isNsfw);
+  writer.writeString(offsets[1], object.name);
+  writer.writeStringList(offsets[2], object.nsfwSocialProfiles);
+  writer.writeStringList(offsets[3], object.nsfwSourceUrls);
+  writer.writeString(offsets[4], object.picturePath);
+  writer.writeStringList(offsets[5], object.socialProfiles);
+  writer.writeStringList(offsets[6], object.sourceUrls);
 }
 
 CreatorModel _creatorModelDeserialize(
@@ -133,12 +139,13 @@ CreatorModel _creatorModelDeserialize(
 ) {
   final object = CreatorModel(
     id: id,
-    name: reader.readString(offsets[0]),
-    nsfwSocialProfiles: reader.readStringList(offsets[1]) ?? const [],
-    nsfwSourceUrls: reader.readStringList(offsets[2]) ?? const [],
-    picturePath: reader.readStringOrNull(offsets[3]),
-    socialProfiles: reader.readStringList(offsets[4]),
-    sourceUrls: reader.readStringList(offsets[5]) ?? const [],
+    isNsfw: reader.readBoolOrNull(offsets[0]) ?? false,
+    name: reader.readString(offsets[1]),
+    nsfwSocialProfiles: reader.readStringList(offsets[2]) ?? const [],
+    nsfwSourceUrls: reader.readStringList(offsets[3]) ?? const [],
+    picturePath: reader.readStringOrNull(offsets[4]),
+    socialProfiles: reader.readStringList(offsets[5]),
+    sourceUrls: reader.readStringList(offsets[6]) ?? const [],
   );
   return object;
 }
@@ -151,16 +158,18 @@ P _creatorModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 1:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readString(offset)) as P;
     case 2:
       return (reader.readStringList(offset) ?? const []) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 4:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
+      return (reader.readStringList(offset)) as P;
+    case 6:
       return (reader.readStringList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -310,6 +319,16 @@ extension CreatorModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition> isNsfwEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isNsfw',
+        value: value,
       ));
     });
   }
@@ -1533,6 +1552,18 @@ extension CreatorModelQueryLinks
 
 extension CreatorModelQuerySortBy
     on QueryBuilder<CreatorModel, CreatorModel, QSortBy> {
+  QueryBuilder<CreatorModel, CreatorModel, QAfterSortBy> sortByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterSortBy> sortByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
   QueryBuilder<CreatorModel, CreatorModel, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1573,6 +1604,18 @@ extension CreatorModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<CreatorModel, CreatorModel, QAfterSortBy> thenByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterSortBy> thenByIsNsfwDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isNsfw', Sort.desc);
+    });
+  }
+
   QueryBuilder<CreatorModel, CreatorModel, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1601,6 +1644,12 @@ extension CreatorModelQuerySortThenBy
 
 extension CreatorModelQueryWhereDistinct
     on QueryBuilder<CreatorModel, CreatorModel, QDistinct> {
+  QueryBuilder<CreatorModel, CreatorModel, QDistinct> distinctByIsNsfw() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isNsfw');
+    });
+  }
+
   QueryBuilder<CreatorModel, CreatorModel, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1648,6 +1697,12 @@ extension CreatorModelQueryProperty
   QueryBuilder<CreatorModel, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<CreatorModel, bool, QQueryOperations> isNsfwProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isNsfw');
     });
   }
 

@@ -64,7 +64,26 @@ class TagModel {
   ///
   /// **Un solo salto** al aplicarlas: si A es hermana de B y B de C, poner A no
   /// pone C. Encadenarlas convertiría una etiqueta en media biblioteca.
+  ///
+  /// El enlace dice **que van juntas**; a quién arrastra cada una lo dice
+  /// [mutedSiblings].
   final siblings = IsarLinks<TagModel>();
+
+  /// De sus hermanas, a cuáles **no** arrastra ésta.
+  ///
+  /// La relación es simétrica —las dos saben que van juntas— pero el arrastre no
+  /// tiene por qué serlo: «ladybug» puede poner «Marinette» sin que poner
+  /// «Marinette» ponga «ladybug». Con las dos listas salen los cuatro casos: las
+  /// dos se arrastran, sólo una, la otra, o ninguna.
+  ///
+  /// **Se guarda al revés de lo que se pregunta, y es a propósito.** Guardando a
+  /// quién sí arrastra, todo lo que ya está en la base —que no tiene el campo—
+  /// se leería como «no arrastra a nadie», y el día que se instalara esta
+  /// versión el etiquetado automático dejaría de poner hermanas sin decir nada.
+  /// Guardando las excepciones, la lista vacía significa «a todas», que es
+  /// exactamente lo que se venía haciendo: aditivo de verdad, sin migración y
+  /// sin tocar una sola fila.
+  List<int> mutedSiblings = const [];
   
   @Backlink(to: 'tags')
   final personas = IsarLinks<PersonaModel>();
@@ -81,6 +100,7 @@ class TagModel {
     this.nsfwSourceUrls = const [],
     this.isNsfw = false,
     this.isPerson = false,
+    this.mutedSiblings = const [],
   });
 
   TagEntity toEntity() =>
@@ -107,6 +127,7 @@ class TagModel {
       nsfwSourceUrls: nsfwSourceUrls,
       isNsfw: isNsfw,
       isPerson: isPerson,
+      mutedSiblings: mutedSiblings,
       children: children,
       // Planas: sin sus hijas ni sus propias hermanas. Lo que hace falta de una
       // hermana es su nombre, y recorrer sus ramas aquí acabaría cargando media
@@ -118,6 +139,9 @@ class TagModel {
             name: sibling.name,
             picturePath: sibling.picturePath,
             isNsfw: sibling.isNsfw,
+            // Lo suyo sí hace falta: la dirección de la pareja se lee con las
+            // dos listas, y sin la de la hermana sólo se sabría media.
+            mutedSiblings: sibling.mutedSiblings,
             children: const [],
           ),
       ],

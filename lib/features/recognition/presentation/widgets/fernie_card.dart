@@ -391,6 +391,8 @@ class _FernieCardState extends State<FernieCard> {
               initialValue: _linkQuery,
               search: _searchLinkCreators,
               labelOf: (creator) => creator.name,
+              trailingOf: (creator) =>
+                  creator.isNsfw ? const NsfwTagMark() : null,
               onSelected: (creator) => setState(() => _linkedId = creator.id),
               onChanged: (query) => setState(() => _linkQuery = query),
               debounce: searchDebounceDuration,

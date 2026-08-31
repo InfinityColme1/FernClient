@@ -15,11 +15,13 @@ import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
+import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
@@ -27,6 +29,7 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
@@ -78,6 +81,18 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         _visibility = visibility,
         _onNsfwChanged = onNsfwChanged;
 
+  /// El que se lleva las copias de avatar que dejan de usarse.
+  ///
+  /// Se construye aquí y no llega por parámetro: no necesita nada que el
+  /// repositorio no tenga ya. Pedirlo por el constructor sería obligar a los
+  /// veinte sitios que montan este repositorio a saber de él para que la
+  /// limpieza funcione, y el día que uno se lo dejara volvería la basura sin que
+  /// nada lo dijera.
+  late final AvatarJanitor _avatars = AvatarJanitor(
+    database: _appDatabase,
+    storage: _avatarStorage,
+  );
+
   /// Los sumarios que se pueden enseñar.
   ///
   /// **Por aquí pasa todo lo que devuelve contenido.** Es la única garantía de
@@ -97,6 +112,16 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   List<TagModel> _visibleTags(Iterable<TagModel> tags) => [
         for (final tag in tags)
           if (!_visibility.hidesTag(tag.id)) tag,
+      ];
+
+  /// Los creadores que se pueden enseñar.
+  ///
+  /// Lo mismo que [_visibleTags] y por lo mismo: esconder a un creador es
+  /// esconder su nombre, y que aparezca en un listado o autocompletando ya
+  /// cuenta lo que hay aunque su contenido no se vea.
+  List<CreatorModel> _visibleCreators(Iterable<CreatorModel> creators) => [
+        for (final creator in creators)
+          if (!_visibility.hidesCreator(creator.id)) creator,
       ];
 
   /// Una etiqueta como entidad, con lo que el filtro sabe de ella.
@@ -1072,6 +1097,24 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     return same.any((each) => each.id != exceptId);
   }
 
+  @override
+  Future<DataState<TagEntity?>> findTagNamed(String name) async {
+    try {
+      final clean = name.trim();
+      if (clean.isEmpty) return const DataSuccess(null);
+
+      final model = await _appDatabase.tagModels
+          .filter()
+          .nameEqualTo(clean, caseSensitive: false)
+          .findFirst();
+      if (model == null) return const DataSuccess(null);
+
+      return DataSuccess(await _asEntity(model));
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   /// Cambia los datos de una etiqueta que ya existe: su nombre, su avatar y de
   /// quién cuelga.
   ///
@@ -1094,6 +1137,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       }
 
       final newParent = await _allowedParent(model, parent);
+
+      // El avatar que tenía, para poder borrarlo si el nuevo lo sustituye: son
+      // copias nuestras, y la que deja de estar apuntada no la reclama nadie
+      // nunca más.
+      final previousPicture = model.picturePath;
 
       await _appDatabase.writeTxn(() async {
         model.name = tag.name;
@@ -1140,6 +1188,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       // la devuelve. Es justo lo que la marca propagada al leer permite hacer
       // sin reescribir nada, y lo único que hace falta es volver a mirarlo.
       await _nsfwChanged();
+
+      // Y la copia que ha dejado de usarse. Después de escribir, no antes: la
+      // comprobación de «no la usa nadie» tiene que hacerse con el avatar nuevo
+      // ya guardado, o se encontraría a sí misma en uso y no borraría nunca.
+      if (previousPicture != tag.picturePath) {
+        await _avatars.removeIfUnused(previousPicture);
+      }
 
       await model.children.load();
 
@@ -1261,7 +1316,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   @override
   Future<DataState<TagEntity>> saveTagSiblings(
     int tagId,
-    List<int> siblingIds,
+    Map<int, SiblingDirection> siblings,
   ) async {
     try {
       final tag = await _appDatabase.tagModels.get(tagId);
@@ -1269,27 +1324,53 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       // Ni a sí misma ni repetidas: una etiqueta hermana de sí misma se pondría
       // dos veces y no significaría nada.
-      final wanted = {...siblingIds}..remove(tagId);
+      final wanted = {...siblings}..remove(tagId);
 
-      final siblings =
-          (await _appDatabase.tagModels.getAll(wanted.toList())).nonNulls
+      final models =
+          (await _appDatabase.tagModels.getAll(wanted.keys.toList())).nonNulls
               .toList(growable: false);
 
       await _appDatabase.writeTxn(() async {
         await tag.siblings.load();
 
-        // Las que se quitan tienen que soltar a ésta por su lado.
-        final kept = {for (final sibling in siblings) sibling.id};
+        // Las que se quitan tienen que soltar a ésta por su lado, y olvidar lo
+        // que tuvieran dicho sobre ella: un silencio que sobrevive a la relación
+        // reaparecería el día que alguien las volviera a relacionar, y nadie
+        // entendería por qué esa pareja nace muda.
+        final kept = {for (final model in models) model.id};
         for (final previous in tag.siblings.toList()) {
           if (kept.contains(previous.id)) continue;
 
           await previous.siblings.update(unlink: [tag]);
+          previous.mutedSiblings = [
+            for (final id in previous.mutedSiblings)
+              if (id != tagId) id,
+          ];
+          await _appDatabase.tagModels.put(previous);
         }
 
-        await tag.siblings.update(link: siblings, reset: true);
+        await tag.siblings.update(link: models, reset: true);
 
-        for (final sibling in siblings) {
-          await sibling.siblings.update(link: [tag]);
+        // Lo que esta etiqueta deja de arrastrar. Se escribe la lista entera y
+        // no entrada a entrada: así lo que ya no es hermana no deja rastro.
+        tag.mutedSiblings = mutedFor({
+          for (final model in models) model.id: wanted[model.id]!,
+        });
+        await _appDatabase.tagModels.put(tag);
+
+        // Y la otra mitad, en cada hermana: sólo su entrada para ésta, que el
+        // resto de sus parejas no son cosa de esta llamada.
+        for (final model in models) {
+          await model.siblings.update(link: [tag]);
+
+          final mutes = siblingMutes(wanted[model.id]!);
+          final rest = [
+            for (final id in model.mutedSiblings)
+              if (id != tagId) id,
+          ];
+
+          model.mutedSiblings = mutes ? [...rest, tagId] : rest;
+          await _appDatabase.tagModels.put(model);
         }
       });
 
@@ -1644,6 +1725,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       var isTaken = false;
 
+      // El avatar que tenía, para poder borrarlo si el nuevo lo sustituye.
+      final previousPicture = model.picturePath;
+
       await _appDatabase.writeTxn(() async {
         isTaken = await _isCreatorNameTaken(name, exceptId: creator.id);
         if (isTaken) return;
@@ -1673,6 +1757,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (isTaken) return DataException(DuplicateCreatorNameException(name));
 
+      // La copia anterior, si el avatar ha cambiado. Después de guardar, y sólo
+      // si se ha llegado a guardar: con el nombre repetido no se ha escrito nada
+      // y el avatar de antes sigue siendo el suyo.
+      if (previousPicture != creator.picturePath) {
+        await _avatars.removeIfUnused(previousPicture);
+      }
+
       return DataSuccess(model.toEntity());
     } on Exception catch (e) {
       return DataException(e);
@@ -1686,6 +1777,48 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// formulario del creador. Las direcciones llegan tal y como las escribió el
   /// usuario y se guardan normalizadas, que es la forma en la que se comparan al
   /// importar.
+  /// Marca o desmarca un creador como contenido no apto.
+  ///
+  /// Como con las etiquetas, la marca se guarda sola y no con el formulario: es
+  /// una decision que hace desaparecer contenido, y dejarla a medias seria la
+  /// peor forma de contarlo.
+  @override
+  Future<DataState<int>> setCreatorNsfw(
+    int creatorId, {
+    required bool isNsfw,
+  }) async {
+    try {
+      final model = await _appDatabase.creatorModels.get(creatorId);
+      if (model == null) return DataException(Exception("Creator not found"));
+
+      // El desconocido no: es el respaldo al que van a parar los contenidos que
+      // se quedan sin creador, asi que marcarlo esconderia media biblioteca de
+      // una pulsacion y sin que nadie lo relacionara con esto.
+      if (model.name == unknownCreator.name) {
+        return DataException(Exception("The unknown creator cannot be marked"));
+      }
+
+      await _appDatabase.writeTxn(() async {
+        model.isNsfw = isNsfw;
+        await _appDatabase.creatorModels.put(model);
+      });
+
+      await _nsfwChanged();
+
+      // Cuanto contenido hay debajo de la decision. Se dice al pulsar y no como
+      // texto fijo: es la respuesta a lo que se acaba de hacer, y con el filtro
+      // puesto ese contenido desaparece de la rejilla.
+      final affected = await _appDatabase.mediaModels
+          .filter()
+          .creator((q) => q.idEqualTo(creatorId))
+          .count();
+
+      return DataSuccess(affected);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   @override
   Future<DataState<CreatorEntity>> saveCreatorSourceUrls(
     int creatorId,
@@ -1926,8 +2059,14 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   Future<DataState<CreatorEntity?>> getCreator(int id) async {
     try {
       final model = await _appDatabase.creatorModels.get(id);
+      // Como `getTag`: uno bloqueado no se devuelve ni sabiendo su
+      // identificador, o cualquiera que lo guarde por ahí —los últimos usados,
+      // por ejemplo— lo traería de vuelta con el filtro puesto.
+      if (model == null || _visibility.hidesCreator(model.id)) {
+        return const DataSuccess(null);
+      }
 
-      return DataSuccess(model?.toEntity());
+      return DataSuccess(model.toEntity());
     } on Exception catch (e) {
       return DataException(e);
     }
@@ -2017,8 +2156,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     try {
       // Ordenados por nombre, como las etiquetas: el orden en el que los lee
       // Isar es el de creación, que en un listado no dice nada.
-      final query = await _appDatabase.creatorModels.where().findAll()
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      final query =
+          _visibleCreators(await _appDatabase.creatorModels.where().findAll())
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
 
       return DataSuccess(query.map((e) => e.toEntity()).toList());
     } on Exception catch (e) {
@@ -2055,11 +2197,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final term = query.trim();
       if (term.isEmpty) return const DataSuccess([]);
 
-      final results = await _appDatabase.creatorModels
-          .filter()
-          .nameContains(term, caseSensitive: false)
-          .limit(limit)
-          .findAll();
+      final results = await _creatorsByName(term, limit: limit);
 
       return DataSuccess(results.map((e) => e.toEntity()).toList());
     } on Exception catch (e) {
@@ -2084,7 +2222,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       final byType = [
         [
-          for (final media in await _mediaByDescription(term, limit: limit))
+          for (final media in await _mediaByText(term, limit: limit))
             SearchSuggestionEntity(
               id: media.id!,
               type: SearchResultType.media,
@@ -2111,6 +2249,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
               type: SearchResultType.creator,
               label: creator.name,
               imagePath: creator.picturePath,
+              // Los marcados se distinguen al autocompletar, como las
+              // etiquetas: acotar por uno sin saberlo es esconder contenido sin
+              // querer.
+              isNsfw: _visibility.marksCreator(creator.id),
             ),
         ],
       ];
@@ -2133,43 +2275,196 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
   /// Búsqueda de contenido para la rejilla, ya agrupada y en el orden en el que
-  /// se pinta: primero las coincidencias por descripción, luego un grupo por
-  /// cada etiqueta cuyo nombre encaje y por último uno por cada creador.
+  /// se pinta: primero las coincidencias por texto, luego un grupo por cada
+  /// etiqueta cuyo nombre encaje y por último uno por cada creador.
   ///
   /// Los grupos que se quedan sin contenido definitivo no se devuelven: una
   /// etiqueta puede existir sin que nadie la haya usado todavía.
+  ///
+  /// Es una pastilla de texto libre y nada más, y por eso delega: teniendo dos
+  /// caminos para lo mismo, el día que uno cambie el otro se queda como estaba y
+  /// buscar daría un resultado distinto según por dónde se hubiera entrado.
   @override
-  Future<DataState<List<MediaSearchSectionEntity>>> searchMedia(String query) async {
+  Future<DataState<List<MediaSearchSectionEntity>>> searchMedia(String query) =>
+      searchMediaByCriteria([SearchCriterionEntity.text(query.trim())]);
+
+  /// Contenido que cumple **todas** las pastillas de la barra.
+  ///
+  /// Con una sola se devuelve lo mismo que antes, agrupado igual: es el caso de
+  /// siempre y no tiene por qué cambiar de aspecto. Con dos o más se cruzan y sale
+  /// un único grupo sin cabecera: «esta etiqueta **y** este creador» no tiene
+  /// grupos naturales que enseñar, y repartir el cruce por cabeceras diría que hay
+  /// resultados de varias clases cuando lo que hay es uno solo.
+  @override
+  Future<DataState<List<MediaSearchSectionEntity>>> searchMediaByCriteria(
+    List<SearchCriterionEntity> criteria,
+  ) async {
     try {
-      final term = query.trim();
-      if (term.isEmpty) return const DataSuccess([]);
+      final wanted = [
+        for (final criterion in criteria)
+          if (criterion.label.trim().isNotEmpty) criterion,
+      ];
 
-      final sections = <MediaSearchSectionEntity>[];
+      if (wanted.isEmpty) return const DataSuccess([]);
+      if (wanted.length == 1) return _singleSection(wanted.single);
 
-      final byDescription = await _importedSummaries(await _mediaByDescription(term));
-      if (byDescription.isNotEmpty) {
-        sections.add(MediaSearchSectionEntity(
+      // Se empieza por las más baratas —una etiqueta o un creador van por enlace,
+      // el texto libre recorre la colección— y se cruzan de menor a mayor: cada
+      // paso deja menos que comprobar en el siguiente.
+      final sets = <Set<int>>[];
+      for (final criterion in wanted..sort(_cheapestFirst)) {
+        final ids = await _idsOf(criterion);
+
+        // Un cruce con el vacío es vacío: no hace falta seguir preguntando.
+        if (ids.isEmpty) return const DataSuccess([]);
+
+        sets.add(ids);
+      }
+
+      final crossed = sets.reduce((a, b) => a.intersection(b));
+      if (crossed.isEmpty) return const DataSuccess([]);
+
+      final media = await _importedSummaries(
+        (await _appDatabase.mediaModels.getAll(crossed.toList())).nonNulls
+            .toList(),
+      );
+      if (media.isEmpty) return const DataSuccess([]);
+
+      return DataSuccess([
+        MediaSearchSectionEntity(
           type: SearchResultType.media,
-          title: term,
-          media: byDescription,
-        ));
-      }
-
-      for (final tag in await _tagsByName(term)) {
-        final section = await _tagSection(tag);
-        if (section != null) sections.add(section);
-      }
-
-      for (final creator in await _creatorsByName(term)) {
-        final section = await _creatorSection(creator);
-        if (section != null) sections.add(section);
-      }
-
-      return DataSuccess(sections);
+          // Sin título: la rejilla no le pinta cabecera, que es lo que hay que
+          // hacer con un grupo único. Lo que se está buscando ya se lee en las
+          // pastillas de la barra, y repetirlo aquí sería decirlo dos veces.
+          title: '',
+          media: media,
+        ),
+      ]);
     } on Exception catch (e) {
       return DataException(e);
     }
   }
+
+  /// Lo barato primero: las entidades van por enlace y el texto recorre.
+  static int _cheapestFirst(
+    SearchCriterionEntity a,
+    SearchCriterionEntity b,
+  ) {
+    int cost(SearchCriterionEntity criterion) =>
+        criterion.kind == SearchCriterionKind.text ? 1 : 0;
+
+    return cost(a).compareTo(cost(b));
+  }
+
+  /// El grupo de una sola pastilla, tal y como se enseñaba antes de que las
+  /// hubiera.
+  Future<DataState<List<MediaSearchSectionEntity>>> _singleSection(
+    SearchCriterionEntity criterion,
+  ) async {
+    final sections = <MediaSearchSectionEntity>[];
+
+    switch (criterion.kind) {
+      case SearchCriterionKind.text:
+        final term = criterion.label.trim();
+
+        final byText = await _importedSummaries(await _mediaByText(term));
+        if (byText.isNotEmpty) {
+          sections.add(MediaSearchSectionEntity(
+            type: SearchResultType.media,
+            title: term,
+            media: byText,
+          ));
+        }
+
+        for (final tag in await _tagsByName(term)) {
+          final section = await _tagSection(tag);
+          if (section != null) sections.add(section);
+        }
+
+        for (final creator in await _creatorsByName(term)) {
+          final section = await _creatorSection(creator);
+          if (section != null) sections.add(section);
+        }
+
+      case SearchCriterionKind.tag:
+        final section =
+            await _tagSection(await _appDatabase.tagModels.get(criterion.id!));
+        if (section != null) sections.add(section);
+
+      case SearchCriterionKind.creator:
+        final section = await _creatorSection(
+          await _appDatabase.creatorModels.get(criterion.id!),
+        );
+        if (section != null) sections.add(section);
+
+      case SearchCriterionKind.media:
+        final section = await _mediaSectionById(criterion.id!, criterion.label);
+        if (section != null) sections.add(section);
+    }
+
+    return DataSuccess(sections);
+  }
+
+  /// Los contenidos que cumplen una pastilla, por identificador.
+  Future<Set<int>> _idsOf(SearchCriterionEntity criterion) async {
+    switch (criterion.kind) {
+      case SearchCriterionKind.text:
+        return _idsMatchingText(criterion.label.trim());
+
+      case SearchCriterionKind.tag:
+        final tag = await _appDatabase.tagModels.get(criterion.id!);
+        if (tag == null || _visibility.hidesTag(tag.id)) return {};
+
+        return _idsOfMedia(await _appDatabase.mediaModels
+            .filter()
+            .tags((q) => q.idEqualTo(tag.id))
+            .findAll());
+
+      case SearchCriterionKind.creator:
+        if (_visibility.hidesCreator(criterion.id!)) return {};
+
+        return _idsOfMedia(await _appDatabase.mediaModels
+            .filter()
+            .creator((q) => q.idEqualTo(criterion.id!))
+            .findAll());
+
+      case SearchCriterionKind.media:
+        return {criterion.id!};
+    }
+  }
+
+  /// Todo lo que una pastilla de texto libre recoge.
+  ///
+  /// Lo mismo que llegaba escribiendo antes de que hubiera pastillas: la
+  /// descripción, el nombre del fichero, y el contenido de las etiquetas y los
+  /// creadores cuyo nombre encaje. Recortarlo a la descripción habría hecho que
+  /// escribir «marinette» dejara de traer lo de la etiqueta que se llama así.
+  Future<Set<int>> _idsMatchingText(String term) async {
+    if (term.isEmpty) return {};
+
+    final ids = _idsOfMedia(await _mediaByText(term));
+
+    for (final tag in await _tagsByName(term)) {
+      ids.addAll(_idsOfMedia(await _appDatabase.mediaModels
+          .filter()
+          .tags((q) => q.idEqualTo(tag.id))
+          .findAll()));
+    }
+
+    for (final creator in await _creatorsByName(term)) {
+      ids.addAll(_idsOfMedia(await _appDatabase.mediaModels
+          .filter()
+          .creator((q) => q.idEqualTo(creator.id))
+          .findAll()));
+    }
+
+    return ids;
+  }
+
+  Set<int> _idsOfMedia(List<MediaModel> media) => {
+        for (final one in media)
+          if (one.id != null) one.id!,
+      };
 
   /// Contenido de una sola sugerencia.
   ///
@@ -2180,24 +2475,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Un grupo vacío se devuelve igualmente como lista vacía de grupos, que es lo
   /// que la rejilla pinta como "aquí no hay nada".
   @override
+  /// Es una pastilla de esa entidad y nada más, y por eso delega: teniendo dos
+  /// caminos para lo mismo, el día que uno cambie el otro se queda como estaba.
+  @override
   Future<DataState<List<MediaSearchSectionEntity>>> searchMediaBySuggestion(
     SearchSuggestionEntity suggestion,
-  ) async {
-    try {
-      final section = switch (suggestion.type) {
-        SearchResultType.tag =>
-          await _tagSection(await _appDatabase.tagModels.get(suggestion.id)),
-        SearchResultType.creator => await _creatorSection(
-            await _appDatabase.creatorModels.get(suggestion.id),
-          ),
-        SearchResultType.media => await _mediaSection(suggestion),
-      };
-
-      return DataSuccess(section == null ? const [] : [section]);
-    } on Exception catch (e) {
-      return DataException(e);
-    }
-  }
+  ) =>
+      searchMediaByCriteria([SearchCriterionEntity.of(suggestion)]);
 
   /// Grupo de una etiqueta: su contenido definitivo, o `null` si no tiene (o si
   /// la etiqueta ya no está en la base).
@@ -2222,6 +2506,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
   Future<MediaSearchSectionEntity?> _creatorSection(CreatorModel? creator) async {
     if (creator == null) return null;
+    if (_visibility.hidesCreator(creator.id)) return null;
 
     final media = await _importedSummaries(
       await _appDatabase.mediaModels
@@ -2239,33 +2524,48 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     );
   }
 
-  /// Grupo de una sugerencia que ya es un contenido: sólo ese contenido, con su
-  /// descripción como título.
-  Future<MediaSearchSectionEntity?> _mediaSection(
-    SearchSuggestionEntity suggestion,
+  Future<MediaSearchSectionEntity?> _mediaSectionById(
+    int id,
+    String label,
   ) async {
-    final summary = await _appDatabase.mediaSummaryModels.get(suggestion.id);
+    final summary = await _appDatabase.mediaSummaryModels.get(id);
     if (summary == null || !summary.isImported || summary.isDeleted) return null;
     if (_visibility.hidesMedia(summary.id)) return null;
 
     return MediaSearchSectionEntity(
       type: SearchResultType.media,
-      title: suggestion.label,
-      imagePath: suggestion.imagePath,
+      title: label,
+      imagePath: summary.path,
       media: [summary.toEntity()],
     );
   }
 
-  /// Contenidos con una descripción parecida a [term].
+  /// Contenidos cuya descripción o cuyo **nombre de fichero** se parece a [term].
+  ///
+  /// El nombre de fichero se compara sobre el nombre a secas y no sobre la ruta
+  /// entera: la ruta lleva dentro las carpetas de la biblioteca, así que buscar
+  /// «Users» o «C» devolvería la biblioteca completa. La consulta sí va por la
+  /// ruta —es lo único que sabe filtrar Isar— y lo que sobra se cae aquí.
   ///
   /// El recorte a [limit] se hace sobre los que además son definitivos, no
   /// sobre la consulta: si no, el corte podría llevarse por delante justo los
   /// que se iban a mostrar.
-  Future<List<MediaModel>> _mediaByDescription(String term, {int? limit}) async {
-    final found = await _appDatabase.mediaModels
+  Future<List<MediaModel>> _mediaByText(String term, {int? limit}) async {
+    final needle = term.toLowerCase();
+
+    final candidates = await _appDatabase.mediaModels
         .filter()
         .descriptionContains(term, caseSensitive: false)
+        .or()
+        .pathContains(term, caseSensitive: false)
         .findAll();
+
+    final found = [
+      for (final media in candidates)
+        if ((media.description?.toLowerCase().contains(needle) ?? false) ||
+            p.basename(media.path).toLowerCase().contains(needle))
+          media,
+    ];
 
     // Lo bloqueado se cae aquí, antes de cualquier recorte: si se filtrara
     // después, la descripción de un contenido bloqueado seguiría saliendo en la
@@ -2307,12 +2607,23 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         : visible.sublist(0, limit);
   }
 
-  Future<List<CreatorModel>> _creatorsByName(String term, {int? limit}) {
-    final query = _appDatabase.creatorModels
+  /// Los creadores cuyo nombre encaja, sin los bloqueados.
+  ///
+  /// El recorte a [limit] va **después** de quitar los bloqueados, igual que en
+  /// las etiquetas: recortando antes, uno bloqueado dentro de los cinco primeros
+  /// se llevaría por delante el hueco de otro que sí se puede enseñar, y el
+  /// usuario vería menos resultados sin saber por qué.
+  Future<List<CreatorModel>> _creatorsByName(String term, {int? limit}) async {
+    final found = await _appDatabase.creatorModels
         .filter()
-        .nameContains(term, caseSensitive: false);
+        .nameContains(term, caseSensitive: false)
+        .findAll();
 
-    return limit == null ? query.findAll() : query.limit(limit).findAll();
+    final visible = _visibleCreators(found);
+
+    return limit == null || visible.length <= limit
+        ? visible
+        : visible.sublist(0, limit);
   }
 
   /// Sumarios **definitivos** de los contenidos indicados, en el mismo orden.

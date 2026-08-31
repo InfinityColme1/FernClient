@@ -6,6 +6,7 @@ import 'package:Fern/core/widgets/sidebar_item.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/services/collapsed_tags.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
@@ -53,6 +54,10 @@ class _SidebarState extends State<Sidebar> {
   final _settingsBloc = getIt<SettingsBloc>();
   final _notificationsBloc = getIt<NotificationsBloc>();
 
+  /// Las ramas plegadas. Se escucha: plegar desde la pantalla de gestión tiene
+  /// que verse aquí en el momento, y al revés.
+  final _collapsed = getIt<CollapsedTags>();
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +66,18 @@ class _SidebarState extends State<Sidebar> {
     // la primera vez y el bloc (que es único) se las queda. Quien las cambia
     // avisa por su cuenta.
     if (!_tagsBloc.state.isLoaded) _tagsBloc.add(const LoadTagsEvent());
+
+    _collapsed.addListener(_onCollapsedChanged);
+  }
+
+  @override
+  void dispose() {
+    _collapsed.removeListener(_onCollapsedChanged);
+    super.dispose();
+  }
+
+  void _onCollapsedChanged() {
+    if (mounted) setState(() {});
   }
 
   /// Pone [tag] a los contenidos que se han soltado encima.
@@ -234,6 +251,13 @@ class _SidebarState extends State<Sidebar> {
           id: 'tag:${tag.id}',
           title: tag.name,
           icon: Symbols.sell,
+          hasChildren: tag.children.isNotEmpty,
+          isCollapsed: _collapsed.isCollapsed(tag.id),
+          onToggleCollapse: () => _collapsed.toggle(tag.id),
+          // Arrastrando contenido: posarse encima abre la rama para poder
+          // seguir bajando hasta una hija, y soltar la vuelve a cerrar.
+          onSpringOpen: () => _collapsed.expandWhileDragging(tag.id),
+          onSpringRelease: _collapsed.releaseDragged,
           // Con el filtro quitado, una etiqueta NSFW se veía en el menú igual
           // que las demás y no había forma de saber cuál escondía contenido.
           isNsfw: tag.isUnderNsfw,
@@ -245,11 +269,15 @@ class _SidebarState extends State<Sidebar> {
           // a abrirlos uno a uno.
           onMediaDropped: (mediaIds) => _tagDropped(tag, mediaIds),
         ),
-        ..._tagItems(
-          tag.children,
-          showAvatars: showAvatars,
-          depth: depth + 1,
-        ),
+        // La descendencia se corta aquí cuando la rama está plegada. Es la
+        // misma regla que aplica `TagList.flatten` en la pantalla de gestión:
+        // las dos listas aplanan el mismo árbol.
+        if (!_collapsed.isCollapsed(tag.id))
+          ..._tagItems(
+            tag.children,
+            showAvatars: showAvatars,
+            depth: depth + 1,
+          ),
       ],
     ];
   }

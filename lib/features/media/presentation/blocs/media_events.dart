@@ -5,6 +5,7 @@ import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
+import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 
 /// Los eventos del bloc de contenido.
@@ -36,8 +37,22 @@ class LoadMediaLibraryEvent extends MediaEvents {
   const LoadMediaLibraryEvent();
 }
 
-/// Busca [query] por todo (descripciones, etiquetas y creadores) y deja el
-/// resultado agrupado para la rejilla de la pantalla de media.
+/// Cambian las pastillas de la barra: se busca lo que las cumple **todas**.
+///
+/// Llega la lista entera y no lo que se ha añadido o quitado: la barra es dueña
+/// de sus pastillas, y mandar el conjunto hace que poner una, quitarla o
+/// reordenarlas sean el mismo camino en vez de tres.
+class SearchCriteriaChangedEvent extends MediaEvents {
+  final List<SearchCriterionEntity> criteria;
+
+  const SearchCriteriaChangedEvent(this.criteria);
+}
+
+/// Busca [query] por todo (descripciones, nombres de fichero, etiquetas y
+/// creadores) y deja el resultado agrupado para la rejilla.
+///
+/// Es una sola pastilla de texto libre, y se conserva porque hay cuatro sitios
+/// que buscan sin saber nada de pastillas.
 class SearchMediaEvent extends MediaEvents {
   final String query;
 
@@ -52,6 +67,18 @@ class SearchSuggestionSelectedEvent extends MediaEvents {
   final SearchSuggestionEntity suggestion;
 
   const SearchSuggestionSelectedEvent(this.suggestion);
+}
+
+/// Le quita una etiqueta al contenido que se está viendo, y **sólo a ése**.
+///
+/// Va aparte de [RemoveTagFromSelectedMediaEvent], que trabaja sobre lo marcado
+/// en la rejilla: esto sale de la cruz de una etiqueta del panel de información,
+/// donde no hay selección ninguna y lo que se toca es el contenido de delante.
+class RemoveTagFromMediaEvent extends MediaEvents {
+  final int mediaId;
+  final int tagId;
+
+  const RemoveTagFromMediaEvent({required this.mediaId, required this.tagId});
 }
 
 /// Enciende o apaga [type] en el filtro de la cabecera de la pantalla de media.

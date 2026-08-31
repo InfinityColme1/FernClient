@@ -34,6 +34,73 @@ _cancelled = set()
 _models = {}
 _MAX_CACHED_MODELS = 3
 
+# La tarjeta no puede ejecutar lo que trae esta version de torch.
+#
+# Pasa cuando la GPU es mas nueva (o mas vieja) que las arquitecturas para las
+# que se compilo la rueda instalada: torch dice que hay CUDA, coge la tarjeta, y
+# al lanzar el primer kernel contesta "no kernel image is available for
+# execution on the device". No es un fallo del contenido ni de los pesos, y
+# reintentar en la tarjeta va a fallar igual: se apunta y se sigue en el
+# procesador el resto de la sesion.
+_cuda_broken = False
+_cuda_error = None
+
+
+def _cuda_unusable(error):
+    """Si este fallo dice que la tarjeta no sirve para nada."""
+    message = str(error).lower()
+
+    return (
+        "no kernel image is available" in message
+        or "cuda error" in message
+        or "cuda driver" in message
+        or "no cuda gpus are available" in message
+    )
+
+
+def _cuda_works():
+    """Si hay tarjeta **y ademas sabe ejecutar algo**.
+
+    Que `torch.cuda.is_available()` diga que si no basta: eso dice que hay driver
+    y tarjeta, no que la rueda de torch instalada traiga kernels compilados para
+    esa arquitectura. Cuando no los trae, la primera operacion revienta con "no
+    kernel image is available for execution on the device", y hasta ese momento
+    todo parecia correcto.
+
+    Se comprueba lanzando una operacion de verdad, una sola vez por sesion.
+    """
+    global _cuda_broken, _cuda_error
+
+    if _cuda_broken:
+        return False
+
+    try:
+        import torch
+
+        if not torch.cuda.is_available():
+            return False
+
+        # Pequena y de verdad: reservar memoria no lanza ningun kernel, asi que
+        # no probaria nada.
+        (torch.zeros(8, 8, device="cuda") + 1).sum().item()
+
+        return True
+    except Exception as error:
+        _cuda_broken = True
+        _cuda_error = str(error)
+
+        return False
+
+
+def _device():
+    """Donde se ejecuta: la tarjeta si la hay y funciona, y si no el procesador.
+
+    Se dice **explicitamente** en cada peticion. Sin decirlo, ultralytics coge la
+    tarjeta por su cuenta en cuanto torch dice que hay una, y entonces no hay
+    forma de volver al procesador cuando esa tarjeta no puede ejecutar nada.
+    """
+    return "cuda:0" if _cuda_works() else "cpu"
+
 
 def _send(payload):
     sys.stdout.write(json.dumps(payload) + "\n")
@@ -103,12 +170,20 @@ def handle_env_info(request_id, params):
 
         info["torch"] = torch.__version__
 
-        if torch.cuda.is_available():
+        if _cuda_works():
             info["device"] = "cuda:0"
             info["device_name"] = torch.cuda.get_device_name(0)
             info["vram_mb"] = int(
                 torch.cuda.get_device_properties(0).total_memory / (1024 * 1024)
             )
+        elif _cuda_broken:
+            # Hay tarjeta, pero esta rueda de torch no sabe hablarle. Se dice que
+            # se va por el procesador **y por que**: sin el motivo, el panel
+            # ofreceria descargar la version con GPU, que es justo la que ya esta
+            # puesta y no funciona.
+            info["device"] = "cpu"
+            info["device_name"] = platform.processor() or "CPU"
+            info["device_error"] = _cuda_error
         elif getattr(torch.backends, "mps", None) is not None and \
                 torch.backends.mps.is_available():
             # En los Mac con Apple Silicon la aceleracion viene de serie con la
@@ -187,6 +262,11 @@ def handle_train(request_id, params):
         )
     except RuntimeError as error:
         message = str(error).lower()
+        # Que la tarjeta no sepa ejecutar el modelo no es quedarse sin memoria, y
+        # llamarlo asi manda a buscar donde no es: lo que hay que hacer no es
+        # bajar el lote, es entrenar en el procesador o cambiar de rueda.
+        if _cuda_unusable(error):
+            raise SidecarError("DEVICE_UNSUPPORTED", str(error))
         if "out of memory" in message or "cuda" in message:
             raise SidecarError("OUT_OF_MEMORY", str(error))
         raise
@@ -282,13 +362,51 @@ def _detections_of(result, conf):
     return detections
 
 
+def _predict_one(weights, model, image, conf, imgsz):
+    """Mira una imagen, cayendo al procesador si la tarjeta no puede.
+
+    El cambio se hace una vez y vale para el resto de la sesion: si la tarjeta no
+    sabe ejecutar el modelo, no va a saber en la imagen siguiente tampoco, y
+    reintentarlo en cada una convertiria el reconocimiento en el doble de lento
+    con el mismo resultado.
+    """
+    global _cuda_broken
+
+    try:
+        return model.predict(
+            image,
+            conf=conf,
+            imgsz=imgsz,
+            device=_device(),
+            verbose=False,
+        )[0]
+    except RuntimeError as error:
+        if _cuda_broken or not _cuda_unusable(error):
+            raise
+
+        _cuda_broken = True
+
+        # El modelo esta cargado en una tarjeta que no sirve: se vuelve a leer
+        # para que nazca en el procesador.
+        _models.clear()
+
+        return _load_model(weights).predict(
+            image,
+            conf=conf,
+            imgsz=imgsz,
+            device="cpu",
+            verbose=False,
+        )[0]
+
+
 def handle_predict(request_id, params):
     images = params.get("images") or []
     if not images:
         return {"results": []}
 
     conf = float(params.get("conf", 0.35))
-    model = _load_model(params.get("weights"))
+    weights = params.get("weights")
+    model = _load_model(weights)
     imgsz = int(params.get("imgsz", 640))
 
     results = []
@@ -304,12 +422,11 @@ def handle_predict(request_id, params):
             results.append({"image": image, "detections": [], "missing": True})
             continue
 
-        prediction = model.predict(
-            image,
-            conf=conf,
-            imgsz=imgsz,
-            verbose=False,
-        )[0]
+        prediction = _predict_one(weights, model, image, conf, imgsz)
+
+        # Al caer al procesador el modelo se vuelve a cargar, asi que el que se
+        # tenia en la mano ya no es el bueno.
+        model = _load_model(weights)
 
         results.append({
             "image": image,

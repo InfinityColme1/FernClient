@@ -850,6 +850,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tagRelationsAddSibling => 'Ajouter une étiquette liée';
 
   @override
+  String get tagCollapseBranch => 'Replier ce qui dépend de celle-ci';
+
+  @override
+  String get tagExpandBranch => 'Déplier ce qui dépend de celle-ci';
+
+  @override
+  String get siblingDirectionBoth => 'Chacune ajoute l’autre';
+
+  @override
+  String siblingDirectionOneWay(String from, String to) {
+    return '«$from» ajoute «$to»';
+  }
+
+  @override
+  String get siblingDirectionNone => 'Aucune n’ajoute l’autre';
+
+  @override
+  String get siblingDirectionNote =>
+      'Être liées dit qu’elles vont ensemble. La direction dit ce qui se passe quand on en ajoute une.';
+
+  @override
   String get tagRelationsCreate => 'Créer une nouvelle étiquette';
 
   @override
@@ -1962,6 +1983,87 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noSourceUrls => 'Aucune adresse liée';
+
+  @override
+  String get databaseCleanupTitle => 'Nettoyer les fichiers orphelins';
+
+  @override
+  String get databaseCleanupNote =>
+      'Les avatars sont des copies faites par Fern. Quand vous en changez un, la copie précédente n’est plus utilisée par rien et reste sur le disque. Ceci emporte tout ce que plus rien ne désigne.';
+
+  @override
+  String get databaseCleanupAction => 'Nettoyer';
+
+  @override
+  String get databaseCleanupFailed => 'Le nettoyage n’a pas pu se terminer';
+
+  @override
+  String databaseCleanupDone(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fichiers supprimés, $size libérés',
+      one: '1 fichier supprimé, $size libérés',
+      zero: 'Il n’y avait rien d’orphelin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get blockedImportsTitle => 'À ne plus importer';
+
+  @override
+  String get blockedImportsNote =>
+      'Ce que vous avez demandé à ne plus voir proposé. C’est ignoré sans être téléchargé.';
+
+  @override
+  String get blockedImportsNone => 'Rien n’est bloqué.';
+
+  @override
+  String get blockedImportsUnblock => 'Réimporter ceci';
+
+  @override
+  String get blockedImportsClear => 'Tout oublier';
+
+  @override
+  String get blockImportAgain => 'Ne plus importer ceci';
+
+  @override
+  String get blockImportAgainDescription =>
+      'La source continue de proposer ce que vous y avez enregistré. Coché, ceci est ignoré sans être téléchargé. Annulable dans Réglages, section Base de données.';
+
+  @override
+  String importSkippedBlocked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ignorés : vous avez demandé à ne plus les voir.',
+      one: '1 ignoré : vous avez demandé à ne plus le voir.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorNsfwAffected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Masque $count éléments.',
+      one: 'Masque 1 élément.',
+      zero: 'Ce créateur n’a aucun contenu pour l’instant.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorNsfwOnTooltip =>
+      'Marqué comme NSFW · cliquez pour le démarquer';
+
+  @override
+  String get creatorNsfwOffTooltip => 'Marquer comme NSFW';
+
+  @override
+  String get searchChipDescription => 'Description';
 
   @override
   String get showsTagBranchOnFilter =>

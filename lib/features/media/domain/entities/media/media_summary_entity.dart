@@ -22,6 +22,13 @@ class MediaSummaryEntity extends Equatable {
   /// dato del contenido y lo pone quien lo revisa.
   final ImportSource importSource;
 
+  /// El identificador de la pieza en la fuente de la que vino, si se sabe.
+  ///
+  /// Es lo que permite decir «esto no me lo vuelvas a ofrecer»: la fuente lo da
+  /// antes de descargar, así que un bloqueo se resuelve sin bajar el fichero.
+  /// `null` en lo local y en lo que entró antes de que esto se guardara.
+  final String? remoteId;
+
   /// Si algún modelo ha propuesto algo sobre esto y nadie lo ha contestado.
   ///
   /// Está en el sumario y no se pregunta por las sugerencias de cada celda a
@@ -60,6 +67,7 @@ class MediaSummaryEntity extends Equatable {
     this.isDeleted = false,
     this.deletedAt,
     this.importSource = ImportSource.local,
+    this.remoteId,
     this.hasPendingSuggestions = false,
     this.recognizedAt,
     this.width,
@@ -74,6 +82,7 @@ class MediaSummaryEntity extends Equatable {
         isDeleted,
         deletedAt,
         importSource,
+        remoteId,
         hasPendingSuggestions,
         recognizedAt,
         width,

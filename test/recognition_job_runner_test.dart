@@ -368,15 +368,65 @@ void main() {
       expect(results.saved.keys.toList()..sort(), [1, 3]);
     });
 
-    test('una tanda que revienta no para el trabajo', () async {
+    test('una tanda que revienta no para las demas', () async {
       recognizer.explodesOn = {2};
 
       final work = job([1, 2, 3]);
-      await runner().run(work.context);
 
-      // La tanda que fallo se pierde entera, pero las demas se guardan y el
-      // trabajo termina: un fallo del motor a mitad de biblioteca no puede
-      // dejar sin reconocer todo lo que venia detras.
+      // La tanda que fallo se pierde entera, pero las demas se guardan: un fallo
+      // del motor a mitad de biblioteca no puede dejar sin reconocer todo lo que
+      // venia detras.
+      await expectLater(runner().run(work.context), throwsA(anything));
+
+      expect(results.saved.keys.toList()..sort(), [1, 3]);
+    });
+
+    // Y al terminar se dice. Antes se escribia en la consola y el trabajo
+    // terminaba en verde sin una sola sugerencia: un reconocimiento que no podia
+    // funcionar —una tarjeta que no sabe ejecutar el modelo— se veia igual que
+    // uno que miro y no encontro nada.
+    test('pero el trabajo termina diciendo que fallo', () async {
+      recognizer.explodesOn = {2};
+
+      final work = job([1, 2, 3]);
+
+      await expectLater(
+        runner().run(work.context),
+        throwsA(isA<RecognitionFailedException>()),
+      );
+    });
+
+    test('el motivo viaja con el fallo', () async {
+      recognizer.explodesOn = {2};
+
+      final work = job([1, 2, 3]);
+
+      await expectLater(
+        runner().run(work.context),
+        throwsA(predicate<RecognitionFailedException>(
+          (error) => error.toString().contains('el motor se cayo'),
+        )),
+      );
+    });
+
+    test('si fallan todas, se dice que fallaron todas', () async {
+      recognizer.explodesOn = {1, 2, 3};
+
+      final work = job([1, 2, 3]);
+
+      await expectLater(
+        runner().run(work.context),
+        throwsA(predicate<RecognitionFailedException>((e) => e.isTotal)),
+      );
+    });
+
+    test('lo que si funciono no se pierde por el fallo', () async {
+      recognizer.explodesOn = {2};
+
+      final work = job([1, 2, 3]);
+      await expectLater(runner().run(work.context), throwsA(anything));
+
+      // Se levanta despues de guardar, no en vez de guardar.
       expect(results.saved.keys.toList()..sort(), [1, 3]);
     });
 

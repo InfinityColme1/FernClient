@@ -3,6 +3,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
@@ -642,15 +643,22 @@ class _TagCardState extends State<TagCard> {
     final parentChanged = result.parent?.id != _parent?.id;
     setState(() => _parent = result.parent);
 
-    final before = {for (final one in _siblings) one.id};
-    final after = {for (final one in result.siblings) one.id};
-    final siblingsChanged = !setEquals(before, after);
+    // Quiénes son y qué dirección tiene cada una: cambiar sólo la dirección es
+    // un cambio, y comparando nada más las listas se habría perdido.
+    final before = {
+      for (final one in _siblings)
+        one.id: siblingDirectionBetween(tag: widget.tag, sibling: one),
+    };
+    final after = {
+      for (final one in result.siblings) one.id: result.directionOf(one.id),
+    };
+    final siblingsChanged = !mapEquals(before, after);
 
     if (!parentChanged && !siblingsChanged) return;
 
     await _run(() async {
       if (parentChanged) await _saveParent(result.parent);
-      if (siblingsChanged) await _saveSiblings(result.siblings);
+      if (siblingsChanged) await _saveSiblings(result.siblings, after);
     });
   }
 
@@ -691,11 +699,14 @@ class _TagCardState extends State<TagCard> {
 
 
   /// Guarda la lista y rehace el campo de búsqueda para que se vacíe.
-  Future<void> _saveSiblings(List<TagEntity> siblings) async {
+  Future<void> _saveSiblings(
+    List<TagEntity> siblings,
+    Map<int, SiblingDirection> directions,
+  ) async {
     final result = await _saveTagSiblings(
       params: SaveTagSiblingsParams(
         tagId: widget.tag.id,
-        siblingIds: [for (final one in siblings) one.id],
+        siblings: directions,
       ),
     );
 

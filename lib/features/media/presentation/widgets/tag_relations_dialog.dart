@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/services/tag_relations_layout.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -17,7 +18,21 @@ class TagRelations {
   final TagEntity? parent;
   final List<TagEntity> siblings;
 
-  const TagRelations({this.parent, this.siblings = const []});
+  /// Quién arrastra a quién con cada hermana.
+  ///
+  /// Una entrada por cada una de [siblings]. Ser hermanas dice que van juntas;
+  /// esto dice qué pasa al poner una.
+  final Map<int, SiblingDirection> directions;
+
+  const TagRelations({
+    this.parent,
+    this.siblings = const [],
+    this.directions = const {},
+  });
+
+  /// La dirección de [siblingId], o la de fábrica si no se dijo otra cosa.
+  SiblingDirection directionOf(int siblingId) =>
+      directions[siblingId] ?? SiblingDirection.both;
 }
 
 /// De quién cuelga una etiqueta y con quiénes va a la par, en un árbol.
@@ -69,6 +84,13 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
   late TagEntity? _parent = widget.parent;
   late List<TagEntity> _siblings = [...widget.siblings];
 
+  /// Quién arrastra a quién con cada hermana, según están ahora mismo.
+  late Map<int, SiblingDirection> _directions = {
+    for (final sibling in widget.siblings)
+      sibling.id:
+          siblingDirectionBetween(tag: widget.tag, sibling: sibling),
+  };
+
   /// El buscador se rehace al elegir para que se vacíe solo.
   Key _searchKey = UniqueKey();
 
@@ -89,6 +111,10 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
         _parent = tag;
       } else {
         _siblings = [..._siblings, tag];
+        // Nace poniéndose las dos, que es lo que hacían todas antes de que esto
+        // se pudiera elegir: relacionarlas es lo que se acaba de pedir, y
+        // afinar la dirección es el paso siguiente, no un requisito.
+        _directions = {..._directions, tag.id: SiblingDirection.both};
       }
 
       _adding = null;
@@ -112,7 +138,12 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
       }
 
       _siblings = [for (final one in _siblings) if (one.id != tagId) one];
+      _directions = {..._directions}..remove(tagId);
     });
+  }
+
+  void _setDirection(int siblingId, SiblingDirection direction) {
+    setState(() => _directions = {..._directions, siblingId: direction});
   }
 
   @override
@@ -140,6 +171,16 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: context.colors.gray),
             ),
+            // El sentido es nuevo y se elige con un icono: sin una línea que lo
+            // explique, la flecha de la tarjeta no dice de qué va.
+            if (_siblings.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                texts.siblingDirectionNote,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: context.colors.gray),
+              ),
+            ],
             const SizedBox(height: AppSpacing.l),
             _canvas(slots),
             const SizedBox(height: AppSpacing.l),
@@ -150,7 +191,11 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
       actionButton: FernActionButton(
         label: texts.actionSave,
         onPressed: () => Navigator.of(context).pop(
-          TagRelations(parent: _parent, siblings: _siblings),
+          TagRelations(
+            parent: _parent,
+            siblings: _siblings,
+            directions: _directions,
+          ),
         ),
       ),
     );
@@ -208,6 +253,14 @@ class _TagRelationsDialogState extends State<TagRelationsDialog> {
                     // árbol: es de quien es el árbol.
                     onRemove:
                         tag.id == widget.tag.id ? null : () => _remove(tag.id),
+                    // El sentido sólo lo tienen las hermanas: de la madre a la
+                    // hija la jerarquía ya dice quién arrastra a quién, y no se
+                    // elige.
+                    direction: _directions[tag.id],
+                    selfName: widget.tag.name,
+                    onDirection: _directions.containsKey(tag.id)
+                        ? (value) => _setDirection(tag.id, value)
+                        : null,
                   ),
                 ),
           ],
@@ -289,7 +342,75 @@ class _TagNode extends StatelessWidget {
   final bool isSelf;
   final VoidCallback? onRemove;
 
-  const _TagNode({required this.tag, required this.isSelf, this.onRemove});
+  /// Quién arrastra a quién, si esta tarjeta es de una hermana.
+  final SiblingDirection? direction;
+
+  /// Cómo se llama la etiqueta del árbol, para poder decir las direcciones con
+  /// los dos nombres. Un icono de flecha solo no dice hacia dónde apunta cuando
+  /// la tarjeta puede estar a izquierda o a derecha.
+  final String selfName;
+
+  final ValueChanged<SiblingDirection>? onDirection;
+
+  const _TagNode({
+    required this.tag,
+    required this.isSelf,
+    required this.selfName,
+    this.onRemove,
+    this.direction,
+    this.onDirection,
+  });
+
+  /// El icono con el que se resume la dirección en la tarjeta.
+  IconData get _directionIcon => switch (direction) {
+        SiblingDirection.both => Symbols.sync_alt,
+        SiblingDirection.forward => Symbols.arrow_forward,
+        SiblingDirection.backward => Symbols.arrow_back,
+        SiblingDirection.none || null => Symbols.block,
+      };
+
+  String _labelOf(SiblingDirection value, AppLocalizations texts) =>
+      switch (value) {
+        SiblingDirection.both => texts.siblingDirectionBoth,
+        SiblingDirection.forward =>
+          texts.siblingDirectionOneWay(selfName, tag.name),
+        SiblingDirection.backward =>
+          texts.siblingDirectionOneWay(tag.name, selfName),
+        SiblingDirection.none => texts.siblingDirectionNone,
+      };
+
+  /// El botón que abre las cuatro opciones.
+  ///
+  /// Un desplegable con las cuatro escritas y no un botón que las va rotando:
+  /// rotando entre cuatro estados hay que pulsar y mirar qué ha salido, y aquí
+  /// lo que se elige —«"ladybug" pone "Marinette"»— sólo se entiende con los dos
+  /// nombres delante.
+  Widget _directionButton(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
+    return FernPopupMenu<SiblingDirection>(
+      options: [
+        for (final value in SiblingDirection.values)
+          FernMenuOption(
+            value: value,
+            label: _labelOf(value, texts),
+            icon: switch (value) {
+              SiblingDirection.both => Symbols.sync_alt,
+              SiblingDirection.forward => Symbols.arrow_forward,
+              SiblingDirection.backward => Symbols.arrow_back,
+              SiblingDirection.none => Symbols.block,
+            },
+          ),
+      ],
+      onSelected: onDirection!,
+      builder: (context, toggle) => IconButton(
+        tooltip: _labelOf(direction ?? SiblingDirection.both, texts),
+        iconSize: AppSizes.iconSmall,
+        onPressed: toggle,
+        icon: Icon(_directionIcon),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +454,7 @@ class _TagNode extends StatelessWidget {
                 ],
               ),
             ),
+            if (onDirection != null) _directionButton(context),
             if (onRemove != null)
               IconButton(
                 tooltip: AppLocalizations.of(context).actionRemove,

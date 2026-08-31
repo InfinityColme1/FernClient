@@ -1,4 +1,6 @@
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
+import 'package:Fern/features/media/data/models/media/media_model.dart';
+import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
@@ -6,7 +8,8 @@ import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/recognition_model_model.dart';
 import 'package:isar/isar.dart';
 
-/// Qué etiquetas, contenidos, fernies y modelos están bloqueados, en memoria.
+/// Qué etiquetas, creadores, contenidos, fernies y modelos están bloqueados, en
+/// memoria.
 ///
 /// Existe por rendimiento y por corrección, en ese orden de urgencia pero al
 /// revés de importancia:
@@ -20,11 +23,11 @@ import 'package:isar/isar.dart';
 ///   cambia el filtro sola: no hay marcas propagadas que se queden viejas ni
 ///   migraciones que reescriban media biblioteca.
 ///
-/// Hay **dos** formas de que un contenido esté marcado y aquí se suman: la suya
-/// propia, puesta a mano sobre él, y la que hereda de sus etiquetas. Ninguna
-/// pisa a la otra: desmarcar una etiqueta no toca lo que se marcó a mano, y
-/// quitarle la marca a un contenido no lo saca de la rama de una etiqueta que
-/// sigue marcada.
+/// Hay **tres** formas de que un contenido esté marcado y aquí se suman: la suya
+/// propia, puesta a mano sobre él, la que hereda de sus etiquetas y la de su
+/// creador. Ninguna pisa a las otras: desmarcar una etiqueta no toca lo que se
+/// marcó a mano, y quitarle la marca a un contenido no lo saca de la rama de una
+/// etiqueta que sigue marcada ni de la galería de un creador que sigue marcado.
 ///
 /// Se reconstruye entero. Recalcular sólo lo que cambia es tentador y es donde
 /// se cuelan los fallos: un contenido que se queda visible porque nadie avisó
@@ -41,6 +44,7 @@ class NsfwIndex {
   final bool Function() _marksChildren;
 
   Set<int> _tags = const {};
+  Set<int> _creators = const {};
   Set<int> _media = const {};
   Set<int> _byHand = const {};
   Set<int> _fernies = const {};
@@ -59,12 +63,16 @@ class NsfwIndex {
   /// Las etiquetas bloqueadas: las marcadas y todo lo que cuelga de ellas.
   Set<int> get tags => _tags;
 
-  /// Los contenidos filtrados: los marcados a mano y los que llevan alguna de
-  /// esas etiquetas.
+  /// Los creadores bloqueados. No hay rama que resolver: un creador no cuelga de
+  /// otro, así que son exactamente los marcados.
+  Set<int> get creators => _creators;
+
+  /// Los contenidos filtrados: los marcados a mano, los que llevan alguna de
+  /// esas etiquetas y los de esos creadores.
   Set<int> get media => _media;
 
-  /// Los fernies bloqueados: los marcados y los que proponen una etiqueta
-  /// bloqueada.
+  /// Los fernies bloqueados: los marcados y los que proponen una etiqueta o un
+  /// creador bloqueados.
   Set<int> get fernies => _fernies;
 
   /// Los modelos bloqueados: los marcados y aquellos cuyos fernies **están
@@ -82,7 +90,11 @@ class NsfwIndex {
   /// Con nada marcado el filtro no esconde nada y no hay por qué pedir
   /// contraseñas para ver una biblioteca entera.
   bool get isEmpty =>
-      _tags.isEmpty && _media.isEmpty && _fernies.isEmpty && _models.isEmpty;
+      _tags.isEmpty &&
+      _creators.isEmpty &&
+      _media.isEmpty &&
+      _fernies.isEmpty &&
+      _models.isEmpty;
 
   /// Los contenidos marcados **a mano**, sin los que lo están por su etiqueta.
   ///
@@ -94,6 +106,8 @@ class NsfwIndex {
   bool isMarkedByHand(int mediaId) => _byHand.contains(mediaId);
 
   bool hasTag(int tagId) => _tags.contains(tagId);
+
+  bool hasCreator(int creatorId) => _creators.contains(creatorId);
 
   bool hasMedia(int mediaId) => _media.contains(mediaId);
 
@@ -117,7 +131,6 @@ class NsfwIndex {
 
     if (marked.isEmpty) {
       _tags = const {};
-      _media = byHand;
     } else {
       final rooted = marked.map((tag) => tag.id);
 
@@ -129,12 +142,19 @@ class NsfwIndex {
           : const <TagModel>[];
 
       _tags = {...rooted, for (final tag in branch) tag.id};
-      _media = {...byHand, ...await _mediaWithAny(_tags)};
     }
 
-    // En este orden y no en otro: los fernies heredan de las etiquetas y los
-    // modelos heredan de sus fernies.
-    _fernies = await _blockedFernies(_tags);
+    _creators = await _markedCreators();
+
+    _media = {
+      ...byHand,
+      if (_tags.isNotEmpty) ...await _mediaWithAny(_tags),
+      if (_creators.isNotEmpty) ...await _mediaOfCreators(_creators),
+    };
+
+    // En este orden y no en otro: los fernies heredan de las etiquetas y de los
+    // creadores, y los modelos heredan de sus fernies.
+    _fernies = await _blockedFernies(_tags, _creators);
     _models = await _blockedModels(_fernies);
   }
 
@@ -146,24 +166,60 @@ class NsfwIndex {
   /// la marca escondía, y sus regiones son recortes del contenido que la lleva.
   /// Como con la rama de etiquetas, no se escribe nada: se resuelve al leer, y
   /// desmarcar la etiqueta devuelve el fernie a la vista sola.
-  Future<Set<int>> _blockedFernies(Set<int> blockedTags) async {
+  Future<Set<int>> _blockedFernies(
+    Set<int> blockedTags,
+    Set<int> blockedCreators,
+  ) async {
     final rows =
         await _database.fernieModels.filter().isNsfwEqualTo(true).findAll();
 
     final blocked = {for (final row in rows) row.id};
 
-    if (blockedTags.isEmpty) return blocked;
+    if (blockedTags.isEmpty && blockedCreators.isEmpty) return blocked;
 
     // Se recorren todos y se filtra aquí: los fernies son unas decenas, y
     // preguntar por cada etiqueta bloqueada sería una consulta por etiqueta
     // para leer lo mismo.
-    final linked = await _database.fernieModels
-        .filter()
-        .linkedTagIdIsNotNull()
-        .findAll();
+    final linked = await _database.fernieModels.where().findAll();
 
     for (final row in linked) {
-      if (blockedTags.contains(row.linkedTagId)) blocked.add(row.id);
+      final tagId = row.linkedTagId;
+      final creatorId = row.linkedCreatorId;
+
+      if (tagId != null && blockedTags.contains(tagId)) blocked.add(row.id);
+      if (creatorId != null && blockedCreators.contains(creatorId)) {
+        blocked.add(row.id);
+      }
+    }
+
+    return blocked;
+  }
+
+  /// Los creadores que alguien marcó.
+  Future<Set<int>> _markedCreators() async {
+    final rows =
+        await _database.creatorModels.filter().isNsfwEqualTo(true).findAll();
+
+    return {for (final row in rows) row.id};
+  }
+
+  /// El contenido de estos creadores.
+  ///
+  /// Se pregunta por creador y no por contenido, como con las etiquetas: los
+  /// marcados son unos pocos y los contenidos son decenas de miles.
+  Future<Set<int>> _mediaOfCreators(Set<int> creatorIds) async {
+    final blocked = <int>{};
+
+    for (final creatorId in creatorIds) {
+      final rows = await _database.mediaModels
+          .filter()
+          .creator((q) => q.idEqualTo(creatorId))
+          .findAll();
+
+      for (final media in rows) {
+        final id = media.id;
+        if (id != null) blocked.add(id);
+      }
     }
 
     return blocked;

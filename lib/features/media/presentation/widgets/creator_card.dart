@@ -10,6 +10,7 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_source_urls_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_creator_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_creator_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
@@ -54,6 +55,7 @@ class _CreatorCardState extends State<CreatorCard> {
   final _updateCreator = getIt<UpdateCreatorUseCase>();
   final _deleteCreator = getIt<DeleteCreatorUseCase>();
   final _saveCreatorSourceUrls = getIt<SaveCreatorSourceUrlsUseCase>();
+  final _setCreatorNsfw = getIt<SetCreatorNsfwUseCase>();
   final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
@@ -80,6 +82,13 @@ class _CreatorCardState extends State<CreatorCard> {
     for (final url in widget.creator.sourceUrls)
       FernLink(url, isNsfw: widget.creator.nsfwSourceUrls.contains(url)),
   ];
+
+  /// El creador está marcado como contenido no apto.
+  ///
+  /// Se guarda al tocar el interruptor y no con el botón de guardar: es una
+  /// decisión que hace desaparecer contenido, y dejarla a medias —marcada en
+  /// pantalla, sin marcar en la base— sería la peor forma de contarlo.
+  late bool _isNsfw = widget.creator.isNsfw;
 
   /// El creador desconocido no se borra: es el respaldo al que van a parar los
   /// contenidos cuando se borra otro, así que sin él no habría dónde dejarlos.
@@ -266,6 +275,7 @@ class _CreatorCardState extends State<CreatorCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                _nsfwButton(texts),
                 _recognizeButton(texts),
                 _assignUrlsButton(texts),
               ],
@@ -364,6 +374,60 @@ class _CreatorCardState extends State<CreatorCard> {
       ),
       tooltip: texts.assignUrlsCreatorTooltip,
       onPressed: _isBusy ? null : _assignUrls,
+    );
+  }
+
+  /// Marca o desmarca al creador, y dice a cuánto afecta.
+  ///
+  /// Con el bloqueo cerrado, marcarlo hace que la ficha y su contenido
+  /// desaparezcan de la pantalla en cuanto se relea: por eso el número se
+  /// enseña aquí y ahora, que es el único momento en el que se puede leer.
+  Future<void> _setNsfw(bool value) async {
+    final texts = AppLocalizations.of(context);
+
+    final result = await _setCreatorNsfw(
+      params: SetCreatorNsfwParams(
+        creatorId: widget.creator.id,
+        isNsfw: value,
+      ),
+    );
+
+    if (result is! DataSuccess<int> || !mounted) return;
+
+    setState(() => _isNsfw = value);
+
+    showFernToast(
+      context,
+      texts.creatorNsfwAffected(result.data ?? 0),
+      icon: value ? Symbols.visibility_off : Symbols.visibility,
+    );
+
+    getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
+    getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
+  }
+
+  /// El interruptor de NSFW, hecho un icono más de la fila de arriba, como en la
+  /// ficha de etiqueta.
+  ///
+  /// Sólo con contraseña puesta: sin ella, marcar no escondería nada y el botón
+  /// prometería algo que no va a pasar.
+  ///
+  /// Y nunca para el desconocido: es el respaldo al que van a parar los
+  /// contenidos que se quedan sin creador, así que esconderlo escondería media
+  /// biblioteca de una pulsación.
+  Widget _nsfwButton(AppLocalizations texts) {
+    if (_isUnknown || !getIt<NsfwModeService>().isConfigured) {
+      return const SizedBox.shrink();
+    }
+
+    return IconButton(
+      icon: Icon(
+        Symbols.visibility_off,
+        size: AppSizes.iconCardAction,
+        color: _isNsfw ? context.colors.terciary : null,
+      ),
+      tooltip: _isNsfw ? texts.creatorNsfwOnTooltip : texts.creatorNsfwOffTooltip,
+      onPressed: _isBusy ? null : () => _run(() => _setNsfw(!_isNsfw)),
     );
   }
 

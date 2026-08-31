@@ -9,6 +9,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
@@ -135,13 +136,24 @@ class _TagManagerPageState extends State<TagManagerPage> {
   /// relacionadas, sustituyendo lo que hubiera. La relación es simétrica y de
   /// eso se encarga el repositorio.
   Future<bool> _relate(TagEntity tag, TagEntity other) async {
-    final ids = {for (final each in tag.siblings) each.id};
+    // Las que ya tenía, cada una con la dirección que tuviera: mandar la lista
+    // entera es como se guardan, y recalcularlas aquí las pondría a todas como
+    // de fábrica cada vez que se arrastra una encima.
+    final directions = {
+      for (final each in tag.siblings)
+        each.id: siblingDirectionBetween(tag: tag, sibling: each),
+    };
 
     // Ya lo estaban: no hay nada que guardar ni nada que decir.
-    if (!ids.add(other.id)) return false;
+    if (directions.containsKey(other.id)) return false;
+
+    // La nueva nace arrastrando en los dos sentidos, que es lo que hacían todas
+    // antes de que esto se pudiera elegir. Afinarla es cosa del árbol de
+    // relaciones; soltarla encima es sólo decir que van juntas.
+    directions[other.id] = SiblingDirection.both;
 
     final result = await getIt<SaveTagSiblingsUseCase>()(
-      params: SaveTagSiblingsParams(tagId: tag.id, siblingIds: ids.toList()),
+      params: SaveTagSiblingsParams(tagId: tag.id, siblings: directions),
     );
 
     return result is DataSuccess;
