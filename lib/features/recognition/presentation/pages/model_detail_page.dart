@@ -207,7 +207,7 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
     final choice = await chooseAvatarImage(context);
     if (choice == null || !mounted) return;
 
-    final stored = await storeChosenAvatar(choice);
+    final stored = await storeChosenAvatar(choice, replacing: _picturePath);
     if (!mounted) return;
 
     setState(() => _picturePath = stored);

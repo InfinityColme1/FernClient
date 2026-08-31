@@ -148,6 +148,59 @@ class TagList extends StatefulWidget {
     ];
   }
 
+  /// Las etiquetas aplanadas **tal y como se ven al filtrar por [query]**.
+  ///
+  /// Con el campo vacío es [flatten] con lo plegado: el árbol de siempre.
+  ///
+  /// Buscando **manda el filtro sobre lo plegado**: encontrar una etiqueta y no
+  /// verla porque su madre está cerrada sería un buscador que miente.
+  ///
+  /// Con [showsBranch], cada coincidencia arranca en la raíz y su rama cuelga de
+  /// ella, con la sangría contada **desde ella** y no desde el árbol entero.
+  /// Apagado, lo que encaja sale suelto y a ras, que es lo que se hacía antes de
+  /// que la rama acompañara.
+  ///
+  /// **La usan las dos listas** —la de gestión y la del menú lateral—: aplanan el
+  /// mismo árbol con la misma regla, y hacerlo por separado acabaría en dos
+  /// comportamientos distintos en cuanto se arreglara algo en una.
+  static List<TagRow> rowsOf(
+    List<TagEntity> tags, {
+    String query = '',
+    Set<int> collapsed = const {},
+    bool showsBranch = true,
+  }) {
+    final needle = query.trim().toLowerCase();
+
+    if (needle.isEmpty) return flatten(tags, collapsed: collapsed);
+
+    final all = flatten(tags);
+
+    if (!showsBranch) {
+      return [
+        for (final row in all)
+          if (row.tag.name.toLowerCase().contains(needle)) (tag: row.tag, depth: 0),
+      ];
+    }
+
+    // Sin llevar la cuenta de lo ya emitido, una hija que también encaja saldría
+    // dos veces: una colgando de su madre y otra por su cuenta. Como las madres
+    // van antes en el recorrido, la primera vez sale en su sitio.
+    final emitted = <int>{};
+    final rows = <TagRow>[];
+
+    for (final row in all) {
+      if (!row.tag.name.toLowerCase().contains(needle)) continue;
+      if (emitted.contains(row.tag.id)) continue;
+
+      for (final each in flatten([row.tag])) {
+        if (!emitted.add(each.tag.id)) continue;
+        rows.add(each);
+      }
+    }
+
+    return rows;
+  }
+
   /// Las etiquetas por encima de [id], de la raíz hacia abajo.
   ///
   /// Es lo que hay que desplegar para que una etiqueta se vea: una elegida
@@ -286,48 +339,12 @@ class _TagListState extends State<TagList> {
   /// no se ven dibuja un árbol que no existe. Con la rama ese motivo desaparece,
   /// porque la madre de cada fila sangrada sí está: es la coincidencia de la que
   /// cuelga.
-  List<TagRow> get _rows {
-    final needle = _query.trim().toLowerCase();
-    final tree = _tree;
-
-    if (needle.isEmpty) {
-      return TagList.flatten(tree, collapsed: _collapsedIds);
-    }
-
-    // Buscando **manda el filtro sobre lo plegado**: encontrar una etiqueta y no
-    // verla porque su madre está cerrada sería un buscador que miente. Con el
-    // campo vacío vuelve a mandar lo plegado.
-    final all = TagList.flatten(tree);
-
-    if (!_showsBranch) {
-      return [
-        for (final row in all)
-          if (row.tag.name.toLowerCase().contains(needle))
-            (tag: row.tag, depth: 0),
-      ];
-    }
-
-    // Cada coincidencia arranca en la raíz y su rama cuelga de ella, con la
-    // sangría contada **desde ella** y no desde el árbol entero.
-    //
-    // Sin llevar la cuenta de lo ya emitido, una hija que también encaja saldría
-    // dos veces: una colgando de su madre y otra por su cuenta. Como las madres
-    // van antes en el recorrido, la primera vez sale en su sitio.
-    final emitted = <int>{};
-    final rows = <TagRow>[];
-
-    for (final row in all) {
-      if (!row.tag.name.toLowerCase().contains(needle)) continue;
-      if (emitted.contains(row.tag.id)) continue;
-
-      for (final each in TagList.flatten([row.tag])) {
-        if (!emitted.add(each.tag.id)) continue;
-        rows.add(each);
-      }
-    }
-
-    return rows;
-  }
+  List<TagRow> get _rows => TagList.rowsOf(
+        _tree,
+        query: _query,
+        collapsed: _collapsedIds,
+        showsBranch: _showsBranch,
+      );
 
   /// Si [dragged] se puede soltar sobre [target].
   bool _accepts(TagEntity dragged, TagEntity target) =>

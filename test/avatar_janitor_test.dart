@@ -22,6 +22,7 @@ import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
@@ -71,6 +72,7 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        MediaTagLogModelSchema,
         FernieModelSchema,
         FernieRegionModelSchema,
         RecognitionModelModelSchema,

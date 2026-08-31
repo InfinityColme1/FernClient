@@ -227,7 +227,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     // Guardar sí puede tardar, así que se hace con la ficha en espera. Elegir
     // no: allí el tiempo lo pone el usuario.
     await _run(() async {
-      final storedPath = await storeChosenAvatar(choice);
+      final storedPath = await storeChosenAvatar(choice, replacing: _selectedImagePath);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);
@@ -266,7 +266,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     if (choice == null || !mounted) return;
 
     await _run(() async {
-      final storedPath = await storeChosenAvatar(choice);
+      final storedPath = await storeChosenAvatar(choice, replacing: _selectedImagePath);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);

@@ -33,6 +33,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/media/domain/services/viewer_save_action.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
+import 'package:Fern/features/media/presentation/widgets/tag_log_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -220,6 +221,18 @@ class _InfoContent extends StatelessWidget {
                       texts.mediaInfoTitle,
                       style: theme.textTheme.titleMedium,
                     ),
+                  ),
+                  // De dónde ha salido cada cosa que tiene puesta. Es la
+                  // pregunta que no tenía dónde mirarse: la aplicación etiqueta
+                  // sola por cinco caminos y en el panel todos se ven igual.
+                  IconButton(
+                    tooltip: texts.actionTagLog,
+                    iconSize: AppSizes.iconMedium,
+                    onPressed: () => showFernDialog<void, MediaBloc>(
+                      context: context,
+                      builder: (_) => TagLogDialog(mediaId: media.id),
+                    ),
+                    icon: const Icon(Symbols.history),
                   ),
                   // Llegar al fichero de verdad. Sólo donde la aplicación sabe
                   // hacerlo: un botón que no hace nada es peor que no tenerlo.

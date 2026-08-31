@@ -1015,6 +1015,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get avatarLibraryEmpty => 'Nothing here matches that';
 
   @override
+  String get tagLogTitle => 'Where this came from';
+
+  @override
+  String get tagLogNote => 'What was put on this media, and why.';
+
+  @override
+  String get tagLogGuessNote =>
+      'Some of this was never recorded: it is worked out from the data as they are now, not from what happened. Those lines are marked.';
+
+  @override
+  String get tagLogGuessed => 'worked out';
+
+  @override
+  String get tagLogLoading => 'Reading the log…';
+
+  @override
+  String get tagLogEmpty => 'Nothing has been put on this media.';
+
+  @override
+  String get tagLogManual => 'You put it';
+
+  @override
+  String get tagLogSourceUrl => 'A linked address matched';
+
+  @override
+  String get tagLogPlatform => 'The platform it came from';
+
+  @override
+  String get tagLogAncestor => 'Inherited from the branch';
+
+  @override
+  String tagLogAncestorOf(String tag) {
+    return 'Above $tag';
+  }
+
+  @override
+  String get tagLogSibling => 'Goes with another tag';
+
+  @override
+  String tagLogSiblingOf(String tag) {
+    return 'Goes with $tag';
+  }
+
+  @override
+  String get tagLogRecognition => 'You accepted what a model suggested';
+
+  @override
+  String get tagLogFernie => 'What a marked fernie links to';
+
+  @override
+  String tagLogFernieOf(String fernie) {
+    return 'You marked $fernie here';
+  }
+
+  @override
+  String get tagLogUnknown => 'No record of it';
+
+  @override
+  String get actionTagLog => 'Where this came from';
+
+  @override
   String get viewerSaveSectionTitle => 'Saving imported media';
 
   @override

@@ -13,6 +13,10 @@ import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
+import 'package:Fern/features/media/data/services/media_tag_log.dart';
+import 'package:Fern/features/media/domain/services/tag_log_guess.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
@@ -92,6 +96,14 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     database: _appDatabase,
     storage: _avatarStorage,
   );
+
+  /// El registro de por qué el contenido tiene lo que tiene puesto.
+  ///
+  /// Se construye aquí por lo mismo que [_avatars]: sólo necesita la base de
+  /// datos, que el repositorio ya tiene, y pedirlo por el constructor sería
+  /// obligar a los veinte sitios que lo montan a saber de él para que el
+  /// registro se escriba.
+  late final MediaTagLog _tagLog = MediaTagLog(_appDatabase);
 
   /// Los sumarios que se pueden enseñar.
   ///
@@ -632,6 +644,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       final model = MediaModel.fromEntity(media);
 
+      // Lo que el panel acaba de sumar, para el registro. Se mira antes de
+      // escribir porque después ya no hay contra qué comparar; y sólo lo que
+      // suma: quitar una etiqueta no es ponerla, y el registro cuenta de dónde
+      // sale lo que hay.
+      final entries = await _manualEntries(media.id, tagModels, creatorModel);
+
       await _appDatabase.writeTxn(() async {
         // Guardar detalles
         await _appDatabase.mediaModels.put(model);
@@ -658,6 +676,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           model.source.value = sourceModel;
           await model.source.save();
         }
+
+        await _tagLog.writeInside(entries);
       });
 
       // Las etiquetas que se acaban de poner pueden bloquearlo o desbloquearlo:
@@ -753,11 +773,26 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
     final groupIds = await _duplicateGroupsOf(ids.toSet());
 
+    // El registro de por qué tenía lo que tenía se va con él: sin el contenido
+    // no cuenta nada, y el identificador es el hash de la ruta, así que el mismo
+    // fichero importado otra vez heredaría el registro del anterior.
+    final logIds = <int>[];
+    for (final mediaId in ids) {
+      logIds.addAll(
+        await _appDatabase.mediaTagLogModels
+            .filter()
+            .mediaIdEqualTo(mediaId)
+            .idProperty()
+            .findAll(),
+      );
+    }
+
     await _appDatabase.writeTxn(() async {
       await _appDatabase.mediaSummaryModels.deleteAll(ids);
       await _appDatabase.mediaModels.deleteAll(ids);
       await _appDatabase.fernieRegionModels.deleteAll(regionIds);
       await _appDatabase.duplicateGroupModels.deleteAll(groupIds);
+      await _appDatabase.mediaTagLogModels.deleteAll(logIds);
     });
   }
 
@@ -1966,7 +2001,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
   @override
-  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds) async {
+  Future<DataState<int>> addTagsToMedia(
+    int mediaId,
+    List<int> tagIds, {
+    TagLogReason reason = TagLogReason.manual,
+    String? detail,
+  }) async {
     try {
       final media = await _appDatabase.mediaModels.get(mediaId);
       if (media == null) {
@@ -1986,10 +2026,28 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final expanded = await _tagHierarchy.withRelatives(asked);
       final tags = expanded.isEmpty ? asked : expanded;
 
+      // Lo que ya tenía no se apunta: aceptar dos veces la misma sugerencia no
+      // puede dejar dos líneas diciendo que se puso dos veces.
+      await media.tags.load();
+      final already = {for (final tag in media.tags) tag.id};
+
+      final entries = await _tagEntries(
+        mediaId: mediaId,
+        asked: asked,
+        put: tags,
+        already: already,
+        reason: reason,
+        detail: detail,
+      );
+
       await _appDatabase.writeTxn(() async {
         // Sin `reset`: esto suma a lo que el contenido ya tuviera. Con `reset`
         // aceptar una sugerencia borraría las etiquetas puestas a mano.
         await media.tags.update(link: tags);
+
+        // Dentro de la misma escritura: apuntar que algo se puso tiene que irse
+        // al suelo con lo que lo puso si aquello falla.
+        await _tagLog.writeInside(entries);
       });
 
       // Puede acabar de heredar una etiqueta bloqueada: el contenido que estaba
@@ -2003,10 +2061,232 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
   @override
+  Future<DataState<MediaTagLogView>> getMediaTagLog(
+    int mediaId, {
+    Map<int, String> byFernie = const {},
+  }) async {
+    try {
+      final stored = await _withPictures(await _tagLog.of(mediaId));
+
+      // Lo apuntado y lo deducido **se mezclan**, no se eligen: un contenido
+      // anterior al registro al que hoy se le pone una etiqueta tiene una línea
+      // de verdad y diecinueve etiquetas sin explicar, y devolver sólo la
+      // primera escondería justo lo que se ha ido a mirar.
+      final explained = {
+        for (final entry in stored)
+          if (entry.tagId case final tagId?) tagId,
+      };
+
+      final media = await _appDatabase.mediaModels.get(mediaId);
+      final summary = await _appDatabase.mediaSummaryModels.get(mediaId);
+      if (media == null) {
+        return DataSuccess((entries: stored, isGuess: false));
+      }
+
+      await media.tags.load();
+      await media.source.load();
+
+      // Las etiquetas se rehidratan desde el árbol: las del contenido llegan sin
+      // hermanas cargadas, y sin ellas «va con» no se podría deducir nunca.
+      final treeResult = await getTagTree();
+      final tree = treeResult.data ?? const <TagEntity>[];
+      final byId = {
+        for (final tag in _flattenTree(tree)) tag.id: tag,
+      };
+
+      // Sólo lo que no está explicado ya. **Nada de esto se escribe**: es una
+      // lectura de cómo están los datos ahora, no de lo que pasó, y cambiar la
+      // dirección de una etiqueta mañana cambiaría la respuesta. Cada línea sabe
+      // que es deducida y la pantalla lo dice.
+      final tags = [
+        for (final tag in media.tags)
+          if (!explained.contains(tag.id))
+            if (byId[tag.id] case final hydrated?) hydrated,
+      ];
+
+      final guessed = guessTagLog(
+        mediaId: mediaId,
+        tags: tags,
+        at: media.downloaded,
+        mediaUrls: [?summary?.sourceUrl],
+        platformTag: media.source.value?.toEntity(),
+        byFernie: byFernie,
+      );
+
+      return DataSuccess((
+        entries: [...stored, ...guessed],
+        isGuess: guessed.isNotEmpty,
+      ));
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
+  /// Las líneas del registro con el avatar de lo que se puso, tal y como está
+  /// ahora.
+  ///
+  /// La imagen no se guarda con la línea, al revés que el nombre: es cómo se
+  /// reconoce una etiqueta de un vistazo, así que tiene que ser la de ahora. Una
+  /// etiqueta que ya no existe se queda sin ella y la pantalla pinta su icono de
+  /// reserva, que es lo correcto: la línea sigue contando lo que pasó.
+  Future<List<TagLogEntryEntity>> _withPictures(
+    List<TagLogEntryEntity> entries,
+  ) async {
+    if (entries.isEmpty) return entries;
+
+    final tags = await _appDatabase.tagModels
+        .getAll([for (final entry in entries) ?entry.tagId]);
+    final creators = await _appDatabase.creatorModels
+        .getAll([for (final entry in entries) ?entry.creatorId]);
+
+    final pictures = {
+      for (final tag in tags.nonNulls) 'tag:${tag.id}': tag.picturePath,
+      for (final creator in creators.nonNulls)
+        'creator:${creator.id}': creator.picturePath,
+    };
+
+    return [
+      for (final entry in entries)
+        TagLogEntryEntity(
+          mediaId: entry.mediaId,
+          reason: entry.reason,
+          tagId: entry.tagId,
+          creatorId: entry.creatorId,
+          label: entry.label,
+          detail: entry.detail,
+          at: entry.at,
+          isGuess: entry.isGuess,
+          imagePath: pictures[entry.isCreator
+              ? 'creator:${entry.creatorId}'
+              : 'tag:${entry.tagId}'],
+        ),
+    ];
+  }
+
+  /// El árbol entero aplanado, cada etiqueta con sus hijas y sus hermanas ya
+  /// cargadas.
+  Iterable<TagEntity> _flattenTree(List<TagEntity> tags) sync* {
+    for (final tag in tags) {
+      yield tag;
+      yield* _flattenTree(tag.children);
+    }
+  }
+
+  /// Lo que el panel del visor acaba de sumar a mano: etiquetas que el contenido
+  /// no tenía y un creador distinto del que tenía.
+  ///
+  /// Guardar desde el panel sustituye la lista entera de etiquetas, así que aquí
+  /// no hay «pedidas» y «heredadas»: lo que llega es lo que el usuario ha dejado
+  /// puesto, y todo lo nuevo es suyo. Lo que quita no se apunta: el registro
+  /// cuenta de dónde sale lo que hay, no lo que hubo.
+  Future<List<TagLogEntryEntity>> _manualEntries(
+    int mediaId,
+    List<TagModel> tags,
+    CreatorModel creator,
+  ) async {
+    final previous = await _appDatabase.mediaModels.get(mediaId);
+    if (previous == null) return const [];
+
+    await previous.tags.load();
+    await previous.creator.load();
+
+    final already = {for (final tag in previous.tags) tag.id};
+    final at = DateTime.now();
+
+    return [
+      for (final tag in tags)
+        if (!already.contains(tag.id))
+          TagLogEntryEntity(
+            mediaId: mediaId,
+            reason: TagLogReason.manual,
+            tagId: tag.id,
+            label: tag.name,
+            at: at,
+          ),
+      if (previous.creator.value?.id != creator.id)
+        TagLogEntryEntity(
+          mediaId: mediaId,
+          reason: TagLogReason.manual,
+          creatorId: creator.id,
+          label: creator.name,
+          at: at,
+        ),
+    ];
+  }
+
+  /// Una línea de registro por cada etiqueta que el contenido no tuviera ya, con
+  /// el porqué de cada una.
+  ///
+  /// Lo pedido lleva el motivo de quien llama; lo demás entró por la jerarquía, y
+  /// ahí se distingue **de dónde viene**: una etiqueta que está por encima de la
+  /// pedida se hereda, y una hermana va con ella. Es justo lo que no se puede
+  /// adivinar mirando el panel, donde las tres se ven igual.
+  Future<List<TagLogEntryEntity>> _tagEntries({
+    required int mediaId,
+    required List<TagModel> asked,
+    required List<TagModel> put,
+    required Set<int> already,
+    required TagLogReason reason,
+    String? detail,
+  }) async {
+    final askedIds = {for (final tag in asked) tag.id};
+
+    // De qué etiqueta pedida viene cada una de las que llegan de propina, y por
+    // qué camino. Se resuelve por etiqueta pedida —y no todas de golpe— porque
+    // lo que el registro tiene que decir es «viene de ésta».
+    final inherited = <int, ({TagLogReason reason, String from})>{};
+
+    for (final tag in asked) {
+      for (final ancestor in await _tagHierarchy.ancestorsOf([tag.id])) {
+        inherited.putIfAbsent(
+          ancestor.id,
+          () => (reason: TagLogReason.ancestor, from: tag.name),
+        );
+      }
+
+      await tag.siblings.load();
+      for (final sibling in tag.siblings) {
+        inherited.putIfAbsent(
+          sibling.id,
+          () => (reason: TagLogReason.sibling, from: tag.name),
+        );
+      }
+    }
+
+    final at = DateTime.now();
+
+    return [
+      for (final tag in put)
+        if (!already.contains(tag.id))
+          if (askedIds.contains(tag.id))
+            TagLogEntryEntity(
+              mediaId: mediaId,
+              reason: reason,
+              tagId: tag.id,
+              label: tag.name,
+              detail: detail,
+              at: at,
+            )
+          else
+            TagLogEntryEntity(
+              mediaId: mediaId,
+              // Lo que no es de la pedida ni de sus hermanas está por encima de
+              // alguna de ellas: es lo único que queda de la expansión.
+              reason: inherited[tag.id]?.reason ?? TagLogReason.ancestor,
+              tagId: tag.id,
+              label: tag.name,
+              detail: inherited[tag.id]?.from,
+              at: at,
+            ),
+    ];
+  }
+
+  @override
   Future<DataState<bool>> setMediaCreator(
     int mediaId,
     int creatorId, {
     bool onlyIfMissing = false,
+    TagLogReason reason = TagLogReason.manual,
   }) async {
     try {
       final media = await _appDatabase.mediaModels.get(mediaId);
@@ -2027,9 +2307,19 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         if (!isMissing) return const DataSuccess(false);
       }
 
+      final entry = TagLogEntryEntity(
+        mediaId: mediaId,
+        reason: reason,
+        creatorId: creator.id,
+        label: creator.name,
+        at: DateTime.now(),
+      );
+
       await _appDatabase.writeTxn(() async {
         media.creator.value = creator;
         await media.creator.save();
+
+        await _tagLog.writeInside([entry]);
       });
 
       return const DataSuccess(true);

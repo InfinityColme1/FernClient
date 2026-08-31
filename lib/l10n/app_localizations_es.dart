@@ -1016,6 +1016,68 @@ class AppLocalizationsEs extends AppLocalizations {
   String get avatarLibraryEmpty => 'Aquí no hay nada que encaje';
 
   @override
+  String get tagLogTitle => 'De dónde sale esto';
+
+  @override
+  String get tagLogNote =>
+      'Lo que se le ha puesto a este contenido, y por qué.';
+
+  @override
+  String get tagLogGuessNote =>
+      'Parte de esto no se apuntó: se deduce de cómo están los datos ahora, no de lo que pasó. Esas líneas van marcadas.';
+
+  @override
+  String get tagLogGuessed => 'deducido';
+
+  @override
+  String get tagLogLoading => 'Leyendo el registro…';
+
+  @override
+  String get tagLogEmpty => 'A este contenido no se le ha puesto nada.';
+
+  @override
+  String get tagLogManual => 'La pusiste tú';
+
+  @override
+  String get tagLogSourceUrl => 'Casó una dirección vinculada';
+
+  @override
+  String get tagLogPlatform => 'La plataforma de la que se bajó';
+
+  @override
+  String get tagLogAncestor => 'Heredada de la rama';
+
+  @override
+  String tagLogAncestorOf(String tag) {
+    return 'Está por encima de $tag';
+  }
+
+  @override
+  String get tagLogSibling => 'Va con otra etiqueta';
+
+  @override
+  String tagLogSiblingOf(String tag) {
+    return 'Va con $tag';
+  }
+
+  @override
+  String get tagLogRecognition => 'Aceptaste lo que propuso un modelo';
+
+  @override
+  String get tagLogFernie => 'Lo que enlaza un fernie marcado';
+
+  @override
+  String tagLogFernieOf(String fernie) {
+    return 'Marcaste aquí a $fernie';
+  }
+
+  @override
+  String get tagLogUnknown => 'No consta';
+
+  @override
+  String get actionTagLog => 'De dónde sale esto';
+
+  @override
   String get viewerSaveSectionTitle => 'Al guardar contenido importado';
 
   @override

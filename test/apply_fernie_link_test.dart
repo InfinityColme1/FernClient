@@ -12,6 +12,7 @@
 // cambiar.
 
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/usecases/apply_fernie_link_to_media_usecase.dart';
@@ -128,7 +129,12 @@ class _FakeRepository implements LocalMediaRepository {
   bool creatorChanges = true;
 
   @override
-  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds) async {
+  Future<DataState<int>> addTagsToMedia(
+    int mediaId,
+    List<int> tagIds, {
+    TagLogReason reason = TagLogReason.manual,
+    String? detail,
+  }) async {
     tagged.add((mediaId: mediaId, tagIds: tagIds));
 
     return DataSuccess(tagIds.length);
@@ -139,6 +145,7 @@ class _FakeRepository implements LocalMediaRepository {
     int mediaId,
     int creatorId, {
     bool onlyIfMissing = false,
+    TagLogReason reason = TagLogReason.manual,
   }) async {
     credited.add((
       mediaId: mediaId,

@@ -178,7 +178,16 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
     final content = <Widget>[];
     for (final section in widget.sections) {
       final isEmpty = section.items.isEmpty;
-      if (isEmpty && (section.emptyMessage == null || !_isExpanded)) continue;
+      final header = _isExpanded ? section.header : null;
+
+      // Con buscador, la sección se pinta aunque no haya salido nada: el campo
+      // es lo que explica por qué está vacía, y quitarlo con el último resultado
+      // dejaría al usuario sin forma de deshacer su propia búsqueda.
+      if (isEmpty &&
+          header == null &&
+          (section.emptyMessage == null || !_isExpanded)) {
+        continue;
+      }
 
       if (content.isNotEmpty) {
         content.add(const Divider(
@@ -196,8 +205,22 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             : TutorialAnchor(id: anchorId, child: title));
       }
 
+      if (header != null) {
+        content.add(Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.l,
+            0,
+            AppSpacing.l,
+            AppSpacing.s,
+          ),
+          child: header,
+        ));
+      }
+
       if (isEmpty) {
-        content.add(_sectionMessage(section.emptyMessage!));
+        if (section.emptyMessage != null) {
+          content.add(_sectionMessage(section.emptyMessage!));
+        }
         continue;
       }
 

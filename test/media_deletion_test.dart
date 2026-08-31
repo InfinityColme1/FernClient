@@ -13,6 +13,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
 import 'package:Fern/features/duplicates/domain/services/group_reconciliation.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
@@ -64,6 +65,7 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        MediaTagLogModelSchema,
         // El borrado definitivo se lleva por delante las regiones de fernie y
         // los grupos de repetidos, así que la base de datos de la prueba tiene
         // que conocerlos.

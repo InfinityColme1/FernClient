@@ -9,6 +9,7 @@ import 'package:Fern/features/media/domain/entities/search/search_criterion_enti
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import '../../../../core/resources/data_state.dart';
 
 
@@ -60,7 +61,31 @@ abstract class LocalMediaRepository {
   /// él.
   ///
   /// Las que ya tenga se quedan: esto suma, no reemplaza.
-  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds);
+  /// El registro de por qué este contenido tiene lo que tiene puesto.
+  ///
+  /// Con [MediaTagLogView.isGuess] a `true` lo que se devuelve **no es lo que
+  /// pasó** sino lo que se deduce mirando los datos de ahora: es lo único que se
+  /// puede decir del contenido anterior al registro, que es casi todo lo que hay
+  /// en la biblioteca, y quien lo enseñe tiene que decirlo.
+  ///
+  /// [byFernie] son las etiquetas que enlazan los fernies marcados en el
+  /// contenido, con el nombre del fernie. Llegan de fuera porque los fernies son
+  /// de otra parte de la aplicación y este repositorio no sabe de ellos.
+  Future<DataState<MediaTagLogView>> getMediaTagLog(
+    int mediaId, {
+    Map<int, String> byFernie,
+  });
+
+  /// [reason] es por qué se ponen, para el registro del contenido: sin decir
+  /// nada, a mano, que es lo que hace el diálogo de asignar. Lo que llega de la
+  /// jerarquía —lo que está por encima y las hermanas— se apunta con su propio
+  /// motivo, que es justo lo que no se puede adivinar mirando el panel.
+  Future<DataState<int>> addTagsToMedia(
+    int mediaId,
+    List<int> tagIds, {
+    TagLogReason reason,
+    String? detail,
+  });
 
   /// Le pone este creador a un contenido, sin tocar nada más.
   ///
@@ -77,6 +102,7 @@ abstract class LocalMediaRepository {
     int mediaId,
     int creatorId, {
     bool onlyIfMissing = false,
+    TagLogReason reason,
   });
 
   Future<DataState<List<int>>> getRecognizableMediaIds({

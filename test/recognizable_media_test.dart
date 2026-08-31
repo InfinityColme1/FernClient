@@ -15,6 +15,7 @@ import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
@@ -58,6 +59,7 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        MediaTagLogModelSchema,
         FernieModelSchema,
         FernieRegionModelSchema,
         RecognitionModelModelSchema,

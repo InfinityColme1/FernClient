@@ -1440,6 +1440,13 @@ const fernieMinDistinctMedia = 5;
 /// no cuele.
 const fernieMinRegionFraction = 0.0025;
 
+/// Cuántas líneas del registro de etiquetado se conservan por contenido.
+///
+/// Con tope, como el parte de reconocimiento: reconocer la biblioteca entera
+/// varias veces deja decenas de líneas por contenido, y de un registro así nadie
+/// lee más que el final. Se cae lo más viejo.
+const mediaTagLogLimit = 50;
+
 /// Cuántas regiones se escriben de una vez al marcar el contenido de una
 /// etiqueta entera.
 ///

@@ -7,6 +7,7 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/widgets/avatar_crop_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/avatar_library_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/avatar_source_dialog.dart';
+import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
 import 'package:Fern/features/settings/domain/usecases/crop_avatar_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:file_picker/file_picker.dart';
@@ -111,8 +112,21 @@ Future<_Chosen?> _fromDevice() async {
 /// La imagen entera no pasa por el recorte: descodificarla y volver a
 /// escribirla para quedarse con lo mismo sería trabajo y pérdida de calidad a
 /// cambio de nada. Copiarla es lo que se ha hecho siempre.
-Future<String> storeChosenAvatar(AvatarCrop choice) {
-  return choice.rect == wholeImageRect
-      ? getIt<StoreAvatarUseCase>()(params: choice.path)
-      : getIt<CropAvatarUseCase>()(params: choice);
+///
+/// [replacing] es el avatar que tenía la ficha antes, si lo había, y se borra
+/// **cuando ya no lo usa nadie**. Sin esto, cambiar de idea dos veces antes de
+/// guardar dejaba dos ficheros en la carpeta de avatares que no apunta nadie y
+/// que no se ven en ninguna pantalla. El que sí esté guardado en la base se
+/// queda: lo borra el repositorio al guardar la ficha, que es cuando deja de
+/// estar en uso de verdad.
+Future<String> storeChosenAvatar(AvatarCrop choice, {String? replacing}) async {
+  final stored = choice.rect == wholeImageRect
+      ? await getIt<StoreAvatarUseCase>()(params: choice.path)
+      : await getIt<CropAvatarUseCase>()(params: choice);
+
+  if (replacing != null && replacing.isNotEmpty && replacing != stored) {
+    await getIt<AvatarJanitor>().removeIfUnused(replacing);
+  }
+
+  return stored;
 }

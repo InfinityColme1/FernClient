@@ -170,6 +170,7 @@ import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart
 import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_tag_log_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_deleted_media_usecase.dart';
@@ -858,6 +859,11 @@ Future<void> initializeDependencies() async {
     GetTagAncestorsUseCase(getIt())
   );
 
+  // Por qué un contenido tiene lo que tiene puesto. Junta la biblioteca y los
+  // fernies, que viven en dos sitios distintos.
+  getIt.registerLazySingleton<GetMediaTagLogUseCase>(
+    () => GetMediaTagLogUseCase(library: getIt(), fernies: getIt()),
+  );
   getIt.registerSingleton<GetTagTreeUseCase>(
     GetTagTreeUseCase(localMediaRepository: getIt())
   );

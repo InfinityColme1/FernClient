@@ -6,6 +6,7 @@ import 'package:Fern/core/widgets/sidebar_item.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/presentation/widgets/tag_list.dart';
 import 'package:Fern/features/media/domain/services/collapsed_tags.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
@@ -234,8 +235,13 @@ class _SidebarState extends State<Sidebar> {
   }
 
   /// Las etiquetas en fila, madres antes que hijas, cada una con el nivel que le
-  /// toca: el menú es una lista, así que la jerarquía se cuenta con [depth] y se
-  /// ve en la sangría de cada botón.
+  /// toca: el menú es una lista, así que la jerarquía se cuenta con la sangría
+  /// de cada botón.
+  ///
+  /// El aplanado —lo plegado, y la rama entera de lo que encaja al buscar— es
+  /// **el mismo que usa la pantalla de gestión** (`TagList.rowsOf`). Las dos
+  /// listas enseñan el mismo árbol, y hacerlo por separado acabaría en dos
+  /// comportamientos distintos en cuanto se arreglara algo en una.
   ///
   /// Con [showAvatars] cada una lleva su imagen en lugar del icono común, que es
   /// lo único que las distingue con el menú plegado. Las que no tengan imagen se
@@ -243,44 +249,53 @@ class _SidebarState extends State<Sidebar> {
   List<SidebarItem> _tagItems(
     List<TagEntity> tags, {
     required bool showAvatars,
-    int depth = 0,
+    required bool showsBranchOnFilter,
   }) {
+    // Buscando no se pliega: lo que se ve es el resultado de una búsqueda, no el
+    // árbol, y un chevron ahí escondería coincidencias.
+    final isFiltering = _query.trim().isNotEmpty;
+
     return [
-      for (final tag in tags) ...[
+      for (final row in TagList.rowsOf(
+        tags,
+        query: _query,
+        collapsed: _collapsed.ids,
+        // El mismo ajuste que manda en la pantalla de gestión: si allí lo que
+        // encaja viene con su rama, aquí también. Dos respuestas distintas a la
+        // misma búsqueda serían dos listas que no se parecen.
+        showsBranch: showsBranchOnFilter,
+      ))
         SidebarItem(
-          id: 'tag:${tag.id}',
-          title: tag.name,
+          id: 'tag:${row.tag.id}',
+          title: row.tag.name,
           icon: Symbols.sell,
-          hasChildren: tag.children.isNotEmpty,
-          isCollapsed: _collapsed.isCollapsed(tag.id),
-          onToggleCollapse: () => _collapsed.toggle(tag.id),
+          hasChildren: row.tag.children.isNotEmpty,
+          isCollapsed: _collapsed.isCollapsed(row.tag.id),
+          onToggleCollapse:
+              isFiltering ? null : () => _collapsed.toggle(row.tag.id),
           // Arrastrando contenido: posarse encima abre la rama para poder
           // seguir bajando hasta una hija, y soltar la vuelve a cerrar.
-          onSpringOpen: () => _collapsed.expandWhileDragging(tag.id),
+          onSpringOpen: () => _collapsed.expandWhileDragging(row.tag.id),
           onSpringRelease: _collapsed.releaseDragged,
           // Con el filtro quitado, una etiqueta NSFW se veía en el menú igual
           // que las demás y no había forma de saber cuál escondía contenido.
-          isNsfw: tag.isUnderNsfw,
-          avatarPath: showAvatars ? tag.picturePath : null,
-          depth: depth,
-          onTap: () => _filterByTag(tag),
+          isNsfw: row.tag.isUnderNsfw,
+          avatarPath: showAvatars ? row.tag.picturePath : null,
+          depth: row.depth,
+          onTap: () => _filterByTag(row.tag),
           // Arrastrar contenido hasta aquí se lo etiqueta. Es la forma rápida
           // de poner la misma etiqueta a treinta contenidos, que antes obligaba
           // a abrirlos uno a uno.
-          onMediaDropped: (mediaIds) => _tagDropped(tag, mediaIds),
+          onMediaDropped: (mediaIds) => _tagDropped(row.tag, mediaIds),
         ),
-        // La descendencia se corta aquí cuando la rama está plegada. Es la
-        // misma regla que aplica `TagList.flatten` en la pantalla de gestión:
-        // las dos listas aplanan el mismo árbol.
-        if (!_collapsed.isCollapsed(tag.id))
-          ..._tagItems(
-            tag.children,
-            showAvatars: showAvatars,
-            depth: depth + 1,
-          ),
-      ],
     ];
   }
+
+  /// Lo escrito en el buscador de las etiquetas. Vacío es el árbol entero.
+  ///
+  /// Vive aquí y no en el menú de dentro porque lo que filtra son las filas que
+  /// este menú construye, no cómo se pintan.
+  String _query = '';
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +309,11 @@ class _SidebarState extends State<Sidebar> {
           previous.settings.showListAvatars !=
               current.settings.showListAvatars ||
           previous.settings.notifications.enabled !=
-              current.settings.notifications.enabled,
+              current.settings.notifications.enabled ||
+          // Cambiarlo en Ajustes tiene que verse aquí sin cerrar nada: el menú
+          // está montado todo el rato y no hay «volver a entrar».
+          previous.settings.showsTagBranchOnFilter !=
+              current.settings.showsTagBranchOnFilter,
       builder: (context, settings) => BlocBuilder<TagsBloc, TagsState>(
         bloc: _tagsBloc,
         // Los contadores de avisos también se escuchan: encontrar repetidos o
@@ -341,9 +360,18 @@ class _SidebarState extends State<Sidebar> {
                 // Donde señala el tutorial al contar que las etiquetas también
                 // son sitios donde soltar contenido.
                 anchorId: TutorialAnchorId.sidebarTags,
+                // El mismo buscador que la lista de la pantalla de gestión: con
+                // un árbol grande, el menú es una lista larguísima justo donde
+                // más se usa, que es al arrastrar contenido hasta una etiqueta.
+                header: FernFilterField(
+                  hintText: texts.searchEllipsisHint,
+                  onChanged: (value) => setState(() => _query = value),
+                ),
                 items: _tagItems(
                   state.tags,
                   showAvatars: settings.settings.showListAvatars,
+                  showsBranchOnFilter:
+                      settings.settings.showsTagBranchOnFilter,
                 ),
                 // Mientras la primera lectura está en marcha no se dice que no
                 // haya etiquetas: todavía no se sabe.

@@ -1015,6 +1015,67 @@ class AppLocalizationsCa extends AppLocalizations {
   String get avatarLibraryEmpty => 'Aquí no hi ha res que hi encaixi';
 
   @override
+  String get tagLogTitle => 'D\'on surt això';
+
+  @override
+  String get tagLogNote => 'El que s\'ha posat a aquest contingut, i per què.';
+
+  @override
+  String get tagLogGuessNote =>
+      'Part d\'això no es va apuntar: es dedueix de com són les dades ara, no del que va passar. Aquestes línies van marcades.';
+
+  @override
+  String get tagLogGuessed => 'deduït';
+
+  @override
+  String get tagLogLoading => 'Llegint el registre…';
+
+  @override
+  String get tagLogEmpty => 'A aquest contingut no se li ha posat res.';
+
+  @override
+  String get tagLogManual => 'La vas posar tu';
+
+  @override
+  String get tagLogSourceUrl => 'Va coincidir una adreça vinculada';
+
+  @override
+  String get tagLogPlatform => 'La plataforma d\'on es va baixar';
+
+  @override
+  String get tagLogAncestor => 'Heretada de la branca';
+
+  @override
+  String tagLogAncestorOf(String tag) {
+    return 'És per damunt de $tag';
+  }
+
+  @override
+  String get tagLogSibling => 'Va amb una altra etiqueta';
+
+  @override
+  String tagLogSiblingOf(String tag) {
+    return 'Va amb $tag';
+  }
+
+  @override
+  String get tagLogRecognition => 'Vas acceptar el que va proposar un model';
+
+  @override
+  String get tagLogFernie => 'El que enllaça un fernie marcat';
+
+  @override
+  String tagLogFernieOf(String fernie) {
+    return 'Vas marcar aquí en/na $fernie';
+  }
+
+  @override
+  String get tagLogUnknown => 'No hi consta';
+
+  @override
+  String get actionTagLog => 'D\'on surt això';
+
+  @override
   String get viewerSaveSectionTitle => 'En desar contingut importat';
 
   @override

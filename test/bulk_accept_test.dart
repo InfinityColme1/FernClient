@@ -7,6 +7,7 @@
 // que un contenido que falle no se lleva por delante a los demás.
 
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/domain/entities/media/suggestion_filter.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
@@ -351,7 +352,12 @@ class _FakeLibrary implements LocalMediaRepository {
   final ancestors = <int, List<int>>{};
 
   @override
-  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds) async {
+  Future<DataState<int>> addTagsToMedia(
+    int mediaId,
+    List<int> tagIds, {
+    TagLogReason reason = TagLogReason.manual,
+    String? detail,
+  }) async {
     if (broken.contains(mediaId)) {
       return DataException(Exception('no se pudo escribir'));
     }
@@ -369,6 +375,7 @@ class _FakeLibrary implements LocalMediaRepository {
     int mediaId,
     int creatorId, {
     bool onlyIfMissing = false,
+    TagLogReason reason = TagLogReason.manual,
   }) async {
     creatorOf[mediaId] = creatorId;
 

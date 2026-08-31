@@ -1,4 +1,5 @@
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/core/usecases/usecase.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
@@ -48,7 +49,15 @@ class ApplyFernieLinkToMediaUseCase
 
       for (final mediaId in mediaIds) {
         if (fernie.linkedTagId case final tagId?) {
-          final result = await _repository.addTagsToMedia(mediaId, [tagId]);
+          // Con el nombre del fernie: en el registro, «se puso “Marinette”
+          // porque marcaste a Marinette» es la línea que explica de dónde sale
+          // una etiqueta que nadie escribió.
+          final result = await _repository.addTagsToMedia(
+            mediaId,
+            [tagId],
+            reason: TagLogReason.fernie,
+            detail: fernie.name,
+          );
 
           if (result is DataSuccess) tagged++;
         }
@@ -58,6 +67,7 @@ class ApplyFernieLinkToMediaUseCase
             mediaId,
             creatorId,
             onlyIfMissing: true,
+            reason: TagLogReason.fernie,
           );
 
           if (result.data == true) credited++;

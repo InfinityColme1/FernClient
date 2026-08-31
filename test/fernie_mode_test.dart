@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_region_entity.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_region_media_entity.dart';
@@ -156,7 +157,12 @@ class _FakeMedia implements LocalMediaRepository {
   final credited = <int>[];
 
   @override
-  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds) async {
+  Future<DataState<int>> addTagsToMedia(
+    int mediaId,
+    List<int> tagIds, {
+    TagLogReason reason = TagLogReason.manual,
+    String? detail,
+  }) async {
     tagged.add((mediaId: mediaId, tagIds: tagIds));
 
     return DataSuccess(tagIds.length);
@@ -167,6 +173,7 @@ class _FakeMedia implements LocalMediaRepository {
     int mediaId,
     int creatorId, {
     bool onlyIfMissing = false,
+    TagLogReason reason = TagLogReason.manual,
   }) async {
     credited.add(creatorId);
 

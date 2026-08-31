@@ -11,7 +11,6 @@
 // volvería sin que nada lo explicara.
 
 import 'package:Fern/core/resources/data_state.dart';
-import 'package:Fern/core/usecases/usecase.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';

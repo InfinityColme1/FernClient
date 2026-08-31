@@ -5,6 +5,7 @@
 // la misma etiqueta a treinta contenidos era abrirlos uno a uno.
 
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/media/domain/usecases/add_tag_to_media_usecase.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,7 +66,12 @@ class _FakeRepository implements LocalMediaRepository {
   Set<int> failing = const {};
 
   @override
-  Future<DataState<int>> addTagsToMedia(int mediaId, List<int> tagIds) async {
+  Future<DataState<int>> addTagsToMedia(
+    int mediaId,
+    List<int> tagIds, {
+    TagLogReason reason = TagLogReason.manual,
+    String? detail,
+  }) async {
     calls.add((mediaId, tagIds));
 
     if (failing.contains(mediaId)) {

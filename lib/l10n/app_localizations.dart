@@ -1710,6 +1710,114 @@ abstract class AppLocalizations {
   /// **'Nothing here matches that'**
   String get avatarLibraryEmpty;
 
+  /// No description provided for @tagLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this came from'**
+  String get tagLogTitle;
+
+  /// No description provided for @tagLogNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What was put on this media, and why.'**
+  String get tagLogNote;
+
+  /// No description provided for @tagLogGuessNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Some of this was never recorded: it is worked out from the data as they are now, not from what happened. Those lines are marked.'**
+  String get tagLogGuessNote;
+
+  /// No description provided for @tagLogGuessed.
+  ///
+  /// In en, this message translates to:
+  /// **'worked out'**
+  String get tagLogGuessed;
+
+  /// No description provided for @tagLogLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the log…'**
+  String get tagLogLoading;
+
+  /// No description provided for @tagLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been put on this media.'**
+  String get tagLogEmpty;
+
+  /// No description provided for @tagLogManual.
+  ///
+  /// In en, this message translates to:
+  /// **'You put it'**
+  String get tagLogManual;
+
+  /// No description provided for @tagLogSourceUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'A linked address matched'**
+  String get tagLogSourceUrl;
+
+  /// No description provided for @tagLogPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'The platform it came from'**
+  String get tagLogPlatform;
+
+  /// No description provided for @tagLogAncestor.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited from the branch'**
+  String get tagLogAncestor;
+
+  /// No description provided for @tagLogAncestorOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Above {tag}'**
+  String tagLogAncestorOf(String tag);
+
+  /// No description provided for @tagLogSibling.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes with another tag'**
+  String get tagLogSibling;
+
+  /// No description provided for @tagLogSiblingOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes with {tag}'**
+  String tagLogSiblingOf(String tag);
+
+  /// No description provided for @tagLogRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'You accepted what a model suggested'**
+  String get tagLogRecognition;
+
+  /// No description provided for @tagLogFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'What a marked fernie links to'**
+  String get tagLogFernie;
+
+  /// No description provided for @tagLogFernieOf.
+  ///
+  /// In en, this message translates to:
+  /// **'You marked {fernie} here'**
+  String tagLogFernieOf(String fernie);
+
+  /// No description provided for @tagLogUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No record of it'**
+  String get tagLogUnknown;
+
+  /// No description provided for @actionTagLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this came from'**
+  String get actionTagLog;
+
   /// No description provided for @viewerSaveSectionTitle.
   ///
   /// In en, this message translates to:

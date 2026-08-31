@@ -171,7 +171,7 @@ class _TagCardState extends State<TagCard> {
     // Guardar sí puede tardar, así que se hace con la ficha en espera. Elegir
     // no: allí el tiempo lo pone el usuario.
     await _run(() async {
-      final storedPath = await storeChosenAvatar(choice);
+      final storedPath = await storeChosenAvatar(choice, replacing: _picturePath);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);

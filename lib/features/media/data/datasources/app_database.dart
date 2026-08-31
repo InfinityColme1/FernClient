@@ -1,3 +1,4 @@
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
@@ -25,6 +26,9 @@ class AppDatabase {
     final isar = await Isar.open(
         [
           BlockedImportModelSchema,
+          // Por qué un contenido acabó con cada etiqueta puesta. Colección
+          // nueva: aditiva, y lo que ya hay en la base no se toca.
+          MediaTagLogModelSchema,
       TagModelSchema, PersonaModelSchema, CreatorModelSchema,
           MediaSummaryModelSchema, MediaModelSchema,
           // Reconocimiento: son colecciones nuevas, así que no hace falta

@@ -1016,6 +1016,68 @@ class AppLocalizationsFr extends AppLocalizations {
   String get avatarLibraryEmpty => 'Rien ici ne correspond';
 
   @override
+  String get tagLogTitle => 'D\'où vient tout ça';
+
+  @override
+  String get tagLogNote => 'Ce qui a été mis sur ce contenu, et pourquoi.';
+
+  @override
+  String get tagLogGuessNote =>
+      'Une partie n\'a pas été notée : elle est déduite des données telles qu\'elles sont maintenant, pas de ce qui s\'est passé. Ces lignes sont marquées.';
+
+  @override
+  String get tagLogGuessed => 'déduit';
+
+  @override
+  String get tagLogLoading => 'Lecture du journal…';
+
+  @override
+  String get tagLogEmpty => 'Rien n\'a été mis sur ce contenu.';
+
+  @override
+  String get tagLogManual => 'Vous l\'avez mise';
+
+  @override
+  String get tagLogSourceUrl => 'Une adresse liée correspondait';
+
+  @override
+  String get tagLogPlatform => 'La plateforme d\'où il vient';
+
+  @override
+  String get tagLogAncestor => 'Héritée de la branche';
+
+  @override
+  String tagLogAncestorOf(String tag) {
+    return 'Au-dessus de $tag';
+  }
+
+  @override
+  String get tagLogSibling => 'Va avec une autre étiquette';
+
+  @override
+  String tagLogSiblingOf(String tag) {
+    return 'Va avec $tag';
+  }
+
+  @override
+  String get tagLogRecognition =>
+      'Vous avez accepté ce qu\'un modèle proposait';
+
+  @override
+  String get tagLogFernie => 'Ce qu\'un fernie marqué relie';
+
+  @override
+  String tagLogFernieOf(String fernie) {
+    return 'Vous avez marqué $fernie ici';
+  }
+
+  @override
+  String get tagLogUnknown => 'Rien de noté';
+
+  @override
+  String get actionTagLog => 'D\'où vient tout ça';
+
+  @override
   String get viewerSaveSectionTitle => 'En enregistrant un média importé';
 
   @override

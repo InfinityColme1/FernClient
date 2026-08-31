@@ -1,4 +1,5 @@
 import 'package:Fern/core/resources/data_state.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:Fern/core/usecases/usecase.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
@@ -105,7 +106,11 @@ class AcceptSuggestionsAboveUseCase
       };
 
       if (tagIds.isNotEmpty) {
-        final result = await _library.addTagsToMedia(mediaId, tagIds.toList());
+        final result = await _library.addTagsToMedia(
+          mediaId,
+          tagIds.toList(),
+          reason: TagLogReason.recognition,
+        );
         if (result is! DataSuccess) return false;
       }
 
@@ -118,7 +123,11 @@ class AcceptSuggestionsAboveUseCase
           );
 
       if (creator?.creator case final chosenCreator?) {
-        await _library.setMediaCreator(mediaId, chosenCreator.id);
+        await _library.setMediaCreator(
+          mediaId,
+          chosenCreator.id,
+          reason: TagLogReason.recognition,
+        );
       }
 
       return true;

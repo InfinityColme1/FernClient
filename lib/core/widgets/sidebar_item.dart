@@ -99,6 +99,14 @@ class SidebarSection {
   /// no se haya creado ninguna). Sin texto, la sección vacía no se pinta.
   final String? emptyMessage;
 
+  /// Lo que va **debajo del rótulo y encima de los botones**: el buscador de las
+  /// etiquetas.
+  ///
+  /// Sólo se pinta con el menú abierto. Plegado no hay ancho para un campo de
+  /// texto —la fila entera es un icono—, y es la misma regla que siguen los
+  /// rótulos y los chevrones: lo que necesita texto desaparece al plegar.
+  final Widget? header;
+
   /// Con qué nombre puede señalar aquí el tutorial, si es que puede.
   ///
   /// Lo lleva el **rótulo** de la sección y no la sección entera: los botones se
@@ -112,5 +120,6 @@ class SidebarSection {
     required this.items,
     this.emptyMessage,
     this.anchorId,
+    this.header,
   });
 }
