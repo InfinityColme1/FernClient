@@ -72,6 +72,18 @@ class RecognitionSettingsSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
               child: Divider(),
             ),
+            // El entorno, **justo detrás de la carpeta en la que se instala**.
+            //
+            // Es lo primero que hace falta: sin él no reconoce nada, y los tres
+            // ajustes de abajo no significan nada. Estaba el último, así que el
+            // botón de instalarlo —lo único imprescindible de esta pantalla—
+            // quedaba a tres pantallazos de desplazamiento del sitio donde se
+            // elige dónde instalarlo.
+            const SidecarSetupPanel(),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(),
+            ),
             // Reconocer solo lo que llega. Va antes de lo de después de
             // reconocer porque es lo primero que pasa, y leerlo en ese orden es
             // lo que hace que se entienda por qué el contenido se mueve.
@@ -123,11 +135,6 @@ class RecognitionSettingsSection extends StatelessWidget {
                     value ?? defaultMaxDetectionsPerClass,
                   )),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-              child: Divider(),
-            ),
-            const SidecarSetupPanel(),
           ],
         );
       },

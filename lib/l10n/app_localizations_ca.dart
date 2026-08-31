@@ -3795,18 +3795,18 @@ class AppLocalizationsCa extends AppLocalizations {
   String get settingsHelp => 'Ajuda';
 
   @override
-  String get tutorialSectionTitle => 'Recorregut guiat';
+  String get tutorialSectionTitle => 'Voltes guiades';
 
   @override
   String get tutorialSectionNote =>
-      'Un recorregut per les pantalles de l’aplicació i pel que es fa a cadascuna. Es pot deixar en qualsevol moment.';
+      'Deu recorreguts que cobreixen tota l\'aplicació, un per matèria. Seguint-los tots no queda res per explicar. Es pot deixar qualsevol en qualsevol moment.';
 
   @override
-  String get tutorialOfferTitle => 'Vols que t’ensenyi l’aplicació?';
+  String get tutorialOfferTitle => 'Et mostro l\'aplicació?';
 
   @override
   String get tutorialOfferBody =>
-      'És un recorregut curt i el pots deixar quan vulguis. Si prefereixes mirar pel teu compte, el tens a la configuració.';
+      'Un recorregut de deu passos pel que és cada cosa i on és. N\'hi ha nou més, un per matèria, a Configuració → Ajuda. Es deixa quan vulguis.';
 
   @override
   String get tutorialOfferAccept => 'Començar';
@@ -3836,189 +3836,190 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get tutorialWelcomeBody =>
-      'Un recorregut ràpid pel que fa l’aplicació. S’avança amb Següent o amb les fletxes, i se surt amb Escapada.';
+      'FeRN desa el contingut que col·leccionis: el porta, l\'ordena amb etiquetes i creadors, i pot aprendre a reconèixer el que hi surt. S\'avança amb Següent o amb les fletxes, i se surt amb Escape.';
 
   @override
   String get tutorialSidebarTitle => 'Per aquí es navega';
 
   @override
   String get tutorialSidebarBody =>
-      'Totes les pantalles són aquí: la teva biblioteca, el que portes de fora, els teus preferits i els gestors. El botó de dalt el plega per deixar espai al contingut.';
+      'Totes les pantalles hi són: la teva biblioteca, el que portes de fora, els preferits, la paperera i els gestors de creadors, etiquetes, fernies i models. El botó de dalt el plega quan cal espai.';
 
   @override
   String get tutorialImportTitle => 'Per aquí entra el contingut';
 
   @override
   String get tutorialImportBody =>
-      'Portes contingut d’una font remota o d’una carpeta del teu disc. El que arriba queda pendent de revisar fins que l’acceptes, així que res no entra a la biblioteca sense que ho vegis.';
+      'Portes contingut d\'una font remota —Reddit, Pixiv, Danbooru, Gelbooru, Pinterest, Pawchive— o d\'una carpeta del teu disc. El que arriba espera aquí fins que l\'acceptes, així que res no entra a la biblioteca sense que ho vegis.';
 
   @override
   String get tutorialContentTitle => 'Aquí apareix tot';
 
   @override
   String get tutorialContentBody =>
-      'La teva biblioteca. Un clic obre el visor, el botó dret treu les accions, i se’n poden marcar uns quants alhora per tractar-los junts.';
+      'La teva biblioteca: tot el que has acceptat. Un clic obre el visor, el botó dret treu les accions, i se\'n poden marcar diversos alhora per tractar-los junts.';
 
   @override
   String get tutorialTagsTitle => 'Etiqueta arrossegant';
 
   @override
   String get tutorialTagsBody =>
-      'Les etiquetes del menú també són llocs on deixar anar: arrossega un o més continguts damunt d’una i queden etiquetats. En premér-la, la biblioteca només ensenya el seu.';
+      'Les etiquetes del menú també són llocs on deixar anar: arrossega un o diversos continguts damunt d\'una i queden etiquetats. En prémer-la, la biblioteca es queda amb el que la porta.';
 
   @override
-  String get tutorialCreateTitle => 'Creadors, etiquetes i fernies';
+  String get tutorialCreateTitle => 'Crear coses';
 
   @override
   String get tutorialCreateBody =>
-      'Des d’aquí es crea tot el que serveix per organitzar: creadors, etiquetes i fernies, que són les cares que l’aplicació aprèn a reconeixer.';
+      'D\'aquí surten els creadors, les etiquetes, els fernies i els models. Un creador és qui va fer alguna cosa; una etiqueta és qualsevol cosa per la qual vulguis agrupar; un fernie és una cara o un objecte que vols que FeRN aprengui.';
 
   @override
   String get tutorialSearchTitle => 'Cercar';
 
   @override
   String get tutorialSearchBody =>
-      'Cerca per nom, creador o etiqueta des de qualsevol pantalla.';
+      'Escriu i FeRN t\'ofereix el que encaixa: una etiqueta, un creador, una descripció. El que triïs es queda com una píndola, i les píndoles s\'acumulen: amb dues de posades s\'ensenya el que compleix totes dues.';
 
   @override
-  String get tutorialSettingsTitle => 'La resta és aquí';
+  String get tutorialSettingsTitle => 'Tota la resta és aquí';
 
   @override
   String get tutorialSettingsBody =>
-      'Idioma, tema, carpetes, fonts remotes i reconeixement. I aquest mateix tutorial, per si el vols repetir.';
+      'Idioma, tema, carpetes, fonts remotes, reconeixement i el bloqueig de contingut. A Ajuda hi ha els altres nou recorreguts: un per matèria, i entre tots cobreixen tota l\'aplicació.';
 
   @override
-  String get tourGeneralTitle => 'Recorregut general';
+  String get tourGeneralTitle => 'Volta general';
 
   @override
   String get tourGeneralDescription =>
-      'On és cada cosa i per on entra el contingut. És el que s’ofereix la primera vegada.';
+      'Què és FeRN, per a què serveix cada pantalla i on és cada cosa. Comença per aquí.';
 
   @override
   String get tourImportingTitle => 'Portar i revisar contingut';
 
   @override
   String get tourImportingDescription =>
-      'D’on surt el contingut, com es revisa i què cal perquè arribi a la biblioteca.';
+      'D\'on surt el contingut, com es revisa i què cal perquè arribi a la biblioteca.';
 
   @override
-  String get tourImporting1Title => 'D’on i quant';
+  String get tourImporting1Title => 'D\'on i quant';
 
   @override
   String get tourImporting1Body =>
-      'Tries la font —una de remota o una carpeta d’aquest equip—, si vols tot o només el que hi ha de nou des de l’última vegada, i prems Portar.';
+      'Tries la font —una de remota o una carpeta d\'aquest equip—, dius si vols tot o només el nou des de l\'últim cop, i prems Portar. Una font remota porta el que tinguis marcat com a preferit allà.';
 
   @override
-  String get tourImporting2Title => 'El que arriba es revisa aquí';
+  String get tourImporting2Title => 'Cada font demana les seves claus';
 
   @override
   String get tourImporting2Body =>
-      'Res d’això no és encara a la teva biblioteca. Aquesta graella és la safata d’entrada: el que s’ha portat, esperant que diguis què en vols fer.';
+      'Les fonts remotes necessiten les dades del teu compte, i es posen a Configuració → Fonts remotes. Cadascuna explica com aconseguir-les: no són la teva contrasenya, sinó claus que la plataforma dona per a això.';
 
   @override
-  String get tourImporting3Title => 'Obre’n un i decideix';
+  String get tourImporting3Title => 'Res d\'això encara no és teu';
 
   @override
   String get tourImporting3Body =>
-      'Un clic l’obre al visor. Allà el deses, i passa a ser definitiu, o el descartes: descartar-lo el treu de la base de dades i et pregunta si també vols esborrar el fitxer.';
+      'Aquesta graella és la safata d\'entrada: el que s\'ha portat, esperant que diguis què fer-ne. Ja és al teu disc, però no és a la teva biblioteca i no surt a les cerques.';
 
   @override
-  String get tourImporting4Title => 'La fitxa, sense sortir del visor';
+  String get tourImporting4Title => 'Obre\'n un i decideix';
 
   @override
   String get tourImporting4Body =>
-      'El plafó d’informació és on se li posa creador, etiquetes, títol i enllaços. S’edita mentre es mira, que és quan se sap què és.';
+      'Un clic l\'obre al visor. Allà el deses, i passa a ser definitiu, o el descartes: descartar el treu de la base de dades i et pregunta si esborrar també el fitxer.';
 
   @override
-  String get tourImporting5Title => 'I ja és a Contingut';
+  String get tourImporting5Title => 'La fitxa, sense sortir del visor';
 
   @override
   String get tourImporting5Body =>
-      'El que has desat surt de la graella d’importació i apareix a la biblioteca.';
+      'El plafó lateral és on se li posa creador, etiquetes, descripció i enllaços. S\'edita mentre es mira, que és quan se sap què és. En desar, a més, es passa al següent.';
 
   @override
-  String get tourManagersTitle => 'Creadors i etiquetes';
+  String get tourManagersTitle => 'Etiquetes, persones i creadors';
 
   @override
   String get tourManagersDescription =>
-      'Les dues maneres d’ordenar el que tens, i la manera ràpida d’etiquetar-ne uns quants de cop.';
+      'Tot el que serveix per ordenar la biblioteca: l\'arbre d\'etiquetes, les germanes, les persones, els creadors i l\'etiquetatge automàtic.';
 
   @override
-  String get tourManagers1Title => 'La llista de creadors';
+  String get tourManagers1Title => 'Els creadors';
 
   @override
   String get tourManagers1Body =>
-      'Tots els que tens. En triar-ne un, la pantalla s’omple del seu.';
+      'Un creador és qui va fer alguna cosa: un artista, un compte, un estudi. Cada contingut en té un, i només un. En triar-ne un aquí, la pantalla s\'omple amb el seu.';
 
   @override
   String get tourManagers2Title => 'La seva fitxa';
 
   @override
   String get tourManagers2Body =>
-      'Nom, avatar i els enllaços als seus llocs. El que hi canviïs es desa al creador.';
+      'Nom, avatar i els enllaços on publica. Aquests enllaços no són adorn: són el que permet que FeRN li posi el creador sol quan arriba alguna cosa des d\'una d\'aquestes adreces.';
 
   @override
-  String get tourManagers3Title => 'Tot el seu';
+  String get tourManagers3Title => 'Els avatars';
 
   @override
   String get tourManagers3Body =>
-      'El contingut que li has assignat, en una graella com la de la biblioteca.';
+      'Prem la imatge i tries d\'on surt: un fitxer de l\'equip, o la teva pròpia biblioteca. De la biblioteca pots retallar un quadrat de qualsevol imatge, que és el que un avatar és de debò.';
 
   @override
   String get tourManagers4Title => 'Les etiquetes van igual';
 
   @override
   String get tourManagers4Body =>
-      'Amb una diferència: una etiqueta pot penjar d’una altra, així que es poden ordenar en arbre.';
+      'Amb una diferència: un contingut té un creador, però tantes etiquetes com vulguis. Una etiqueta és qualsevol cosa per la qual vulguis agrupar: una sèrie, un color, un ambient, un lloc.';
 
   @override
-  String get tourManagers5Title => 'I es posen arrossegant';
+  String get tourManagers5Title =>
+      'Les etiquetes pengen les unes de les altres';
 
   @override
   String get tourManagers5Body =>
-      'Des de la biblioteca, arrossega un o més continguts damunt d’una etiqueta del menú. És la manera ràpida d’etiquetar-ne uns quants de cop.';
+      'Arrossega\'n una sobre una altra i queda penjant d\'ella. Aquí hi ha l\'avantatge: posar una etiqueta filla posa també totes les que té a sobre, així que allò etiquetat amb un personatge surt també en cercar la seva sèrie.';
 
   @override
-  String get tourFernieTitle => 'Mode fernie';
+  String get tourFernieTitle => 'Fernies i el mode fernie';
 
   @override
   String get tourFernieDescription =>
-      'Què és un fernie, d’on surten els seus exemples i com es marquen al visor.';
+      'Què és un fernie, d\'on surten els seus exemples i totes les maneres de marcar-li regions al teu contingut.';
 
   @override
   String get tourFernie1Title => 'Què és un fernie';
 
   @override
   String get tourFernie1Body =>
-      'Una cara, un personatge o un objecte que vols que Fern aprengui a reconèixer al teu contingut.';
+      'Una cara, un personatge o un objecte que vols que FeRN aprengui a reconèixer al teu contingut. No és una etiqueta: una etiqueta diu què és una cosa, un fernie és un exemple de quin aspecte té.';
 
   @override
-  String get tourFernie2Title => 'Aquí tens els teus';
+  String get tourFernie2Title => 'Enllaça\'l amb alguna cosa';
 
   @override
   String get tourFernie2Body =>
-      'Cada fernie pot proposar una etiqueta o un creador quan se’l trobi. Sense res enllaçat només serveix per entrenar: tot sol no etiqueta res.';
+      'Cada fernie pot apuntar a una etiqueta o a un creador. Aquest enllaç és el que converteix el reconeixement en etiquetatge: quan es trobi el fernie, això és el que es proposa. Sense res enllaçat només serveix per entrenar.';
 
   @override
   String get tourFernie3Title => 'Les seves regions';
 
   @override
   String get tourFernie3Body =>
-      'Cada retall és un exemple seu, i són els exemples amb què aprèn un model. Com més i més variats, millor: amb poca varietat aprendrà el fons i no el fernie.';
+      'Cada retall és un exemple seu, i són els exemples amb què aprèn un model. Com més i més variats, millor: amb poca varietat aprendrà el fons en comptes de la cosa.';
 
   @override
   String get tourFernie4Title => 'Es marquen al visor';
 
   @override
   String get tourFernie4Body =>
-      'Obre un contingut, entra al mode fernie i arrossega damunt del que vulguis marcar. Amb la barra espaiadora o el botó central et mous per la imatge.';
+      'Obre un contingut i entra al mode fernie. Amb l\'eina de marcar, arrossega un requadre sobre el que vulguis i tries de qui és. En vídeo i GIF la regió és del fotograma en què siguis.';
 
   @override
-  String get tourFernie5Title => 'I després s’entrena';
+  String get tourFernie5Title => 'Corregir el marcat';
 
   @override
   String get tourFernie5Body =>
-      'Els fernies sols no reconeixen res. El que reconeix és un model entrenat amb ells.';
+      'L\'altra eina tria el que ja hi és: es mou, s\'estira pels tiradors, es dona a un altre fernie o s\'esborra. Res no s\'escriu fins que surts desant, així que es pot desfer pel camí.';
 
   @override
   String get tourModelsTitle => 'Models i reconeixement';
@@ -4028,35 +4029,35 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get tourModels1Body =>
-      'Un model és el que de debò reconeix. Es munta amb els fernies que li posis.';
+      'Un model és el que de debò reconeix. S\'arma amb els fernies que li posis, s\'entrena un cop, i a partir d\'aquí pot mirar el teu contingut i dir el que veu.';
 
   @override
-  String get tourModels2Title => 'Crear-ne un';
+  String get tourModels2Title => 'Abans, l\'entorn';
 
   @override
   String get tourModels2Body =>
-      'Li tries els fernies i què ha de contestar: si cadascun hi és o no, o quin d’ells ha trobat i on. El segon necessita com a mínim dos, perquè amb un no hi ha entre què triar.';
+      'El reconeixement corre sobre Python, i FeRN te l\'instal·la: Configuració → Reconeixement i prémer instal·lar. Són uns quants centenars de megues i es fa un sol cop. Amb targeta gràfica va molt més ràpid.';
 
   @override
-  String get tourModels3Title => 'Entrenar triga';
+  String get tourModels3Title => 'Armar-ne un';
 
   @override
   String get tourModels3Body =>
-      'Va per darrere i pots seguir fent servir Fern mentrestant. L’indicador de la barra de dalt diu per on va.';
+      'Li tries els seus fernies i què ha de contestar: si cadascun hi és o no hi és, o quin d\'ells ha trobat i on. El segon necessita almenys dos fernies i regions marcades al contingut.';
 
   @override
-  String get tourModels4Title => 'Reconèixer';
+  String get tourModels4Title => 'Entrenar triga';
 
   @override
   String get tourModels4Body =>
-      'Un model ja entrenat repassa el contingut que li posis i proposa el que veu. Per sota del llindar de seguretat no proposa res.';
+      'De minuts a hores, segons el que li hagis donat i la màquina que tinguis. Corre per darrere i pots seguir fent servir FeRN; l\'indicador de dalt diu per quina època va i quant queda a ull.';
 
   @override
-  String get tourModels5Title => 'Res s’aplica sol';
+  String get tourModels5Title => 'Reconèixer';
 
   @override
   String get tourModels5Body =>
-      'El que veu es queda en suggeriment fins que l’acceptes. Pots acceptar de cop tots els que passin d’un percentatge de seguretat.';
+      'Un model ja entrenat repassa el contingut que li posis —un, una selecció o tota la biblioteca— i proposa el que veu. Per sota del seu llistó de seguretat no proposa res.';
 
   @override
   String get tourDuplicatesTitle => 'Contingut repetit';
@@ -4066,64 +4067,449 @@ class AppLocalizationsCa extends AppLocalizations {
       'Com es busca el repetit, com es decideix quina còpia es queda i de què depèn que dues coses comptin com la mateixa.';
 
   @override
-  String get tourDuplicates1Title => 'Buscar repetits';
+  String get tourDuplicates1Title => 'Cercar repetits';
 
   @override
   String get tourDuplicates1Body =>
-      'Prem Buscar ara i Fern repassa la biblioteca sencera calculant una empremta de cada contingut. La primera vegada pot trigar una estona.';
+      'Prem Cercar ara i FeRN repassa tota la biblioteca calculant una empremta de cada contingut. El primer cop pot trigar una estona; després només calcula la del nou.';
 
   @override
   String get tourDuplicates2Title => 'Els grups';
 
   @override
   String get tourDuplicates2Body =>
-      'Cada grup són còpies que s’assemblen prou per ser la mateixa cosa. Els que ja has contestat no tornen a sortir.';
+      'Cada grup són còpies que s\'assemblen prou per ser el mateix: la mateixa imatge en dues mides, o desada dos cops des de llocs diferents. Els que ja has contestat no tornen a sortir.';
 
   @override
   String get tourDuplicates3Title => 'Es decideix quina es queda';
 
   @override
   String get tourDuplicates3Body =>
-      'Tries la còpia que conserves i les altres es descarten. Pots fusionar a la que es queda les etiquetes, el creador, el preferit i la descripció de les descartades.';
+      'Tries la còpia que conserves i la resta es descarten. Abans pots fusionar en la que es queda les etiquetes, el creador, el preferit i la descripció de les que se\'n van.';
 
   @override
-  String get tourDuplicates4Title => 'El llistó, a Configuració';
+  String get tourDuplicates4Title => 'O dir que no són la mateixa';
 
   @override
   String get tourDuplicates4Body =>
-      'Quant es poden diferenciar dos continguts i seguir comptant com el mateix. Pujar-lo agrupa més i comença a ajuntar coses que només s’assemblen; baixar-lo deixa repetits sense trobar.';
+      'Si el grup s\'equivoca, digues-ho i no es torna a oferir. Dues coses que només s\'assemblen no són un repetit, i això només ho saps tu.';
 
   @override
-  String get tourDuplicates5Title => 'I es busca sol';
+  String get tourDuplicates5Title => 'El llistó, a Configuració';
 
   @override
   String get tourDuplicates5Body =>
-      'De tant en tant Fern ho repassa pel seu compte i avisa si troba res. Aquest període també és a Configuració.';
+      'Quant es poden diferenciar dos continguts i seguir comptant com el mateix. Pujar-lo agrupa més i comença a ajuntar coses que només s\'assemblen; baixar-lo deixa només les còpies gairebé idèntiques.';
 
   @override
   String get tourModelsDescription =>
-      'Com es munta un model, què triga a entrenar, què passa amb el que proposa i com l’arbre decideix quins s’executen.';
+      'L\'entorn de Python, com s\'arma i s\'entrena un model, què passa amb el que proposa i com l\'arbre decideix quins s\'executen.';
 
   @override
-  String get tourModels6Title => 'L’arbre de models';
+  String get tourModels6Title => 'Res no s\'aplica sol';
 
   @override
   String get tourModels6Body =>
-      'Un model que no és a l’arbre no s’executa mai en reconèixer. L’arbre és el que diu quins corren i en quin ordre.';
+      'El que veu es queda en suggeriment fins que l\'acceptes, al plafó del contingut o de cop des de la pantalla d\'importació. Rebutjar-ne una és dir que no es torni a oferir per a aquell contingut.';
 
   @override
-  String get tourModels7Title => 'Posar-los-hi i penjar-los';
+  String get tourModels7Title => 'L\'arbre de models';
 
   @override
   String get tourModels7Body =>
-      'El plafó de la dreta són els models que són fora. Tria un node de l’arbre i el que hi posis penjarà d’ell. Un model no pot penjar d’ell mateix ni tancar un cercle: l’arbre es mossegaria la cua.';
+      'Un model que no és a l\'arbre no s\'executa mai en reconèixer. L\'arbre és el que diu quins corren i en quin ordre.';
 
   @override
-  String get tourModels8Title => 'Cada branca té la seva condició';
+  String get tourModels8Title => 'Ficar-los i penjar-los';
 
   @override
   String get tourModels8Body =>
-      'Un fill només s’executa quan el pare detecta el fernie que hagis posat a aquella unió. Aquí hi ha la gràcia: un de general filtra, i només el que troba obre els especialitzats. Sense condició s’executen davant de qualsevol detecció, i un pare sense entrenar no obre res.';
+      'El plafó de la dreta són els models que són fora. Tria un node de l\'arbre i el que fiquis penjarà d\'ell. Un model no pot penjar d\'ell mateix ni ser dos cops a l\'arbre.';
+
+  @override
+  String get tourLibraryTitle => 'La biblioteca i el visor';
+
+  @override
+  String get tourLibraryDescription =>
+      'La graella, marcar-ne diversos alhora, el menú del botó dret i tot el que sap fer el visor.';
+
+  @override
+  String get tourSearchingTitle => 'Cercar i filtrar';
+
+  @override
+  String get tourSearchingDescription =>
+      'Les píndoles que s\'acumulen, el text lliure, els filtres de la barra i les altres maneres d\'acotar el que veus.';
+
+  @override
+  String get tourNsfwTitle => 'El bloqueig de contingut';
+
+  @override
+  String get tourNsfwDescription =>
+      'Una contrasenya que amaga el que marquis, què s\'amaga amb això i com es comporta obert i tancat.';
+
+  @override
+  String get tourFilesTitle => 'Fitxers i manteniment';
+
+  @override
+  String get tourFilesDescription =>
+      'On viu el teu contingut al disc, què fa FeRN amb aquests fitxers i com es neteja després.';
+
+  @override
+  String get tutorialViewerTitle => 'El visor';
+
+  @override
+  String get tutorialViewerBody =>
+      'Obrir alguna cosa ocupa tota la pantalla: s\'apropa amb la roda, es passa d\'un a un altre amb les fletxes, i el plafó lateral és on se li posa creador, etiquetes i descripció mentre ho mires.';
+
+  @override
+  String get tutorialJobsTitle => 'El que corre per darrere';
+
+  @override
+  String get tutorialJobsBody =>
+      'Les importacions, el reconeixement, els entrenaments i la cerca de repetits corren per darrere: aquest indicador diu què hi ha en marxa, per on va i permet aturar-ho. Mentrestant pots seguir fent servir FeRN.';
+
+  @override
+  String get tourImporting6Title => 'El que no vols que torni';
+
+  @override
+  String get tourImporting6Body =>
+      'Una font remota torna a oferir el mateix cada cop. En descartar alguna cosa pots dir a més que no te la torni a oferir: se salta abans de baixar-la, i la llista del que has bloquejat és a Configuració → Base de dades.';
+
+  @override
+  String get tourImporting7Title => 'El que pot passar sol';
+
+  @override
+  String get tourImporting7Body =>
+      'El que arriba pot etiquetar-se sol si l\'adreça d\'on ve està vinculada a una etiqueta, marcar-se com a NSFW si ho encens a la capçalera, i passar pels teus models si ho demanes a Configuració.';
+
+  @override
+  String get tourImporting8Title => 'De cop';
+
+  @override
+  String get tourImporting8Body =>
+      'No cal anar d\'un en un: marca\'n diversos i la capçalera et deixa acceptar-los tots, descartar-los tots, o acceptar de cop els suggeriments dels teus models que passin de la seguretat que triïs.';
+
+  @override
+  String get tourImporting9Title => 'I ja és a Contingut';
+
+  @override
+  String get tourImporting9Body =>
+      'El que has desat surt de la graella d\'importació i apareix a la biblioteca. A partir d\'aquí es cerca, s\'etiqueta i entra a tota la resta que fa FeRN.';
+
+  @override
+  String get tourLibrary1Title => 'Tot el que tens';
+
+  @override
+  String get tourLibrary1Body =>
+      'La graella respecta la forma de cada contingut, així que es reconeixen tant per la silueta com pel que hi ha dins. En desplaçar-te es va carregant el que ve.';
+
+  @override
+  String get tourLibrary2Title => 'Diversos alhora';
+
+  @override
+  String get tourLibrary2Body =>
+      'Cada cel·la té la seva casella al cantó: marca\'n una i estàs seleccionant. Majúscules i clic estira la selecció fins allà, seguint l\'ordre de la pantalla. El que facis després va sobre totes.';
+
+  @override
+  String get tourLibrary3Title => 'El botó dret';
+
+  @override
+  String get tourLibrary3Body =>
+      'Sobre qualsevol cel·la treu el que es pot fer: marcar-lo com a preferit, enviar-lo a la paperera, reconèixer-lo amb els teus models o obrir la carpeta on és. Amb una selecció feta, va sobre tota ella.';
+
+  @override
+  String get tourLibrary4Title => 'La paperera retorna';
+
+  @override
+  String get tourLibrary4Body =>
+      'Enviar alguna cosa a la paperera no l\'esborra: es queda allà un temps i es pot restablir amb tot el que tenia. Buidar la paperera és el que esborra de debò, i això pregunta abans.';
+
+  @override
+  String get tourLibrary5Title => 'Ordenar i filtrar aquí';
+
+  @override
+  String get tourLibrary5Body =>
+      'La capçalera diu quants n\'hi ha i permet ordenar-los —el més nou, el més vell, a l\'atzar— i quedar-te només amb imatges, només amb vídeo, o només amb el que va venir d\'una font.';
+
+  @override
+  String get tourLibrary6Title => 'Dins del visor';
+
+  @override
+  String get tourLibrary6Body =>
+      'La roda apropa, el botó central —o la barra espaiadora— arrossega la imatge, i el doble clic la torna a ajustar a la pantalla. Les fletxes passen a l\'anterior i al següent sense sortir.';
+
+  @override
+  String get tourLibrary7Title => 'El plafó d\'informació';
+
+  @override
+  String get tourLibrary7Body =>
+      'Creador, etiquetes, descripció i enllaços, tot editable allà mateix. També ensenya el que proposen els teus models, i un botó que explica d\'on ha sortit cada etiqueta d\'aquell contingut.';
+
+  @override
+  String get tourLibrary8Title => 'Preferits';
+
+  @override
+  String get tourLibrary8Body =>
+      'El cor marca el que vols tornar a trobar sense recordar com ho vas etiquetar. Tot el marcat té la seva pròpia pantalla al menú.';
+
+  @override
+  String get tourLibrary9Title => 'Vídeo i animació';
+
+  @override
+  String get tourLibrary9Body =>
+      'El vídeo i els GIF es reprodueixen al visor amb una línia de temps que es pot recórrer fotograma a fotograma. Això importa més endavant: una regió de fernie és d\'un fotograma, no de tot el vídeo.';
+
+  @override
+  String get tourManagers6Title => 'I algunes van juntes';
+
+  @override
+  String get tourManagers6Body =>
+      'En deixar-ne anar una sobre una altra també es pot triar relacionar-les en comptes de penjar-les: són germanes. Les germanes no són ni a sobre ni a sota: posar-ne una posa també l\'altra, perquè van sempre juntes.';
+
+  @override
+  String get tourManagers7Title => 'Les persones són etiquetes';
+
+  @override
+  String get tourManagers7Body =>
+      'Una etiqueta es pot marcar com a persona: algú o un personatge que surt al contingut. És només una manera de tenir la llista ordenada —el botó de dalt canvia entre les dues llistes— i a la resta de l\'aplicació es comporten com qualsevol etiqueta.';
+
+  @override
+  String get tourManagers8Title => 'Etiquetar sol';
+
+  @override
+  String get tourManagers8Body =>
+      'Una etiqueta pot tenir adreces vinculades. Tot el que arribi des d\'una d\'aquestes adreces entra ja etiquetat, i amb el que hi hagi a sobre i les seves germanes. D\'aquí sortirà la major part del teu etiquetatge.';
+
+  @override
+  String get tourManagers9Title => 'Una llista llarga, domada';
+
+  @override
+  String get tourManagers9Body =>
+      'El xebró d\'una etiqueta plega la seva branca, i el cercador de sobre la llista la troba pel nom. Les dues coses van aquí i al menú lateral, i el que pleguis segueix plegat el cop següent.';
+
+  @override
+  String get tourManagers10Title => 'Etiquetar de cop';
+
+  @override
+  String get tourManagers10Body =>
+      'Des de la biblioteca, arrossega un o diversos continguts sobre una etiqueta del menú. És la manera ràpida, i és per això que les etiquetes del menú són llocs on deixar anar.';
+
+  @override
+  String get tourManagers11Title => 'D\'on surt aquesta etiqueta?';
+
+  @override
+  String get tourManagers11Body =>
+      'FeRN etiqueta sol per diversos camins, i al plafó tots es veuen igual. El botó del rellotge de cada contingut explica cadascuna: la vas posar tu, va coincidir una adreça, es va heretar, la va proposar un model, la va portar un fernie.';
+
+  @override
+  String get tourSearching1Title => 'La barra de cerca';
+
+  @override
+  String get tourSearching1Body =>
+      'Funciona des de qualsevol pantalla. A mesura que escrius, FeRN t\'ofereix el que encaixa: etiquetes, creadors i contingut per la descripció. Cerca a la teva biblioteca, no a internet.';
+
+  @override
+  String get tourSearching2Title => 'El que tries es queda en una píndola';
+
+  @override
+  String get tourSearching2Body =>
+      'Triar una etiqueta o un creador el converteix en una píndola de la barra. Una píndola cerca per aquella cosa exacta i no pel seu nom: el creador Pompeu porta el seu, i no el que només menciona la paraula.';
+
+  @override
+  String get tourSearching3Title => 'Les píndoles es creuen';
+
+  @override
+  String get tourSearching3Body =>
+      'Amb dues píndoles s\'ensenya el que compleix totes dues, no el que en compleix alguna: aquesta etiqueta, d\'aquest creador. Aquí hi ha la utilitat. El retrocés amb el camp buit treu l\'última.';
+
+  @override
+  String get tourSearching4Title => 'El text lliure';
+
+  @override
+  String get tourSearching4Body =>
+      'Si el que escrius no és una etiqueta ni un creador, prem Enter i es queda com a píndola de text lliure: cerca a les descripcions i als noms de fitxer. Útil per al que mai no vas arribar a etiquetar.';
+
+  @override
+  String get tourSearching5Title => 'Acotar el resultat';
+
+  @override
+  String get tourSearching5Body =>
+      'El filtre del costat de la barra decideix quines classes de resultat compten i permet quedar-te només amb imatges, només amb vídeo o només amb una font. Amb una sola píndola, a més, permet descartar grups sencers.';
+
+  @override
+  String get tourSearching6Title => 'El menú també filtra';
+
+  @override
+  String get tourSearching6Body =>
+      'Prémer una etiqueta del menú lateral és el mateix que posar la seva píndola a la barra, així que des d\'allà pots seguir: afegeix un creador, afegeix una paraula. La barra sempre ensenya el que està filtrant.';
+
+  @override
+  String get tourSearching7Title => 'Cada llista té el seu';
+
+  @override
+  String get tourSearching7Body =>
+      'Les llistes d\'etiquetes, creadors i fernies tenen el seu propi filtre a sobre. Aquell només acota la llista que estàs mirant, i no toca el que ensenya la graella.';
+
+  @override
+  String get tourFernie6Title => 'Quan l\'exemple és tot';
+
+  @override
+  String get tourFernie6Body =>
+      'Hi ha un botó que marca tot el fotograma de cop, per quan el contingut no és més que la cosa. I a la fitxa d\'un fernie n\'hi ha un altre que agafa una etiqueta sencera i marca així tot el seu contingut.';
+
+  @override
+  String get tourFernie7Title => 'De suggeriment a exemple';
+
+  @override
+  String get tourFernie7Body =>
+      'Quan un model ja ha proposat alguna cosa, el plafó ofereix convertir el que va veure en regions: dibuixa els requadres i tu acceptes els que estiguin bé. És la manera més ràpida de fer créixer un fernie.';
+
+  @override
+  String get tourFernie8Title => 'Marcar també etiqueta';
+
+  @override
+  String get tourFernie8Body =>
+      'Marcar-li una regió a un contingut és dir que aquell fernie hi surt, així que el que enllaça se li posa al moment. El creador només si no en tenia ja un de propi.';
+
+  @override
+  String get tourFernie9Title => 'I després s\'entrena';
+
+  @override
+  String get tourFernie9Body =>
+      'Els fernies sols no reconeixen res. El que reconeix és un model entrenat amb ells, i d\'això va el recorregut següent.';
+
+  @override
+  String get tourModels9Title => 'Cada branca té la seva condició';
+
+  @override
+  String get tourModels9Body =>
+      'Un fill només s\'executa quan el pare detecta el fernie que li hagis posat a aquella unió. Aquí hi ha la gràcia: un de general filtra, i només el que troba passa als especialitzats.';
+
+  @override
+  String get tourModels10Title => 'Quan va sortir malament';
+
+  @override
+  String get tourModels10Body =>
+      'Un entrenament es pot aturar a mitges, i a un model se li pot fer oblidar el que ha après: se\'n van els seus pesos i torna a estar sense entrenar, però es queden els seus fernies, els seus ajustos i el seu lloc a l\'arbre.';
+
+  @override
+  String get tourDuplicates6Title => 'I cerca sol';
+
+  @override
+  String get tourDuplicates6Body =>
+      'Cada cert temps FeRN ho repassa pel seu compte i avisa si troba alguna cosa. Aquest període també és a Configuració, i apagar-ho també.';
+
+  @override
+  String get tourNsfw1Title => 'Què és el bloqueig';
+
+  @override
+  String get tourNsfw1Body =>
+      'Una contrasenya que amaga part de la teva biblioteca. El que marquis com a NSFW desapareix mentre el bloqueig estigui tancat: no és a la graella, ni a les cerques, ni als recomptes.';
+
+  @override
+  String get tourNsfw2Title => 'Posar-lo en marxa';
+
+  @override
+  String get tourNsfw2Body =>
+      'A Configuració, a la secció del bloqueig, es posa una contrasenya. FeRN et dona llavors un codi de recuperació: apunta\'l. És l\'única manera de tornar a entrar, perquè la contrasenya no es desa enlloc.';
+
+  @override
+  String get tourNsfw3Title => 'Obrir i tancar';
+
+  @override
+  String get tourNsfw3Body =>
+      'Obrir demana la contrasenya; tancar no pregunta res i és immediat. Pots fer que recordi que està obert entre sessions, o que arrenqui tancat sempre.';
+
+  @override
+  String get tourNsfw4Title => 'Marcar una etiqueta o un creador';
+
+  @override
+  String get tourNsfw4Body =>
+      'Les seves fitxes tenen un botó de bloqueig. Marcar una etiqueta amaga tot el que la porta, i tot el que en penja a l\'arbre. Marcar un creador l\'amaga a ell i a tot el seu contingut.';
+
+  @override
+  String get tourNsfw5Title => 'O un contingut solt';
+
+  @override
+  String get tourNsfw5Body =>
+      'Qualsevol contingut es pot marcar pel seu compte des del visor, diguin el que diguin les seves etiquetes. I en importar pots fer que tot el que arribi entri ja marcat, cosa que estalvia marcar-ne cinquanta a mà.';
+
+  @override
+  String get tourNsfw6Title => 'Com es comporta';
+
+  @override
+  String get tourNsfw6Body =>
+      'Tries què vol dir tancat: que el marcat desaparegui del tot, o que surti difuminat per saber que hi és. I tries si en obrir es veu tot o només el marcat.';
+
+  @override
+  String get tourNsfw7Title => 'Els enllaços també es marquen';
+
+  @override
+  String get tourNsfw7Body =>
+      'Una etiqueta o un creador poden tenir adreces marcades: no s\'ensenyen amb el bloqueig tancat, però segueixen etiquetant el que arribi d\'elles. Amagar una adreça no és oblidar-la.';
+
+  @override
+  String get tourNsfw8Title => 'Desfer-se de tot';
+
+  @override
+  String get tourNsfw8Body =>
+      'A Configuració → Base de dades es pot buidar només el marcat: només el contingut, perquè les etiquetes, els creadors, els fernies i els models es queden. Només s\'ofereix amb el bloqueig obert: tancat seria esborrar a cegues.';
+
+  @override
+  String get tourFiles1Title => 'On viu el teu contingut';
+
+  @override
+  String get tourFiles1Body =>
+      'FeRN desa una base de dades amb el que sap, i els fitxers es queden al teu disc. A Configuració tries la carpeta de la biblioteca: allà és on va a parar el que portes.';
+
+  @override
+  String get tourFiles2Title => 'Vigilar una carpeta teva';
+
+  @override
+  String get tourFiles2Body =>
+      'Pots apuntar FeRN a una carpeta que ja tinguis i portar-te el que hi ha dins. Tu decideixes si copia els fitxers a la biblioteca o els deixa on són i només se\'n recorda.';
+
+  @override
+  String get tourFiles3Title => 'Ordenar sol';
+
+  @override
+  String get tourFiles3Body =>
+      'FeRN pot arxivar el que gestiona en carpetes per font, per creador o per data, perquè el disc s\'assembli a la biblioteca. Si canvies d\'idea després, mou el que ja hi és.';
+
+  @override
+  String get tourFiles4Title => 'La carpeta d\'avatars';
+
+  @override
+  String get tourFiles4Body =>
+      'Els avatars són còpies que fa FeRN, així que viuen a la seva pròpia carpeta, que també tries tu. Canviar la carpeta s\'emporta el que hi ha dins: res no es queda sense la seva imatge.';
+
+  @override
+  String get tourFiles5Title => 'Moure la biblioteca';
+
+  @override
+  String get tourFiles5Body =>
+      'Si apuntes la biblioteca a un altre disc, FeRN s\'ofereix a moure-hi el que gestiona i a actualitzar totes les rutes que té apuntades. És una operació llarga, així que t\'explica com ha anat.';
+
+  @override
+  String get tourFiles6Title => 'Fitxers que no fa servir ningú';
+
+  @override
+  String get tourFiles6Body =>
+      'Amb el temps s\'acumulen orfes: avatars que vas reemplaçar, baixades la fitxa de les quals vas descartar, pesos d\'un model que ja no hi és. El botó de neteja de Configuració els troba, diu quant ocupen i pregunta abans d\'esborrar.';
+
+  @override
+  String get tourFiles7Title => 'Començar de zero';
+
+  @override
+  String get tourFiles7Body =>
+      'Buidar la base de dades és l\'única cosa d\'aquí sense volta enrere, i pregunta dos cops. Tu tries si s\'emporta també els fitxers: sense això, els teus fitxers es queden on són i un escaneig els torna a portar.';
+
+  @override
+  String get tourFiles8Title => 'I t\'avisa quan acaba';
+
+  @override
+  String get tourFiles8Body =>
+      'Els treballs llargs —importar, entrenar, reconèixer, cercar repetits— poden avisar-te en acabar, amb so o sense. Això també és a Configuració, i pots triar de quins.';
 
   @override
   String get viewerVolume => 'Volum';

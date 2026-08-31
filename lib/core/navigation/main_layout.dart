@@ -311,7 +311,12 @@ class _MainLayoutState extends State<MainLayout> {
           // dentro: la lista de tareas es de la aplicación entera, y bastaría un
           // caso especial por tipo de trabajo para que acabara importando media
           // aplicación.
-          JobsIndicator(
+          // Señalable: el tutorial cuenta aquí que las importaciones, los
+          // entrenamientos y el reconocimiento corren por detrás, y sin poder
+          // apuntar al sitio esa explicación no dice dónde mirar.
+          TutorialAnchor(
+            id: TutorialAnchorId.jobs,
+            child: JobsIndicator(
             hasDetail: (job) =>
                 getIt<RecognitionLogStore>().has(job.id) ||
                 getIt<PendingLinkReviews>().has(job.id),
@@ -332,6 +337,7 @@ class _MainLayoutState extends State<MainLayout> {
                 ),
               ));
             },
+            ),
           ),
           FernPopupMenu<_CreateOption>(
             options: _createOptions(AppLocalizations.of(context)),

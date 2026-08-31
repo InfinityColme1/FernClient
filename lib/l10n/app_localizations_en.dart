@@ -3775,18 +3775,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsHelp => 'Help';
 
   @override
-  String get tutorialSectionTitle => 'Guided tour';
+  String get tutorialSectionTitle => 'Guided tours';
 
   @override
   String get tutorialSectionNote =>
-      'A walk through the screens of the app and what each one is for. You can leave it at any point.';
+      'Ten tours that cover the whole app, one subject each. Follow them all and nothing here will be a mystery. You can leave any of them at any time.';
 
   @override
   String get tutorialOfferTitle => 'Shall I show you around?';
 
   @override
   String get tutorialOfferBody =>
-      'It is a short guided tour and you can leave at any point. If you would rather look around on your own, it is in the settings.';
+      'A ten-step tour of what everything is and where it lives. There are nine more, one per subject, in Settings under Help. You can leave whenever you like.';
 
   @override
   String get tutorialOfferAccept => 'Start';
@@ -3816,189 +3816,189 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tutorialWelcomeBody =>
-      'A quick tour of what the app does. Move on with Next or the arrow keys, and leave with Escape.';
+      'FeRN keeps the media you collect: it brings it in, sorts it with tags and creators, and can learn to recognise what appears in it. Use Next or the arrow keys, and Escape to leave.';
 
   @override
-  String get tutorialSidebarTitle => 'This is how you move around';
+  String get tutorialSidebarTitle => 'This is how you get around';
 
   @override
   String get tutorialSidebarBody =>
-      'Every screen lives here: your library, what you bring in from elsewhere, your favourites and the managers. The button above folds it away to give the content more room.';
+      'Every screen is here: your library, what you bring in, favourites, the bin, and the managers for creators, tags, fernies and models. The button at the top folds it away when you need the room.';
 
   @override
-  String get tutorialImportTitle => 'This is where content comes in';
+  String get tutorialImportTitle => 'Content comes in here';
 
   @override
   String get tutorialImportBody =>
-      'Bring content from a remote source or from a folder on your disk. What arrives waits for review until you accept it, so nothing reaches the library without you seeing it.';
+      'You bring content from a remote source — Reddit, Pixiv, Danbooru, Gelbooru, Pinterest, Pawchive — or from a folder on your disk. Whatever arrives waits here until you accept it, so nothing lands in your library without you seeing it.';
 
   @override
-  String get tutorialContentTitle => 'Everything shows up here';
+  String get tutorialContentTitle => 'And this is where it all shows up';
 
   @override
   String get tutorialContentBody =>
-      'Your library. A click opens the viewer, right-click brings up the actions, and you can mark several at once to handle them together.';
+      'Your library: everything you have accepted. A click opens the viewer, right-click brings up the actions, and you can tick several to work on them together.';
 
   @override
   String get tutorialTagsTitle => 'Tag by dragging';
 
   @override
   String get tutorialTagsBody =>
-      'The tags in the menu are also places to drop things: drag one or more items onto a tag and they are tagged. Click it and the library shows only what is in it.';
+      'The tags in the menu are also places to drop: drag one or several items onto one and they come out tagged. Clicking a tag filters the library down to what carries it.';
 
   @override
-  String get tutorialCreateTitle => 'Creators, tags and fernies';
+  String get tutorialCreateTitle => 'Creating things';
 
   @override
   String get tutorialCreateBody =>
-      'Everything you organise with is created here: creators, tags, and fernies, which are the faces the app learns to recognise.';
+      'This is where creators, tags, fernies and models are born. A creator is who made something; a tag is anything you want to group by; a fernie is a face or a thing you want FeRN to learn.';
 
   @override
-  String get tutorialSearchTitle => 'Search';
+  String get tutorialSearchTitle => 'Searching';
 
   @override
   String get tutorialSearchBody =>
-      'Search by name, creator or tag from any screen.';
+      'Type and FeRN offers what matches: a tag, a creator, a description. What you pick becomes a chip, and chips stack — two of them show what meets both.';
 
   @override
-  String get tutorialSettingsTitle => 'Everything else lives here';
+  String get tutorialSettingsTitle => 'And everything else is here';
 
   @override
   String get tutorialSettingsBody =>
-      'Language, theme, folders, remote sources and recognition. This tutorial too, in case you want to see it again.';
+      'Language, theme, folders, remote sources, recognition and the content lock. Under Help you will find the other nine tours: one per subject, and between them they cover the whole app.';
 
   @override
-  String get tourGeneralTitle => 'General tour';
+  String get tourGeneralTitle => 'The general tour';
 
   @override
   String get tourGeneralDescription =>
-      'Where everything is and how content gets in. This is the one offered the first time.';
+      'What FeRN is, what each screen is for and where everything lives. Start here.';
 
   @override
-  String get tourImportingTitle => 'Bringing in and reviewing content';
+  String get tourImportingTitle => 'Bringing content in';
 
   @override
   String get tourImportingDescription =>
-      'Where content comes from, how it is reviewed, and what it takes for it to reach the library.';
+      'Where content comes from, how you review it and what it takes for it to reach your library.';
 
   @override
-  String get tourImporting1Title => 'From where, and how much';
+  String get tourImporting1Title => 'Where from, and how much';
 
   @override
   String get tourImporting1Body =>
-      'Pick the source — a remote one or a folder on this computer — choose everything or only what is new since last time, and press Fetch.';
+      'Pick a source — a remote one or a folder on this computer — say whether you want everything or only what is new since last time, and press Bring. A remote source brings what you have favourited there.';
 
   @override
-  String get tourImporting2Title => 'What arrives is reviewed here';
+  String get tourImporting2Title => 'Each source needs its keys';
 
   @override
   String get tourImporting2Body =>
-      'None of this is in your library yet. This grid is the inbox: what has been fetched, waiting for you to say what to do with it.';
+      'Remote sources need your account details, and you put them in Settings under Remote sources. Each one explains how to get them: they are not your password but keys the platform gives out for this.';
 
   @override
-  String get tourImporting3Title => 'Open one and decide';
+  String get tourImporting3Title => 'Nothing here is yours yet';
 
   @override
   String get tourImporting3Body =>
-      'A click opens it in the viewer. There you save it, which makes it final, or discard it: discarding takes it out of the database and asks whether to delete the file too.';
+      'This grid is the inbox: what has been brought in, waiting for you to say what to do with it. It is already on your disk, but it is not in your library and it does not show up in searches.';
 
   @override
-  String get tourImporting4Title => 'Its details, without leaving the viewer';
+  String get tourImporting4Title => 'Open one and decide';
 
   @override
   String get tourImporting4Body =>
-      'The information panel is where you set creator, tags, title and links. You edit it while looking at it, which is when you know what it is.';
+      'A click opens it in the viewer. There you save it — and it becomes final — or you discard it. Discarding takes it out of the database and asks whether to delete the file as well.';
 
   @override
-  String get tourImporting5Title => 'And then it is in Content';
+  String get tourImporting5Title => 'The details, without leaving the viewer';
 
   @override
   String get tourImporting5Body =>
-      'What you saved leaves the import grid and shows up in the library.';
+      'The side panel is where it gets a creator, tags, a description and links. You edit it while you look at it, which is when you actually know what it is. Saving also moves you on to the next one.';
 
   @override
-  String get tourManagersTitle => 'Creators and tags';
+  String get tourManagersTitle => 'Tags, people and creators';
 
   @override
   String get tourManagersDescription =>
-      'The two ways of ordering what you have, and the quick way to tag several things at once.';
+      'Everything you use to sort your library: the tag tree, siblings, people, creators and automatic tagging.';
 
   @override
-  String get tourManagers1Title => 'The list of creators';
+  String get tourManagers1Title => 'Creators';
 
   @override
   String get tourManagers1Body =>
-      'Every creator you have. Pick one and the screen fills with their work.';
+      'A creator is whoever made something: an artist, an account, a studio. Each item has one and only one. Picking one here fills the screen with everything of theirs.';
 
   @override
-  String get tourManagers2Title => 'Their details';
+  String get tourManagers2Title => 'Their card';
 
   @override
   String get tourManagers2Body =>
-      'Name, avatar and the links to their sites. What you change here is saved on the creator.';
+      'Name, avatar and the links to where they publish. Those links are not decoration: they are what lets FeRN put the creator on by itself when something arrives from one of those addresses.';
 
   @override
-  String get tourManagers3Title => 'Everything of theirs';
+  String get tourManagers3Title => 'Avatars';
 
   @override
   String get tourManagers3Body =>
-      'The content you have assigned to them, in a grid like the library one.';
+      'Click the picture and you choose where it comes from: a file on this computer, or your own library. From your library you can crop a square out of any image, which is what an avatar actually is.';
 
   @override
   String get tourManagers4Title => 'Tags work the same way';
 
   @override
   String get tourManagers4Body =>
-      'With one difference: a tag can hang from another, so they can be arranged as a tree.';
+      'With one difference: an item has one creator but as many tags as you like. A tag is anything you want to group by — a series, a colour, a mood, a place.';
 
   @override
-  String get tourManagers5Title => 'And you apply them by dragging';
+  String get tourManagers5Title => 'Tags hang from tags';
 
   @override
   String get tourManagers5Body =>
-      'From the library, drag one or more items onto a tag in the menu. It is the quick way to tag several at once.';
+      'Drag one onto another and it hangs from it. That is what makes tagging worth it: putting on a child tag puts on everything above it, so something tagged as a character also comes up under its series.';
 
   @override
-  String get tourFernieTitle => 'Fernie mode';
+  String get tourFernieTitle => 'Fernies and the marking mode';
 
   @override
   String get tourFernieDescription =>
-      'What a fernie is, where its examples come from, and how you mark them in the viewer.';
+      'What a fernie is, where its examples come from and every way of marking regions on your content.';
 
   @override
   String get tourFernie1Title => 'What a fernie is';
 
   @override
   String get tourFernie1Body =>
-      'A face, a character or an object you want Fern to learn to recognise in your content.';
+      'A face, a character or an object you want FeRN to learn to recognise in your content. It is not a tag: a tag says what something is, a fernie is an example of what something looks like.';
 
   @override
-  String get tourFernie2Title => 'Here are yours';
+  String get tourFernie2Title => 'Link it to something';
 
   @override
   String get tourFernie2Body =>
-      'Each fernie can propose a tag or a creator when it is found. With nothing linked it only trains: on its own it tags nothing.';
+      'Each fernie can point at a tag or a creator. That link is what turns recognition into tagging: when the fernie is found, that is what gets proposed. With nothing linked it only serves to train.';
 
   @override
   String get tourFernie3Title => 'Its regions';
 
   @override
   String get tourFernie3Body =>
-      'Each crop is an example of it, and those examples are what a model learns from. The more and the more varied, the better: with little variety it will learn the background instead of the fernie.';
+      'Each crop is one example of it, and those examples are what a model learns from. The more and the more varied, the better: with little variety it learns the background instead of the thing.';
 
   @override
-  String get tourFernie4Title => 'You mark them in the viewer';
+  String get tourFernie4Title => 'Marking them in the viewer';
 
   @override
   String get tourFernie4Body =>
-      'Open something, go into fernie mode and drag over what you want to mark. Hold the space bar or the middle button to move around the image.';
+      'Open something and enter fernie mode. With the marking tool, drag a box around what you want and pick whose it is. On video and GIFs the region belongs to the frame you are on.';
 
   @override
-  String get tourFernie5Title => 'And then you train';
+  String get tourFernie5Title => 'Fixing what you marked';
 
   @override
   String get tourFernie5Body =>
-      'Fernies on their own recognise nothing. What recognises is a model trained with them.';
+      'The other tool selects what is already there: move it, resize it by its handles, give it to another fernie or delete it. Nothing is written until you leave saving, so you can undo on the way.';
 
   @override
   String get tourModelsTitle => 'Models and recognition';
@@ -4008,102 +4008,487 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tourModels1Body =>
-      'A model is what actually recognises. You put it together from the fernies you give it.';
+      'A model is what actually recognises. You build it out of the fernies you give it, you train it once, and from then on it can look at your content and say what it sees.';
 
   @override
-  String get tourModels2Title => 'Creating one';
+  String get tourModels2Title => 'First, the environment';
 
   @override
   String get tourModels2Body =>
-      'You pick its fernies and what it has to answer: whether each one is there or not, or which of them it found and where. The second needs at least two, because with one there is nothing to choose between.';
+      'Recognition runs on Python, and FeRN installs it for you: Settings, Recognition, and press install. It is a few hundred megabytes and it is done once. With a graphics card it goes much faster.';
 
   @override
-  String get tourModels3Title => 'Training takes a while';
+  String get tourModels3Title => 'Building one';
 
   @override
   String get tourModels3Body =>
-      'It runs in the background and you can keep using Fern meanwhile. The indicator in the top bar says how far along it is.';
+      'You choose its fernies and what it has to answer: whether each one is there or not, or which of them it found and where. The second needs at least two fernies and regions drawn on the content.';
 
   @override
-  String get tourModels4Title => 'Recognising';
+  String get tourModels4Title => 'Training takes a while';
 
   @override
   String get tourModels4Body =>
-      'A trained model goes over whatever content you point it at and proposes what it sees. Below the confidence threshold it proposes nothing.';
+      'Minutes to hours, depending on how much you gave it and what machine you have. It runs in the background and you can keep using FeRN; the indicator up top says which epoch it is on and roughly how long is left.';
 
   @override
-  String get tourModels5Title => 'Nothing is applied on its own';
+  String get tourModels5Title => 'Recognising';
 
   @override
   String get tourModels5Body =>
-      'What it sees stays a suggestion until you accept it. You can accept in one go every suggestion above a given confidence.';
+      'A trained model goes over whatever content you point it at — one item, a selection, or the whole library — and proposes what it sees. Below its confidence threshold it proposes nothing.';
 
   @override
   String get tourDuplicatesTitle => 'Repeated content';
 
   @override
   String get tourDuplicatesDescription =>
-      'How repeats are found, how you decide which copy stays, and what makes two things count as the same.';
+      'How repeats are found, how you decide which copy stays and what makes two things count as the same.';
 
   @override
   String get tourDuplicates1Title => 'Finding repeats';
 
   @override
   String get tourDuplicates1Body =>
-      'Press Scan now and Fern goes over the whole library working out a fingerprint for each item. The first time it can take a while.';
+      'Press Search now and FeRN goes over your whole library working out a fingerprint of each item. The first time can take a while; after that it only fingerprints what is new.';
 
   @override
   String get tourDuplicates2Title => 'The groups';
 
   @override
   String get tourDuplicates2Body =>
-      'Each group is copies alike enough to be the same thing. The ones you have already answered do not come back.';
+      'Each group is copies that look alike enough to be the same thing — the same picture in two sizes, or saved twice from different places. Groups you have already answered do not come back.';
 
   @override
-  String get tourDuplicates3Title => 'You decide which one stays';
+  String get tourDuplicates3Title => 'Choosing which one stays';
 
   @override
   String get tourDuplicates3Body =>
-      'Pick the copy you keep and the rest are discarded. You can merge into the one that stays the tags, creator, favourite and description of the discarded ones.';
+      'You pick the copy you keep and the rest are discarded. Before that you can merge into the one that stays the tags, the creator, the favourite mark and the description of the ones that go.';
 
   @override
-  String get tourDuplicates4Title => 'The threshold, in Settings';
+  String get tourDuplicates4Title => 'Or say they are not the same';
 
   @override
   String get tourDuplicates4Body =>
-      'How different two items can be and still count as the same. Raising it groups more and starts joining things that merely look alike; lowering it leaves repeats unfound.';
+      'If the group got it wrong, say so and it will not be offered again. Two things that merely look alike are not a repeat, and only you can tell the difference.';
 
   @override
-  String get tourDuplicates5Title => 'And it looks on its own';
+  String get tourDuplicates5Title => 'The threshold, in Settings';
 
   @override
   String get tourDuplicates5Body =>
-      'Every so often Fern goes over the library by itself and tells you if it finds anything. That period is in Settings too.';
+      'How different two items can be and still count as the same. Raising it groups more and starts lumping together things that merely look alike; lowering it only catches near-identical copies.';
 
   @override
   String get tourModelsDescription =>
-      'How a model is put together, how long training takes, what happens to what it proposes, and how the tree decides which ones run.';
+      'The Python environment, how a model is built and trained, what it proposes, and how the tree decides which ones run.';
 
   @override
-  String get tourModels6Title => 'The model tree';
+  String get tourModels6Title => 'Nothing is applied by itself';
 
   @override
   String get tourModels6Body =>
-      'A model that is not in the tree never runs when recognising. The tree is what says which ones run, and in what order.';
+      'What it sees stays a suggestion until you accept it, in the item panel or in bulk from the import screen. Rejecting one means it will not be offered again for that item.';
 
   @override
-  String get tourModels7Title => 'Putting them in and hanging them';
+  String get tourModels7Title => 'The model tree';
 
   @override
   String get tourModels7Body =>
-      'The panel on the right holds the models that are outside. Pick a node in the tree and whatever you add hangs from it. A model cannot hang from itself or close a loop: the tree would bite its own tail.';
+      'A model that is not in the tree never runs when you recognise. The tree is what says which ones run and in what order.';
 
   @override
-  String get tourModels8Title => 'Every branch has its condition';
+  String get tourModels8Title => 'Putting them in';
 
   @override
   String get tourModels8Body =>
-      'A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing.';
+      'The panel on the right holds the models that are out. Pick a node in the tree and what you add hangs from it. A model cannot hang from itself, and it cannot be in the tree twice.';
+
+  @override
+  String get tourLibraryTitle => 'The library and the viewer';
+
+  @override
+  String get tourLibraryDescription =>
+      'The grid, selecting several at once, the right-click menu, and everything the viewer can do.';
+
+  @override
+  String get tourSearchingTitle => 'Searching and filtering';
+
+  @override
+  String get tourSearchingDescription =>
+      'Chips that stack, free text, the filters in the bar and the other ways to narrow down what you see.';
+
+  @override
+  String get tourNsfwTitle => 'The content lock';
+
+  @override
+  String get tourNsfwDescription =>
+      'A password that hides what you mark, what it hides along with it, and how it behaves when it is open and when it is closed.';
+
+  @override
+  String get tourFilesTitle => 'Files and upkeep';
+
+  @override
+  String get tourFilesDescription =>
+      'Where your content lives on disk, what FeRN does with those files, and how to tidy up afterwards.';
+
+  @override
+  String get tutorialViewerTitle => 'The viewer';
+
+  @override
+  String get tutorialViewerBody =>
+      'Opening something takes over the screen: zoom with the wheel, move between items with the arrows, and open the side panel to give it a creator, tags and a description while you are looking at it.';
+
+  @override
+  String get tutorialJobsTitle => 'What runs in the background';
+
+  @override
+  String get tutorialJobsBody =>
+      'Imports, recognition, training and repeat scans all run behind you: this indicator says what is going on, how far along it is, and lets you stop it. You can keep using FeRN meanwhile.';
+
+  @override
+  String get tourImporting6Title => 'What you do not want again';
+
+  @override
+  String get tourImporting6Body =>
+      'A remote source offers the same favourites every time. When you discard something you can also say do not offer this again: it will be skipped before it is even downloaded, and the list of what you blocked is in Settings under Database.';
+
+  @override
+  String get tourImporting7Title => 'Things that can happen on their own';
+
+  @override
+  String get tourImporting7Body =>
+      'What arrives can be tagged on its own if the address it came from is linked to a tag, marked NSFW if you turn that on in the header, and passed through your models if you ask for that in Settings.';
+
+  @override
+  String get tourImporting8Title => 'Several at once';
+
+  @override
+  String get tourImporting8Body =>
+      'You do not have to go one by one: tick several and the header lets you accept them all, discard them all, or accept every suggestion your models made above a confidence you choose.';
+
+  @override
+  String get tourImporting9Title => 'And then it is in Content';
+
+  @override
+  String get tourImporting9Body =>
+      'What you saved leaves the import grid and appears in your library. From then on it is searchable, taggable and part of everything else FeRN does.';
+
+  @override
+  String get tourLibrary1Title => 'Everything you have';
+
+  @override
+  String get tourLibrary1Body =>
+      'The grid keeps each item at its own proportions, so you recognise things by their shape as much as by their content. Scrolling loads more as you go.';
+
+  @override
+  String get tourLibrary2Title => 'Several at a time';
+
+  @override
+  String get tourLibrary2Body =>
+      'Each cell has a tick in its corner: tick one and you are selecting. Shift and click stretches the selection to there, following the order on screen. What you do next applies to all of them.';
+
+  @override
+  String get tourLibrary3Title => 'The right-click menu';
+
+  @override
+  String get tourLibrary3Body =>
+      'On any cell it opens what can be done: favourite it, send it to the bin, recognise it with your models, or open the folder it lives in. With a selection, it works on the whole selection.';
+
+  @override
+  String get tourLibrary4Title => 'The bin gives things back';
+
+  @override
+  String get tourLibrary4Body =>
+      'Sending something to the bin does not delete it: it waits there for a while and you can put it back with everything it had. Emptying the bin is what deletes for good, and that one asks first.';
+
+  @override
+  String get tourLibrary5Title => 'Sorting and filtering here';
+
+  @override
+  String get tourLibrary5Body =>
+      'The header says how many there are and lets you sort them — newest, oldest, at random — and keep only images, only video, or only what came from one source.';
+
+  @override
+  String get tourLibrary6Title => 'Inside the viewer';
+
+  @override
+  String get tourLibrary6Body =>
+      'The wheel zooms, the middle button or space and drag moves you around, and a double click fits it back to the screen. The arrows go to the previous and the next one without leaving.';
+
+  @override
+  String get tourLibrary7Title => 'The information panel';
+
+  @override
+  String get tourLibrary7Body =>
+      'Creator, tags, description and links, all editable on the spot. It also shows what your models suggest, and a button that explains where each tag on this item came from.';
+
+  @override
+  String get tourLibrary8Title => 'Favourites';
+
+  @override
+  String get tourLibrary8Body =>
+      'The heart marks what you want to find again without having to remember how you tagged it. Everything marked lives on its own screen in the menu.';
+
+  @override
+  String get tourLibrary9Title => 'Video and animation';
+
+  @override
+  String get tourLibrary9Body =>
+      'Video and GIFs play in the viewer with a timeline you can step through frame by frame. That matters later: a fernie region belongs to one frame, not to the whole clip.';
+
+  @override
+  String get tourManagers6Title => 'And some go together';
+
+  @override
+  String get tourManagers6Body =>
+      'Dropping one onto another also offers to relate them instead: sisters. Sisters are not above or below each other — putting one on simply puts the other on too, because they always come as a pair.';
+
+  @override
+  String get tourManagers7Title => 'People are tags too';
+
+  @override
+  String get tourManagers7Body =>
+      'A tag can be marked as a person: someone or a character that appears in the content. It is only a way of keeping the list tidy — the button at the top switches between the two lists — and everywhere else they behave like any other tag.';
+
+  @override
+  String get tourManagers8Title => 'Tagging by itself';
+
+  @override
+  String get tourManagers8Body =>
+      'A tag can have addresses linked to it. Anything that arrives from one of those addresses comes in already tagged — and with everything above that tag, and its sisters. That is where most of your tagging will come from.';
+
+  @override
+  String get tourManagers9Title => 'A long list, tamed';
+
+  @override
+  String get tourManagers9Body =>
+      'The chevron on a tag folds its branch away, and the search box above the list finds one by name. Both work here and in the side menu, and what you fold stays folded next time.';
+
+  @override
+  String get tourManagers10Title => 'Tagging in bulk';
+
+  @override
+  String get tourManagers10Body =>
+      'From the library, drag one or several items onto a tag in the menu. It is the quick way, and it is why the menu tags are drop targets at all.';
+
+  @override
+  String get tourManagers11Title => 'Where did that tag come from?';
+
+  @override
+  String get tourManagers11Body =>
+      'FeRN tags on its own through several routes, and in the panel they all look alike. The clock button on the item explains each one: you put it, an address matched, it was inherited, a model proposed it, a fernie brought it.';
+
+  @override
+  String get tourSearching1Title => 'The search bar';
+
+  @override
+  String get tourSearching1Body =>
+      'It works from any screen. As you type, FeRN offers what matches: tags, creators and content by its description. It searches your library, not the internet.';
+
+  @override
+  String get tourSearching2Title => 'What you pick becomes a chip';
+
+  @override
+  String get tourSearching2Body =>
+      'Picking a tag or a creator turns it into a chip in the bar. A chip searches by that exact thing, not by its name: the creator Pompeu brings what is his, and nothing that merely mentions the word.';
+
+  @override
+  String get tourSearching3Title => 'Chips stack';
+
+  @override
+  String get tourSearching3Body =>
+      'Two chips show what meets both, not what meets either: this tag, by this creator. That is what makes them worth it. Backspace on an empty field takes the last one off.';
+
+  @override
+  String get tourSearching4Title => 'Free text';
+
+  @override
+  String get tourSearching4Body =>
+      'If what you type is not a tag or a creator, press Enter and it becomes a free-text chip: it looks in descriptions and file names. Handy for what you never got round to tagging.';
+
+  @override
+  String get tourSearching5Title => 'Narrowing the results';
+
+  @override
+  String get tourSearching5Body =>
+      'The filter next to the bar decides what kinds of results count and lets you keep only images, only video, or only one source. With a single chip it also lets you drop whole groups of results.';
+
+  @override
+  String get tourSearching6Title => 'The menu filters too';
+
+  @override
+  String get tourSearching6Body =>
+      'Clicking a tag in the side menu is the same as putting its chip in the bar, so you can carry on from there: add a creator, add a word. The bar always shows what is filtering.';
+
+  @override
+  String get tourSearching7Title => 'Every list has its own';
+
+  @override
+  String get tourSearching7Body =>
+      'The tag, creator and fernie lists each have their own filter above them. That one only narrows the list you are looking at, and it does not touch what the grid is showing.';
+
+  @override
+  String get tourFernie6Title => 'When the whole thing is the example';
+
+  @override
+  String get tourFernie6Body =>
+      'There is a button that marks the whole frame at once, for when the item is nothing but the thing. And on a fernie card, another one takes an entire tag and marks all of its content that way.';
+
+  @override
+  String get tourFernie7Title => 'From a suggestion to an example';
+
+  @override
+  String get tourFernie7Body =>
+      'When a model has already proposed something, the panel offers to turn what it saw into regions: it draws the boxes and you accept the ones that are right. It is the fastest way to grow a fernie.';
+
+  @override
+  String get tourFernie8Title => 'Marking also tags';
+
+  @override
+  String get tourFernie8Body =>
+      'Marking a region on an item says that the fernie appears there, so what it links to gets put on the item straight away. The creator only if it did not have one of its own.';
+
+  @override
+  String get tourFernie9Title => 'And then you train';
+
+  @override
+  String get tourFernie9Body =>
+      'Fernies on their own recognise nothing. What recognises is a model trained with them, and that is the next tour.';
+
+  @override
+  String get tourModels9Title => 'Each branch has its condition';
+
+  @override
+  String get tourModels9Body =>
+      'A child only runs when its parent detects the fernie you set on that link. That is the point: a general model filters, and only what it finds goes on to the specialised ones.';
+
+  @override
+  String get tourModels10Title => 'When it turned out wrong';
+
+  @override
+  String get tourModels10Body =>
+      'You can stop a training run halfway, and you can make a model forget what it learned: its weights go and it is untrained again, but its fernies, its settings and its place in the tree stay.';
+
+  @override
+  String get tourDuplicates6Title => 'And it looks on its own';
+
+  @override
+  String get tourDuplicates6Body =>
+      'Every so often FeRN goes over it by itself and tells you if it found something. That period is in Settings too, and so is turning it off.';
+
+  @override
+  String get tourNsfw1Title => 'What the lock is';
+
+  @override
+  String get tourNsfw1Body =>
+      'A password that hides part of your library. What you mark as NSFW disappears while the lock is closed: it is not in the grid, not in searches, not in the counts.';
+
+  @override
+  String get tourNsfw2Title => 'Setting it up';
+
+  @override
+  String get tourNsfw2Body =>
+      'In Settings, under the lock section, you set a password. FeRN gives you a recovery code at that moment: write it down. It is the only way back in, because the password is not stored anywhere.';
+
+  @override
+  String get tourNsfw3Title => 'Opening and closing';
+
+  @override
+  String get tourNsfw3Body =>
+      'Opening asks for the password; closing asks for nothing and is instant. You can have it remember that it is open between sessions, or make it start closed every time.';
+
+  @override
+  String get tourNsfw4Title => 'Marking a tag or a creator';
+
+  @override
+  String get tourNsfw4Body =>
+      'Their cards have a lock button. Marking a tag hides everything carrying it, and everything hanging below it in the tree. Marking a creator hides them and all of their content.';
+
+  @override
+  String get tourNsfw5Title => 'Or one item at a time';
+
+  @override
+  String get tourNsfw5Body =>
+      'Any item can be marked on its own from the viewer, whatever its tags say. And when you import you can have everything that arrives come in marked, which saves marking fifty things by hand.';
+
+  @override
+  String get tourNsfw6Title => 'How it behaves';
+
+  @override
+  String get tourNsfw6Body =>
+      'You choose what closed means: marked content vanishing altogether, or showing up blurred so you know it is there. And you choose whether opening the lock shows everything or only what is marked.';
+
+  @override
+  String get tourNsfw7Title => 'Links can be marked too';
+
+  @override
+  String get tourNsfw7Body =>
+      'A tag or a creator can have addresses marked as NSFW: they are not shown while the lock is closed, but they keep tagging what arrives from them. Hiding an address is not the same as forgetting it.';
+
+  @override
+  String get tourNsfw8Title => 'Getting rid of it all';
+
+  @override
+  String get tourNsfw8Body =>
+      'In Settings, under Database, you can wipe only what is marked — content only; tags, creators, fernies and models stay. It is offered only while the lock is open: closed, you would be deleting blind.';
+
+  @override
+  String get tourFiles1Title => 'Where your content lives';
+
+  @override
+  String get tourFiles1Body =>
+      'FeRN keeps a database of what it knows, and the files stay on your disk. In Settings you choose the library folder: that is where what you bring in goes.';
+
+  @override
+  String get tourFiles2Title => 'Watching a folder of your own';
+
+  @override
+  String get tourFiles2Body =>
+      'You can point FeRN at a folder you already have and bring in what is inside. You decide whether it copies the files into the library or leaves them where they are and just remembers them.';
+
+  @override
+  String get tourFiles3Title => 'Tidying on its own';
+
+  @override
+  String get tourFiles3Body =>
+      'FeRN can file what it manages into folders by source, by creator or by date, so the disk looks like the library. Change your mind later and it moves what is already there.';
+
+  @override
+  String get tourFiles4Title => 'The avatars folder';
+
+  @override
+  String get tourFiles4Body =>
+      'Avatars are copies FeRN makes, so they live in their own folder, which you also choose. Changing the folder moves what is in it: nothing loses its picture.';
+
+  @override
+  String get tourFiles5Title => 'Moving everything';
+
+  @override
+  String get tourFiles5Body =>
+      'If you point the library at another disk, FeRN offers to move what it manages there and update every path it has. It is one operation and it can take a while, so it tells you how it went.';
+
+  @override
+  String get tourFiles6Title => 'Files nobody uses';
+
+  @override
+  String get tourFiles6Body =>
+      'Over time, orphans pile up: avatars you replaced, downloads whose entry you discarded, weights from a model that is gone. The cleanup button in Settings finds them, says how much they weigh, and asks before deleting.';
+
+  @override
+  String get tourFiles7Title => 'Starting over';
+
+  @override
+  String get tourFiles7Body =>
+      'Wiping the database is the only thing here with no way back, and it asks twice. You choose whether it takes the files with it: without that, your files stay where they are and a scan brings them back.';
+
+  @override
+  String get tourFiles8Title => 'And it tells you when it is done';
+
+  @override
+  String get tourFiles8Body =>
+      'Long jobs — importing, training, recognising, looking for repeats — can notify you when they finish, with or without a sound. That is in Settings too, and you can pick which ones.';
 
   @override
   String get viewerVolume => 'Volume';

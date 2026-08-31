@@ -3793,18 +3793,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsHelp => 'Ayuda';
 
   @override
-  String get tutorialSectionTitle => 'Vuelta guiada';
+  String get tutorialSectionTitle => 'Vueltas guiadas';
 
   @override
   String get tutorialSectionNote =>
-      'Un recorrido por las pantallas de la aplicación y por lo que se hace en cada una. Se puede dejar en cualquier momento.';
+      'Diez recorridos que cubren la aplicación entera, uno por materia. Siguiéndolos todos no queda nada por explicar. Se puede dejar cualquiera en cualquier momento.';
 
   @override
   String get tutorialOfferTitle => '¿Te enseño la aplicación?';
 
   @override
   String get tutorialOfferBody =>
-      'Es un recorrido de ocho pasos y se deja cuando quieras. Si prefieres mirar por tu cuenta, lo tienes en los ajustes.';
+      'Un recorrido de diez pasos por lo que es cada cosa y dónde está. Hay nueve más, uno por materia, en Ajustes → Ayuda. Se deja cuando quieras.';
 
   @override
   String get tutorialOfferAccept => 'Empezar';
@@ -3834,63 +3834,63 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tutorialWelcomeBody =>
-      'Un recorrido rápido por lo que hace la aplicación. Se avanza con Siguiente o con las flechas, y se sale con Escape.';
+      'FeRN guarda el contenido que coleccionas: lo trae, lo ordena con etiquetas y creadores, y puede aprender a reconocer lo que sale en él. Se avanza con Siguiente o con las flechas, y se sale con Escape.';
 
   @override
   String get tutorialSidebarTitle => 'Por aquí se navega';
 
   @override
   String get tutorialSidebarBody =>
-      'Todas las pantallas están aquí: tu biblioteca, lo que traes de fuera, tus favoritos y los gestores. El botón de arriba lo pliega para dejarle sitio al contenido.';
+      'Todas las pantallas están aquí: tu biblioteca, lo que traes de fuera, los favoritos, la papelera y los gestores de creadores, etiquetas, fernies y modelos. El botón de arriba lo pliega cuando hace falta sitio.';
 
   @override
   String get tutorialImportTitle => 'Por aquí entra el contenido';
 
   @override
   String get tutorialImportBody =>
-      'Traes contenido de una fuente remota o de una carpeta de tu disco. Lo que llega se queda pendiente de revisar hasta que lo aceptas, así que nada entra en la biblioteca sin que lo veas.';
+      'Traes contenido de una fuente remota —Reddit, Pixiv, Danbooru, Gelbooru, Pinterest, Pawchive— o de una carpeta de tu disco. Lo que llega espera aquí hasta que lo aceptas, así que nada entra en tu biblioteca sin que lo veas.';
 
   @override
   String get tutorialContentTitle => 'Aquí aparece todo';
 
   @override
   String get tutorialContentBody =>
-      'Tu biblioteca. Un clic abre el visor, el botón derecho saca las acciones, y se pueden marcar varios a la vez para tratarlos juntos.';
+      'Tu biblioteca: todo lo que has aceptado. Un clic abre el visor, el botón derecho saca las acciones, y se pueden marcar varios a la vez para tratarlos juntos.';
 
   @override
   String get tutorialTagsTitle => 'Etiqueta arrastrando';
 
   @override
   String get tutorialTagsBody =>
-      'Las etiquetas del menú son también sitios donde soltar: arrastra uno o varios contenidos encima de una y quedan etiquetados. Al pulsarla, la biblioteca enseña sólo lo suyo.';
+      'Las etiquetas del menú son también sitios donde soltar: arrastra uno o varios contenidos encima de una y quedan etiquetados. Al pulsarla, la biblioteca se queda con lo que la lleva.';
 
   @override
-  String get tutorialCreateTitle => 'Creadores, etiquetas y fernies';
+  String get tutorialCreateTitle => 'Crear cosas';
 
   @override
   String get tutorialCreateBody =>
-      'Desde aquí se crea todo lo que sirve para organizar: creadores, etiquetas y fernies, que son las caras que la aplicación aprende a reconocer.';
+      'De aquí salen los creadores, las etiquetas, los fernies y los modelos. Un creador es quien hizo algo; una etiqueta es cualquier cosa por la que quieras agrupar; un fernie es una cara o un objeto que quieres que FeRN aprenda.';
 
   @override
   String get tutorialSearchTitle => 'Buscar';
 
   @override
   String get tutorialSearchBody =>
-      'Busca por nombre, creador o etiqueta desde cualquier pantalla.';
+      'Escribe y FeRN te ofrece lo que encaja: una etiqueta, un creador, una descripción. Lo que elijas se queda como una pastilla, y las pastillas se acumulan: con dos puestas se enseña lo que cumple las dos.';
 
   @override
   String get tutorialSettingsTitle => 'Todo lo demás está aquí';
 
   @override
   String get tutorialSettingsBody =>
-      'Idioma, tema, carpetas, fuentes remotas y reconocimiento. Y este mismo tutorial, por si quieres repetirlo.';
+      'Idioma, tema, carpetas, fuentes remotas, reconocimiento y el bloqueo de contenido. En Ayuda están los otros nueve recorridos: uno por materia, y entre todos cubren la aplicación entera.';
 
   @override
   String get tourGeneralTitle => 'Vuelta general';
 
   @override
   String get tourGeneralDescription =>
-      'Dónde está cada cosa y por dónde entra el contenido. Es el que se ofrece la primera vez.';
+      'Qué es FeRN, para qué es cada pantalla y dónde está cada cosa. Empieza por aquí.';
 
   @override
   String get tourImportingTitle => 'Traer y revisar contenido';
@@ -3904,119 +3904,119 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tourImporting1Body =>
-      'Eliges la fuente —una remota o una carpeta de este equipo—, si quieres todo o sólo lo nuevo desde la última vez, y pulsas Traer.';
+      'Eliges la fuente —una remota o una carpeta de este equipo—, dices si quieres todo o sólo lo nuevo desde la última vez, y pulsas Traer. Una fuente remota trae lo que tengas marcado como favorito allí.';
 
   @override
-  String get tourImporting2Title => 'Lo traído se revisa aquí';
+  String get tourImporting2Title => 'Cada fuente pide sus claves';
 
   @override
   String get tourImporting2Body =>
-      'Nada de esto está todavía en tu biblioteca. Esta rejilla es la bandeja de entrada: lo que se ha traído, esperando a que digas qué hacer con ello.';
+      'Las fuentes remotas necesitan los datos de tu cuenta, y se ponen en Ajustes → Fuentes remotas. Cada una explica cómo conseguirlos: no son tu contraseña, sino claves que la plataforma da para esto.';
 
   @override
-  String get tourImporting3Title => 'Abre uno y decide';
+  String get tourImporting3Title => 'Nada de esto es tuyo todavía';
 
   @override
   String get tourImporting3Body =>
-      'Un clic lo abre en el visor. Ahí lo guardas, y pasa a ser definitivo, o lo descartas: descartar lo saca de la base de datos y te pregunta si borrar también el fichero.';
+      'Esta rejilla es la bandeja de entrada: lo que se ha traído, esperando a que digas qué hacer con ello. Ya está en tu disco, pero no está en tu biblioteca y no sale en las búsquedas.';
 
   @override
-  String get tourImporting4Title => 'La ficha, sin salir del visor';
+  String get tourImporting4Title => 'Abre uno y decide';
 
   @override
   String get tourImporting4Body =>
-      'El panel de información es donde se le pone creador, etiquetas, título y enlaces. Se edita mientras se mira, que es cuando se sabe qué es.';
+      'Un clic lo abre en el visor. Ahí lo guardas, y pasa a ser definitivo, o lo descartas: descartar lo saca de la base de datos y te pregunta si borrar también el fichero.';
 
   @override
-  String get tourImporting5Title => 'Y ya está en Contenido';
+  String get tourImporting5Title => 'La ficha, sin salir del visor';
 
   @override
   String get tourImporting5Body =>
-      'Lo que has guardado sale de la rejilla de importación y aparece en la biblioteca.';
+      'El panel lateral es donde se le pone creador, etiquetas, descripción y enlaces. Se edita mientras se mira, que es cuando se sabe qué es. Al guardar, además, se pasa al siguiente.';
 
   @override
-  String get tourManagersTitle => 'Creadores y etiquetas';
+  String get tourManagersTitle => 'Etiquetas, personas y creadores';
 
   @override
   String get tourManagersDescription =>
-      'Las dos formas de ordenar lo que tienes, y la manera rápida de etiquetar de golpe.';
+      'Todo lo que sirve para ordenar la biblioteca: el árbol de etiquetas, las hermanas, las personas, los creadores y el etiquetado automático.';
 
   @override
-  String get tourManagers1Title => 'La lista de creadores';
+  String get tourManagers1Title => 'Los creadores';
 
   @override
   String get tourManagers1Body =>
-      'Todos los que tienes. Al elegir uno, la pantalla se llena con lo suyo.';
+      'Un creador es quien hizo algo: un artista, una cuenta, un estudio. Cada contenido tiene uno, y sólo uno. Al elegir uno aquí, la pantalla se llena con lo suyo.';
 
   @override
   String get tourManagers2Title => 'Su ficha';
 
   @override
   String get tourManagers2Body =>
-      'Nombre, avatar y los enlaces a sus sitios. Lo que cambies aquí se guarda en el creador.';
+      'Nombre, avatar y los enlaces a donde publica. Esos enlaces no son adorno: son lo que permite que FeRN le ponga el creador solo cuando llega algo desde una de esas direcciones.';
 
   @override
-  String get tourManagers3Title => 'Todo lo suyo';
+  String get tourManagers3Title => 'Los avatares';
 
   @override
   String get tourManagers3Body =>
-      'El contenido que le has asignado, en una rejilla como la de la biblioteca.';
+      'Pulsa la imagen y eliges de dónde sale: un fichero del equipo, o tu propia biblioteca. De la biblioteca puedes recortar un cuadrado de cualquier imagen, que es lo que un avatar es de verdad.';
 
   @override
   String get tourManagers4Title => 'Las etiquetas van igual';
 
   @override
   String get tourManagers4Body =>
-      'Con una diferencia: una etiqueta puede colgar de otra, así que se pueden ordenar en árbol.';
+      'Con una diferencia: un contenido tiene un creador, pero tantas etiquetas como quieras. Una etiqueta es cualquier cosa por la que quieras agrupar: una serie, un color, un ambiente, un lugar.';
 
   @override
-  String get tourManagers5Title => 'Y se ponen arrastrando';
+  String get tourManagers5Title => 'Las etiquetas cuelgan unas de otras';
 
   @override
   String get tourManagers5Body =>
-      'Desde la biblioteca, arrastra uno o varios contenidos sobre una etiqueta del menú. Es la forma rápida de etiquetar de golpe.';
+      'Arrastra una sobre otra y queda colgando de ella. Ahí está la ventaja: poner una etiqueta hija pone también todas las que tiene encima, así que lo etiquetado con un personaje sale también al buscar su serie.';
 
   @override
-  String get tourFernieTitle => 'Modo fernie';
+  String get tourFernieTitle => 'Fernies y el modo fernie';
 
   @override
   String get tourFernieDescription =>
-      'Qué es un fernie, de dónde salen sus ejemplos y cómo se marcan en el visor.';
+      'Qué es un fernie, de dónde salen sus ejemplos y todas las formas de marcarle regiones a tu contenido.';
 
   @override
   String get tourFernie1Title => 'Qué es un fernie';
 
   @override
   String get tourFernie1Body =>
-      'Una cara, un personaje o un objeto que quieres que Fern aprenda a reconocer en tu contenido.';
+      'Una cara, un personaje o un objeto que quieres que FeRN aprenda a reconocer en tu contenido. No es una etiqueta: una etiqueta dice qué es algo, un fernie es un ejemplo de qué aspecto tiene.';
 
   @override
-  String get tourFernie2Title => 'Aquí están los tuyos';
+  String get tourFernie2Title => 'Enlázalo con algo';
 
   @override
   String get tourFernie2Body =>
-      'Cada fernie puede proponer una etiqueta o un creador cuando se le encuentre. Sin nada enlazado sólo sirve para entrenar: por sí solo no etiqueta nada.';
+      'Cada fernie puede apuntar a una etiqueta o a un creador. Ese enlace es lo que convierte el reconocimiento en etiquetado: cuando se encuentre al fernie, eso es lo que se propone. Sin nada enlazado sólo sirve para entrenar.';
 
   @override
   String get tourFernie3Title => 'Sus regiones';
 
   @override
   String get tourFernie3Body =>
-      'Cada recorte es un ejemplo suyo, y son los ejemplos con los que aprende un modelo. Cuantos más y más variados, mejor: con poca variedad aprenderá el fondo y no el fernie.';
+      'Cada recorte es un ejemplo suyo, y son los ejemplos con los que aprende un modelo. Cuantos más y más variados, mejor: con poca variedad aprenderá el fondo en vez de la cosa.';
 
   @override
   String get tourFernie4Title => 'Se marcan en el visor';
 
   @override
   String get tourFernie4Body =>
-      'Abre un contenido, entra en modo fernie y arrastra sobre lo que quieras marcar. Con la barra espaciadora o el botón central te mueves por la imagen.';
+      'Abre un contenido y entra en modo fernie. Con la herramienta de marcar, arrastra un recuadro sobre lo que quieras y eliges de quién es. En vídeo y GIF la región es del fotograma en el que estés.';
 
   @override
-  String get tourFernie5Title => 'Y luego se entrena';
+  String get tourFernie5Title => 'Corregir lo marcado';
 
   @override
   String get tourFernie5Body =>
-      'Los fernies solos no reconocen nada. Lo que reconoce es un modelo entrenado con ellos.';
+      'La otra herramienta elige lo que ya está: se mueve, se estira por sus tiradores, se le da a otro fernie o se borra. Nada se escribe hasta que sales guardando, así que se puede deshacer por el camino.';
 
   @override
   String get tourModelsTitle => 'Modelos y reconocimiento';
@@ -4026,35 +4026,35 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tourModels1Body =>
-      'Un modelo es lo que de verdad reconoce. Se arma con los fernies que le pongas.';
+      'Un modelo es lo que de verdad reconoce. Se arma con los fernies que le pongas, se entrena una vez, y a partir de ahí puede mirar tu contenido y decir lo que ve.';
 
   @override
-  String get tourModels2Title => 'Crear uno';
+  String get tourModels2Title => 'Antes, el entorno';
 
   @override
   String get tourModels2Body =>
-      'Le eliges sus fernies y qué tiene que contestar: si cada uno está o no está, o cuál de ellos ha encontrado y dónde. Lo segundo necesita al menos dos, porque con uno no hay entre qué elegir.';
+      'El reconocimiento corre sobre Python, y FeRN te lo instala: Ajustes → Reconocimiento y pulsar instalar. Son unos cientos de megas y se hace una sola vez. Con tarjeta gráfica va mucho más rápido.';
 
   @override
-  String get tourModels3Title => 'Entrenar tarda';
+  String get tourModels3Title => 'Armar uno';
 
   @override
   String get tourModels3Body =>
-      'Corre por detrás y puedes seguir usando Fern mientras tanto. El indicador de la barra de arriba dice por dónde va.';
+      'Le eliges sus fernies y qué tiene que contestar: si cada uno está o no está, o cuál de ellos ha encontrado y dónde. Lo segundo necesita al menos dos fernies y regiones marcadas en el contenido.';
 
   @override
-  String get tourModels4Title => 'Reconocer';
+  String get tourModels4Title => 'Entrenar tarda';
 
   @override
   String get tourModels4Body =>
-      'Un modelo ya entrenado repasa el contenido que le eches y propone lo que ve. Por debajo del listón de seguridad no propone nada.';
+      'De minutos a horas, según lo que le hayas dado y la máquina que tengas. Corre por detrás y puedes seguir usando FeRN; el indicador de arriba dice por qué época va y cuánto queda a ojo.';
 
   @override
-  String get tourModels5Title => 'Nada se aplica solo';
+  String get tourModels5Title => 'Reconocer';
 
   @override
   String get tourModels5Body =>
-      'Lo que ve se queda en sugerencia hasta que la aceptas. Puedes aceptar de golpe todas las que pasen de un porcentaje de seguridad.';
+      'Un modelo ya entrenado repasa el contenido que le eches —uno, una selección o la biblioteca entera— y propone lo que ve. Por debajo de su listón de seguridad no propone nada.';
 
   @override
   String get tourDuplicatesTitle => 'Contenido repetido';
@@ -4068,60 +4068,445 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tourDuplicates1Body =>
-      'Pulsa Buscar ahora y Fern repasa la biblioteca entera calculando una huella de cada contenido. La primera vez puede tardar un rato.';
+      'Pulsa Buscar ahora y FeRN repasa la biblioteca entera calculando una huella de cada contenido. La primera vez puede tardar un rato; después sólo calcula la de lo nuevo.';
 
   @override
   String get tourDuplicates2Title => 'Los grupos';
 
   @override
   String get tourDuplicates2Body =>
-      'Cada grupo son copias que se parecen lo bastante como para ser lo mismo. Los que ya has contestado no vuelven a salir.';
+      'Cada grupo son copias que se parecen lo bastante como para ser lo mismo: la misma imagen en dos tamaños, o guardada dos veces desde sitios distintos. Los que ya has contestado no vuelven a salir.';
 
   @override
   String get tourDuplicates3Title => 'Se decide cuál se queda';
 
   @override
   String get tourDuplicates3Body =>
-      'Eliges la copia que conservas y las demás se descartan. Puedes fusionar en la que se queda las etiquetas, el creador, el favorito y la descripción de las descartadas.';
+      'Eliges la copia que conservas y las demás se descartan. Antes puedes fusionar en la que se queda las etiquetas, el creador, el favorito y la descripción de las que se van.';
 
   @override
-  String get tourDuplicates4Title => 'El listón, en Ajustes';
+  String get tourDuplicates4Title => 'O decir que no son la misma';
 
   @override
   String get tourDuplicates4Body =>
-      'Cuánto pueden diferenciarse dos contenidos y seguir contando como el mismo. Subirlo agrupa más y empieza a juntar cosas que sólo se parecen; bajarlo deja repetidos sin encontrar.';
+      'Si el grupo se equivoca, dilo y no se vuelve a ofrecer. Dos cosas que sólo se parecen no son un repetido, y eso sólo lo sabes tú.';
 
   @override
-  String get tourDuplicates5Title => 'Y se busca solo';
+  String get tourDuplicates5Title => 'El listón, en Ajustes';
 
   @override
   String get tourDuplicates5Body =>
-      'Cada cierto tiempo Fern lo repasa por su cuenta y avisa si encuentra algo. Ese periodo también está en Ajustes.';
+      'Cuánto pueden diferenciarse dos contenidos y seguir contando como el mismo. Subirlo agrupa más y empieza a juntar cosas que sólo se parecen; bajarlo deja sólo las copias casi idénticas.';
 
   @override
   String get tourModelsDescription =>
-      'Cómo se arma un modelo, qué tarda en entrenar, qué pasa con lo que propone y cómo el árbol decide cuáles se ejecutan.';
+      'El entorno de Python, cómo se arma y se entrena un modelo, qué pasa con lo que propone y cómo el árbol decide cuáles se ejecutan.';
 
   @override
-  String get tourModels6Title => 'El árbol de modelos';
+  String get tourModels6Title => 'Nada se aplica solo';
 
   @override
   String get tourModels6Body =>
-      'Un modelo que no está en el árbol no se ejecuta nunca al reconocer. El árbol es lo que dice cuáles corren y en qué orden.';
+      'Lo que ve se queda en sugerencia hasta que la aceptas, en el panel del contenido o de golpe desde la pantalla de importación. Rechazar una es decir que no se vuelva a ofrecer para ese contenido.';
 
   @override
-  String get tourModels7Title => 'Meterlos y colgarlos';
+  String get tourModels7Title => 'El árbol de modelos';
 
   @override
   String get tourModels7Body =>
-      'El panel de la derecha son los modelos que están fuera. Elige un nodo del árbol y lo que metas colgará de él. Un modelo no puede colgar de sí mismo ni cerrar un círculo: el árbol se mordería la cola.';
+      'Un modelo que no está en el árbol no se ejecuta nunca al reconocer. El árbol es lo que dice cuáles corren y en qué orden.';
 
   @override
-  String get tourModels8Title => 'Cada rama tiene su condición';
+  String get tourModels8Title => 'Meterlos y colgarlos';
 
   @override
   String get tourModels8Body =>
-      'Un hijo sólo se ejecuta cuando el padre detecta el fernie que le hayas puesto a esa unión. Ahí está la gracia: uno general filtra, y sólo lo que encuentra abre los especializados. Sin condición se ejecutan ante cualquier detección, y un padre sin entrenar no abre nada.';
+      'El panel de la derecha son los modelos que están fuera. Elige un nodo del árbol y lo que metas colgará de él. Un modelo no puede colgar de sí mismo ni estar dos veces en el árbol.';
+
+  @override
+  String get tourLibraryTitle => 'La biblioteca y el visor';
+
+  @override
+  String get tourLibraryDescription =>
+      'La rejilla, marcar varios a la vez, el menú del botón derecho y todo lo que sabe hacer el visor.';
+
+  @override
+  String get tourSearchingTitle => 'Buscar y filtrar';
+
+  @override
+  String get tourSearchingDescription =>
+      'Las pastillas que se acumulan, el texto libre, los filtros de la barra y las demás formas de acotar lo que ves.';
+
+  @override
+  String get tourNsfwTitle => 'El bloqueo de contenido';
+
+  @override
+  String get tourNsfwDescription =>
+      'Una contraseña que esconde lo que marques, qué se esconde con ello y cómo se comporta abierto y cerrado.';
+
+  @override
+  String get tourFilesTitle => 'Ficheros y mantenimiento';
+
+  @override
+  String get tourFilesDescription =>
+      'Dónde vive tu contenido en el disco, qué hace FeRN con esos ficheros y cómo se limpia después.';
+
+  @override
+  String get tutorialViewerTitle => 'El visor';
+
+  @override
+  String get tutorialViewerBody =>
+      'Abrir algo ocupa la pantalla entera: se acerca con la rueda, se pasa de uno a otro con las flechas, y el panel lateral es donde se le pone creador, etiquetas y descripción mientras lo estás mirando.';
+
+  @override
+  String get tutorialJobsTitle => 'Lo que corre por detrás';
+
+  @override
+  String get tutorialJobsBody =>
+      'Las importaciones, el reconocimiento, los entrenamientos y la búsqueda de repetidos corren por detrás: este indicador dice qué hay en marcha, por dónde va y deja pararlo. Mientras tanto puedes seguir usando FeRN.';
+
+  @override
+  String get tourImporting6Title => 'Lo que no quieres que vuelva';
+
+  @override
+  String get tourImporting6Body =>
+      'Una fuente remota vuelve a ofrecer lo mismo cada vez. Al descartar algo puedes decir además que no te lo vuelva a ofrecer: se salta antes de descargarlo, y la lista de lo bloqueado está en Ajustes → Base de datos.';
+
+  @override
+  String get tourImporting7Title => 'Lo que puede pasar solo';
+
+  @override
+  String get tourImporting7Body =>
+      'Lo que llega puede etiquetarse solo si la dirección de la que viene está vinculada a una etiqueta, marcarse como NSFW si lo enciendes en la cabecera, y pasar por tus modelos si lo pides en Ajustes.';
+
+  @override
+  String get tourImporting8Title => 'De golpe';
+
+  @override
+  String get tourImporting8Body =>
+      'No hace falta ir de uno en uno: marca varios y la cabecera te deja aceptarlos todos, descartarlos todos, o aceptar de golpe las sugerencias de tus modelos que pasen de la seguridad que elijas.';
+
+  @override
+  String get tourImporting9Title => 'Y ya está en Contenido';
+
+  @override
+  String get tourImporting9Body =>
+      'Lo que has guardado sale de la rejilla de importación y aparece en la biblioteca. A partir de ahí se busca, se etiqueta y entra en todo lo demás que hace FeRN.';
+
+  @override
+  String get tourLibrary1Title => 'Todo lo que tienes';
+
+  @override
+  String get tourLibrary1Body =>
+      'La rejilla respeta la forma de cada contenido, así que se reconocen tanto por su silueta como por lo que hay dentro. Al desplazarte se va cargando lo que viene.';
+
+  @override
+  String get tourLibrary2Title => 'Varios a la vez';
+
+  @override
+  String get tourLibrary2Body =>
+      'Cada celda tiene su casilla en la esquina: marca una y estás seleccionando. Mayúsculas y clic estira la selección hasta ahí, siguiendo el orden de la pantalla. Lo que hagas después va sobre todas.';
+
+  @override
+  String get tourLibrary3Title => 'El botón derecho';
+
+  @override
+  String get tourLibrary3Body =>
+      'Sobre cualquier celda saca lo que se puede hacer: marcarlo como favorito, mandarlo a la papelera, reconocerlo con tus modelos o abrir la carpeta donde está. Con una selección hecha, va sobre toda ella.';
+
+  @override
+  String get tourLibrary4Title => 'La papelera devuelve';
+
+  @override
+  String get tourLibrary4Body =>
+      'Mandar algo a la papelera no lo borra: se queda ahí un tiempo y se puede restablecer con todo lo que tenía. Vaciar la papelera es lo que borra de verdad, y eso pregunta antes.';
+
+  @override
+  String get tourLibrary5Title => 'Ordenar y filtrar aquí';
+
+  @override
+  String get tourLibrary5Body =>
+      'La cabecera dice cuántos hay y deja ordenarlos —lo más nuevo, lo más viejo, al azar— y quedarte sólo con imágenes, sólo con vídeo, o sólo con lo que vino de una fuente.';
+
+  @override
+  String get tourLibrary6Title => 'Dentro del visor';
+
+  @override
+  String get tourLibrary6Body =>
+      'La rueda acerca, el botón central —o la barra espaciadora— arrastra la imagen, y el doble clic la vuelve a ajustar a la pantalla. Las flechas pasan al anterior y al siguiente sin salir.';
+
+  @override
+  String get tourLibrary7Title => 'El panel de información';
+
+  @override
+  String get tourLibrary7Body =>
+      'Creador, etiquetas, descripción y enlaces, todo editable ahí mismo. También enseña lo que proponen tus modelos, y un botón que explica de dónde ha salido cada etiqueta de ese contenido.';
+
+  @override
+  String get tourLibrary8Title => 'Favoritos';
+
+  @override
+  String get tourLibrary8Body =>
+      'El corazón marca lo que quieres volver a encontrar sin acordarte de cómo lo etiquetaste. Todo lo marcado tiene su propia pantalla en el menú.';
+
+  @override
+  String get tourLibrary9Title => 'Vídeo y animación';
+
+  @override
+  String get tourLibrary9Body =>
+      'El vídeo y los GIF se reproducen en el visor con una línea de tiempo que se puede recorrer fotograma a fotograma. Eso importa más adelante: una región de fernie es de un fotograma, no del vídeo entero.';
+
+  @override
+  String get tourManagers6Title => 'Y algunas van juntas';
+
+  @override
+  String get tourManagers6Body =>
+      'Al soltar una sobre otra también se puede elegir relacionarlas en vez de colgarlas: son hermanas. Las hermanas no están ni encima ni debajo: poner una pone también la otra, porque van siempre juntas.';
+
+  @override
+  String get tourManagers7Title => 'Las personas son etiquetas';
+
+  @override
+  String get tourManagers7Body =>
+      'Una etiqueta se puede marcar como persona: alguien o un personaje que sale en el contenido. Es sólo una forma de tener la lista ordenada —el botón de arriba cambia entre las dos listas— y en el resto de la aplicación se comportan como cualquier etiqueta.';
+
+  @override
+  String get tourManagers8Title => 'Etiquetar solo';
+
+  @override
+  String get tourManagers8Body =>
+      'Una etiqueta puede tener direcciones vinculadas. Todo lo que llegue desde una de esas direcciones entra ya etiquetado, y con lo que haya por encima y sus hermanas. De ahí va a salir la mayor parte de tu etiquetado.';
+
+  @override
+  String get tourManagers9Title => 'Una lista larga, domada';
+
+  @override
+  String get tourManagers9Body =>
+      'El chevron de una etiqueta pliega su rama, y el buscador de encima de la lista la encuentra por nombre. Las dos cosas van aquí y en el menú lateral, y lo que pliegues sigue plegado la próxima vez.';
+
+  @override
+  String get tourManagers10Title => 'Etiquetar de golpe';
+
+  @override
+  String get tourManagers10Body =>
+      'Desde la biblioteca, arrastra uno o varios contenidos sobre una etiqueta del menú. Es la forma rápida, y es para lo que las etiquetas del menú son sitios donde soltar.';
+
+  @override
+  String get tourManagers11Title => '¿De dónde sale esa etiqueta?';
+
+  @override
+  String get tourManagers11Body =>
+      'FeRN etiqueta solo por varios caminos, y en el panel todos se ven igual. El botón del reloj de cada contenido explica cada una: la pusiste tú, casó una dirección, se heredó, la propuso un modelo, la trajo un fernie.';
+
+  @override
+  String get tourSearching1Title => 'La barra de búsqueda';
+
+  @override
+  String get tourSearching1Body =>
+      'Funciona desde cualquier pantalla. Según escribes, FeRN te ofrece lo que encaja: etiquetas, creadores y contenido por su descripción. Busca en tu biblioteca, no en internet.';
+
+  @override
+  String get tourSearching2Title => 'Lo que eliges se queda en una pastilla';
+
+  @override
+  String get tourSearching2Body =>
+      'Elegir una etiqueta o un creador lo convierte en una pastilla de la barra. Una pastilla busca por esa cosa exacta y no por su nombre: el creador Pompeu trae lo suyo, y no lo que sólo menciona la palabra.';
+
+  @override
+  String get tourSearching3Title => 'Las pastillas se cruzan';
+
+  @override
+  String get tourSearching3Body =>
+      'Con dos pastillas se enseña lo que cumple las dos, no lo que cumple alguna: esta etiqueta, de este creador. Ahí está su utilidad. El retroceso con el campo vacío quita la última.';
+
+  @override
+  String get tourSearching4Title => 'El texto libre';
+
+  @override
+  String get tourSearching4Body =>
+      'Si lo que escribes no es una etiqueta ni un creador, pulsa Enter y se queda como pastilla de texto libre: busca en las descripciones y en los nombres de fichero. Útil para lo que nunca llegaste a etiquetar.';
+
+  @override
+  String get tourSearching5Title => 'Acotar el resultado';
+
+  @override
+  String get tourSearching5Body =>
+      'El filtro de al lado de la barra decide qué clases de resultado cuentan y deja quedarte sólo con imágenes, sólo con vídeo o sólo con una fuente. Con una sola pastilla, además, deja descartar grupos enteros de resultados.';
+
+  @override
+  String get tourSearching6Title => 'El menú también filtra';
+
+  @override
+  String get tourSearching6Body =>
+      'Pulsar una etiqueta del menú lateral es lo mismo que poner su pastilla en la barra, así que desde ahí puedes seguir: añade un creador, añade una palabra. La barra siempre enseña lo que está filtrando.';
+
+  @override
+  String get tourSearching7Title => 'Cada lista tiene el suyo';
+
+  @override
+  String get tourSearching7Body =>
+      'Las listas de etiquetas, creadores y fernies tienen su propio filtro encima. Ése sólo acota la lista que estás mirando, y no toca lo que enseña la rejilla.';
+
+  @override
+  String get tourFernie6Title => 'Cuando el ejemplo es todo';
+
+  @override
+  String get tourFernie6Body =>
+      'Hay un botón que marca el fotograma entero de una vez, para cuando el contenido no es más que la cosa. Y en la ficha de un fernie hay otro que coge una etiqueta entera y marca así todo su contenido.';
+
+  @override
+  String get tourFernie7Title => 'De sugerencia a ejemplo';
+
+  @override
+  String get tourFernie7Body =>
+      'Cuando un modelo ya ha propuesto algo, el panel ofrece convertir lo que vio en regiones: dibuja los recuadros y tú aceptas los que estén bien. Es la forma más rápida de hacer crecer un fernie.';
+
+  @override
+  String get tourFernie8Title => 'Marcar también etiqueta';
+
+  @override
+  String get tourFernie8Body =>
+      'Marcarle una región a un contenido es decir que ese fernie sale ahí, así que lo que enlaza se le pone al momento. El creador sólo si no tenía ya uno suyo.';
+
+  @override
+  String get tourFernie9Title => 'Y luego se entrena';
+
+  @override
+  String get tourFernie9Body =>
+      'Los fernies solos no reconocen nada. Lo que reconoce es un modelo entrenado con ellos, y de eso va el siguiente recorrido.';
+
+  @override
+  String get tourModels9Title => 'Cada rama tiene su condición';
+
+  @override
+  String get tourModels9Body =>
+      'Un hijo sólo se ejecuta cuando el padre detecta el fernie que le hayas puesto a esa unión. Ahí está la gracia: uno general filtra, y sólo lo que encuentra pasa a los especializados.';
+
+  @override
+  String get tourModels10Title => 'Cuando salió mal';
+
+  @override
+  String get tourModels10Body =>
+      'Un entrenamiento se puede parar a medias, y a un modelo se le puede hacer olvidar lo aprendido: se van sus pesos y vuelve a estar sin entrenar, pero se quedan sus fernies, sus ajustes y su sitio en el árbol.';
+
+  @override
+  String get tourDuplicates6Title => 'Y busca solo';
+
+  @override
+  String get tourDuplicates6Body =>
+      'Cada cierto tiempo FeRN lo repasa por su cuenta y avisa si encuentra algo. Ese periodo también está en Ajustes, y apagarlo también.';
+
+  @override
+  String get tourNsfw1Title => 'Qué es el bloqueo';
+
+  @override
+  String get tourNsfw1Body =>
+      'Una contraseña que esconde parte de tu biblioteca. Lo que marques como NSFW desaparece mientras el bloqueo esté cerrado: no está en la rejilla, ni en las búsquedas, ni en los recuentos.';
+
+  @override
+  String get tourNsfw2Title => 'Ponerlo en marcha';
+
+  @override
+  String get tourNsfw2Body =>
+      'En Ajustes, en la sección del bloqueo, se pone una contraseña. FeRN te da entonces un código de recuperación: apúntalo. Es la única forma de volver a entrar, porque la contraseña no se guarda en ninguna parte.';
+
+  @override
+  String get tourNsfw3Title => 'Abrir y cerrar';
+
+  @override
+  String get tourNsfw3Body =>
+      'Abrir pide la contraseña; cerrar no pregunta nada y es inmediato. Puedes hacer que recuerde que está abierto entre sesiones, o que arranque cerrado siempre.';
+
+  @override
+  String get tourNsfw4Title => 'Marcar una etiqueta o un creador';
+
+  @override
+  String get tourNsfw4Body =>
+      'Sus fichas tienen un botón de bloqueo. Marcar una etiqueta esconde todo lo que la lleva, y todo lo que cuelga de ella en el árbol. Marcar un creador lo esconde a él y a todo su contenido.';
+
+  @override
+  String get tourNsfw5Title => 'O un contenido suelto';
+
+  @override
+  String get tourNsfw5Body =>
+      'Cualquier contenido se puede marcar por su cuenta desde el visor, digan lo que digan sus etiquetas. Y al importar puedes hacer que todo lo que llegue entre ya marcado, que ahorra marcar cincuenta cosas a mano.';
+
+  @override
+  String get tourNsfw6Title => 'Cómo se comporta';
+
+  @override
+  String get tourNsfw6Body =>
+      'Eliges qué significa cerrado: que lo marcado desaparezca del todo, o que salga difuminado para saber que está. Y eliges si al abrir se ve todo o sólo lo marcado.';
+
+  @override
+  String get tourNsfw7Title => 'Los enlaces también se marcan';
+
+  @override
+  String get tourNsfw7Body =>
+      'Una etiqueta o un creador pueden tener direcciones marcadas: no se enseñan con el bloqueo cerrado, pero siguen etiquetando lo que llegue de ellas. Esconder una dirección no es olvidarla.';
+
+  @override
+  String get tourNsfw8Title => 'Deshacerse de todo';
+
+  @override
+  String get tourNsfw8Body =>
+      'En Ajustes → Base de datos se puede vaciar sólo lo marcado: sólo el contenido, porque las etiquetas, los creadores, los fernies y los modelos se quedan. Sólo se ofrece con el bloqueo abierto: cerrado sería borrar a ciegas.';
+
+  @override
+  String get tourFiles1Title => 'Dónde vive tu contenido';
+
+  @override
+  String get tourFiles1Body =>
+      'FeRN guarda una base de datos con lo que sabe, y los ficheros se quedan en tu disco. En Ajustes eliges la carpeta de la biblioteca: ahí es donde va a parar lo que traes.';
+
+  @override
+  String get tourFiles2Title => 'Vigilar una carpeta tuya';
+
+  @override
+  String get tourFiles2Body =>
+      'Puedes apuntar FeRN a una carpeta que ya tengas y traerte lo que hay dentro. Tú decides si copia los ficheros a la biblioteca o los deja donde están y sólo se acuerda de ellos.';
+
+  @override
+  String get tourFiles3Title => 'Ordenar solo';
+
+  @override
+  String get tourFiles3Body =>
+      'FeRN puede archivar lo que gestiona en carpetas por fuente, por creador o por fecha, para que el disco se parezca a la biblioteca. Si cambias de idea después, mueve lo que ya está.';
+
+  @override
+  String get tourFiles4Title => 'La carpeta de avatares';
+
+  @override
+  String get tourFiles4Body =>
+      'Los avatares son copias que hace FeRN, así que viven en su propia carpeta, que también eliges tú. Cambiar la carpeta se lleva lo que hay dentro: nada se queda sin su imagen.';
+
+  @override
+  String get tourFiles5Title => 'Mover la biblioteca';
+
+  @override
+  String get tourFiles5Body =>
+      'Si apuntas la biblioteca a otro disco, FeRN se ofrece a mover allí lo que gestiona y a actualizar todas las rutas que tiene apuntadas. Es una operación larga, así que te cuenta cómo ha ido.';
+
+  @override
+  String get tourFiles6Title => 'Ficheros que no usa nadie';
+
+  @override
+  String get tourFiles6Body =>
+      'Con el tiempo se acumulan huérfanos: avatares que reemplazaste, descargas cuya ficha descartaste, pesos de un modelo que ya no está. El botón de limpieza de Ajustes los encuentra, dice cuánto ocupan y pregunta antes de borrar.';
+
+  @override
+  String get tourFiles7Title => 'Empezar de cero';
+
+  @override
+  String get tourFiles7Body =>
+      'Vaciar la base de datos es lo único de aquí sin vuelta atrás, y pregunta dos veces. Tú eliges si se lleva también los ficheros: sin eso, tus ficheros se quedan donde están y un escaneo los vuelve a traer.';
+
+  @override
+  String get tourFiles8Title => 'Y te avisa cuando termina';
+
+  @override
+  String get tourFiles8Body =>
+      'Los trabajos largos —importar, entrenar, reconocer, buscar repetidos— pueden avisarte al terminar, con sonido o sin él. Eso también está en Ajustes, y puedes elegir de cuáles.';
 
   @override
   String get viewerVolume => 'Volumen';
