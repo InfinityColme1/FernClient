@@ -26,9 +26,11 @@ enum AssignUrlTarget {
 /// lo que llega de su galería. Se trabaja por dirección y no por un campo de
 /// cada API para que valga igual en las plataformas que no tienen API pública.
 ///
-/// Es el mismo formulario que los enlaces de redes sociales del diálogo de
-/// creadores: un campo por dirección, dos para empezar, y un botón discreto para
-/// añadir más.
+/// Es la misma lista que los enlaces de redes sociales de la ficha del creador
+/// —el mismo widget, de hecho—: cada dirección se abre de una pulsación, se
+/// edita en el sitio y se quita con su aspa, y debajo un botón discreto para
+/// añadir más. Antes eran campos de texto sueltos: no se podía abrir ninguno, y
+/// para quitar uno había que borrar su texto a mano.
 ///
 /// Al confirmar se cierra devolviendo lo escrito, y al cerrarlo (con el aspa o
 /// con escape) devuelve `null`: quien lo abrió decide qué hacer con ello, que no
@@ -36,7 +38,7 @@ enum AssignUrlTarget {
 /// existe) que desde su ficha:
 ///
 /// ```dart
-/// final urls = await showFernDialog<List<String>, TagsBloc>(
+/// final urls = await showFernDialog<List<FernLink>, TagsBloc>(
 ///   context: context,
 ///   builder: (_) => AssignUrlDialog(urls: _sourceUrls, name: name),
 /// );
@@ -45,7 +47,7 @@ class AssignUrlDialog extends StatefulWidget {
   /// Direcciones que ya tiene la etiqueta (o el creador). Con las que llegue se
   /// rellenan los campos, y de ahí para abajo se completa hasta
   /// [_initialFieldCount].
-  final List<String> urls;
+  final List<FernLink> urls;
 
   /// Nombre de la etiqueta o del creador, para decir de cuál se está hablando.
   /// Vacío mientras no se le haya puesto uno (se está creando y aún no se ha
@@ -54,11 +56,19 @@ class AssignUrlDialog extends StatefulWidget {
 
   final AssignUrlTarget target;
 
+  /// Si se puede marcar una dirección como no apta, y si las marcadas se
+  /// esconden ahora mismo. Llegan de fuera porque el diálogo se abre también
+  /// desde la creación, donde la etiqueta todavía no existe.
+  final bool canMarkNsfw;
+  final bool hidesMarked;
+
   const AssignUrlDialog({
     super.key,
     this.urls = const [],
     this.name = '',
     this.target = AssignUrlTarget.tag,
+    this.canMarkNsfw = false,
+    this.hidesMarked = false,
   });
 
   @override
@@ -70,30 +80,12 @@ class AssignUrlDialog extends StatefulWidget {
 const _initialFieldCount = 2;
 
 class _AssignUrlDialogState extends State<AssignUrlDialog> {
-  late final List<TextEditingController> _controllers = [
-    for (final url in widget.urls) TextEditingController(text: url),
-    for (var i = widget.urls.length; i < _initialFieldCount; i++)
-      TextEditingController(),
-  ];
-
-  void _addField() {
-    setState(() => _controllers.add(TextEditingController()));
-  }
-
-  /// Lo escrito, sin los campos que se han quedado vacíos. Se devuelve tal cual
-  /// se ha escrito: normalizarlo es cosa de quien lo guarda.
-  List<String> get _urls => _controllers
-      .map((controller) => controller.text.trim())
-      .where((url) => url.isNotEmpty)
-      .toList();
-
-  @override
-  void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
+  /// Lo escrito, tal cual: normalizarlo es cosa de quien lo guarda.
+  ///
+  /// Lo mantiene al día la lista de enlaces, que avisa en cada cambio. No hace
+  /// falta `setState`: aquí no se pinta nada con esto, sólo se devuelve al
+  /// confirmar.
+  late List<FernLink> _urls = List.of(widget.urls);
 
   @override
   Widget build(BuildContext context) {
@@ -119,42 +111,28 @@ class _AssignUrlDialogState extends State<AssignUrlDialog> {
             style: theme.textTheme.bodyMedium?.copyWith(color: context.colors.gray),
           ),
           const SizedBox(height: AppSpacing.l),
-          Text(
-            texts.sourceUrlsLabel,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          // Qué forma tiene una regla que funciona. Hace falta decirlo: en las
-          // plataformas que identifican la galería con lo que va detrás del
-          // «?», copiar sólo la parte bonita de la dirección no recoge nada.
-          Text(
-            texts.sourceUrlsNote,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: context.colors.unremarked),
-          ),
-          const SizedBox(height: AppSpacing.s),
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: createDialogSocialFieldsMaxHeight,
-            ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: _controllers.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
-              itemBuilder: (_, index) => TextField(
-                controller: _controllers[index],
-                keyboardType: TextInputType.url,
-                decoration: InputDecoration(hintText: texts.sourceUrlHint),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s),
-          FernAddButton.compact(
-            label: texts.addSourceUrl,
-            onTap: _addField,
+          // El rótulo y la nota los pone la propia lista: qué forma tiene una
+          // regla que funciona hace falta decirlo, porque en las plataformas que
+          // identifican la galería con lo que va detrás del «?», copiar sólo la
+          // parte bonita de la dirección no recoge nada.
+          FernLinkListField(
+            links: widget.urls,
+            onChanged: (urls) => _urls = urls,
+            label: texts.sourceUrlsLabel,
+            note: texts.sourceUrlsNote,
+            emptyMessage: texts.noSourceUrls,
+            hintText: texts.sourceUrlHint,
+            addLabel: texts.addSourceUrl,
+            openTooltip: texts.openSourceUrlTooltip,
+            editTooltip: texts.editSourceUrlTooltip,
+            removeTooltip: texts.removeSourceUrlTooltip,
+            doneTooltip: texts.doneEditingSourceUrlTooltip,
+            canMarkNsfw: widget.canMarkNsfw,
+            hidesMarked: widget.hidesMarked,
+            markNsfwTooltip: texts.markLinkNsfwTooltip,
+            unmarkNsfwTooltip: texts.unmarkLinkNsfwTooltip,
+            initialEmptyFields: _initialFieldCount,
+            maxHeight: createDialogSocialFieldsMaxHeight,
           ),
         ],
       ),

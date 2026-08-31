@@ -19,8 +19,14 @@ un equipo cualquiera.
 import json
 import os
 import sys
+import threading
 import time
 import traceback
+
+try:
+    import queue
+except ImportError:  # Python 2, que no se usa pero no cuesta nada
+    import Queue as queue
 
 SIDECAR_VERSION = "1"
 
@@ -34,10 +40,86 @@ _cancelled = set()
 _models = {}
 _MAX_CACHED_MODELS = 3
 
+# La tarjeta no puede ejecutar lo que trae esta version de torch.
+#
+# Pasa cuando la GPU es mas nueva (o mas vieja) que las arquitecturas para las
+# que se compilo la rueda instalada: torch dice que hay CUDA, coge la tarjeta, y
+# al lanzar el primer kernel contesta "no kernel image is available for
+# execution on the device". No es un fallo del contenido ni de los pesos, y
+# reintentar en la tarjeta va a fallar igual: se apunta y se sigue en el
+# procesador el resto de la sesion.
+_cuda_broken = False
+_cuda_error = None
+
+
+def _cuda_unusable(error):
+    """Si este fallo dice que la tarjeta no sirve para nada."""
+    message = str(error).lower()
+
+    return (
+        "no kernel image is available" in message
+        or "cuda error" in message
+        or "cuda driver" in message
+        or "no cuda gpus are available" in message
+    )
+
+
+def _cuda_works():
+    """Si hay tarjeta **y ademas sabe ejecutar algo**.
+
+    Que `torch.cuda.is_available()` diga que si no basta: eso dice que hay driver
+    y tarjeta, no que la rueda de torch instalada traiga kernels compilados para
+    esa arquitectura. Cuando no los trae, la primera operacion revienta con "no
+    kernel image is available for execution on the device", y hasta ese momento
+    todo parecia correcto.
+
+    Se comprueba lanzando una operacion de verdad, una sola vez por sesion.
+    """
+    global _cuda_broken, _cuda_error
+
+    if _cuda_broken:
+        return False
+
+    try:
+        import torch
+
+        if not torch.cuda.is_available():
+            return False
+
+        # Pequena y de verdad: reservar memoria no lanza ningun kernel, asi que
+        # no probaria nada.
+        (torch.zeros(8, 8, device="cuda") + 1).sum().item()
+
+        return True
+    except Exception as error:
+        _cuda_broken = True
+        _cuda_error = str(error)
+
+        return False
+
+
+def _device():
+    """Donde se ejecuta: la tarjeta si la hay y funciona, y si no el procesador.
+
+    Se dice **explicitamente** en cada peticion. Sin decirlo, ultralytics coge la
+    tarjeta por su cuenta en cuanto torch dice que hay una, y entonces no hay
+    forma de volver al procesador cuando esa tarjeta no puede ejecutar nada.
+    """
+    return "cuda:0" if _cuda_works() else "cpu"
+
+
+# Escriben dos hilos: el que atiende las peticiones y el que lee stdin,
+# que contesta el "cancel" por su cuenta. Sin cerrojo, dos lineas podrian
+# entrelazarse y el otro lado leeria un JSON roto.
+_stdout_lock = threading.Lock()
+
 
 def _send(payload):
-    sys.stdout.write(json.dumps(payload) + "\n")
-    sys.stdout.flush()
+    line = json.dumps(payload) + "\n"
+
+    with _stdout_lock:
+        sys.stdout.write(line)
+        sys.stdout.flush()
 
 
 def _ok(request_id, result):
@@ -103,12 +185,20 @@ def handle_env_info(request_id, params):
 
         info["torch"] = torch.__version__
 
-        if torch.cuda.is_available():
+        if _cuda_works():
             info["device"] = "cuda:0"
             info["device_name"] = torch.cuda.get_device_name(0)
             info["vram_mb"] = int(
                 torch.cuda.get_device_properties(0).total_memory / (1024 * 1024)
             )
+        elif _cuda_broken:
+            # Hay tarjeta, pero esta rueda de torch no sabe hablarle. Se dice que
+            # se va por el procesador **y por que**: sin el motivo, el panel
+            # ofreceria descargar la version con GPU, que es justo la que ya esta
+            # puesta y no funciona.
+            info["device"] = "cpu"
+            info["device_name"] = platform.processor() or "CPU"
+            info["device_error"] = _cuda_error
         elif getattr(torch.backends, "mps", None) is not None and \
                 torch.backends.mps.is_available():
             # En los Mac con Apple Silicon la aceleracion viene de serie con la
@@ -187,6 +277,11 @@ def handle_train(request_id, params):
         )
     except RuntimeError as error:
         message = str(error).lower()
+        # Que la tarjeta no sepa ejecutar el modelo no es quedarse sin memoria, y
+        # llamarlo asi manda a buscar donde no es: lo que hay que hacer no es
+        # bajar el lote, es entrenar en el procesador o cambiar de rueda.
+        if _cuda_unusable(error):
+            raise SidecarError("DEVICE_UNSUPPORTED", str(error))
         if "out of memory" in message or "cuda" in message:
             raise SidecarError("OUT_OF_MEMORY", str(error))
         raise
@@ -282,13 +377,51 @@ def _detections_of(result, conf):
     return detections
 
 
+def _predict_one(weights, model, image, conf, imgsz):
+    """Mira una imagen, cayendo al procesador si la tarjeta no puede.
+
+    El cambio se hace una vez y vale para el resto de la sesion: si la tarjeta no
+    sabe ejecutar el modelo, no va a saber en la imagen siguiente tampoco, y
+    reintentarlo en cada una convertiria el reconocimiento en el doble de lento
+    con el mismo resultado.
+    """
+    global _cuda_broken
+
+    try:
+        return model.predict(
+            image,
+            conf=conf,
+            imgsz=imgsz,
+            device=_device(),
+            verbose=False,
+        )[0]
+    except RuntimeError as error:
+        if _cuda_broken or not _cuda_unusable(error):
+            raise
+
+        _cuda_broken = True
+
+        # El modelo esta cargado en una tarjeta que no sirve: se vuelve a leer
+        # para que nazca en el procesador.
+        _models.clear()
+
+        return _load_model(weights).predict(
+            image,
+            conf=conf,
+            imgsz=imgsz,
+            device="cpu",
+            verbose=False,
+        )[0]
+
+
 def handle_predict(request_id, params):
     images = params.get("images") or []
     if not images:
         return {"results": []}
 
     conf = float(params.get("conf", 0.35))
-    model = _load_model(params.get("weights"))
+    weights = params.get("weights")
+    model = _load_model(weights)
     imgsz = int(params.get("imgsz", 640))
 
     results = []
@@ -304,12 +437,11 @@ def handle_predict(request_id, params):
             results.append({"image": image, "detections": [], "missing": True})
             continue
 
-        prediction = model.predict(
-            image,
-            conf=conf,
-            imgsz=imgsz,
-            verbose=False,
-        )[0]
+        prediction = _predict_one(weights, model, image, conf, imgsz)
+
+        # Al caer al procesador el modelo se vuelve a cargar, asi que el que se
+        # tenia en la mano ya no es el bueno.
+        model = _load_model(weights)
 
         results.append({
             "image": image,
@@ -349,7 +481,17 @@ HANDLERS = {
 }
 
 
-def main():
+def _read_stdin(pending):
+    """Lee peticiones y las pone en la cola, **menos las de cancelar**.
+
+    Las de cancelar se contestan aqui mismo, en este hilo. Es todo el motivo de
+    que este hilo exista: mientras se entrena, el principal esta dentro de
+    ultralytics durante horas, asi que un "cancel" encolado no se leeria hasta
+    que el entrenamiento hubiera terminado - justo lo que se queria evitar.
+
+    Se puede atender desde aqui porque lo unico que hace el manejador es
+    levantar una bandera que los callbacks miran entre epoca y epoca.
+    """
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -360,6 +502,37 @@ def main():
         except ValueError as error:
             _error("", "INTERNAL", "Bad request: %s" % error)
             continue
+
+        if request.get("method") == "cancel":
+            request_id = request.get("id", "")
+            try:
+                _ok(
+                    request_id,
+                    handle_cancel(request_id, request.get("params") or {}),
+                )
+            except Exception:
+                _error(request_id, "INTERNAL", traceback.format_exc())
+            continue
+
+        pending.put(request)
+
+    # stdin cerrado: el otro lado se ha ido y no va a llegar nada mas.
+    pending.put(None)
+
+
+def main():
+    pending = queue.Queue()
+
+    # Demonio: si el hilo principal se va, este no puede quedarse esperando una
+    # linea que ya no va a llegar y dejar el proceso vivo.
+    reader = threading.Thread(target=_read_stdin, args=(pending,))
+    reader.daemon = True
+    reader.start()
+
+    while True:
+        request = pending.get()
+        if request is None:
+            return
 
         request_id = request.get("id", "")
         method = request.get("method", "")

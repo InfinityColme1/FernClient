@@ -50,6 +50,19 @@ class ContentVisibility {
   /// que su madre, y no distinguirla sería avisar a medias.
   bool marksTag(int tagId) => false;
 
+  /// Si este creador no se puede enseñar.
+  ///
+  /// Va aparte del contenido por lo mismo que [hidesTag]: esconder a un creador
+  /// es esconder también su nombre, y que aparezca en el listado o autocomplete
+  /// en un buscador ya cuenta lo que hay aunque su contenido no se vea.
+  bool hidesCreator(int creatorId) => false;
+
+  /// Si este creador esconde contenido, esté el filtro puesto o no.
+  ///
+  /// Lo mismo que [marksTag] para las etiquetas: con el filtro quitado el
+  /// creador se ve, y hay que poder distinguirlo de los demás.
+  bool marksCreator(int creatorId) => false;
+
   /// Si este fernie no se puede enseñar.
   ///
   /// Va aparte del contenido porque lo que esconde no es lo mismo: un fernie es
@@ -77,4 +90,18 @@ class ContentVisibility {
 
   /// Si este modelo está marcado, esté el filtro puesto o no.
   bool marksModel(int modelId) => false;
+
+  /// Si las direcciones marcadas no se pueden enseñar ahora mismo.
+  ///
+  /// No lleva identificador porque no depende de cuál sea: o el bloqueo está
+  /// cerrado y no se enseña ninguna, o está abierto y se enseñan todas.
+  ///
+  /// Una dirección vinculada delata tanto como el nombre de una etiqueta: la
+  /// galería de la que sale el contenido dice lo que hay dentro aunque el
+  /// contenido no se llegue a ver.
+  ///
+  /// **No dice nada de lo que la dirección hace.** Escondida sigue etiquetando
+  /// al importar, igual que un fernie escondido sigue entrenando: por eso quien
+  /// lee para trabajar (`MediaRegistry`) no pregunta esto.
+  bool get hidesMarkedLinks => false;
 }

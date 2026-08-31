@@ -60,6 +60,49 @@ class RegionAssignedEvent extends FernieModeEvents {
   });
 }
 
+/// Entra al modo con lo que un modelo ha detectado, **sin marcar**.
+///
+/// Es lo que hace el botón de «guardar como región» de una sugerencia: en vez de
+/// guardar a ciegas lo que el modelo vio, abre el modo con sus rectángulos
+/// dibujados para poder quedarse sólo con los que estén bien. Un modelo que ve
+/// cuatro coches puede estar acertando en tres.
+class ProposedRegionsOfferedEvent extends FernieModeEvents {
+  final List<ProposedRegion> regions;
+
+  /// De qué sugerencias salen.
+  ///
+  /// Al aceptar sus regiones, esas sugerencias quedan contestadas: ir a las
+  /// regiones de una sugerencia, darlas por buenas y tener que volver a aceptar
+  /// la sugerencia es decir dos veces lo mismo — más aún ahora que marcar la
+  /// región ya le pone la etiqueta al contenido.
+  final List<int> suggestionIds;
+
+  /// Como en [EnterFernieModeEvent]: lo que hay que restaurar al salir.
+  final bool infoWasOpen;
+
+  const ProposedRegionsOfferedEvent({
+    required this.regions,
+    required this.infoWasOpen,
+    this.suggestionIds = const [],
+  });
+}
+
+/// Da por buena una de las propuestas: pasa a estar marcada.
+class ProposedRegionAcceptedEvent extends FernieModeEvents {
+  final int index;
+
+  const ProposedRegionAcceptedEvent(this.index);
+}
+
+/// Da por buenas todas las que queden.
+///
+/// El botón de «todas» existe porque el caso normal es que el modelo acierte:
+/// con doce coches bien detectados, pulsarlos de uno en uno es el trabajo que
+/// esto venía a ahorrar.
+class AllProposedRegionsAcceptedEvent extends FernieModeEvents {
+  const AllProposedRegionsAcceptedEvent();
+}
+
 /// Cambia la herramienta del modo.
 ///
 /// Suelta lo que hubiera elegido: las dos herramientas trabajan sobre cosas

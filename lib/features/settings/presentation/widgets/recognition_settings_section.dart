@@ -9,6 +9,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/features/settings/presentation/settings_status_labels.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -71,6 +72,18 @@ class RecognitionSettingsSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
               child: Divider(),
             ),
+            // El entorno, **justo detrás de la carpeta en la que se instala**.
+            //
+            // Es lo primero que hace falta: sin él no reconoce nada, y los tres
+            // ajustes de abajo no significan nada. Estaba el último, así que el
+            // botón de instalarlo —lo único imprescindible de esta pantalla—
+            // quedaba a tres pantallazos de desplazamiento del sitio donde se
+            // elige dónde instalarlo.
+            const SidecarSetupPanel(),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(),
+            ),
             // Reconocer solo lo que llega. Va antes de lo de después de
             // reconocer porque es lo primero que pasa, y leerlo en ese orden es
             // lo que hace que se entienda por qué el contenido se mueve.
@@ -101,7 +114,27 @@ class RecognitionSettingsSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
               child: Divider(),
             ),
-            const SidecarSetupPanel(),
+            // Cuántas veces se guarda lo mismo en un contenido. Un modelo puede
+            // ver cuatro coches en una foto, y las cuatro detecciones valen
+            // porque cada una es una región distinta que se puede marcar.
+            _title(context, texts.maxDetectionsLabel),
+            Text(
+              texts.maxDetectionsDescription,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colors.gray,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.m),
+            FernDropdownPill<int>(
+              value: state.settings.maxDetectionsPerClass,
+              items: maxDetectionsPerClassOptions,
+              labelBuilder: (value) => '$value',
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(MaxDetectionsChangedEvent(
+                    value ?? defaultMaxDetectionsPerClass,
+                  )),
+            ),
           ],
         );
       },

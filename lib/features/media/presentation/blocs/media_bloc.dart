@@ -28,8 +28,10 @@ import 'package:Fern/features/media/domain/usecases/restore_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
-import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
+import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/usecases/search_media_by_criteria_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_nsfw_usecase.dart';
@@ -45,7 +47,6 @@ import '../../domain/entities/media/media_entity.dart';
 import '../../domain/entities/media/media_summary_entity.dart';
 import '../../domain/entities/search/media_search_section_entity.dart';
 import '../../domain/entities/search/search_result_type.dart';
-import '../../domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/core/services/jobs/job.dart';
 import 'package:Fern/core/services/jobs/job_queue.dart';
 import 'package:Fern/features/media/data/services/import_feed.dart';
@@ -56,6 +57,13 @@ import 'media_states.dart';
 
 class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final SelectImportDirectoryUsecase _selectImportDirectoryUsecase;
+
+  /// Lo que el usuario ha dicho que no quiere volver a importar.
+  ///
+  /// Llega como función y puede no llegar: el bloc no necesita saber de esto
+  /// para nada más que para poner su contador a cero, y las pruebas que lo
+  /// montan sin base de datos no tienen por qué dar una.
+  final BlockedImports Function()? _blocked;
   /// La cola de trabajos de fondo.
   ///
   /// La importación va por ella: sale en la lista de tareas como todo lo demás
@@ -95,8 +103,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final SetMediaListFavoriteUseCase _setMediaListFavoriteUseCase;
   final SetMediaNsfwUseCase _setMediaNsfwUseCase;
   final AddTagToMediaUseCase _addTagToMediaUseCase;
-  final SearchMediaUseCase _searchMediaUseCase;
-  final SearchMediaBySuggestionUseCase _searchMediaBySuggestionUseCase;
+  final SearchMediaByCriteriaUseCase _searchMediaByCriteriaUseCase;
 
   /// Hace falta para el vaciado automático de la papelera, que es el único
   /// borrado sin aviso: de aquí sale lo que el usuario respondió la última vez
@@ -157,15 +164,16 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     ImportSource? Function()? rememberedSource,
     Future<void> Function(ImportSource source)? rememberSource,
     required AddTagToMediaUseCase addTagToMediaUseCase,
-    required SearchMediaUseCase searchMediaUseCase,
-    required SearchMediaBySuggestionUseCase searchMediaBySuggestionUseCase,
+    required SearchMediaByCriteriaUseCase searchMediaByCriteriaUseCase,
     required PreferencesService preferences,
     required ShuffleSeed shuffle,
     required NotificationService notifications,
     required ImportDecisions decisions,
     bool Function()? keepsSelectionOnDrop,
+    BlockedImports Function()? blocked,
   })  : _selectImportDirectoryUsecase = selectImportDirectoryUsecase,
         _keepsSelectionOnDrop = keepsSelectionOnDrop ?? _dropClearsSelection,
+        _blocked = blocked,
         _jobs = jobs,
         _importFeed = importFeed,
         _getMediaDetailsUsecase = getMediaDetailsUsecase,
@@ -192,8 +200,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _rememberedSource = rememberedSource,
         _rememberSource = rememberSource,
         _addTagToMediaUseCase = addTagToMediaUseCase,
-        _searchMediaUseCase = searchMediaUseCase,
-        _searchMediaBySuggestionUseCase = searchMediaBySuggestionUseCase,
+        _searchMediaByCriteriaUseCase = searchMediaByCriteriaUseCase,
         _preferences = preferences,
         _shuffle = shuffle,
         _notifications = notifications,
@@ -202,14 +209,17 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
     on<ReloadCurrentMediaEvent>(onReloadCurrent);
+    on<RefreshCurrentMediaTagsEvent>(onRefreshCurrentMediaTags);
     on<LoadDeletedMediaEvent>(onLoadDeletedMedia);
     on<LoadFavoriteMediaEvent>(onLoadFavoriteMedia);
     on<LoadMediaByTagEvent>(onLoadMediaByTag);
     on<RemoveTagFromSelectedMediaEvent>(onRemoveTagFromSelectedMedia);
+    on<RemoveTagFromMediaEvent>(onRemoveTagFromMedia);
     on<LoadMediaByCreatorEvent>(onLoadMediaByCreator);
     on<RemoveCreatorFromSelectedMediaEvent>(onRemoveCreatorFromSelectedMedia);
     on<ToggleFavoriteEvent>(onToggleFavorite);
     on<SearchMediaEvent>(onSearchMedia);
+    on<SearchCriteriaChangedEvent>(onSearchCriteriaChanged);
     on<SearchSuggestionSelectedEvent>(onSearchSuggestionSelected);
     on<ToggleSearchFilterEvent>(onToggleSearchFilter);
     on<ToggleSourceFilterEvent>(onToggleSourceFilter);
@@ -287,6 +297,31 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     Emitter<MediaStates> emit,
   ) async {
     add(_lastListing ?? const LoadMediaLibraryEvent());
+  }
+
+  /// Vuelve a leer las etiquetas del contenido que se está viendo.
+  ///
+  /// Lo pide el visor al salir del modo fernie: lo que los fernies marcados
+  /// enlazan se le acaba de poner al contenido en la base de datos, y el panel
+  /// seguía enseñando las de antes.
+  ///
+  /// **Se sustituyen sólo las etiquetas.** Lo demás del contenido se queda como
+  /// está en el estado, que es donde viven los cambios del panel sin guardar: una
+  /// descripción a medio escribir no puede perderse por haber marcado una región.
+  Future<void> onRefreshCurrentMediaTags(
+    RefreshCurrentMediaTagsEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final current = state.currentMedia;
+    if (current == null) return;
+
+    final result = await _getMediaDetailsUsecase(params: current.id);
+    if (result is! DataSuccess || result.data == null) return;
+
+    emit(state.copyWith(currentMedia: current.copyWith(
+      tags: result.data!.tags,
+      creator: result.data!.creator,
+    )));
   }
 
   /// Al entrar en la pantalla de importación.
@@ -463,6 +498,42 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// Los contenidos dejan de tener esa etiqueta, así que salen de la rejilla de la
   /// pantalla de gestión de etiquetas (que es justo la de esa etiqueta); en la
   /// base de datos siguen tal cual, con sus demás etiquetas.
+  /// Le quita una etiqueta al contenido que se está viendo.
+  ///
+  /// **Escribe y actualiza lo que se está viendo, las dos cosas.** Escribir sin
+  /// tocar el estado sería peor que no hacer nada: el panel guarda las etiquetas
+  /// que lleva `currentMedia` sustituyendo las de la base (`saveMedia` usa
+  /// `reset: true`), así que pulsar Guardar después la habría devuelto.
+  ///
+  /// Y no se marca como modificado: no queda nada pendiente, ya está guardado.
+  ///
+  /// Se quita **sólo ésa**. Sus madres y sus hermanas se quedan: entraron por su
+  /// cuenta y quitarlas en cascada sorprendería a quien sólo quería deshacer una.
+  void onRemoveTagFromMedia(
+    RemoveTagFromMediaEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final media = state.currentMedia;
+    if (media == null || media.id != event.mediaId) return;
+
+    final result = await _removeTagFromMediaUseCase(
+      params: RemoveTagFromMediaParams(
+        tagId: event.tagId,
+        mediaIds: [event.mediaId],
+      ),
+    );
+    if (result is! DataSuccess) return;
+
+    emit(state.copyWith(
+      currentMedia: media.copyWith(
+        tags: [
+          for (final tag in media.tags ?? const <TagEntity>[])
+            if (tag.id != event.tagId) tag,
+        ],
+      ),
+    ));
+  }
+
   void onRemoveTagFromSelectedMedia(
     RemoveTagFromSelectedMediaEvent event,
     Emitter<MediaStates> emit,
@@ -691,25 +762,48 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     ));
   }
 
-  /// Búsqueda por texto: todo lo que se parezca a lo escrito.
-  void onSearchMedia(SearchMediaEvent event, Emitter<MediaStates> emit) async {
-    final term = event.query.trim();
-    if (term.isEmpty) {
+  /// Búsqueda por texto: una sola pastilla de texto libre.
+  void onSearchMedia(SearchMediaEvent event, Emitter<MediaStates> emit) =>
+      _searchBy([SearchCriterionEntity.text(event.query.trim())], emit);
+
+  /// Cambian las pastillas de la barra.
+  void onSearchCriteriaChanged(
+    SearchCriteriaChangedEvent event,
+    Emitter<MediaStates> emit,
+  ) =>
+      _searchBy(event.criteria, emit);
+
+  /// Busca lo que cumple **todas** las pastillas.
+  ///
+  /// Sin ninguna que valga, la rejilla vuelve a ser la biblioteca entera: es lo
+  /// que pasa al borrar lo escrito y al quitar la última pastilla, y las dos
+  /// cosas tienen que dejar la pantalla como estaba antes de buscar.
+  Future<void> _searchBy(
+    List<SearchCriterionEntity> criteria,
+    Emitter<MediaStates> emit,
+  ) async {
+    final wanted = [
+      for (final criterion in criteria)
+        if (criterion.label.trim().isNotEmpty) criterion,
+    ];
+
+    if (wanted.isEmpty) {
       await _loadLibrary(emit);
       return;
     }
 
     emit(state.copyWith(isBusy: true));
 
-    final result = await _searchMediaUseCase(params: term);
+    final result = await _searchMediaByCriteriaUseCase(params: wanted);
     if (result is! DataSuccess) {
       emit(_idle);
       return;
     }
 
-    final sections = result.data ?? const <MediaSearchSectionEntity>[];
-
-    emit(_searchState(sections, query: term));
+    emit(_searchState(
+      result.data ?? const <MediaSearchSectionEntity>[],
+      criteria: wanted,
+    ));
   }
 
   /// Búsqueda de la sugerencia elegida: sólo su contenido.
@@ -720,21 +814,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   void onSearchSuggestionSelected(
     SearchSuggestionSelectedEvent event,
     Emitter<MediaStates> emit,
-  ) async {
-    emit(state.copyWith(isBusy: true));
-
-    final result = await _searchMediaBySuggestionUseCase(params: event.suggestion);
-    if (result is! DataSuccess) {
-      emit(_idle);
-      return;
-    }
-
-    emit(_searchState(
-      result.data ?? const [],
-      query: event.suggestion.label,
-      suggestion: event.suggestion,
-    ));
-  }
+  ) =>
+      _searchBy([SearchCriterionEntity.of(event.suggestion)], emit);
 
   /// Estado de un resultado de búsqueda.
   ///
@@ -747,21 +828,26 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// el buscador, no parte de un resultado concreto.
   MediaStates _searchState(
     List<MediaSearchSectionEntity> sections, {
-    required String query,
-    SearchSuggestionEntity? suggestion,
+    required List<SearchCriterionEntity> criteria,
   }) {
+    final crosses =
+        criteria.where((each) => each.label.trim().isNotEmpty).length > 1;
+
     return MediaLoading(
       mediaList: _visibleMedia(
         sections,
         state.searchFilters,
         state.sourceFilters,
         state.typeFilters,
+        crossesCriteria: crosses,
       ),
-      searchQuery: query,
+      searchCriteria: criteria,
       searchSections: sections,
       searchFilters: state.searchFilters,
       sourceFilters: state.sourceFilters,
-      searchSuggestion: suggestion,
+      // Se arrastraba todo menos éste, así que buscar dejaba el filtro de tipos
+      // encendido en la cabecera mientras la rejilla seguía recortada por él.
+      typeFilters: state.typeFilters,
     );
   }
 
@@ -834,6 +920,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       searchFilters,
       sourceFilters,
       typeFilters,
+      crossesCriteria: state.crossesCriteria,
     );
     final visibleIds = {for (final summary in mediaList) summary.id};
 
@@ -852,11 +939,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     List<MediaSearchSectionEntity> sections,
     Set<SearchResultType> filters,
     Set<ImportSource> sourceFilters,
-    Set<MediaKind> typeFilters,
-  ) {
+    Set<MediaKind> typeFilters, {
+    bool crossesCriteria = false,
+  }) {
     return [
       for (final section in sections)
-        if (filters.contains(section.type))
+        // Cruzando pastillas el filtro de tipo de resultado no se aplica: hay
+        // un solo grupo y apagar su casilla lo vaciaría todo. Igual que en
+        // `visibleSearchSections`, que es lo que pinta la rejilla.
+        if (crossesCriteria || filters.contains(section.type))
           for (final summary in section.media)
             if (sourceFilters.contains(summary.importSource) &&
                 typeFilters.contains(MediaKind.of(summary.path)))
@@ -1047,7 +1138,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     emit(MediaLoading(
       mediaList: newList,
       selectedIds: Set<int>.from(state.selectedIds)..remove(id),
-      searchQuery: state.searchQuery,
+      searchCriteria: state.searchCriteria,
       searchSections: _sectionsWithout((summary) => summary.id == id),
       searchFilters: state.searchFilters,
       sourceFilters: state.sourceFilters,
@@ -1135,12 +1226,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         mediaList: const [],
         selectedIds: selectedIds,
         showInfo: state.showInfo,
-        searchQuery: state.searchQuery,
+        searchCriteria: state.searchCriteria,
         searchSections: sections,
         searchFilters: state.searchFilters,
         sourceFilters: state.sourceFilters,
-        searchSuggestion: state.searchSuggestion,
-        favoritesOnly: state.favoritesOnly,
+          favoritesOnly: state.favoritesOnly,
         importSource: state.importSource,
       lastImportAt: state.lastImportAt,
       ));
@@ -1397,11 +1487,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     return MediaLoading(
       mediaList: mediaList,
-      searchQuery: state.searchQuery,
+      searchCriteria: state.searchCriteria,
       searchSections: _sectionsWithout(remove),
       searchFilters: state.searchFilters,
       sourceFilters: state.sourceFilters,
-      searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,
       lastImportAt: state.lastImportAt,
@@ -1491,11 +1580,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     emit(MediaLoading(
       mediaList: state.mediaList,
       selectedIds: state.selectedIds,
-      searchQuery: state.searchQuery,
+      searchCriteria: state.searchCriteria,
       searchSections: state.searchSections,
       searchFilters: state.searchFilters,
       sourceFilters: state.sourceFilters,
-      searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,
       lastImportAt: state.lastImportAt,
@@ -1540,11 +1628,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       selectedIds: state.selectedIds,
       // El visor se abre sobre la rejilla: al volver, la búsqueda sigue
       // exactamente como estaba.
-      searchQuery: state.searchQuery,
+      searchCriteria: state.searchCriteria,
       searchSections: state.searchSections,
       searchFilters: state.searchFilters,
       sourceFilters: state.sourceFilters,
-      searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       importSource: state.importSource,
       lastImportAt: state.lastImportAt,
@@ -1563,7 +1650,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   void onScanSource(ScanSourceEvent event, Emitter<MediaStates> emit) async {
     final source = state.importSource;
 
-    await _scan(emit, () async {
+    // El recuento de lo saltado es de **esta** importación: sin ponerlo a cero,
+    // el aviso del final iría sumando el de todas las anteriores.
+    _blocked?.call().resetSkipped();
+
+    await _scan(emit, asNsfw: event.asNsfw, () async {
       // Prioridad alta: esto lo acaba de pedir el usuario y lo está mirando; no
       // puede quedarse esperando detrás de un escaneo de repetidos.
       final id = _jobs.enqueue(
@@ -1652,8 +1743,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// indicador esté puesto quedan cosas por llegar.
   Future<void> _scan(
     Emitter<MediaStates> emit,
-    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan,
-  ) async {
+    Future<Stream<DataState<MediaSummaryEntity>>> Function() scan, {
+    /// Marca como no apto lo que haya entrado, al terminar.
+    bool asNsfw = false,
+  }) async {
     // Sin respuestas heredadas: lo que se dijo que valía "para todo" valía
     // para la importación anterior, no para ésta.
     _decisions.reset();
@@ -1662,6 +1755,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // lleva aquí**: la lista que vale es la del estado, y ésa la puede rehacer
     // cualquier otra cosa mientras esto dura.
     var arrived = 0;
+
+    // Lo que ha entrado en esta tanda, para poder marcarlo al final. Sólo se
+    // llena si hace falta: en una importación normal es una lista que nadie
+    // mira, y una biblioteca entera son miles de identificadores.
+    final arrivedIds = <int>[];
 
     final selectedIds = state.selectedIds;
     emit(MediaLoading(
@@ -1707,6 +1805,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       onData: (dataState) {
         if (dataState is DataSuccess && dataState.data != null) {
           arrived++;
+          if (asNsfw) arrivedIds.add(dataState.data!.id);
 
           // Fuera de su pantalla no se pinta nada, pero lo que llega **no se
           // pierde**: está en la base de datos, y al volver se relee de ahí.
@@ -1741,6 +1840,18 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       },
     );
 
+    // Lo que ha entrado queda marcado, de una vez y al terminar.
+    //
+    // Al final y no pieza a pieza porque durante la importación lo que llega se
+    // ve llegar, que es lo que dice que va bien; y de una vez porque son mil
+    // escrituras contra una. Parar a mitad marca lo que hubiera entrado, que es
+    // lo que se ha traído.
+    if (arrivedIds.isNotEmpty) {
+      await _setMediaNsfwUseCase(
+        params: SetMediaNsfwParams(mediaIds: arrivedIds, isNsfw: true),
+      );
+    }
+
     // Y lo que quedó sin traerse porque hacía falta el usuario, de una vez y al
     // final. Es un resumen y no una pregunta: no para nada y no espera a nadie.
     await _decisions.flushPendingLinks();
@@ -1770,11 +1881,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     emit(MediaLoading(
       mediaList: state.mediaList,
       selectedIds: state.selectedIds,
-      searchQuery: state.searchQuery,
+      searchCriteria: state.searchCriteria,
       searchSections: state.searchSections,
       searchFilters: state.searchFilters,
       sourceFilters: state.sourceFilters,
-      searchSuggestion: state.searchSuggestion,
       favoritesOnly: state.favoritesOnly,
       // Los dos filtros, no sólo el de fuentes: dejarse el de tipos aquí lo
       // encendía entero al terminar cada importación.

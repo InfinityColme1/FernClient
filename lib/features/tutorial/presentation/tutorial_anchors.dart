@@ -31,6 +31,9 @@ abstract final class TutorialAnchorId {
   /// El botón de ajustes.
   static const settings = 'settings';
 
+  /// El indicador de lo que corre por detrás, en la barra de arriba.
+  static const jobs = 'jobs';
+
   /// Lo que ocupa la pantalla, sea la rejilla de contenido o lo que la
   /// sustituya mientras no hay nada.
   static const content = 'content';

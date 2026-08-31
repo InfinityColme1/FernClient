@@ -3,10 +3,12 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
@@ -25,8 +27,7 @@ import 'package:Fern/features/media/presentation/widgets/assign_url_dialog.dart'
 import 'package:Fern/features/media/presentation/widgets/tag_relations_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:Fern/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -66,7 +67,6 @@ class _TagCardState extends State<TagCard> {
   final _saveTagSourceUrls = getIt<SaveTagSourceUrlsUseCase>();
   final _setTagNsfw = getIt<SetTagNsfwUseCase>();
   final _saveTagSiblings = getIt<SaveTagSiblingsUseCase>();
-  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   late final TextEditingController _nameController =
       TextEditingController(text: widget.tag.name);
@@ -74,13 +74,24 @@ class _TagCardState extends State<TagCard> {
   late String? _picturePath = widget.tag.picturePath;
   late TagEntity? _parent = widget.parent;
 
-  /// Direcciones de las que sale el contenido de la etiqueta.
+  /// Direcciones de las que sale el contenido de la etiqueta, tal y como se
+  /// están editando.
   ///
-  /// Se guardan desde su propio diálogo, así que aquí sólo se llevan para saber
-  /// con cuáles abrirlo y para no perderlas al guardar el formulario.
-  late List<String> _sourceUrls = widget.tag.sourceUrls;
+  /// Se ven y se tocan en la propia ficha, y también desde su diálogo: los dos
+  /// caminos escriben aquí, así que abrir el diálogo enseña lo que hay en la
+  /// ficha aunque todavía no se haya guardado.
+  late List<FernLink> _sourceUrls = [
+    for (final url in widget.tag.sourceUrls)
+      FernLink(url, isNsfw: widget.tag.marksLink(url)),
+  ];
 
-
+  /// Cuántas veces han cambiado las direcciones **desde fuera de la lista**.
+  ///
+  /// Es la clave de la lista de enlaces: la lista se queda con las direcciones
+  /// que recibe al nacer, así que para que recoja lo que acaba de confirmar el
+  /// diálogo hay que hacerla nacer otra vez. Escribir en ella no toca esto: si
+  /// lo tocara, la lista se reharía en cada tecla y el campo perdería el foco.
+  int _urlsRevision = 0;
 
 
   /// La etiqueta está marcada como contenido no apto.
@@ -90,6 +101,14 @@ class _TagCardState extends State<TagCard> {
   /// dejarla a medias —marcada en pantalla, sin marcar en la base de datos—
   /// sería la peor forma de contarlo.
   late bool _isNsfw = widget.tag.isNsfw;
+
+  /// La etiqueta identifica a una persona.
+  ///
+  /// Se guarda con el botón de guardar, como el nombre y el avatar: es un campo
+  /// de la etiqueta y no una decisión que haga desaparecer contenido. Al
+  /// guardarla cambia de lista, y la pantalla se encuentra sin la que estaba
+  /// elegida y pasa a la primera, que es lo que ya hace al borrarla.
+  late bool _isPerson = widget.tag.isPerson;
 
   /// A cuántos contenidos afecta la marca, cuando se acaba de tocar.
   /// Las etiquetas relacionadas, tal y como se están editando.
@@ -140,20 +159,19 @@ class _TagCardState extends State<TagCard> {
     return tags.where((tag) => !_ownBranch.contains(tag.id)).toList();
   }
 
-  /// Elige la imagen del avatar y se queda con la copia que guarda la
-  /// aplicación, como en el diálogo de creación: los avatares se cargan siempre
-  /// de la carpeta de avatares.
+  /// Elige el avatar: de dónde sale la imagen, cuál, y qué trozo de ella.
+  ///
+  /// El explorador de ficheros era la única respuesta a la primera pregunta, y
+  /// obligaba a buscar por el disco una imagen que la aplicación ya tiene
+  /// guardada y sabe enseñar.
   Future<void> _pickImage() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
+    final choice = await chooseAvatarImage(context);
+    if (choice == null || !mounted) return;
 
-    final path = result?.files.single.path;
-    if (path == null) return;
-
-    // La copia a la carpeta de avatares sí puede tardar, así que se hace con la
-    // ficha en espera. El explorador de ficheros no: allí el tiempo lo pone el
-    // usuario.
+    // Guardar sí puede tardar, así que se hace con la ficha en espera. Elegir
+    // no: allí el tiempo lo pone el usuario.
     await _run(() async {
-      final storedPath = await _storeAvatar(params: path);
+      final storedPath = await storeChosenAvatar(choice, replacing: _picturePath);
       if (!mounted) return;
 
       setState(() => _picturePath = storedPath);
@@ -180,9 +198,7 @@ class _TagCardState extends State<TagCard> {
           name: name,
           picturePath: _picturePath,
           children: widget.tag.children,
-          // Las direcciones no están en este formulario, pero `updateTag` manda
-          // lo que le llega: sin ellas, guardar el nombre las borraría.
-          sourceUrls: _sourceUrls,
+          isPerson: _isPerson,
         ),
         parent: _parent,
       ),
@@ -232,6 +248,33 @@ class _TagCardState extends State<TagCard> {
     getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
   }
 
+  /// Escribe las direcciones de la etiqueta y se queda con las normalizadas.
+  ///
+  /// Son las que se van a comparar al importar, así que la ficha enseña lo que de
+  /// verdad hay guardado y no lo que se escribió.
+  Future<void> _saveUrls(List<FernLink> urls) async {
+    final result = await _saveTagSourceUrls(
+      params: SaveTagSourceUrlsParams(
+        tagId: widget.tag.id,
+        urls: [for (final link in urls) link.url],
+        nsfwUrls: [
+          for (final link in urls)
+            if (link.isNsfw) link.url,
+        ],
+      ),
+    );
+
+    final tag = result.data;
+    if (result is! DataSuccess || tag == null || !mounted) return;
+
+    setState(() {
+      _sourceUrls = [
+        for (final url in tag.sourceUrls)
+          FernLink(url, isNsfw: tag.marksLink(url)),
+      ];
+    });
+  }
+
   /// Abre el diálogo de las direcciones de la etiqueta y guarda lo que se
   /// confirme.
   ///
@@ -240,26 +283,25 @@ class _TagCardState extends State<TagCard> {
   /// en él queda confirmado. Al cerrarlo sin confirmar no llega nada y las
   /// direcciones se quedan como estaban.
   Future<void> _assignUrls() async {
-    final urls = await showFernDialog<List<String>, MediaBloc>(
+    final urls = await showFernDialog<List<FernLink>, MediaBloc>(
       context: context,
       builder: (_) => AssignUrlDialog(
         urls: _sourceUrls,
         name: widget.tag.name,
+        canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+        hidesMarked: getIt<NsfwVisibility>().hidesMarkedLinks,
       ),
     );
     if (urls == null || !mounted) return;
 
     await _run(() async {
-      final result = await _saveTagSourceUrls(
-        params: SaveTagSourceUrlsParams(tagId: widget.tag.id, urls: urls),
-      );
+      await _saveUrls(urls);
+      if (!mounted) return;
 
-      final tag = result.data;
-      if (result is! DataSuccess || tag == null || !mounted) return;
-
-      // Se recogen ya normalizadas: son las que se van a comparar al importar, y
-      // así el diálogo se vuelve a abrir con lo que de verdad hay guardado.
-      setState(() => _sourceUrls = tag.sourceUrls);
+      // La lista de la ficha se quedó con las direcciones que recibió al nacer,
+      // así que para que recoja lo que acaba de confirmar el diálogo hay que
+      // hacerla nacer otra vez.
+      setState(() => _urlsRevision++);
     });
   }
 
@@ -310,13 +352,17 @@ class _TagCardState extends State<TagCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                _personButton(texts),
                 _nsfwButton(texts),
                 _relationsButton(texts),
                 _recognizeButton(texts),
                 _assignUrlsButton(texts),
               ],
             ),
-            Row(
+            // Con el alto que le den: la ficha lo tiene fijo (lo pone la
+            // pantalla) y este bloque es el que se queda con lo que sobre.
+            Expanded(
+              child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
@@ -356,12 +402,15 @@ class _TagCardState extends State<TagCard> {
                       // lista de relacionadas ocupaban tanto aquí que la rejilla
                       // de contenido de debajo se salía de la pantalla.
                       _relationsSummary(texts),
+                      const SizedBox(height: AppSpacing.m),
+                      Expanded(child: _sourceUrlsField(texts)),
                     ],
                   ),
                 ),
               ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.l),
+            const SizedBox(height: AppSpacing.m),
             // Los botones se reparten en varias líneas si no caben: son cuatro y
             // sus textos crecen bastante según el idioma.
             //
@@ -433,6 +482,27 @@ class _TagCardState extends State<TagCard> {
     );
   }
 
+  /// El interruptor de «esta etiqueta es una persona».
+  ///
+  /// Es lo que hace usable la separación el primer día: todo lo que ya hay en la
+  /// base está mezclado, y sin esto habría que borrar cada persona y volver a
+  /// crearla —perdiendo de paso su contenido, sus direcciones y sus relaciones—.
+  ///
+  /// Sale siempre, también sin contraseña puesta: no esconde nada, sólo dice en
+  /// qué lista se gestiona.
+  Widget _personButton(AppLocalizations texts) {
+    return IconButton(
+      icon: Icon(
+        Symbols.face,
+        size: AppSizes.iconCardAction,
+        color: _isPerson ? context.colors.terciary : null,
+      ),
+      tooltip: texts.tagIsPerson,
+      onPressed:
+          _isBusy ? null : () => setState(() => _isPerson = !_isPerson),
+    );
+  }
+
   Widget _assignUrlsButton(AppLocalizations texts) {
     return IconButton(
       icon: Icon(
@@ -441,6 +511,49 @@ class _TagCardState extends State<TagCard> {
       ),
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
+    );
+  }
+
+  /// Las direcciones vinculadas con la etiqueta, a la vista.
+  ///
+  /// Es la misma lista que los enlaces de redes sociales de la ficha del
+  /// creador. Antes no se veían: la ficha sólo tenía el botón que abría el
+  /// diálogo, y ni siquiera llegaban hasta aquí, así que guardar el nombre de la
+  /// etiqueta las borraba.
+  ///
+  /// Con el hueco que quede y no con un alto propio: la ficha lo tiene fijo (lo
+  /// pone la pantalla), así que este bloque es el que se estira o se encoge y lo
+  /// que no quepa se desplaza aquí dentro. Con un máximo, la ficha crecería
+  /// dirección a dirección y no todas las etiquetas tendrían la misma.
+  ///
+  /// Se guarda en cuanto se termina cada dirección, no con el botón de guardar
+  /// de la ficha: las direcciones tienen su propia escritura
+  /// (`SaveTagSourceUrlsUseCase`), igual que las hermanas y la marca NSFW, y
+  /// `updateTag` ya no las toca.
+  Widget _sourceUrlsField(AppLocalizations texts) {
+    return FernLinkListField(
+      // Se rehace cuando el diálogo trae direcciones nuevas, no al escribir.
+      key: ValueKey(_urlsRevision),
+      links: _sourceUrls,
+      onChanged: (urls) => setState(() => _sourceUrls = urls),
+      canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+      hidesMarked: getIt<NsfwVisibility>().hidesMarkedLinks,
+      markNsfwTooltip: texts.markLinkNsfwTooltip,
+      unmarkNsfwTooltip: texts.unmarkLinkNsfwTooltip,
+      // Sin el indicador de espera de la ficha: es una escritura corta y se
+      // dispara al salir de cada campo, así que tapar la ficha entera cada vez
+      // parpadearía. Y sin pasar por `_run`, que descarta lo que llegue mientras
+      // haya otra escritura en marcha —y aquí eso sería perder la dirección.
+      onCommitted: _saveUrls,
+      label: texts.sourceUrlsLabel,
+      emptyMessage: texts.noSourceUrls,
+      hintText: texts.sourceUrlHint,
+      addLabel: texts.addSourceUrl,
+      openTooltip: texts.openSourceUrlTooltip,
+      editTooltip: texts.editSourceUrlTooltip,
+      removeTooltip: texts.removeSourceUrlTooltip,
+      doneTooltip: texts.doneEditingSourceUrlTooltip,
+      fills: true,
     );
   }
 
@@ -527,15 +640,22 @@ class _TagCardState extends State<TagCard> {
     final parentChanged = result.parent?.id != _parent?.id;
     setState(() => _parent = result.parent);
 
-    final before = {for (final one in _siblings) one.id};
-    final after = {for (final one in result.siblings) one.id};
-    final siblingsChanged = !setEquals(before, after);
+    // Quiénes son y qué dirección tiene cada una: cambiar sólo la dirección es
+    // un cambio, y comparando nada más las listas se habría perdido.
+    final before = {
+      for (final one in _siblings)
+        one.id: siblingDirectionBetween(tag: widget.tag, sibling: one),
+    };
+    final after = {
+      for (final one in result.siblings) one.id: result.directionOf(one.id),
+    };
+    final siblingsChanged = !mapEquals(before, after);
 
     if (!parentChanged && !siblingsChanged) return;
 
     await _run(() async {
       if (parentChanged) await _saveParent(result.parent);
-      if (siblingsChanged) await _saveSiblings(result.siblings);
+      if (siblingsChanged) await _saveSiblings(result.siblings, after);
     });
   }
 
@@ -576,11 +696,14 @@ class _TagCardState extends State<TagCard> {
 
 
   /// Guarda la lista y rehace el campo de búsqueda para que se vacíe.
-  Future<void> _saveSiblings(List<TagEntity> siblings) async {
+  Future<void> _saveSiblings(
+    List<TagEntity> siblings,
+    Map<int, SiblingDirection> directions,
+  ) async {
     final result = await _saveTagSiblings(
       params: SaveTagSiblingsParams(
         tagId: widget.tag.id,
-        siblingIds: [for (final one in siblings) one.id],
+        siblings: directions,
       ),
     );
 

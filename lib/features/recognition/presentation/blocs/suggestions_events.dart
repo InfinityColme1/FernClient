@@ -1,5 +1,6 @@
 import 'package:Fern/core/services/jobs/job.dart';
 import 'package:Fern/features/recognition/domain/entities/media_suggestion_entity.dart';
+import 'package:Fern/features/recognition/domain/entities/recognition_result_entity.dart';
 
 abstract class SuggestionsEvents {
   const SuggestionsEvents();
@@ -68,6 +69,21 @@ class SuggestionsRejectedEvent extends SuggestionsEvents {
   final List<MediaSuggestionEntity> suggestions;
 
   const SuggestionsRejectedEvent(this.suggestions);
+}
+
+/// Sugerencias contestadas **cuyo efecto ya está escrito**.
+///
+/// Aceptar desde el panel va en dos pasos —se aparta y se persiste al guardar el
+/// contenido— porque la etiqueta se queda entre los cambios sin guardar. Aquí no:
+/// al aceptar las regiones que el modelo propuso, las regiones y la etiqueta que
+/// el fernie enlaza se han escrito ya, así que la respuesta se guarda en el
+/// momento. Esperar a un guardado que no va a llegar dejaría la sugerencia
+/// contestada en pantalla y sin contestar en la base.
+class SuggestionsResolvedEvent extends SuggestionsEvents {
+  final List<MediaSuggestionEntity> suggestions;
+  final SuggestionStatus status;
+
+  const SuggestionsResolvedEvent(this.suggestions, {required this.status});
 }
 
 /// El contenido se ha guardado: lo aceptado ya es de verdad.

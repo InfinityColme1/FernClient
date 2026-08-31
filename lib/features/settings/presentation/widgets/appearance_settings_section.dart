@@ -148,6 +148,16 @@ class AppearanceSettingsSection extends StatelessWidget {
                   .read<SettingsBloc>()
                   .add(KeepsSelectionOnDropToggledEvent(value)),
             ),
+            // Y aquí porque es otra cosa de las listas: cómo se comportan al
+            // buscar en ellas.
+            FernCheckboxTile(
+              label: texts.showsTagBranchOnFilter,
+              description: texts.showsTagBranchOnFilterDescription,
+              value: settings.showsTagBranchOnFilter,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(ShowsTagBranchOnFilterToggledEvent(value)),
+            ),
           ],
         );
       },

@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
@@ -58,6 +59,7 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        MediaTagLogModelSchema,
         FernieModelSchema,
         FernieRegionModelSchema,
         RecognitionModelModelSchema,
@@ -417,6 +419,57 @@ void main() {
       await repository.setTraining(modelId: model.id, isTraining: false);
 
       expect((await repository.getModel(model.id)).data!.lastError, 'roto');
+    });
+
+    // Olvidar lo entrenado: un modelo entrenado con lo que no era se queda con
+    // unos pesos que reconocen mal y una ficha que dice que esta listo. Borrarlo
+    // entero era la unica salida, y con eso se iban tambien los hiperparametros,
+    // los fernies y el reparto, que no tenian nada de malo.
+    test('olvidar lo entrenado lo deja a cero', () async {
+      final model = await addModel('Personajes');
+
+      await repository.saveTrainingResult(
+        modelId: model.id,
+        weightsPath: 'C:/runs/uno/best.pt',
+        metrics: '{"map50":0.83}',
+      );
+
+      final forgotten = (await repository.forgetTraining(model.id)).data!;
+
+      expect(forgotten.weightsPath, isNull);
+      expect(forgotten.lastMetrics, isNull);
+      expect(forgotten.lastTrainedAt, isNull);
+      expect(forgotten.lastError, isNull);
+      expect(forgotten.isImportedWeights, isFalse);
+      expect(forgotten.status, ModelTrainingStatus.untrained);
+    });
+
+    // Lo que se olvida es el resultado, no como se pidio.
+    test('y no toca como se pidio', () async {
+      final model = await addModel('Personajes');
+      await repository.saveTrainingResult(
+        modelId: model.id,
+        weightsPath: 'C:/runs/uno/best.pt',
+      );
+
+      final forgotten = (await repository.forgetTraining(model.id)).data!;
+
+      expect(forgotten.name, model.name);
+      expect(forgotten.epochs, model.epochs);
+      expect(forgotten.function, model.function);
+    });
+
+    test('el ultimo fallo tambien se va', () async {
+      final model = await addModel('Personajes');
+      await repository.saveTrainingResult(
+        modelId: model.id,
+        error: 'OUT_OF_MEMORY',
+      );
+
+      expect(
+        (await repository.forgetTraining(model.id)).data!.lastError,
+        isNull,
+      );
     });
 
     test('la marca de entrenando se desatasca al arrancar', () async {

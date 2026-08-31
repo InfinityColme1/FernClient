@@ -205,6 +205,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       frameSamples:
           (_preferences.getInt(frameSamplesPreferenceKey) ?? defaultFrameSamples)
               .clamp(minFrameSamples, maxFrameSamples),
+      maxDetectionsPerClass:
+          _preferences.getInt(maxDetectionsPreferenceKey) ??
+              defaultMaxDetectionsPerClass,
       recognitionPath: _preferences.getString(recognitionPathPreferenceKey) ??
           defaultRecognitionPath,
       organization: FileOrganizationCriteria.fromId(
@@ -216,6 +219,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
           _preferences.getBool(showListAvatarsPreferenceKey) ?? true,
       keepsSelectionOnDrop:
           _preferences.getBool(keepsSelectionOnDropPreferenceKey) ?? false,
+      // Sin preferencia guardada, encendido: es el comportamiento que se quiere
+      // sin tocar nada, y quien no lo quiera lo apaga.
+      showsTagBranchOnFilter:
+          _preferences.getBool(showsTagBranchOnFilterPreferenceKey) ?? true,
       pauseWhenSeeking:
           _preferences.getBool(pauseWhenSeekingPreferenceKey) ?? false,
       themeMode: AppThemeMode.fromId(
@@ -336,6 +343,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
       settings.frameSamples.clamp(minFrameSamples, maxFrameSamples),
     );
 
+    await _preferences.setInt(
+      maxDetectionsPreferenceKey,
+      settings.maxDetectionsPerClass,
+    );
     await _preferences.setBool(
       autoTagRemoteSourcePreferenceKey,
       settings.autoTagRemoteSource,
@@ -349,6 +360,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setBool(
       keepsSelectionOnDropPreferenceKey,
       settings.keepsSelectionOnDrop,
+    );
+
+    await _preferences.setBool(
+      showsTagBranchOnFilterPreferenceKey,
+      settings.showsTagBranchOnFilter,
     );
 
     await _preferences.setBool(

@@ -6,6 +6,7 @@ import 'package:Fern/core/ui/display/fern_avatar.dart';
 import 'package:Fern/core/ui/display/fern_badge.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/core/ui/display/fern_motion.dart';
+import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'dart:math' as math;
@@ -50,6 +51,11 @@ class CollapsingListTile extends StatefulWidget {
   final bool isNsfw;
   final Color textUnselectedColor;
 
+  /// La fila es una etiqueta con hijas, y si están plegadas.
+  final bool hasChildren;
+  final bool isCollapsed;
+  final VoidCallback? onToggleCollapse;
+
   const CollapsingListTile({
     super.key,
     required this.title,
@@ -67,6 +73,9 @@ class CollapsingListTile extends StatefulWidget {
     required this.textSelectedColor,
     required this.unselectedColor,
     this.isNsfw = false,
+    this.hasChildren = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
     required this.textUnselectedColor
   });
 
@@ -155,6 +164,49 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
     );
   }
 
+  /// El chevron que pliega la rama, o el hueco que ocupa cuando no hay ninguna.
+  ///
+  /// **Sólo con el menú desplegado.** Plegado no caben más que los iconos, así
+  /// que ahí la jerarquía no se toca: lo plegado se sigue respetando, sólo que
+  /// no se puede cambiar desde ese estado.
+  ///
+  /// El hueco se reserva también en las filas sin hijas. Sin él, los iconos de
+  /// una rama bailarían de izquierda a derecha según qué etiquetas tuvieran
+  /// descendencia, y la sangría dejaría de leerse.
+  Widget _chevron() {
+    if (!widget.isExpanded) return const SizedBox.shrink();
+
+    // **Sólo las filas del árbol de etiquetas reservan el hueco.** Las opciones
+    // del menú —«Gestor de etiquetas» y compañía— no se pliegan, y darles el
+    // hueco igualmente les quitaba veinte píxeles de título: los nombres largos
+    // pasaron a cortarse con puntos suspensivos.
+    if (widget.onToggleCollapse == null) return const SizedBox.shrink();
+
+    // Una etiqueta sin hijas sí lo reserva: sin él, los avatares de una rama
+    // bailarían de izquierda a derecha según quién tuviera descendencia.
+    if (!widget.hasChildren) return const SizedBox(width: sidebarChevronWidth);
+
+    final texts = AppLocalizations.of(context);
+
+    return SizedBox(
+      width: sidebarChevronWidth,
+      child: IconButton(
+        tooltip: widget.isCollapsed
+            ? texts.tagExpandBranch
+            : texts.tagCollapseBranch,
+        iconSize: AppSizes.iconSmall,
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: widget.onToggleCollapse,
+        icon: Icon(
+          widget.isCollapsed ? Symbols.chevron_right : Symbols.expand_more,
+          color: context.colors.unremarked,
+        ),
+      ),
+    );
+  }
+
   /// La barrita que dice en qué fila se está.
   ///
   /// **Vive en el carril de la izquierda, fuera de la píldora.** Dentro no
@@ -218,6 +270,7 @@ class _CollapsingListTileState extends State<CollapsingListTile> {
                 ),
                 SizedBox(width: sizedBoxAnimation.value),
               ],
+              _chevron(),
               _leading(),
               SizedBox(width: sizedBoxAnimation.value),
               if (widget.isExpanded)

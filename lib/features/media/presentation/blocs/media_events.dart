@@ -5,6 +5,7 @@ import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
+import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 
 /// Los eventos del bloc de contenido.
@@ -36,8 +37,22 @@ class LoadMediaLibraryEvent extends MediaEvents {
   const LoadMediaLibraryEvent();
 }
 
-/// Busca [query] por todo (descripciones, etiquetas y creadores) y deja el
-/// resultado agrupado para la rejilla de la pantalla de media.
+/// Cambian las pastillas de la barra: se busca lo que las cumple **todas**.
+///
+/// Llega la lista entera y no lo que se ha añadido o quitado: la barra es dueña
+/// de sus pastillas, y mandar el conjunto hace que poner una, quitarla o
+/// reordenarlas sean el mismo camino en vez de tres.
+class SearchCriteriaChangedEvent extends MediaEvents {
+  final List<SearchCriterionEntity> criteria;
+
+  const SearchCriteriaChangedEvent(this.criteria);
+}
+
+/// Busca [query] por todo (descripciones, nombres de fichero, etiquetas y
+/// creadores) y deja el resultado agrupado para la rejilla.
+///
+/// Es una sola pastilla de texto libre, y se conserva porque hay cuatro sitios
+/// que buscan sin saber nada de pastillas.
 class SearchMediaEvent extends MediaEvents {
   final String query;
 
@@ -52,6 +67,18 @@ class SearchSuggestionSelectedEvent extends MediaEvents {
   final SearchSuggestionEntity suggestion;
 
   const SearchSuggestionSelectedEvent(this.suggestion);
+}
+
+/// Le quita una etiqueta al contenido que se está viendo, y **sólo a ése**.
+///
+/// Va aparte de [RemoveTagFromSelectedMediaEvent], que trabaja sobre lo marcado
+/// en la rejilla: esto sale de la cruz de una etiqueta del panel de información,
+/// donde no hay selección ninguna y lo que se toca es el contenido de delante.
+class RemoveTagFromMediaEvent extends MediaEvents {
+  final int mediaId;
+  final int tagId;
+
+  const RemoveTagFromMediaEvent({required this.mediaId, required this.tagId});
 }
 
 /// Enciende o apaga [type] en el filtro de la cabecera de la pantalla de media.
@@ -90,7 +117,16 @@ class ClearMediaSearchEvent extends MediaEvents {
 class ScanSourceEvent extends MediaEvents {
   final int limit;
 
-  const ScanSourceEvent({this.limit = unlimitedImportLimit});
+  /// Si lo que entre queda marcado como no apto.
+  ///
+  /// Se marca **al terminar** y de una vez, no pieza a pieza: durante la
+  /// importación lo que llega se ve llegar, que es lo que dice que va bien.
+  final bool asNsfw;
+
+  const ScanSourceEvent({
+    this.limit = unlimitedImportLimit,
+    this.asNsfw = false,
+  });
 }
 
 /// Para la importación que esté en marcha.
@@ -206,6 +242,21 @@ class SelectAllMediaEvent extends MediaEvents {
 /// que es la peor forma posible de que falle un bloqueo.
 class ReloadCurrentMediaEvent extends MediaEvents {
   const ReloadCurrentMediaEvent();
+}
+
+/// Vuelve a leer **sólo las etiquetas** del contenido que se está viendo.
+///
+/// Hace falta cuando algo se las cambia por detrás sin pasar por el panel: al
+/// salir del modo fernie, lo que los fernies marcados enlazan se le pone al
+/// contenido, y el panel seguía enseñando las de antes. Había que salir del
+/// visor y volver a entrar para verlo, y eso hacía dudar de si se había puesto.
+///
+/// **Sólo las etiquetas, a propósito.** Releer el contenido entero se llevaría
+/// por delante lo que el panel tenga sin guardar —una descripción a medio
+/// escribir, un creador recién elegido—, y recargar el listado (que es lo que
+/// hace [ReloadCurrentMediaEvent]) es mucho más de lo que hace falta.
+class RefreshCurrentMediaTagsEvent extends MediaEvents {
+  const RefreshCurrentMediaTagsEvent();
 }
 
 /// Carga el contenido marcado como favorito: el de la pantalla de favoritos.

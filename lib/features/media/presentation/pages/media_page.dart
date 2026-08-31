@@ -6,7 +6,6 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
-import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
@@ -42,16 +41,11 @@ class _MediaPageState extends State<MediaPage> {
   /// biblioteca, una búsqueda, una etiqueta—, y releer con el evento de la
   /// biblioteca entera después de una búsqueda tiraría la búsqueda.
   MediaEvents get _reload {
-    final bloc = getIt<MediaBloc>();
-    final suggestion = bloc.state.searchSuggestion;
-    final searchQuery = bloc.state.searchQuery;
+    final criteria = getIt<MediaBloc>().state.searchCriteria;
 
-    return switch ((suggestion, searchQuery)) {
-      (final SearchSuggestionEntity suggestion, _) =>
-        SearchSuggestionSelectedEvent(suggestion),
-      (_, final String query) => SearchMediaEvent(query),
-      _ => const LoadMediaLibraryEvent(),
-    };
+    return criteria.isEmpty
+        ? const LoadMediaLibraryEvent()
+        : SearchCriteriaChangedEvent(criteria);
   }
 
   /// Un reconocimiento ha terminado sobre esta pantalla.
@@ -247,7 +241,11 @@ class _MediaViewState extends State<_MediaView> {
                   filters: state.searchFilters,
                   sourceFilters: state.sourceFilters,
                   typeFilters: state.typeFilters,
-                  hasSearch: state.searchSections != null,
+                  // Cruzando pastillas no hay nada que recortar: el resultado
+                  // viene en un solo grupo, así que las tres casillas se quedan
+                  // atenuadas con la explicación que ya llevan.
+                  hasSearch:
+                      state.searchSections != null && !state.crossesCriteria,
                 ),
               ],
             ),

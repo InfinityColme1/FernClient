@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
@@ -177,7 +178,16 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
     final content = <Widget>[];
     for (final section in widget.sections) {
       final isEmpty = section.items.isEmpty;
-      if (isEmpty && (section.emptyMessage == null || !_isExpanded)) continue;
+      final header = _isExpanded ? section.header : null;
+
+      // Con buscador, la sección se pinta aunque no haya salido nada: el campo
+      // es lo que explica por qué está vacía, y quitarlo con el último resultado
+      // dejaría al usuario sin forma de deshacer su propia búsqueda.
+      if (isEmpty &&
+          header == null &&
+          (section.emptyMessage == null || !_isExpanded)) {
+        continue;
+      }
 
       if (content.isNotEmpty) {
         content.add(const Divider(
@@ -195,8 +205,22 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             : TutorialAnchor(id: anchorId, child: title));
       }
 
+      if (header != null) {
+        content.add(Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.l,
+            0,
+            AppSpacing.l,
+            AppSpacing.s,
+          ),
+          child: header,
+        ));
+      }
+
       if (isEmpty) {
-        content.add(_sectionMessage(section.emptyMessage!));
+        if (section.emptyMessage != null) {
+          content.add(_sectionMessage(section.emptyMessage!));
+        }
         continue;
       }
 
@@ -224,6 +248,9 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             isNsfw: item.isNsfw,
             avatarPath: item.avatarPath,
             depth: item.depth,
+            hasChildren: item.hasChildren,
+            isCollapsed: item.isCollapsed,
+            onToggleCollapse: item.onToggleCollapse,
             badgeCount: item.badgeCount,
             animationController: _animationController,
             textStyle: widget.textStyle,
@@ -245,6 +272,30 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
   /// Sin destino se devuelve tal cual: montar un `DragTarget` por cada fila del
   /// menú sería pagar por nada en las que no significan algo que se le pueda
   /// poner a un contenido.
+  /// Lo que abre una rama plegada por posarse encima arrastrando.
+  ///
+  /// Un plazo y no al entrar: sin él se abrirían todas las ramas por las que
+  /// pasa el puntero de camino a otro sitio, y el menú daría saltos justo
+  /// mientras se intenta apuntar. Se abre lo que se mira, no lo que se cruza.
+  Timer? _springTimer;
+
+  void _cancelSpring() {
+    _springTimer?.cancel();
+    _springTimer = null;
+  }
+
+  /// Empieza la cuenta para abrir la rama de [item], si está plegada.
+  void _armSpring(SidebarItem item) {
+    _cancelSpring();
+
+    if (!item.isCollapsed || item.onSpringOpen == null) return;
+
+    _springTimer = Timer(collapsedTagSpringDelay, () {
+      _springTimer = null;
+      item.onSpringOpen!();
+    });
+  }
+
   Widget _dropTarget(SidebarItem item, Widget tile) {
     final onDropped = item.onMediaDropped;
     if (onDropped == null) return tile;
@@ -263,12 +314,21 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         // oscurecerse al llegar a una etiqueta no ocurría **justo en las
         // etiquetas**, que es donde se suelta.
         if (acepta) fernDragIsOverTarget.value = true;
+        if (acepta) _armSpring(item);
 
         return acepta;
       },
-      onLeave: (_) => fernDragIsOverTarget.value = false,
+      onLeave: (_) {
+        fernDragIsOverTarget.value = false;
+        _cancelSpring();
+      },
       onAcceptWithDetails: (details) {
         fernDragIsOverTarget.value = false;
+        _cancelSpring();
+        // Lo que abrió el arrastre se vuelve a cerrar: era una ayuda del gesto,
+        // no una decisión. Guardarlo dejaría el árbol abierto por haberlo
+        // cruzado con el ratón.
+        item.onSpringRelease?.call();
         // Se ve entrar dentro de la fila. Es la confirmación de que ha ido a
         // donde se quería, y llega antes que cualquier aviso escrito.
         if (fila case final destino? when destino.mounted) {
@@ -292,6 +352,12 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _cancelSpring();
+    super.dispose();
   }
 
   Widget _sectionTitle(BuildContext context, String title) {

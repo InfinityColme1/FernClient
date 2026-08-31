@@ -1,5 +1,8 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/app_exceptions.dart';
+// Una migración trabaja sobre las filas, así que conoce los modelos: es la
+// excepción a que el núcleo no sepa de las features.
+import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -89,8 +92,66 @@ class SchemaMigrator {
 
 /// Las migraciones de la aplicación, por versión de destino.
 ///
-/// Está vacío a propósito: todo lo que trae FeRN 2.0 es aditivo (colecciones
-/// nuevas y campos con valor por defecto), así que llegar a la versión 2 no
-/// exige convertir nada. Lo que se monta aquí es el sitio donde poner la
-/// primera migración de verdad el día que haga falta, en lugar de improvisarla.
-const Map<int, Migration> schemaMigrations = {};
+/// Hasta la 6 estaba vacío a propósito: todo lo que trajo FeRN 2.0 era aditivo
+/// (colecciones nuevas y campos con valor por defecto), así que no había nada
+/// que convertir. La 7 es la primera que hace algo.
+const Map<int, Migration> schemaMigrations = {
+  7: repairTagSiblingSymmetry,
+};
+
+/// Devuelve la simetría a las relaciones de hermandad que quedaron a medias.
+///
+/// `TagModel.siblings` no tiene backlink: la simetría la fuerza el repositorio
+/// al guardar, escribiendo las dos direcciones. Pero el árbol de etiquetas se
+/// leía **sin** las hermanas, así que la ficha de la pantalla de gestión partía
+/// siempre de una lista vacía, y guardar desde ahí desenlazaba por un lado lo
+/// que seguía enlazado por el otro. El resultado es una etiqueta que sabe que es
+/// hermana de otra sin que la otra lo sepa: se ve desde un lado y desde el otro
+/// no.
+///
+/// **Sólo añade.** Ante una relación coja hay dos lecturas —«se creó y se perdió
+/// la mitad» o «se quitó y se quedó la mitad»— y no hay forma de distinguirlas
+/// en los datos. Se elige recuperarla: recuperar de más se deshace quitándola a
+/// mano, y borrar de más no se deshace de ninguna manera.
+///
+/// Es idempotente: pasarla dos veces sobre la misma base no cambia nada.
+Future<void> repairTagSiblingSymmetry(Isar database) async {
+  final tags = await database.tagModels.where().findAll();
+  if (tags.isEmpty) return;
+
+  final byId = {for (final tag in tags) tag.id: tag};
+
+  // Se mira todo antes de escribir nada: leer dentro de la escritura mientras se
+  // van modificando los enlaces es pedirle a Isar que conteste sobre algo que
+  // está cambiando debajo.
+  for (final tag in tags) {
+    await tag.siblings.load();
+  }
+
+  // Qué le falta a cada etiqueta, por identificador.
+  final missing = <int, Set<TagModel>>{};
+  for (final tag in tags) {
+    for (final sibling in tag.siblings) {
+      final other = byId[sibling.id];
+
+      // Enlazada con algo que ya no está: la relación no lleva a ninguna parte
+      // y no hay nada que reparar en el otro lado.
+      if (other == null || other.id == tag.id) continue;
+
+      if (other.siblings.any((each) => each.id == tag.id)) continue;
+
+      missing.putIfAbsent(other.id, () => <TagModel>{}).add(tag);
+    }
+  }
+
+  if (missing.isEmpty) return;
+
+  await database.writeTxn(() async {
+    for (final entry in missing.entries) {
+      final tag = byId[entry.key];
+      if (tag == null) continue;
+
+      await tag.siblings.update(link: entry.value);
+    }
+  });
+}

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:Fern/core/ui/inputs/fern_search_input.dart';
 import 'package:Fern/core/utils/debouncer.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +41,13 @@ class FernEntitySearchField<T> extends StatefulWidget {
   /// [FernSearchInput.clearOnSelected].
   final bool clearOnSelected;
 
+  /// Qué ofrecer nada más pulsar el campo, antes de escribir.
+  ///
+  /// Son los últimos usados. Sin esto el campo no enseña nada hasta que se
+  /// teclea, y asignar las mismas tres etiquetas a una tanda obliga a
+  /// escribirlas enteras una y otra vez.
+  final Future<List<T>> Function()? recents;
+
   const FernEntitySearchField({
     super.key,
     required this.label,
@@ -51,6 +60,7 @@ class FernEntitySearchField<T> extends StatefulWidget {
     this.initialValue = '',
     this.debounce = const Duration(milliseconds: 250),
     this.clearOnSelected = false,
+    this.recents,
   });
 
   @override
@@ -71,6 +81,25 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
   /// escribiendo sobre una coincidencia ya elegida.
   String? _notifiedName;
 
+  /// Trae los últimos usados y los pone en el desplegable.
+  ///
+  /// Sin esperar: no hay nada que escribir, así que no hay nada que esperar a
+  /// que termine de escribirse. Y sin indicador: es una lectura de preferencias
+  /// y de la base por identificador, no una búsqueda.
+  Future<void> _loadRecents() async {
+    final recents = widget.recents;
+    if (recents == null) return;
+
+    final found = await recents();
+    if (!mounted) return;
+
+    // Mientras se iba a buscarlos ha podido escribirse algo: entonces mandan las
+    // sugerencias de lo escrito, que es lo que se acaba de pedir.
+    if (_results.isNotEmpty || _isSearching) return;
+
+    setState(() => _results = found);
+  }
+
   void _onQueryChanged(String query) {
     widget.onChanged?.call(query);
 
@@ -86,6 +115,10 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
           _isSearching = false;
         });
       }
+
+      // Borrar lo escrito devuelve el campo a como estaba al pulsarlo, con los
+      // últimos usados: dejarlo en blanco sería castigar el haber escrito.
+      unawaited(_loadRecents());
       return;
     }
 
@@ -160,6 +193,8 @@ class _FernEntitySearchFieldState<T> extends State<FernEntitySearchField<T>> {
               return item == null ? null : widget.trailingOf!(item);
             },
       clearOnSelected: widget.clearOnSelected,
+      showsSuggestionsWhenEmpty: widget.recents != null,
+      onFocusedEmpty: _loadRecents,
       onChanged: _onQueryChanged,
       onSelected: _onSuggestionSelected,
     );

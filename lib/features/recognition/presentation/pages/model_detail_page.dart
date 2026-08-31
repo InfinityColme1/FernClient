@@ -13,6 +13,8 @@ import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/features/recognition/domain/usecases/save_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/set_model_nsfw_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/import_model_weights_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/forget_training_usecase.dart';
+import 'package:Fern/features/recognition/presentation/widgets/forget_training_dialog.dart';
 import 'package:Fern/features/recognition/domain/usecases/search_fernies_usecase.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_events.dart';
@@ -31,7 +33,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,16 +70,20 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
   final _saveModel = getIt<SaveModelUseCase>();
   final _setModelNsfw = getIt<SetModelNsfwUseCase>();
   final _searchFernies = getIt<SearchFerniesUseCase>();
-  final _storeAvatar = getIt<StoreAvatarUseCase>();
   final _jobs = getIt<JobQueue>();
   final _engine = getIt<RecognitionEngine>();
   final _importWeights = getIt<ImportModelWeightsUseCase>();
+  final _forget = getIt<ForgetTrainingUseCase>();
 
   /// Se están trayendo unos pesos de fuera.
   ///
   /// Cargar un `.pt` para leer qué trae dentro tarda unos segundos: sin decirlo,
   /// el botón parece que no ha hecho nada y se pulsa otra vez.
   bool _isImporting = false;
+
+  /// Se está olvidando lo entrenado. El botón se apaga mientras: son ficheros
+  /// de cien megas y una escritura, y pulsarlo dos veces no ayuda.
+  bool _isForgetting = false;
 
   final _nameController = TextEditingController();
 
@@ -199,12 +205,16 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
         _function != model.function;
   }
 
+  /// Elige el avatar: de dónde sale la imagen, cuál, y qué trozo de ella.
+  ///
+  /// El explorador de ficheros era la única respuesta a la primera pregunta, y
+  /// obligaba a buscar por el disco una imagen que la aplicación ya tiene
+  /// guardada y sabe enseñar.
   Future<void> _pickImage() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
-    final path = result?.files.single.path;
-    if (path == null || !mounted) return;
+    final choice = await chooseAvatarImage(context);
+    if (choice == null || !mounted) return;
 
-    final stored = await _storeAvatar(params: path);
+    final stored = await storeChosenAvatar(choice, replacing: _picturePath);
     if (!mounted) return;
 
     setState(() => _picturePath = stored);
@@ -397,6 +407,42 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
     );
   }
 
+  /// Deja el modelo como si no se hubiera entrenado nunca.
+  ///
+  /// Se pregunta antes: los pesos no vuelven, y entrenar otra vez son horas.
+  ///
+  /// **Con el entrenamiento en marcha no se ofrece** (`_job != null`): borrar los
+  /// pesos de debajo de lo que está escribiéndolos dejaría el modelo a medias sin
+  /// que nada lo explicara.
+  Future<void> _forgetTraining(RecognitionModelEntity model) async {
+    final confirmed = await showFernDialog<bool, ModelsBloc>(
+      context: context,
+      builder: (_) => ForgetTrainingDialog(modelName: model.name),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isForgetting = true);
+
+    final result = await _forget(params: model);
+    if (!mounted) return;
+
+    setState(() => _isForgetting = false);
+
+    final texts = AppLocalizations.of(context);
+
+    showFernToast(
+      context,
+      result is DataSuccess
+          ? texts.modelForgetTrainingDone
+          : '${result.exception}',
+    );
+
+    // La ficha la pinta el bloc: sin releer, seguiría enseñando los pesos que
+    // acaban de irse.
+    if (mounted) context.read<ModelsBloc>().add(const LoadModelsEvent());
+  }
+
   /// Trae unos pesos entrenados en otro sitio.
   ///
   /// El plan B del doc 02: sin tarjeta gráfica no se puede entrenar aquí, y sin
@@ -489,6 +535,21 @@ class _ModelDetailPageState extends State<ModelDetailPage> {
               ),
               const SizedBox(width: AppSpacing.l),
               _nsfwButton(context, texts, model),
+              // Sólo si hay algo que olvidar. En un modelo sin entrenar el botón
+              // no haría nada, y uno que no hace nada es peor que no tenerlo.
+              if (model.isUsable)
+                IconButton(
+                  tooltip: texts.modelForgetTrainingHint,
+                  onPressed: _isForgetting || _job != null
+                      ? null
+                      : () => _forgetTraining(model),
+                  icon: _isForgetting
+                      ? const SizedBox.square(
+                          dimension: AppSizes.iconMedium,
+                          child: FernProgressIndicator(),
+                        )
+                      : const Icon(Symbols.delete_history),
+                ),
               IconButton(
                 tooltip: texts.modelImportWeightsHint,
                 onPressed: _isImporting || _job != null

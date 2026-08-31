@@ -894,6 +894,12 @@ abstract class AppLocalizations {
   /// **'Preparing the dataset...'**
   String get trainingPreparing;
 
+  /// No description provided for @trainingCancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping when this epoch ends…'**
+  String get trainingCancelling;
+
   /// No description provided for @trainingEpoch.
   ///
   /// In en, this message translates to:
@@ -1025,6 +1031,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A .pt file trained elsewhere. It is copied into the recognition folder so it does not disappear from under the model.'**
   String get modelImportWeightsHint;
+
+  /// No description provided for @modelForgetTrainingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget what was trained'**
+  String get modelForgetTrainingHint;
+
+  /// No description provided for @modelForgetTrainingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget what {model} learned?'**
+  String modelForgetTrainingTitle(String model);
+
+  /// No description provided for @modelForgetTrainingLoses.
+  ///
+  /// In en, this message translates to:
+  /// **'The weights, the metrics and the training date go, files included. Training again takes as long as it took the first time.'**
+  String get modelForgetTrainingLoses;
+
+  /// No description provided for @modelForgetTrainingKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'The hyperparameters, the fernies and the split stay as they are. The model goes back to untrained, and stays where it is in the tree.'**
+  String get modelForgetTrainingKeeps;
+
+  /// No description provided for @modelForgetTrainingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget it'**
+  String get modelForgetTrainingAction;
+
+  /// No description provided for @modelForgetTrainingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing left of that training.'**
+  String get modelForgetTrainingDone;
 
   /// No description provided for @modelImportWeightsInvalid.
   ///
@@ -1416,6 +1458,42 @@ abstract class AppLocalizations {
   /// **'Add a related tag'**
   String get tagRelationsAddSibling;
 
+  /// No description provided for @tagCollapseBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse what hangs from this one'**
+  String get tagCollapseBranch;
+
+  /// No description provided for @tagExpandBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand what hangs from this one'**
+  String get tagExpandBranch;
+
+  /// No description provided for @siblingDirectionBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Each one adds the other'**
+  String get siblingDirectionBoth;
+
+  /// No description provided for @siblingDirectionOneWay.
+  ///
+  /// In en, this message translates to:
+  /// **'«{from}» adds «{to}»'**
+  String siblingDirectionOneWay(String from, String to);
+
+  /// No description provided for @siblingDirectionNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither adds the other'**
+  String get siblingDirectionNone;
+
+  /// No description provided for @siblingDirectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Being related says they go together. The direction says what happens when you add one.'**
+  String get siblingDirectionNote;
+
   /// No description provided for @tagRelationsCreate.
   ///
   /// In en, this message translates to:
@@ -1631,6 +1709,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use the picture you are viewing'**
   String get useCurrentImageAsAvatar;
+
+  /// No description provided for @avatarCropTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the avatar'**
+  String get avatarCropTitle;
+
+  /// No description provided for @avatarCropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a square over the picture. The wheel zooms in.'**
+  String get avatarCropHint;
+
+  /// No description provided for @avatarCropWholeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the whole picture'**
+  String get avatarCropWholeImage;
+
+  /// No description provided for @avatarSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where does the picture come from?'**
+  String get avatarSourceTitle;
+
+  /// No description provided for @avatarSourceLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'From your Fern library'**
+  String get avatarSourceLibrary;
+
+  /// No description provided for @avatarSourceDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'From a file on this computer'**
+  String get avatarSourceDevice;
+
+  /// No description provided for @avatarLibraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here matches that'**
+  String get avatarLibraryEmpty;
+
+  /// No description provided for @tagLogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this came from'**
+  String get tagLogTitle;
+
+  /// No description provided for @tagLogNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What was put on this media, and why.'**
+  String get tagLogNote;
+
+  /// No description provided for @tagLogGuessNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Some of this was never recorded: it is worked out from the data as they are now, not from what happened. Those lines are marked.'**
+  String get tagLogGuessNote;
+
+  /// No description provided for @tagLogGuessed.
+  ///
+  /// In en, this message translates to:
+  /// **'worked out'**
+  String get tagLogGuessed;
+
+  /// No description provided for @tagLogLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the log…'**
+  String get tagLogLoading;
+
+  /// No description provided for @tagLogEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been put on this media.'**
+  String get tagLogEmpty;
+
+  /// No description provided for @tagLogManual.
+  ///
+  /// In en, this message translates to:
+  /// **'You put it'**
+  String get tagLogManual;
+
+  /// No description provided for @tagLogSourceUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'A linked address matched'**
+  String get tagLogSourceUrl;
+
+  /// No description provided for @tagLogPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'The platform it came from'**
+  String get tagLogPlatform;
+
+  /// No description provided for @tagLogAncestor.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited from the branch'**
+  String get tagLogAncestor;
+
+  /// No description provided for @tagLogAncestorOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Above {tag}'**
+  String tagLogAncestorOf(String tag);
+
+  /// No description provided for @tagLogSibling.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes with another tag'**
+  String get tagLogSibling;
+
+  /// No description provided for @tagLogSiblingOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Goes with {tag}'**
+  String tagLogSiblingOf(String tag);
+
+  /// No description provided for @tagLogRecognition.
+  ///
+  /// In en, this message translates to:
+  /// **'You accepted what a model suggested'**
+  String get tagLogRecognition;
+
+  /// No description provided for @tagLogFernie.
+  ///
+  /// In en, this message translates to:
+  /// **'What a marked fernie links to'**
+  String get tagLogFernie;
+
+  /// No description provided for @tagLogFernieOf.
+  ///
+  /// In en, this message translates to:
+  /// **'You marked {fernie} here'**
+  String tagLogFernieOf(String fernie);
+
+  /// No description provided for @tagLogUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No record of it'**
+  String get tagLogUnknown;
+
+  /// No description provided for @actionTagLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this came from'**
+  String get actionTagLog;
 
   /// No description provided for @viewerSaveSectionTitle.
   ///
@@ -2087,6 +2315,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your files stay where they are: nothing is deleted from disk, and scanning your library folder registers them again. Your settings, passwords and remote credentials also stay.'**
   String get databaseWipeKeeps;
+
+  /// No description provided for @databaseWipeScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get databaseWipeScopeAll;
+
+  /// No description provided for @databaseWipeScopeAllNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags, creators, fernies, models: the lot. The app starts over.'**
+  String get databaseWipeScopeAllNote;
+
+  /// No description provided for @databaseWipeScopeNsfw.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what is marked NSFW'**
+  String get databaseWipeScopeNsfw;
+
+  /// No description provided for @databaseWipeScopeNsfwNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The media that is marked, and what it inherits from marked tags and creators. Tags, creators, fernies and models stay.'**
+  String get databaseWipeScopeNsfwNote;
+
+  /// No description provided for @databaseWipeFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the files from disk too'**
+  String get databaseWipeFiles;
+
+  /// No description provided for @databaseWipeFilesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Without this the files stay where they are and a scan brings them back. With it, they are gone: this is the part with no way back.'**
+  String get databaseWipeFilesNote;
+
+  /// No description provided for @databaseWipeConfirmFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'The files go from disk as well. They will be deleted in the background and you can follow it in the task list.'**
+  String get databaseWipeConfirmFiles;
+
+  /// No description provided for @databaseWipeConfirmNsfw.
+  ///
+  /// In en, this message translates to:
+  /// **'Only what is marked NSFW is going. Everything else stays as it is.'**
+  String get databaseWipeConfirmNsfw;
 
   /// No description provided for @databaseWipeContinue.
   ///
@@ -3042,6 +3318,12 @@ abstract class AppLocalizations {
   /// **'Most items a scan brings in'**
   String get importLimitTooltip;
 
+  /// No description provided for @importAsNsfwTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark everything imported as NSFW'**
+  String get importAsNsfwTooltip;
+
   /// No description provided for @lastImportNever.
   ///
   /// In en, this message translates to:
@@ -3137,6 +3419,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add address'**
   String get addSourceUrl;
+
+  /// No description provided for @noSourceUrls.
+  ///
+  /// In en, this message translates to:
+  /// **'No linked addresses'**
+  String get noSourceUrls;
+
+  /// No description provided for @databaseCleanupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up leftover files'**
+  String get databaseCleanupTitle;
+
+  /// No description provided for @databaseCleanupNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatars are copies Fern makes. When you change one, the previous copy stops being used by anything and stays on disk. This sweeps away everything nothing points to any more.'**
+  String get databaseCleanupNote;
+
+  /// No description provided for @databaseCleanupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up'**
+  String get databaseCleanupAction;
+
+  /// No description provided for @databaseCleanupFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 loose file, {size}} other{{count} loose files, {size}}}'**
+  String databaseCleanupFound(int count, String size);
+
+  /// No description provided for @databaseCleanupAvatars.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatars with no owner'**
+  String get databaseCleanupAvatars;
+
+  /// No description provided for @databaseCleanupDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads no longer in the database'**
+  String get databaseCleanupDownloads;
+
+  /// No description provided for @databaseCleanupWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'Weights no model points to'**
+  String get databaseCleanupWeights;
+
+  /// No description provided for @databaseCleanupKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'The Python environment, the training sets and the caches are not touched.'**
+  String get databaseCleanupKeeps;
+
+  /// No description provided for @databaseCleanupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The clean-up could not finish'**
+  String get databaseCleanupFailed;
+
+  /// No description provided for @databaseCleanupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{There was nothing left over} =1{1 file removed, {size} freed} other{{count} files removed, {size} freed}}'**
+  String databaseCleanupDone(int count, String size);
+
+  /// No description provided for @blockedImportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not to be imported again'**
+  String get blockedImportsTitle;
+
+  /// No description provided for @blockedImportsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What you asked not to be offered again. It is skipped without downloading it.'**
+  String get blockedImportsNote;
+
+  /// No description provided for @blockedImportsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is blocked.'**
+  String get blockedImportsNone;
+
+  /// No description provided for @blockedImportsUnblock.
+  ///
+  /// In en, this message translates to:
+  /// **'Import this again'**
+  String get blockedImportsUnblock;
+
+  /// No description provided for @blockedImportsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the page it came from'**
+  String get blockedImportsOpen;
+
+  /// No description provided for @blockedImportsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget them all'**
+  String get blockedImportsClear;
+
+  /// No description provided for @blockImportAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not import this again'**
+  String get blockImportAgain;
+
+  /// No description provided for @blockImportAgainDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The source keeps offering what you saved there. Marked, this one is skipped without downloading it. You can undo it in Settings, under Database.'**
+  String get blockImportAgainDescription;
+
+  /// No description provided for @importSkippedBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 skipped: you asked not to see it again.} other{{count} skipped: you asked not to see them again.}}'**
+  String importSkippedBlocked(int count);
+
+  /// No description provided for @creatorNsfwAffected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{This creator has no content right now.} =1{Hides 1 item.} other{Hides {count} items.}}'**
+  String creatorNsfwAffected(int count);
+
+  /// No description provided for @creatorNsfwOnTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as NSFW · click to unmark'**
+  String get creatorNsfwOnTooltip;
+
+  /// No description provided for @creatorNsfwOffTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as NSFW'**
+  String get creatorNsfwOffTooltip;
+
+  /// No description provided for @searchChipDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get searchChipDescription;
+
+  /// No description provided for @showsTagBranchOnFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the whole branch when filtering tags'**
+  String get showsTagBranchOnFilter;
+
+  /// No description provided for @showsTagBranchOnFilterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtering the tag list also brings whatever hangs from each match, so you can see the branch and not just the name.'**
+  String get showsTagBranchOnFilterDescription;
+
+  /// No description provided for @peopleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get peopleTitle;
+
+  /// No description provided for @navPersonaManager.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get navPersonaManager;
+
+  /// No description provided for @tagIsPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'This tag is a person'**
+  String get tagIsPerson;
+
+  /// No description provided for @tagIsPersonDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People and characters are managed on their own screen. It is still a tag: it keeps working the same when tagging and searching.'**
+  String get tagIsPersonDescription;
+
+  /// No description provided for @openPeopleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to people'**
+  String get openPeopleTooltip;
+
+  /// No description provided for @openTagsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to tags'**
+  String get openTagsTooltip;
+
+  /// No description provided for @noPeopleYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No people yet'**
+  String get noPeopleYet;
+
+  /// No description provided for @noPeopleYetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a tag as a person from its card, or create one from here.'**
+  String get noPeopleYetHint;
+
+  /// No description provided for @markLinkNsfwTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark this address as not safe'**
+  String get markLinkNsfwTooltip;
+
+  /// No description provided for @unmarkLinkNsfwTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'This address is marked as not safe'**
+  String get unmarkLinkNsfwTooltip;
+
+  /// No description provided for @openSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the address in the browser'**
+  String get openSourceUrlTooltip;
+
+  /// No description provided for @editSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit address'**
+  String get editSourceUrlTooltip;
+
+  /// No description provided for @doneEditingSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Done editing'**
+  String get doneEditingSourceUrlTooltip;
+
+  /// No description provided for @removeSourceUrlTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove address'**
+  String get removeSourceUrlTooltip;
 
   /// No description provided for @filtersType.
   ///
@@ -3978,6 +4500,78 @@ abstract class AppLocalizations {
   /// **'Edit regions'**
   String get fernieToolEdit;
 
+  /// No description provided for @jobTagRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking a tag’s content'**
+  String get jobTagRegions;
+
+  /// No description provided for @jobFileCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting files'**
+  String get jobFileCleanup;
+
+  /// No description provided for @fernieImportTagTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a whole tag'**
+  String get fernieImportTagTitle;
+
+  /// No description provided for @fernieImportTagNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Every piece with that tag gets a region covering the whole frame, for this fernie. It is what you would do by hand, one by one.'**
+  String get fernieImportTagNote;
+
+  /// No description provided for @fernieImportTagAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark them'**
+  String get fernieImportTagAction;
+
+  /// No description provided for @fernieImportTagTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a whole tag as regions'**
+  String get fernieImportTagTooltip;
+
+  /// No description provided for @fernieImportTagFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'Frames per video'**
+  String get fernieImportTagFrames;
+
+  /// No description provided for @fernieImportTagFramesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Training takes one image per region, so a whole video would be thousands of near-identical crops.'**
+  String get fernieImportTagFramesNote;
+
+  /// No description provided for @fernieImportTagCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing has that tag} =1{1 piece} other{{count} pieces}}'**
+  String fernieImportTagCount(int count);
+
+  /// No description provided for @fernieImportTagStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking has started; you can follow it in the task list'**
+  String get fernieImportTagStarted;
+
+  /// No description provided for @fernieToolWholeFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the whole frame'**
+  String get fernieToolWholeFrame;
+
+  /// No description provided for @fernieAcceptAllProposed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Accept the detected region} other{Accept the {count} detected regions}}'**
+  String fernieAcceptAllProposed(int count);
+
   /// No description provided for @fernieRegionConfirm.
   ///
   /// In en, this message translates to:
@@ -4157,6 +4751,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}%'**
   String suggestionConfidence(int percent);
+
+  /// No description provided for @suggestionInstances.
+  ///
+  /// In en, this message translates to:
+  /// **'×{count}'**
+  String suggestionInstances(int count);
 
   /// No description provided for @suggestionFromModel.
   ///
@@ -4469,6 +5069,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send recognised content back to importing'**
   String get returnRecognizedLabel;
+
+  /// No description provided for @maxDetectionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many times the same thing is kept'**
+  String get maxDetectionsLabel;
+
+  /// No description provided for @maxDetectionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A model can see four cars in one photo. Each one is a separate region you can mark, so all of them are kept — up to this many. A car park could give fifty.'**
+  String get maxDetectionsDescription;
 
   /// No description provided for @returnRecognizedDescription.
   ///
@@ -5403,13 +6015,13 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Guided tour'**
+  /// **'Guided tours'**
   String get tutorialSectionTitle;
 
   /// No description provided for @tutorialSectionNote.
   ///
   /// In en, this message translates to:
-  /// **'A walk through the screens of the app and what each one is for. You can leave it at any point.'**
+  /// **'Ten tours that cover the whole app, one subject each. Follow them all and nothing here will be a mystery. You can leave any of them at any time.'**
   String get tutorialSectionNote;
 
   /// No description provided for @tutorialOfferTitle.
@@ -5421,7 +6033,7 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialOfferBody.
   ///
   /// In en, this message translates to:
-  /// **'It is a short guided tour and you can leave at any point. If you would rather look around on your own, it is in the settings.'**
+  /// **'A ten-step tour of what everything is and where it lives. There are nine more, one per subject, in Settings under Help. You can leave whenever you like.'**
   String get tutorialOfferBody;
 
   /// No description provided for @tutorialOfferAccept.
@@ -5475,43 +6087,43 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialWelcomeBody.
   ///
   /// In en, this message translates to:
-  /// **'A quick tour of what the app does. Move on with Next or the arrow keys, and leave with Escape.'**
+  /// **'FeRN keeps the media you collect: it brings it in, sorts it with tags and creators, and can learn to recognise what appears in it. Use Next or the arrow keys, and Escape to leave.'**
   String get tutorialWelcomeBody;
 
   /// No description provided for @tutorialSidebarTitle.
   ///
   /// In en, this message translates to:
-  /// **'This is how you move around'**
+  /// **'This is how you get around'**
   String get tutorialSidebarTitle;
 
   /// No description provided for @tutorialSidebarBody.
   ///
   /// In en, this message translates to:
-  /// **'Every screen lives here: your library, what you bring in from elsewhere, your favourites and the managers. The button above folds it away to give the content more room.'**
+  /// **'Every screen is here: your library, what you bring in, favourites, the bin, and the managers for creators, tags, fernies and models. The button at the top folds it away when you need the room.'**
   String get tutorialSidebarBody;
 
   /// No description provided for @tutorialImportTitle.
   ///
   /// In en, this message translates to:
-  /// **'This is where content comes in'**
+  /// **'Content comes in here'**
   String get tutorialImportTitle;
 
   /// No description provided for @tutorialImportBody.
   ///
   /// In en, this message translates to:
-  /// **'Bring content from a remote source or from a folder on your disk. What arrives waits for review until you accept it, so nothing reaches the library without you seeing it.'**
+  /// **'You bring content from a remote source — Reddit, Pixiv, Danbooru, Gelbooru, Pinterest, Pawchive — or from a folder on your disk. Whatever arrives waits here until you accept it, so nothing lands in your library without you seeing it.'**
   String get tutorialImportBody;
 
   /// No description provided for @tutorialContentTitle.
   ///
   /// In en, this message translates to:
-  /// **'Everything shows up here'**
+  /// **'And this is where it all shows up'**
   String get tutorialContentTitle;
 
   /// No description provided for @tutorialContentBody.
   ///
   /// In en, this message translates to:
-  /// **'Your library. A click opens the viewer, right-click brings up the actions, and you can mark several at once to handle them together.'**
+  /// **'Your library: everything you have accepted. A click opens the viewer, right-click brings up the actions, and you can tick several to work on them together.'**
   String get tutorialContentBody;
 
   /// No description provided for @tutorialTagsTitle.
@@ -5523,175 +6135,175 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialTagsBody.
   ///
   /// In en, this message translates to:
-  /// **'The tags in the menu are also places to drop things: drag one or more items onto a tag and they are tagged. Click it and the library shows only what is in it.'**
+  /// **'The tags in the menu are also places to drop: drag one or several items onto one and they come out tagged. Clicking a tag filters the library down to what carries it.'**
   String get tutorialTagsBody;
 
   /// No description provided for @tutorialCreateTitle.
   ///
   /// In en, this message translates to:
-  /// **'Creators, tags and fernies'**
+  /// **'Creating things'**
   String get tutorialCreateTitle;
 
   /// No description provided for @tutorialCreateBody.
   ///
   /// In en, this message translates to:
-  /// **'Everything you organise with is created here: creators, tags, and fernies, which are the faces the app learns to recognise.'**
+  /// **'This is where creators, tags, fernies and models are born. A creator is who made something; a tag is anything you want to group by; a fernie is a face or a thing you want FeRN to learn.'**
   String get tutorialCreateBody;
 
   /// No description provided for @tutorialSearchTitle.
   ///
   /// In en, this message translates to:
-  /// **'Search'**
+  /// **'Searching'**
   String get tutorialSearchTitle;
 
   /// No description provided for @tutorialSearchBody.
   ///
   /// In en, this message translates to:
-  /// **'Search by name, creator or tag from any screen.'**
+  /// **'Type and FeRN offers what matches: a tag, a creator, a description. What you pick becomes a chip, and chips stack — two of them show what meets both.'**
   String get tutorialSearchBody;
 
   /// No description provided for @tutorialSettingsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Everything else lives here'**
+  /// **'And everything else is here'**
   String get tutorialSettingsTitle;
 
   /// No description provided for @tutorialSettingsBody.
   ///
   /// In en, this message translates to:
-  /// **'Language, theme, folders, remote sources and recognition. This tutorial too, in case you want to see it again.'**
+  /// **'Language, theme, folders, remote sources, recognition and the content lock. Under Help you will find the other nine tours: one per subject, and between them they cover the whole app.'**
   String get tutorialSettingsBody;
 
   /// No description provided for @tourGeneralTitle.
   ///
   /// In en, this message translates to:
-  /// **'General tour'**
+  /// **'The general tour'**
   String get tourGeneralTitle;
 
   /// No description provided for @tourGeneralDescription.
   ///
   /// In en, this message translates to:
-  /// **'Where everything is and how content gets in. This is the one offered the first time.'**
+  /// **'What FeRN is, what each screen is for and where everything lives. Start here.'**
   String get tourGeneralDescription;
 
   /// No description provided for @tourImportingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Bringing in and reviewing content'**
+  /// **'Bringing content in'**
   String get tourImportingTitle;
 
   /// No description provided for @tourImportingDescription.
   ///
   /// In en, this message translates to:
-  /// **'Where content comes from, how it is reviewed, and what it takes for it to reach the library.'**
+  /// **'Where content comes from, how you review it and what it takes for it to reach your library.'**
   String get tourImportingDescription;
 
   /// No description provided for @tourImporting1Title.
   ///
   /// In en, this message translates to:
-  /// **'From where, and how much'**
+  /// **'Where from, and how much'**
   String get tourImporting1Title;
 
   /// No description provided for @tourImporting1Body.
   ///
   /// In en, this message translates to:
-  /// **'Pick the source — a remote one or a folder on this computer — choose everything or only what is new since last time, and press Fetch.'**
+  /// **'Pick a source — a remote one or a folder on this computer — say whether you want everything or only what is new since last time, and press Bring. A remote source brings what you have favourited there.'**
   String get tourImporting1Body;
 
   /// No description provided for @tourImporting2Title.
   ///
   /// In en, this message translates to:
-  /// **'What arrives is reviewed here'**
+  /// **'Each source needs its keys'**
   String get tourImporting2Title;
 
   /// No description provided for @tourImporting2Body.
   ///
   /// In en, this message translates to:
-  /// **'None of this is in your library yet. This grid is the inbox: what has been fetched, waiting for you to say what to do with it.'**
+  /// **'Remote sources need your account details, and you put them in Settings under Remote sources. Each one explains how to get them: they are not your password but keys the platform gives out for this.'**
   String get tourImporting2Body;
 
   /// No description provided for @tourImporting3Title.
   ///
   /// In en, this message translates to:
-  /// **'Open one and decide'**
+  /// **'Nothing here is yours yet'**
   String get tourImporting3Title;
 
   /// No description provided for @tourImporting3Body.
   ///
   /// In en, this message translates to:
-  /// **'A click opens it in the viewer. There you save it, which makes it final, or discard it: discarding takes it out of the database and asks whether to delete the file too.'**
+  /// **'This grid is the inbox: what has been brought in, waiting for you to say what to do with it. It is already on your disk, but it is not in your library and it does not show up in searches.'**
   String get tourImporting3Body;
 
   /// No description provided for @tourImporting4Title.
   ///
   /// In en, this message translates to:
-  /// **'Its details, without leaving the viewer'**
+  /// **'Open one and decide'**
   String get tourImporting4Title;
 
   /// No description provided for @tourImporting4Body.
   ///
   /// In en, this message translates to:
-  /// **'The information panel is where you set creator, tags, title and links. You edit it while looking at it, which is when you know what it is.'**
+  /// **'A click opens it in the viewer. There you save it — and it becomes final — or you discard it. Discarding takes it out of the database and asks whether to delete the file as well.'**
   String get tourImporting4Body;
 
   /// No description provided for @tourImporting5Title.
   ///
   /// In en, this message translates to:
-  /// **'And then it is in Content'**
+  /// **'The details, without leaving the viewer'**
   String get tourImporting5Title;
 
   /// No description provided for @tourImporting5Body.
   ///
   /// In en, this message translates to:
-  /// **'What you saved leaves the import grid and shows up in the library.'**
+  /// **'The side panel is where it gets a creator, tags, a description and links. You edit it while you look at it, which is when you actually know what it is. Saving also moves you on to the next one.'**
   String get tourImporting5Body;
 
   /// No description provided for @tourManagersTitle.
   ///
   /// In en, this message translates to:
-  /// **'Creators and tags'**
+  /// **'Tags, people and creators'**
   String get tourManagersTitle;
 
   /// No description provided for @tourManagersDescription.
   ///
   /// In en, this message translates to:
-  /// **'The two ways of ordering what you have, and the quick way to tag several things at once.'**
+  /// **'Everything you use to sort your library: the tag tree, siblings, people, creators and automatic tagging.'**
   String get tourManagersDescription;
 
   /// No description provided for @tourManagers1Title.
   ///
   /// In en, this message translates to:
-  /// **'The list of creators'**
+  /// **'Creators'**
   String get tourManagers1Title;
 
   /// No description provided for @tourManagers1Body.
   ///
   /// In en, this message translates to:
-  /// **'Every creator you have. Pick one and the screen fills with their work.'**
+  /// **'A creator is whoever made something: an artist, an account, a studio. Each item has one and only one. Picking one here fills the screen with everything of theirs.'**
   String get tourManagers1Body;
 
   /// No description provided for @tourManagers2Title.
   ///
   /// In en, this message translates to:
-  /// **'Their details'**
+  /// **'Their card'**
   String get tourManagers2Title;
 
   /// No description provided for @tourManagers2Body.
   ///
   /// In en, this message translates to:
-  /// **'Name, avatar and the links to their sites. What you change here is saved on the creator.'**
+  /// **'Name, avatar and the links to where they publish. Those links are not decoration: they are what lets FeRN put the creator on by itself when something arrives from one of those addresses.'**
   String get tourManagers2Body;
 
   /// No description provided for @tourManagers3Title.
   ///
   /// In en, this message translates to:
-  /// **'Everything of theirs'**
+  /// **'Avatars'**
   String get tourManagers3Title;
 
   /// No description provided for @tourManagers3Body.
   ///
   /// In en, this message translates to:
-  /// **'The content you have assigned to them, in a grid like the library one.'**
+  /// **'Click the picture and you choose where it comes from: a file on this computer, or your own library. From your library you can crop a square out of any image, which is what an avatar actually is.'**
   String get tourManagers3Body;
 
   /// No description provided for @tourManagers4Title.
@@ -5703,31 +6315,31 @@ abstract class AppLocalizations {
   /// No description provided for @tourManagers4Body.
   ///
   /// In en, this message translates to:
-  /// **'With one difference: a tag can hang from another, so they can be arranged as a tree.'**
+  /// **'With one difference: an item has one creator but as many tags as you like. A tag is anything you want to group by — a series, a colour, a mood, a place.'**
   String get tourManagers4Body;
 
   /// No description provided for @tourManagers5Title.
   ///
   /// In en, this message translates to:
-  /// **'And you apply them by dragging'**
+  /// **'Tags hang from tags'**
   String get tourManagers5Title;
 
   /// No description provided for @tourManagers5Body.
   ///
   /// In en, this message translates to:
-  /// **'From the library, drag one or more items onto a tag in the menu. It is the quick way to tag several at once.'**
+  /// **'Drag one onto another and it hangs from it. That is what makes tagging worth it: putting on a child tag puts on everything above it, so something tagged as a character also comes up under its series.'**
   String get tourManagers5Body;
 
   /// No description provided for @tourFernieTitle.
   ///
   /// In en, this message translates to:
-  /// **'Fernie mode'**
+  /// **'Fernies and the marking mode'**
   String get tourFernieTitle;
 
   /// No description provided for @tourFernieDescription.
   ///
   /// In en, this message translates to:
-  /// **'What a fernie is, where its examples come from, and how you mark them in the viewer.'**
+  /// **'What a fernie is, where its examples come from and every way of marking regions on your content.'**
   String get tourFernieDescription;
 
   /// No description provided for @tourFernie1Title.
@@ -5739,19 +6351,19 @@ abstract class AppLocalizations {
   /// No description provided for @tourFernie1Body.
   ///
   /// In en, this message translates to:
-  /// **'A face, a character or an object you want Fern to learn to recognise in your content.'**
+  /// **'A face, a character or an object you want FeRN to learn to recognise in your content. It is not a tag: a tag says what something is, a fernie is an example of what something looks like.'**
   String get tourFernie1Body;
 
   /// No description provided for @tourFernie2Title.
   ///
   /// In en, this message translates to:
-  /// **'Here are yours'**
+  /// **'Link it to something'**
   String get tourFernie2Title;
 
   /// No description provided for @tourFernie2Body.
   ///
   /// In en, this message translates to:
-  /// **'Each fernie can propose a tag or a creator when it is found. With nothing linked it only trains: on its own it tags nothing.'**
+  /// **'Each fernie can point at a tag or a creator. That link is what turns recognition into tagging: when the fernie is found, that is what gets proposed. With nothing linked it only serves to train.'**
   String get tourFernie2Body;
 
   /// No description provided for @tourFernie3Title.
@@ -5763,31 +6375,31 @@ abstract class AppLocalizations {
   /// No description provided for @tourFernie3Body.
   ///
   /// In en, this message translates to:
-  /// **'Each crop is an example of it, and those examples are what a model learns from. The more and the more varied, the better: with little variety it will learn the background instead of the fernie.'**
+  /// **'Each crop is one example of it, and those examples are what a model learns from. The more and the more varied, the better: with little variety it learns the background instead of the thing.'**
   String get tourFernie3Body;
 
   /// No description provided for @tourFernie4Title.
   ///
   /// In en, this message translates to:
-  /// **'You mark them in the viewer'**
+  /// **'Marking them in the viewer'**
   String get tourFernie4Title;
 
   /// No description provided for @tourFernie4Body.
   ///
   /// In en, this message translates to:
-  /// **'Open something, go into fernie mode and drag over what you want to mark. Hold the space bar or the middle button to move around the image.'**
+  /// **'Open something and enter fernie mode. With the marking tool, drag a box around what you want and pick whose it is. On video and GIFs the region belongs to the frame you are on.'**
   String get tourFernie4Body;
 
   /// No description provided for @tourFernie5Title.
   ///
   /// In en, this message translates to:
-  /// **'And then you train'**
+  /// **'Fixing what you marked'**
   String get tourFernie5Title;
 
   /// No description provided for @tourFernie5Body.
   ///
   /// In en, this message translates to:
-  /// **'Fernies on their own recognise nothing. What recognises is a model trained with them.'**
+  /// **'The other tool selects what is already there: move it, resize it by its handles, give it to another fernie or delete it. Nothing is written until you leave saving, so you can undo on the way.'**
   String get tourFernie5Body;
 
   /// No description provided for @tourModelsTitle.
@@ -5805,55 +6417,55 @@ abstract class AppLocalizations {
   /// No description provided for @tourModels1Body.
   ///
   /// In en, this message translates to:
-  /// **'A model is what actually recognises. You put it together from the fernies you give it.'**
+  /// **'A model is what actually recognises. You build it out of the fernies you give it, you train it once, and from then on it can look at your content and say what it sees.'**
   String get tourModels1Body;
 
   /// No description provided for @tourModels2Title.
   ///
   /// In en, this message translates to:
-  /// **'Creating one'**
+  /// **'First, the environment'**
   String get tourModels2Title;
 
   /// No description provided for @tourModels2Body.
   ///
   /// In en, this message translates to:
-  /// **'You pick its fernies and what it has to answer: whether each one is there or not, or which of them it found and where. The second needs at least two, because with one there is nothing to choose between.'**
+  /// **'Recognition runs on Python, and FeRN installs it for you: Settings, Recognition, and press install. It is a few hundred megabytes and it is done once. With a graphics card it goes much faster.'**
   String get tourModels2Body;
 
   /// No description provided for @tourModels3Title.
   ///
   /// In en, this message translates to:
-  /// **'Training takes a while'**
+  /// **'Building one'**
   String get tourModels3Title;
 
   /// No description provided for @tourModels3Body.
   ///
   /// In en, this message translates to:
-  /// **'It runs in the background and you can keep using Fern meanwhile. The indicator in the top bar says how far along it is.'**
+  /// **'You choose its fernies and what it has to answer: whether each one is there or not, or which of them it found and where. The second needs at least two fernies and regions drawn on the content.'**
   String get tourModels3Body;
 
   /// No description provided for @tourModels4Title.
   ///
   /// In en, this message translates to:
-  /// **'Recognising'**
+  /// **'Training takes a while'**
   String get tourModels4Title;
 
   /// No description provided for @tourModels4Body.
   ///
   /// In en, this message translates to:
-  /// **'A trained model goes over whatever content you point it at and proposes what it sees. Below the confidence threshold it proposes nothing.'**
+  /// **'Minutes to hours, depending on how much you gave it and what machine you have. It runs in the background and you can keep using FeRN; the indicator up top says which epoch it is on and roughly how long is left.'**
   String get tourModels4Body;
 
   /// No description provided for @tourModels5Title.
   ///
   /// In en, this message translates to:
-  /// **'Nothing is applied on its own'**
+  /// **'Recognising'**
   String get tourModels5Title;
 
   /// No description provided for @tourModels5Body.
   ///
   /// In en, this message translates to:
-  /// **'What it sees stays a suggestion until you accept it. You can accept in one go every suggestion above a given confidence.'**
+  /// **'A trained model goes over whatever content you point it at — one item, a selection, or the whole library — and proposes what it sees. Below its confidence threshold it proposes nothing.'**
   String get tourModels5Body;
 
   /// No description provided for @tourDuplicatesTitle.
@@ -5865,7 +6477,7 @@ abstract class AppLocalizations {
   /// No description provided for @tourDuplicatesDescription.
   ///
   /// In en, this message translates to:
-  /// **'How repeats are found, how you decide which copy stays, and what makes two things count as the same.'**
+  /// **'How repeats are found, how you decide which copy stays and what makes two things count as the same.'**
   String get tourDuplicatesDescription;
 
   /// No description provided for @tourDuplicates1Title.
@@ -5877,7 +6489,7 @@ abstract class AppLocalizations {
   /// No description provided for @tourDuplicates1Body.
   ///
   /// In en, this message translates to:
-  /// **'Press Scan now and Fern goes over the whole library working out a fingerprint for each item. The first time it can take a while.'**
+  /// **'Press Search now and FeRN goes over your whole library working out a fingerprint of each item. The first time can take a while; after that it only fingerprints what is new.'**
   String get tourDuplicates1Body;
 
   /// No description provided for @tourDuplicates2Title.
@@ -5889,86 +6501,746 @@ abstract class AppLocalizations {
   /// No description provided for @tourDuplicates2Body.
   ///
   /// In en, this message translates to:
-  /// **'Each group is copies alike enough to be the same thing. The ones you have already answered do not come back.'**
+  /// **'Each group is copies that look alike enough to be the same thing — the same picture in two sizes, or saved twice from different places. Groups you have already answered do not come back.'**
   String get tourDuplicates2Body;
 
   /// No description provided for @tourDuplicates3Title.
   ///
   /// In en, this message translates to:
-  /// **'You decide which one stays'**
+  /// **'Choosing which one stays'**
   String get tourDuplicates3Title;
 
   /// No description provided for @tourDuplicates3Body.
   ///
   /// In en, this message translates to:
-  /// **'Pick the copy you keep and the rest are discarded. You can merge into the one that stays the tags, creator, favourite and description of the discarded ones.'**
+  /// **'You pick the copy you keep and the rest are discarded. Before that you can merge into the one that stays the tags, the creator, the favourite mark and the description of the ones that go.'**
   String get tourDuplicates3Body;
 
   /// No description provided for @tourDuplicates4Title.
   ///
   /// In en, this message translates to:
-  /// **'The threshold, in Settings'**
+  /// **'Or say they are not the same'**
   String get tourDuplicates4Title;
 
   /// No description provided for @tourDuplicates4Body.
   ///
   /// In en, this message translates to:
-  /// **'How different two items can be and still count as the same. Raising it groups more and starts joining things that merely look alike; lowering it leaves repeats unfound.'**
+  /// **'If the group got it wrong, say so and it will not be offered again. Two things that merely look alike are not a repeat, and only you can tell the difference.'**
   String get tourDuplicates4Body;
 
   /// No description provided for @tourDuplicates5Title.
   ///
   /// In en, this message translates to:
-  /// **'And it looks on its own'**
+  /// **'The threshold, in Settings'**
   String get tourDuplicates5Title;
 
   /// No description provided for @tourDuplicates5Body.
   ///
   /// In en, this message translates to:
-  /// **'Every so often Fern goes over the library by itself and tells you if it finds anything. That period is in Settings too.'**
+  /// **'How different two items can be and still count as the same. Raising it groups more and starts lumping together things that merely look alike; lowering it only catches near-identical copies.'**
   String get tourDuplicates5Body;
 
   /// No description provided for @tourModelsDescription.
   ///
   /// In en, this message translates to:
-  /// **'How a model is put together, how long training takes, what happens to what it proposes, and how the tree decides which ones run.'**
+  /// **'The Python environment, how a model is built and trained, what it proposes, and how the tree decides which ones run.'**
   String get tourModelsDescription;
 
   /// No description provided for @tourModels6Title.
   ///
   /// In en, this message translates to:
-  /// **'The model tree'**
+  /// **'Nothing is applied by itself'**
   String get tourModels6Title;
 
   /// No description provided for @tourModels6Body.
   ///
   /// In en, this message translates to:
-  /// **'A model that is not in the tree never runs when recognising. The tree is what says which ones run, and in what order.'**
+  /// **'What it sees stays a suggestion until you accept it, in the item panel or in bulk from the import screen. Rejecting one means it will not be offered again for that item.'**
   String get tourModels6Body;
 
   /// No description provided for @tourModels7Title.
   ///
   /// In en, this message translates to:
-  /// **'Putting them in and hanging them'**
+  /// **'The model tree'**
   String get tourModels7Title;
 
   /// No description provided for @tourModels7Body.
   ///
   /// In en, this message translates to:
-  /// **'The panel on the right holds the models that are outside. Pick a node in the tree and whatever you add hangs from it. A model cannot hang from itself or close a loop: the tree would bite its own tail.'**
+  /// **'A model that is not in the tree never runs when you recognise. The tree is what says which ones run and in what order.'**
   String get tourModels7Body;
 
   /// No description provided for @tourModels8Title.
   ///
   /// In en, this message translates to:
-  /// **'Every branch has its condition'**
+  /// **'Putting them in'**
   String get tourModels8Title;
 
   /// No description provided for @tourModels8Body.
   ///
   /// In en, this message translates to:
-  /// **'A child only runs when its parent detects the fernie you set on that link. That is the point: a general one filters, and only what it finds opens the specialised ones. With no condition they run on any detection at all, and a parent that is not trained opens nothing.'**
+  /// **'The panel on the right holds the models that are out. Pick a node in the tree and what you add hangs from it. A model cannot hang from itself, and it cannot be in the tree twice.'**
   String get tourModels8Body;
+
+  /// No description provided for @tourLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The library and the viewer'**
+  String get tourLibraryTitle;
+
+  /// No description provided for @tourLibraryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The grid, selecting several at once, the right-click menu, and everything the viewer can do.'**
+  String get tourLibraryDescription;
+
+  /// No description provided for @tourSearchingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching and filtering'**
+  String get tourSearchingTitle;
+
+  /// No description provided for @tourSearchingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Chips that stack, free text, the filters in the bar and the other ways to narrow down what you see.'**
+  String get tourSearchingDescription;
+
+  /// No description provided for @tourNsfwTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The content lock'**
+  String get tourNsfwTitle;
+
+  /// No description provided for @tourNsfwDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A password that hides what you mark, what it hides along with it, and how it behaves when it is open and when it is closed.'**
+  String get tourNsfwDescription;
+
+  /// No description provided for @tourFilesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Files and upkeep'**
+  String get tourFilesTitle;
+
+  /// No description provided for @tourFilesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Where your content lives on disk, what FeRN does with those files, and how to tidy up afterwards.'**
+  String get tourFilesDescription;
+
+  /// No description provided for @tutorialViewerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The viewer'**
+  String get tutorialViewerTitle;
+
+  /// No description provided for @tutorialViewerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening something takes over the screen: zoom with the wheel, move between items with the arrows, and open the side panel to give it a creator, tags and a description while you are looking at it.'**
+  String get tutorialViewerBody;
+
+  /// No description provided for @tutorialJobsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What runs in the background'**
+  String get tutorialJobsTitle;
+
+  /// No description provided for @tutorialJobsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Imports, recognition, training and repeat scans all run behind you: this indicator says what is going on, how far along it is, and lets you stop it. You can keep using FeRN meanwhile.'**
+  String get tutorialJobsBody;
+
+  /// No description provided for @tourImporting6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'What you do not want again'**
+  String get tourImporting6Title;
+
+  /// No description provided for @tourImporting6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'A remote source offers the same favourites every time. When you discard something you can also say do not offer this again: it will be skipped before it is even downloaded, and the list of what you blocked is in Settings under Database.'**
+  String get tourImporting6Body;
+
+  /// No description provided for @tourImporting7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Things that can happen on their own'**
+  String get tourImporting7Title;
+
+  /// No description provided for @tourImporting7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'What arrives can be tagged on its own if the address it came from is linked to a tag, marked NSFW if you turn that on in the header, and passed through your models if you ask for that in Settings.'**
+  String get tourImporting7Body;
+
+  /// No description provided for @tourImporting8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Several at once'**
+  String get tourImporting8Title;
+
+  /// No description provided for @tourImporting8Body.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have to go one by one: tick several and the header lets you accept them all, discard them all, or accept every suggestion your models made above a confidence you choose.'**
+  String get tourImporting8Body;
+
+  /// No description provided for @tourImporting9Title.
+  ///
+  /// In en, this message translates to:
+  /// **'And then it is in Content'**
+  String get tourImporting9Title;
+
+  /// No description provided for @tourImporting9Body.
+  ///
+  /// In en, this message translates to:
+  /// **'What you saved leaves the import grid and appears in your library. From then on it is searchable, taggable and part of everything else FeRN does.'**
+  String get tourImporting9Body;
+
+  /// No description provided for @tourLibrary1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you have'**
+  String get tourLibrary1Title;
+
+  /// No description provided for @tourLibrary1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The grid keeps each item at its own proportions, so you recognise things by their shape as much as by their content. Scrolling loads more as you go.'**
+  String get tourLibrary1Body;
+
+  /// No description provided for @tourLibrary2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Several at a time'**
+  String get tourLibrary2Title;
+
+  /// No description provided for @tourLibrary2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Each cell has a tick in its corner: tick one and you are selecting. Shift and click stretches the selection to there, following the order on screen. What you do next applies to all of them.'**
+  String get tourLibrary2Body;
+
+  /// No description provided for @tourLibrary3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'The right-click menu'**
+  String get tourLibrary3Title;
+
+  /// No description provided for @tourLibrary3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'On any cell it opens what can be done: favourite it, send it to the bin, recognise it with your models, or open the folder it lives in. With a selection, it works on the whole selection.'**
+  String get tourLibrary3Body;
+
+  /// No description provided for @tourLibrary4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'The bin gives things back'**
+  String get tourLibrary4Title;
+
+  /// No description provided for @tourLibrary4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending something to the bin does not delete it: it waits there for a while and you can put it back with everything it had. Emptying the bin is what deletes for good, and that one asks first.'**
+  String get tourLibrary4Body;
+
+  /// No description provided for @tourLibrary5Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting and filtering here'**
+  String get tourLibrary5Title;
+
+  /// No description provided for @tourLibrary5Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The header says how many there are and lets you sort them — newest, oldest, at random — and keep only images, only video, or only what came from one source.'**
+  String get tourLibrary5Body;
+
+  /// No description provided for @tourLibrary6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Inside the viewer'**
+  String get tourLibrary6Title;
+
+  /// No description provided for @tourLibrary6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The wheel zooms, the middle button or space and drag moves you around, and a double click fits it back to the screen. The arrows go to the previous and the next one without leaving.'**
+  String get tourLibrary6Body;
+
+  /// No description provided for @tourLibrary7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'The information panel'**
+  String get tourLibrary7Title;
+
+  /// No description provided for @tourLibrary7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator, tags, description and links, all editable on the spot. It also shows what your models suggest, and a button that explains where each tag on this item came from.'**
+  String get tourLibrary7Body;
+
+  /// No description provided for @tourLibrary8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourites'**
+  String get tourLibrary8Title;
+
+  /// No description provided for @tourLibrary8Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The heart marks what you want to find again without having to remember how you tagged it. Everything marked lives on its own screen in the menu.'**
+  String get tourLibrary8Body;
+
+  /// No description provided for @tourLibrary9Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Video and animation'**
+  String get tourLibrary9Title;
+
+  /// No description provided for @tourLibrary9Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Video and GIFs play in the viewer with a timeline you can step through frame by frame. That matters later: a fernie region belongs to one frame, not to the whole clip.'**
+  String get tourLibrary9Body;
+
+  /// No description provided for @tourManagers6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'And some go together'**
+  String get tourManagers6Title;
+
+  /// No description provided for @tourManagers6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropping one onto another also offers to relate them instead: sisters. Sisters are not above or below each other — putting one on simply puts the other on too, because they always come as a pair.'**
+  String get tourManagers6Body;
+
+  /// No description provided for @tourManagers7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'People are tags too'**
+  String get tourManagers7Title;
+
+  /// No description provided for @tourManagers7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag can be marked as a person: someone or a character that appears in the content. It is only a way of keeping the list tidy — the button at the top switches between the two lists — and everywhere else they behave like any other tag.'**
+  String get tourManagers7Body;
+
+  /// No description provided for @tourManagers8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tagging by itself'**
+  String get tourManagers8Title;
+
+  /// No description provided for @tourManagers8Body.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag can have addresses linked to it. Anything that arrives from one of those addresses comes in already tagged — and with everything above that tag, and its sisters. That is where most of your tagging will come from.'**
+  String get tourManagers8Body;
+
+  /// No description provided for @tourManagers9Title.
+  ///
+  /// In en, this message translates to:
+  /// **'A long list, tamed'**
+  String get tourManagers9Title;
+
+  /// No description provided for @tourManagers9Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The chevron on a tag folds its branch away, and the search box above the list finds one by name. Both work here and in the side menu, and what you fold stays folded next time.'**
+  String get tourManagers9Body;
+
+  /// No description provided for @tourManagers10Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tagging in bulk'**
+  String get tourManagers10Title;
+
+  /// No description provided for @tourManagers10Body.
+  ///
+  /// In en, this message translates to:
+  /// **'From the library, drag one or several items onto a tag in the menu. It is the quick way, and it is why the menu tags are drop targets at all.'**
+  String get tourManagers10Body;
+
+  /// No description provided for @tourManagers11Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Where did that tag come from?'**
+  String get tourManagers11Title;
+
+  /// No description provided for @tourManagers11Body.
+  ///
+  /// In en, this message translates to:
+  /// **'FeRN tags on its own through several routes, and in the panel they all look alike. The clock button on the item explains each one: you put it, an address matched, it was inherited, a model proposed it, a fernie brought it.'**
+  String get tourManagers11Body;
+
+  /// No description provided for @tourSearching1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'The search bar'**
+  String get tourSearching1Title;
+
+  /// No description provided for @tourSearching1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'It works from any screen. As you type, FeRN offers what matches: tags, creators and content by its description. It searches your library, not the internet.'**
+  String get tourSearching1Body;
+
+  /// No description provided for @tourSearching2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'What you pick becomes a chip'**
+  String get tourSearching2Title;
+
+  /// No description provided for @tourSearching2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Picking a tag or a creator turns it into a chip in the bar. A chip searches by that exact thing, not by its name: the creator Pompeu brings what is his, and nothing that merely mentions the word.'**
+  String get tourSearching2Body;
+
+  /// No description provided for @tourSearching3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Chips stack'**
+  String get tourSearching3Title;
+
+  /// No description provided for @tourSearching3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Two chips show what meets both, not what meets either: this tag, by this creator. That is what makes them worth it. Backspace on an empty field takes the last one off.'**
+  String get tourSearching3Body;
+
+  /// No description provided for @tourSearching4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Free text'**
+  String get tourSearching4Title;
+
+  /// No description provided for @tourSearching4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'If what you type is not a tag or a creator, press Enter and it becomes a free-text chip: it looks in descriptions and file names. Handy for what you never got round to tagging.'**
+  String get tourSearching4Body;
+
+  /// No description provided for @tourSearching5Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrowing the results'**
+  String get tourSearching5Title;
+
+  /// No description provided for @tourSearching5Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The filter next to the bar decides what kinds of results count and lets you keep only images, only video, or only one source. With a single chip it also lets you drop whole groups of results.'**
+  String get tourSearching5Body;
+
+  /// No description provided for @tourSearching6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'The menu filters too'**
+  String get tourSearching6Title;
+
+  /// No description provided for @tourSearching6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Clicking a tag in the side menu is the same as putting its chip in the bar, so you can carry on from there: add a creator, add a word. The bar always shows what is filtering.'**
+  String get tourSearching6Body;
+
+  /// No description provided for @tourSearching7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Every list has its own'**
+  String get tourSearching7Title;
+
+  /// No description provided for @tourSearching7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'The tag, creator and fernie lists each have their own filter above them. That one only narrows the list you are looking at, and it does not touch what the grid is showing.'**
+  String get tourSearching7Body;
+
+  /// No description provided for @tourFernie6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'When the whole thing is the example'**
+  String get tourFernie6Title;
+
+  /// No description provided for @tourFernie6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'There is a button that marks the whole frame at once, for when the item is nothing but the thing. And on a fernie card, another one takes an entire tag and marks all of its content that way.'**
+  String get tourFernie6Body;
+
+  /// No description provided for @tourFernie7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'From a suggestion to an example'**
+  String get tourFernie7Title;
+
+  /// No description provided for @tourFernie7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'When a model has already proposed something, the panel offers to turn what it saw into regions: it draws the boxes and you accept the ones that are right. It is the fastest way to grow a fernie.'**
+  String get tourFernie7Body;
+
+  /// No description provided for @tourFernie8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking also tags'**
+  String get tourFernie8Title;
+
+  /// No description provided for @tourFernie8Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking a region on an item says that the fernie appears there, so what it links to gets put on the item straight away. The creator only if it did not have one of its own.'**
+  String get tourFernie8Body;
+
+  /// No description provided for @tourFernie9Title.
+  ///
+  /// In en, this message translates to:
+  /// **'And then you train'**
+  String get tourFernie9Title;
+
+  /// No description provided for @tourFernie9Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Fernies on their own recognise nothing. What recognises is a model trained with them, and that is the next tour.'**
+  String get tourFernie9Body;
+
+  /// No description provided for @tourModels9Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Each branch has its condition'**
+  String get tourModels9Title;
+
+  /// No description provided for @tourModels9Body.
+  ///
+  /// In en, this message translates to:
+  /// **'A child only runs when its parent detects the fernie you set on that link. That is the point: a general model filters, and only what it finds goes on to the specialised ones.'**
+  String get tourModels9Body;
+
+  /// No description provided for @tourModels10Title.
+  ///
+  /// In en, this message translates to:
+  /// **'When it turned out wrong'**
+  String get tourModels10Title;
+
+  /// No description provided for @tourModels10Body.
+  ///
+  /// In en, this message translates to:
+  /// **'You can stop a training run halfway, and you can make a model forget what it learned: its weights go and it is untrained again, but its fernies, its settings and its place in the tree stay.'**
+  String get tourModels10Body;
+
+  /// No description provided for @tourDuplicates6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'And it looks on its own'**
+  String get tourDuplicates6Title;
+
+  /// No description provided for @tourDuplicates6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Every so often FeRN goes over it by itself and tells you if it found something. That period is in Settings too, and so is turning it off.'**
+  String get tourDuplicates6Body;
+
+  /// No description provided for @tourNsfw1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'What the lock is'**
+  String get tourNsfw1Title;
+
+  /// No description provided for @tourNsfw1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'A password that hides part of your library. What you mark as NSFW disappears while the lock is closed: it is not in the grid, not in searches, not in the counts.'**
+  String get tourNsfw1Body;
+
+  /// No description provided for @tourNsfw2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting it up'**
+  String get tourNsfw2Title;
+
+  /// No description provided for @tourNsfw2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'In Settings, under the lock section, you set a password. FeRN gives you a recovery code at that moment: write it down. It is the only way back in, because the password is not stored anywhere.'**
+  String get tourNsfw2Body;
+
+  /// No description provided for @tourNsfw3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening and closing'**
+  String get tourNsfw3Title;
+
+  /// No description provided for @tourNsfw3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening asks for the password; closing asks for nothing and is instant. You can have it remember that it is open between sessions, or make it start closed every time.'**
+  String get tourNsfw3Body;
+
+  /// No description provided for @tourNsfw4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking a tag or a creator'**
+  String get tourNsfw4Title;
+
+  /// No description provided for @tourNsfw4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Their cards have a lock button. Marking a tag hides everything carrying it, and everything hanging below it in the tree. Marking a creator hides them and all of their content.'**
+  String get tourNsfw4Body;
+
+  /// No description provided for @tourNsfw5Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Or one item at a time'**
+  String get tourNsfw5Title;
+
+  /// No description provided for @tourNsfw5Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Any item can be marked on its own from the viewer, whatever its tags say. And when you import you can have everything that arrives come in marked, which saves marking fifty things by hand.'**
+  String get tourNsfw5Body;
+
+  /// No description provided for @tourNsfw6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'How it behaves'**
+  String get tourNsfw6Title;
+
+  /// No description provided for @tourNsfw6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'You choose what closed means: marked content vanishing altogether, or showing up blurred so you know it is there. And you choose whether opening the lock shows everything or only what is marked.'**
+  String get tourNsfw6Body;
+
+  /// No description provided for @tourNsfw7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Links can be marked too'**
+  String get tourNsfw7Title;
+
+  /// No description provided for @tourNsfw7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag or a creator can have addresses marked as NSFW: they are not shown while the lock is closed, but they keep tagging what arrives from them. Hiding an address is not the same as forgetting it.'**
+  String get tourNsfw7Body;
+
+  /// No description provided for @tourNsfw8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting rid of it all'**
+  String get tourNsfw8Title;
+
+  /// No description provided for @tourNsfw8Body.
+  ///
+  /// In en, this message translates to:
+  /// **'In Settings, under Database, you can wipe only what is marked — content only; tags, creators, fernies and models stay. It is offered only while the lock is open: closed, you would be deleting blind.'**
+  String get tourNsfw8Body;
+
+  /// No description provided for @tourFiles1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Where your content lives'**
+  String get tourFiles1Title;
+
+  /// No description provided for @tourFiles1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'FeRN keeps a database of what it knows, and the files stay on your disk. In Settings you choose the library folder: that is where what you bring in goes.'**
+  String get tourFiles1Body;
+
+  /// No description provided for @tourFiles2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Watching a folder of your own'**
+  String get tourFiles2Title;
+
+  /// No description provided for @tourFiles2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'You can point FeRN at a folder you already have and bring in what is inside. You decide whether it copies the files into the library or leaves them where they are and just remembers them.'**
+  String get tourFiles2Body;
+
+  /// No description provided for @tourFiles3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tidying on its own'**
+  String get tourFiles3Title;
+
+  /// No description provided for @tourFiles3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'FeRN can file what it manages into folders by source, by creator or by date, so the disk looks like the library. Change your mind later and it moves what is already there.'**
+  String get tourFiles3Body;
+
+  /// No description provided for @tourFiles4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'The avatars folder'**
+  String get tourFiles4Title;
+
+  /// No description provided for @tourFiles4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatars are copies FeRN makes, so they live in their own folder, which you also choose. Changing the folder moves what is in it: nothing loses its picture.'**
+  String get tourFiles4Body;
+
+  /// No description provided for @tourFiles5Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving everything'**
+  String get tourFiles5Title;
+
+  /// No description provided for @tourFiles5Body.
+  ///
+  /// In en, this message translates to:
+  /// **'If you point the library at another disk, FeRN offers to move what it manages there and update every path it has. It is one operation and it can take a while, so it tells you how it went.'**
+  String get tourFiles5Body;
+
+  /// No description provided for @tourFiles6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Files nobody uses'**
+  String get tourFiles6Title;
+
+  /// No description provided for @tourFiles6Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Over time, orphans pile up: avatars you replaced, downloads whose entry you discarded, weights from a model that is gone. The cleanup button in Settings finds them, says how much they weigh, and asks before deleting.'**
+  String get tourFiles6Body;
+
+  /// No description provided for @tourFiles7Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting over'**
+  String get tourFiles7Title;
+
+  /// No description provided for @tourFiles7Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Wiping the database is the only thing here with no way back, and it asks twice. You choose whether it takes the files with it: without that, your files stay where they are and a scan brings them back.'**
+  String get tourFiles7Body;
+
+  /// No description provided for @tourFiles8Title.
+  ///
+  /// In en, this message translates to:
+  /// **'And it tells you when it is done'**
+  String get tourFiles8Title;
+
+  /// No description provided for @tourFiles8Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Long jobs — importing, training, recognising, looking for repeats — can notify you when they finish, with or without a sound. That is in Settings too, and you can pick which ones.'**
+  String get tourFiles8Body;
 
   /// No description provided for @viewerVolume.
   ///

@@ -11,6 +11,8 @@ import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:flutter/foundation.dart';
+import 'package:Fern/features/media/data/services/media_tag_log.dart';
+import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:isar/isar.dart';
 
 /// Da de alta en la base de datos los ficheros que aparecen, vengan de donde
@@ -41,6 +43,14 @@ class MediaRegistry {
   })  : _database = database,
         _tagHierarchy = tagHierarchy,
         _onRegistered = onRegistered;
+
+  /// El registro de por qué el contenido tiene lo que tiene puesto.
+  ///
+  /// Se construye aquí y no llega por parámetro: sólo necesita la base de datos,
+  /// que este servicio ya tiene, y pedirlo por el constructor obligaría a todo
+  /// lo que monta un registro —las pruebas incluidas— a saber de él para que se
+  /// escriba.
+  late final MediaTagLog _tagLog = MediaTagLog(_database);
 
   /// Identificador de un contenido a partir de su ruta. Es el mismo desde
   /// siempre: cambiarlo dejaría sin reconocer lo que ya está guardado.
@@ -113,6 +123,13 @@ class MediaRegistry {
     String? description,
     String? sourceTagName,
     List<String> sourceUrls = const [],
+    /// Cómo se llamaba esto en la fuente de la que viene, si venía de una.
+    ///
+    /// Es lo que hace falta para poder decir «no me lo vuelvas a ofrecer»: se
+    /// compara con lo que la fuente da antes de descargar. Sin guardarlo habría
+    /// que deducirlo del nombre del fichero, y eso no vale para lo que sale de
+    /// un comprimido, que se llama como venía dentro.
+    String? remoteId,
   }) async {
     if (await existing(path) != null) return null;
 
@@ -129,6 +146,11 @@ class MediaRegistry {
       ..path = path
       ..isImported = false
       ..importSource = source.id
+      ..remoteId = remoteId
+      // La primera de las que trae la fuente: es la de la publicación, que es la
+      // que sirve para volver a verla. Las siguientes son la del fichero suelto
+      // y las que la publicación enlazara.
+      ..sourceUrl = sourceUrls.firstOrNull
       ..mediaWidth = size?.width
       ..mediaHeight = size?.height;
 
@@ -147,8 +169,20 @@ class MediaRegistry {
     // Con las etiquetas van las que están por encima de ellas: lo que nace con
     // la etiqueta de una comunidad nace también con la de la serie de la que
     // cuelga.
-    final automaticTags = await _tagHierarchy
-        .withRelatives(await tagsForSourceUrls(sourceUrls));
+    // Las que casan con alguna dirección del contenido, aparte de lo que
+    // arrastran: **es el único sitio de la aplicación donde los tres motivos se
+    // distinguen sin ambigüedad**, y por eso el registro se escribe aquí a mano
+    // en vez de pasar por `addTagsToMedia`.
+    final byUrl = await tagsForSourceUrls(sourceUrls);
+    final automaticTags = await _tagHierarchy.withRelatives(byUrl);
+
+    final entries = _tagEntries(
+      mediaId: id,
+      byUrl: byUrl,
+      put: automaticTags,
+      sourceTag: sourceTag,
+      creator: creator,
+    );
 
     await _database.writeTxn(() async {
       await _database.mediaSummaryModels.put(summary);
@@ -168,12 +202,69 @@ class MediaRegistry {
 
       summary.details.value = details;
       await summary.details.save();
+
+      // En la misma escritura que lo que cuenta: un registro que diga que se
+      // puso una etiqueta que no llegó a ponerse sería peor que no tenerlo.
+      await _tagLog.writeInside(entries);
     });
 
     // Después de guardar, no antes: quien escuche va a querer leerlo.
     _onRegistered?.call(summary.id);
 
     return summary.toEntity();
+  }
+
+  /// Por qué nace el contenido con lo que nace.
+  ///
+  /// Los tres caminos, que desde el panel se ven exactamente igual: la etiqueta
+  /// que casó con una dirección del contenido, la de la plataforma de la que se
+  /// bajó, y lo que arrastran la rama y las hermanas de la primera.
+  ///
+  /// El creador «desconocido» no se apunta: es el de reserva con el que nace
+  /// todo lo que llega sin saber de quién es, y una línea diciéndolo en cada
+  /// contenido de la biblioteca no cuenta nada.
+  List<TagLogEntryEntity> _tagEntries({
+    required int mediaId,
+    required List<TagModel> byUrl,
+    required List<TagModel> put,
+    required TagModel? sourceTag,
+    required CreatorModel creator,
+  }) {
+    final asked = {for (final tag in byUrl) tag.id};
+    final at = DateTime.now();
+
+    return [
+      for (final tag in put)
+        TagLogEntryEntity(
+          mediaId: mediaId,
+          reason: asked.contains(tag.id)
+              ? TagLogReason.sourceUrl
+              : TagLogReason.ancestor,
+          tagId: tag.id,
+          label: tag.name,
+          // La dirección que casó no se guarda una por una: la etiqueta puede
+          // tener varias y la que casó se sabe mirando la del contenido, que
+          // está a un clic en el mismo panel.
+          detail: asked.contains(tag.id) ? null : byUrl.firstOrNull?.name,
+          at: at,
+        ),
+      if (sourceTag != null)
+        TagLogEntryEntity(
+          mediaId: mediaId,
+          reason: TagLogReason.platform,
+          tagId: sourceTag.id,
+          label: sourceTag.name,
+          at: at,
+        ),
+      if (creator.name != unknownCreator.name)
+        TagLogEntryEntity(
+          mediaId: mediaId,
+          reason: TagLogReason.sourceUrl,
+          creatorId: creator.id,
+          label: creator.name,
+          at: at,
+        ),
+    ];
   }
 
   /// Creador "Unknown", creándolo la primera vez que hace falta.

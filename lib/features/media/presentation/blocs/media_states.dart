@@ -4,8 +4,8 @@ import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
-import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:equatable/equatable.dart';
 
 
@@ -21,9 +21,16 @@ abstract class MediaStates extends Equatable {
   /// Identificadores de los elementos marcados en la rejilla.
   final Set<int> selectedIds;
 
-  /// Texto de la búsqueda que ha dado lugar a [mediaList]. `null` cuando la
-  /// rejilla muestra la biblioteca entera y no un resultado de búsqueda.
-  final String? searchQuery;
+  /// Por qué se está buscando: las pastillas de la barra, en su orden.
+  ///
+  /// Vacía cuando la rejilla muestra la biblioteca entera y no un resultado de
+  /// búsqueda. Antes eran dos campos —un texto o una sugerencia, nunca las dos—
+  /// y por eso sólo se podía buscar una cosa a la vez.
+  ///
+  /// Puede llevar dentro una pastilla **sin confirmar**, que es lo que hay
+  /// escrito en el campo: busca igual, pero la barra la devuelve al campo en vez
+  /// de pintarla como una más.
+  final List<SearchCriterionEntity> searchCriteria;
 
   /// Resultado de la búsqueda repartido en grupos (descripciones, etiquetas y
   /// creadores), en el orden en el que la rejilla los pinta. `null` si no hay
@@ -54,10 +61,6 @@ abstract class MediaStates extends Equatable {
   /// clase: de qué tipo es un fichero es un dato suyo, no de un resultado de
   /// búsqueda, así que recorta la rejilla haya búsqueda o no.
   final Set<MediaKind> typeFilters;
-
-  /// Sugerencia elegida en el buscador, cuando la búsqueda viene de pulsar una
-  /// y no de escribir. `null` en las búsquedas por texto.
-  final SearchSuggestionEntity? searchSuggestion;
 
   /// La lista es la de la pantalla de favoritos.
   ///
@@ -116,12 +119,11 @@ abstract class MediaStates extends Equatable {
     this.isModified = false,
     this.isNew = false,
     this.selectedIds = const {},
-    this.searchQuery,
+    this.searchCriteria = const [],
     this.searchSections,
     this.searchFilters = allSearchResultTypes,
     this.sourceFilters = ImportSource.allSources,
     this.typeFilters = allMediaKinds,
-    this.searchSuggestion,
     this.favoritesOnly = false,
     this.isBusy = false,
     this.importSource = ImportSource.local,
@@ -173,13 +175,24 @@ abstract class MediaStates extends Equatable {
         false;
   }
 
+  /// Se está cruzando más de una pastilla.
+  ///
+  /// Es lo que decide que el resultado venga en un solo grupo, y lo que deja sin
+  /// sentido al filtro de «de dónde salen los resultados»: con un único grupo,
+  /// apagar una de sus tres casillas no recorta nada o lo vacía todo.
+  bool get crossesCriteria =>
+      searchCriteria.where((each) => each.label.trim().isNotEmpty).length > 1;
+
   List<MediaSearchSectionEntity>? get visibleSearchSections {
     final sections = searchSections;
     if (sections == null) return null;
 
     final visible = <MediaSearchSectionEntity>[];
     for (final section in sections) {
-      if (!searchFilters.contains(section.type)) continue;
+      // Cruzando no se aplica: el grupo único del cruce no pertenece a ninguna
+      // de las tres clases más que por convenio, y apagar la de contenido lo
+      // haría desaparecer entero sin que se entienda por qué.
+      if (!crossesCriteria && !searchFilters.contains(section.type)) continue;
 
       final media = section.media.where(shows).toList();
       if (media.isEmpty) continue;
@@ -202,12 +215,11 @@ abstract class MediaStates extends Equatable {
     bool ? isModified,
     bool ? isNew,
     Set<int> ? selectedIds,
-    String ? searchQuery,
+    List<SearchCriterionEntity> ? searchCriteria,
     List<MediaSearchSectionEntity> ? searchSections,
     Set<SearchResultType> ? searchFilters,
     Set<ImportSource> ? sourceFilters,
     Set<MediaKind> ? typeFilters,
-    SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
     ImportSource ? importSource,
@@ -223,12 +235,11 @@ abstract class MediaStates extends Equatable {
     isModified,
     isNew,
     selectedIds,
-    searchQuery,
+    searchCriteria,
     searchSections,
     searchFilters,
     sourceFilters,
     typeFilters,
-    searchSuggestion,
     favoritesOnly,
     isBusy,
     importSource,
@@ -251,12 +262,11 @@ class MediaLoading extends MediaStates {
     super.isModified,
     super.isNew,
     super.selectedIds,
-    super.searchQuery,
+    super.searchCriteria,
     super.searchSections,
     super.searchFilters,
     super.sourceFilters,
     super.typeFilters,
-    super.searchSuggestion,
     super.favoritesOnly,
     super.isBusy,
     super.importSource,
@@ -272,12 +282,11 @@ class MediaLoading extends MediaStates {
     bool ? isModified,
     bool ? isNew,
     Set<int> ? selectedIds,
-    String ? searchQuery,
+    List<SearchCriterionEntity> ? searchCriteria,
     List<MediaSearchSectionEntity> ? searchSections,
     Set<SearchResultType> ? searchFilters,
     Set<ImportSource> ? sourceFilters,
     Set<MediaKind> ? typeFilters,
-    SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
     ImportSource ? importSource,
@@ -289,12 +298,11 @@ class MediaLoading extends MediaStates {
       isModified: isModified ?? this.isModified,
       isNew: isNew ?? this.isNew,
       selectedIds: selectedIds ?? this.selectedIds,
-      searchQuery: searchQuery ?? this.searchQuery,
+      searchCriteria: searchCriteria ?? this.searchCriteria,
       searchSections: searchSections ?? this.searchSections,
       searchFilters: searchFilters ?? this.searchFilters,
       sourceFilters: sourceFilters ?? this.sourceFilters,
       typeFilters: typeFilters ?? this.typeFilters,
-      searchSuggestion: searchSuggestion ?? this.searchSuggestion,
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,
       isBusy: isBusy ?? this.isBusy,
       importSource: importSource ?? this.importSource,
@@ -317,12 +325,11 @@ class DetailedMedia extends MediaStates {
     super.isModified,
     super.isNew,
     super.selectedIds,
-    super.searchQuery,
+    super.searchCriteria,
     super.searchSections,
     super.searchFilters,
     super.sourceFilters,
     super.typeFilters,
-    super.searchSuggestion,
     super.favoritesOnly,
     super.isBusy,
     super.importSource,
@@ -338,12 +345,11 @@ class DetailedMedia extends MediaStates {
     bool ? isModified,
     bool ? isNew,
     Set<int> ? selectedIds,
-    String ? searchQuery,
+    List<SearchCriterionEntity> ? searchCriteria,
     List<MediaSearchSectionEntity> ? searchSections,
     Set<SearchResultType> ? searchFilters,
     Set<ImportSource> ? sourceFilters,
     Set<MediaKind> ? typeFilters,
-    SearchSuggestionEntity ? searchSuggestion,
     bool ? favoritesOnly,
     bool ? isBusy,
     ImportSource ? importSource,
@@ -357,13 +363,12 @@ class DetailedMedia extends MediaStates {
         isModified: isModified ?? this.isModified,
         isNew: isNew ?? this.isNew,
         selectedIds: selectedIds ?? this.selectedIds,
-        searchQuery: searchQuery ?? this.searchQuery,
+        searchCriteria: searchCriteria ?? this.searchCriteria,
         searchSections: searchSections ?? this.searchSections,
         searchFilters: searchFilters ?? this.searchFilters,
         sourceFilters: sourceFilters ?? this.sourceFilters,
         typeFilters: typeFilters ?? this.typeFilters,
-        searchSuggestion: searchSuggestion ?? this.searchSuggestion,
-        favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+          favoritesOnly: favoritesOnly ?? this.favoritesOnly,
         isBusy: isBusy ?? this.isBusy,
         importSource: importSource ?? this.importSource,
       lastImportAt: lastImportAt ?? this.lastImportAt,

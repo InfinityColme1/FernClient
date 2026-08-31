@@ -42,6 +42,15 @@ MediaSuggestionEntity _suggestion({
   );
 }
 
+/// Una detección señalada, tal y como la manda el panel.
+SpottedBox _spot(
+  int id,
+  ({double x, double y, double w, double h}) box, {
+  String label = 'Rombo',
+  int? frameMs,
+}) =>
+    (id: id, box: box, label: label, frameMs: frameMs);
+
 void main() {
   group('la caja de una sugerencia', () {
     test('sale como la apuntó el modelo', () {
@@ -71,40 +80,41 @@ void main() {
     });
 
     test('señalar guarda la caja y el nombre', () {
-      spotlight.show(id: 1, box: (x: 0.1, y: 0.2, w: 0.3, h: 0.4), label: 'Rombo');
+      spotlight.show([_spot(1, (x: 0.1, y: 0.2, w: 0.3, h: 0.4), label: 'Rombo')]);
 
-      expect(spotlight.box, (x: 0.1, y: 0.2, w: 0.3, h: 0.4));
-      expect(spotlight.label, 'Rombo');
+      expect(spotlight.spotted.single.box, (x: 0.1, y: 0.2, w: 0.3, h: 0.4));
+      expect(spotlight.spotted.single.label, 'Rombo');
       expect(avisos, 1);
     });
 
     test('señalar dos veces lo mismo no repinta', () {
       const box = (x: 0.1, y: 0.2, w: 0.3, h: 0.4);
 
-      spotlight.show(id: 1, box: box, label: 'Rombo');
-      spotlight.show(id: 1, box: box, label: 'Rombo');
+      spotlight.show([_spot(1, box, label: 'Rombo')]);
+      spotlight.show([_spot(1, box, label: 'Rombo')]);
 
       // Mover el ratón dentro de la misma fila dispara `onEnter` más de una
       // vez, y repintar el visor en cada una es trabajo para nada.
       expect(avisos, 1);
     });
 
-    test('sólo se señala una cada vez', () {
-      spotlight.show(id: 1, box: (x: 0.1, y: 0.1, w: 0.1, h: 0.1), label: 'Rombo');
-      spotlight.show(id: 1, box: (x: 0.5, y: 0.5, w: 0.2, h: 0.2), label: 'Cubo');
+    test('señalar otra fila sustituye a la anterior', () {
+      spotlight.show([_spot(1, (x: 0.1, y: 0.1, w: 0.1, h: 0.1), label: 'Rombo')]);
+      spotlight.show([_spot(1, (x: 0.5, y: 0.5, w: 0.2, h: 0.2), label: 'Cubo')]);
 
-      // Enseñar todas a la vez llena el contenido de rectángulos que se pisan,
-      // y la pregunta que se contesta es «dónde ha visto **esto**».
-      expect(spotlight.label, 'Cubo');
-      expect(spotlight.box, (x: 0.5, y: 0.5, w: 0.2, h: 0.2));
+      // Las de **una fila** cada vez: enseñar las de todas a la vez llena el
+      // contenido de rectángulos que se pisan, y la pregunta que se contesta es
+      // «dónde ha visto **esto**».
+      expect(spotlight.spotted.single.label, 'Cubo');
+      expect(spotlight.spotted.single.box, (x: 0.5, y: 0.5, w: 0.2, h: 0.2));
     });
 
     test('dejar de señalar lo apaga', () {
-      spotlight.show(id: 1, box: (x: 0.1, y: 0.2, w: 0.3, h: 0.4), label: 'Rombo');
+      spotlight.show([_spot(1, (x: 0.1, y: 0.2, w: 0.3, h: 0.4), label: 'Rombo')]);
       spotlight.clear();
 
       expect(spotlight.isEmpty, isTrue);
-      expect(spotlight.label, isNull);
+      expect(spotlight.spotted, isEmpty);
       expect(avisos, 2);
     });
 
@@ -124,46 +134,46 @@ void main() {
     setUp(() => spotlight = SuggestionSpotlight());
 
     test('fijar la deja puesta', () {
-      expect(spotlight.pin(id: 1, box: box, label: 'Rombo'), isTrue);
-      expect(spotlight.box, box);
+      expect(spotlight.pin([_spot(1, box, label: 'Rombo')]), isTrue);
+      expect(spotlight.spotted.single.box, box);
       expect(spotlight.pinnedId, 1);
     });
 
     test('el ratón no la quita', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
       spotlight.clear();
 
       // Quien ha pulsado una fila quiere ver **esa** caja mientras decide, y que
       // se la quite el puntero al moverse es lo que hace inservible el
       // enseñar-al-pasar.
-      expect(spotlight.box, box);
+      expect(spotlight.spotted.single.box, box);
     });
 
     test('el ratón tampoco la cambia por otra', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
-      spotlight.show(id: 2, box: otra, label: 'Cubo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
+      spotlight.show([_spot(2, otra, label: 'Cubo')]);
 
-      expect(spotlight.label, 'Rombo');
+      expect(spotlight.spotted.single.label, 'Rombo');
     });
 
     test('volver a pulsar la misma la suelta', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
 
-      expect(spotlight.pin(id: 1, box: box, label: 'Rombo'), isFalse);
+      expect(spotlight.pin([_spot(1, box, label: 'Rombo')]), isFalse);
       expect(spotlight.isEmpty, isTrue);
       expect(spotlight.pinnedId, isNull);
     });
 
     test('pulsar otra cambia a la otra', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
-      spotlight.pin(id: 2, box: otra, label: 'Cubo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
+      spotlight.pin([_spot(2, otra, label: 'Cubo')]);
 
       expect(spotlight.pinnedId, 2);
-      expect(spotlight.label, 'Cubo');
+      expect(spotlight.spotted.single.label, 'Cubo');
     });
 
     test('contestar la fila que la enseñaba la apaga', () {
-      spotlight.show(id: 7, box: box, label: 'Rombo');
+      spotlight.show([_spot(7, box, label: 'Rombo')]);
       spotlight.releaseIf([7]);
 
       // La fila acaba de irse de la lista y ya no puede apagarla ella: sin esto
@@ -172,14 +182,14 @@ void main() {
     });
 
     test('contestar otra fila no la apaga', () {
-      spotlight.show(id: 7, box: box, label: 'Rombo');
+      spotlight.show([_spot(7, box, label: 'Rombo')]);
       spotlight.releaseIf([9]);
 
-      expect(spotlight.label, 'Rombo');
+      expect(spotlight.spotted.single.label, 'Rombo');
     });
 
     test('contestar la fila fijada también la apaga', () {
-      spotlight.pin(id: 7, box: box, label: 'Rombo');
+      spotlight.pin([_spot(7, box, label: 'Rombo')]);
       spotlight.releaseIf([7]);
 
       expect(spotlight.isEmpty, isTrue);
@@ -193,7 +203,7 @@ void main() {
     });
 
     test('soltar lo suelta todo, fijado incluido', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
       spotlight.release();
 
       // Es lo que hay que llamar al cambiar de contenido o al salir del visor:
@@ -204,19 +214,19 @@ void main() {
     });
 
     test('soltado, el ratón manda otra vez', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
       spotlight.release();
-      spotlight.show(id: 2, box: otra, label: 'Cubo');
+      spotlight.show([_spot(2, otra, label: 'Cubo')]);
 
-      expect(spotlight.label, 'Cubo');
+      expect(spotlight.spotted.single.label, 'Cubo');
     });
 
     test('soltada, el ratón vuelve a mandar', () {
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
-      spotlight.pin(id: 1, box: box, label: 'Rombo');
-      spotlight.show(id: 2, box: otra, label: 'Cubo');
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
+      spotlight.pin([_spot(1, box, label: 'Rombo')]);
+      spotlight.show([_spot(2, otra, label: 'Cubo')]);
 
-      expect(spotlight.label, 'Cubo');
+      expect(spotlight.spotted.single.label, 'Cubo');
     });
   });
 

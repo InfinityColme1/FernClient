@@ -4,6 +4,9 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/domain/services/content_visibility.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -116,6 +119,13 @@ class _CreatorTile extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Quién sabe si este creador esconde algo. Se pregunta al pintar, como en la
+  /// fila de un fernie: la lista se rehace al marcar, y así no hace falta que
+  /// nadie la avise.
+  ContentVisibility get _visibility => getIt.isRegistered<NsfwVisibility>()
+      ? getIt<NsfwVisibility>()
+      : const ContentVisibility();
+
   @override
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(AppSizes.radiusLarge);
@@ -144,7 +154,7 @@ class _CreatorTile extends StatelessWidget {
               backgroundColor: context.colors.secondary,
             ),
             const SizedBox(width: AppSpacing.m),
-            Expanded(
+            Flexible(
               child: Text(
                 creator.name,
                 maxLines: 1,
@@ -152,6 +162,13 @@ class _CreatorTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
+            // Con el filtro puesto este creador ni aparece, así que esto sólo se
+            // ve sin él: es entonces cuando hace falta saber cuál de los que se
+            // están usando esconde algo.
+            if (_visibility.marksCreator(creator.id)) ...[
+              const SizedBox(width: AppSpacing.s),
+              const NsfwTagMark(),
+            ],
           ],
         ),
       ),

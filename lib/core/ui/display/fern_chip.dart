@@ -69,13 +69,24 @@ class FernChip extends StatelessWidget {
           leading!,
           const SizedBox(width: AppSpacing.m),
         ],
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                // Sin píldora el texto va con el grosor normal del tema.
-                fontWeight: isPlain ? null : FontWeight.bold,
-                color: labelColor,
-              ),
+        // Cede y se recorta si no llega: la píldora es una fila que no se parte,
+        // y el nombre de una etiqueta puede ser largo. En el panel del contenido
+        // —350 píxeles, con avatar, marca NSFW y cruz al lado— un nombre normal
+        // ya la desbordaba por la derecha.
+        //
+        // Con `Flexible` y no con `Expanded`: la píldora mide lo que mide su
+        // contenido y estirarla dejaría la cruz pegada al borde de la pantalla.
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  // Sin píldora el texto va con el grosor normal del tema.
+                  fontWeight: isPlain ? null : FontWeight.bold,
+                  color: labelColor,
+                ),
+          ),
         ),
         if (trailing != null) ...[
           const SizedBox(width: AppSpacing.s),

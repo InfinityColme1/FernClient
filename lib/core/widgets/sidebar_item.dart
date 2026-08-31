@@ -47,6 +47,28 @@ class SidebarItem {
   /// significan algo que se le pueda poner a un contenido.
   final void Function(List<int> mediaIds)? onMediaDropped;
 
+  /// La etiqueta tiene hijas y se pueden plegar.
+  ///
+  /// Sin hijas no se pinta chevron: uno que no hace nada en la mitad de las
+  /// filas es ruido. En su sitio queda un hueco del mismo ancho, que es lo que
+  /// mantiene alineados los iconos de toda la lista.
+  final bool hasChildren;
+
+  /// Si su rama está plegada ahora mismo.
+  final bool isCollapsed;
+
+  /// Plegar o desplegar. Sin esto la fila no ofrece chevron aunque tenga hijas,
+  /// que es lo que pasa con todo lo que no es una etiqueta.
+  final VoidCallback? onToggleCollapse;
+
+  /// Abrir la rama por posarse encima arrastrando, y volver a cerrarla al
+  /// soltar.
+  ///
+  /// Son dos porque lo que abre el arrastre **no se guarda**: es una ayuda del
+  /// gesto para poder bajar hasta una hija, no una decisión del usuario.
+  final VoidCallback? onSpringOpen;
+  final VoidCallback? onSpringRelease;
+
   SidebarItem({
     required this.id,
     required this.title,
@@ -57,6 +79,11 @@ class SidebarItem {
     this.badgeCount = 0,
     this.isNsfw = false,
     this.onMediaDropped,
+    this.hasChildren = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
+    this.onSpringOpen,
+    this.onSpringRelease,
   });
 }
 
@@ -72,6 +99,14 @@ class SidebarSection {
   /// no se haya creado ninguna). Sin texto, la sección vacía no se pinta.
   final String? emptyMessage;
 
+  /// Lo que va **debajo del rótulo y encima de los botones**: el buscador de las
+  /// etiquetas.
+  ///
+  /// Sólo se pinta con el menú abierto. Plegado no hay ancho para un campo de
+  /// texto —la fila entera es un icono—, y es la misma regla que siguen los
+  /// rótulos y los chevrones: lo que necesita texto desaparece al plegar.
+  final Widget? header;
+
   /// Con qué nombre puede señalar aquí el tutorial, si es que puede.
   ///
   /// Lo lleva el **rótulo** de la sección y no la sección entera: los botones se
@@ -85,5 +120,6 @@ class SidebarSection {
     required this.items,
     this.emptyMessage,
     this.anchorId,
+    this.header,
   });
 }

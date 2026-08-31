@@ -103,6 +103,54 @@ Rect clampNormalized(Rect rect) {
   );
 }
 
+/// El cuadrado que va de [anchor] hasta donde esté [cursor], sin salirse de
+/// [bounds].
+///
+/// Es lo que se arrastra al recortar un avatar. El cuadrado se impone **aquí y
+/// no al soltar**: lo que se pinta mientras se arrastra y lo que sale al final
+/// tienen que ser lo mismo, o se elige una cosa y se recorta otra.
+///
+/// El lado lo manda el eje que más se haya movido, para que el cuadrado siga al
+/// ratón por el eje en el que se está tirando en vez de quedarse corto. Y se
+/// recorta a lo que quede hasta el borde **en la dirección del arrastre**: pasado
+/// ese punto el cuadrado deja de crecer, que es lo único que lo mantiene dentro
+/// de la imagen sin deformarlo.
+///
+/// Va en coordenadas del widget a propósito. Un cuadrado en píxeles de la imagen
+/// es un cuadrado en pantalla —el contenido se pinta con una escala igual en los
+/// dos ejes—, pero **no** un cuadrado en coordenadas normalizadas: ahí cada eje
+/// se mide en fracciones de un lado distinto.
+Rect squareBetween(Offset anchor, Offset cursor, {required Rect bounds}) {
+  // El principio puede caer fuera si el arrastre empezó sobre una banda: se
+  // trae al borde en vez de descartarlo, que es lo que hace que arrastrar desde
+  // el margen recorte la esquina en lugar de no hacer nada.
+  final start = Offset(
+    anchor.dx.clamp(bounds.left, bounds.right),
+    anchor.dy.clamp(bounds.top, bounds.bottom),
+  );
+
+  final toRight = cursor.dx >= start.dx;
+  final toBottom = cursor.dy >= start.dy;
+
+  final room = math.min(
+    toRight ? bounds.right - start.dx : start.dx - bounds.left,
+    toBottom ? bounds.bottom - start.dy : start.dy - bounds.top,
+  );
+
+  final side = math.min(
+    math.max((cursor.dx - start.dx).abs(), (cursor.dy - start.dy).abs()),
+    math.max(0.0, room),
+  );
+
+  return Rect.fromPoints(
+    start,
+    Offset(
+      start.dx + (toRight ? side : -side),
+      start.dy + (toBottom ? side : -side),
+    ),
+  );
+}
+
 /// De un rectángulo en coordenadas del widget a coordenadas normalizadas de la
 /// imagen original.
 ///

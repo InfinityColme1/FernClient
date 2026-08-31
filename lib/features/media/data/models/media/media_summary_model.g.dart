@@ -81,6 +81,16 @@ const MediaSummaryModelSchema = CollectionSchema(
       id: 12,
       name: r'recognizedAt',
       type: IsarType.dateTime,
+    ),
+    r'remoteId': PropertySchema(
+      id: 13,
+      name: r'remoteId',
+      type: IsarType.string,
+    ),
+    r'sourceUrl': PropertySchema(
+      id: 14,
+      name: r'sourceUrl',
+      type: IsarType.string,
     )
   },
   estimateSize: _mediaSummaryModelEstimateSize,
@@ -178,6 +188,18 @@ int _mediaSummaryModelEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.importSource.length * 3;
   bytesCount += 3 + object.path.length * 3;
+  {
+    final value = object.remoteId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.sourceUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -200,6 +222,8 @@ void _mediaSummaryModelSerialize(
   writer.writeString(offsets[10], object.path);
   writer.writeLong(offsets[11], object.perceptualHash);
   writer.writeDateTime(offsets[12], object.recognizedAt);
+  writer.writeString(offsets[13], object.remoteId);
+  writer.writeString(offsets[14], object.sourceUrl);
 }
 
 MediaSummaryModel _mediaSummaryModelDeserialize(
@@ -223,6 +247,8 @@ MediaSummaryModel _mediaSummaryModelDeserialize(
   object.path = reader.readString(offsets[10]);
   object.perceptualHash = reader.readLongOrNull(offsets[11]);
   object.recognizedAt = reader.readDateTimeOrNull(offsets[12]);
+  object.remoteId = reader.readStringOrNull(offsets[13]);
+  object.sourceUrl = reader.readStringOrNull(offsets[14]);
   return object;
 }
 
@@ -259,6 +285,10 @@ P _mediaSummaryModelDeserializeProp<P>(
       return (reader.readLongOrNull(offset)) as P;
     case 12:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1622,6 +1652,314 @@ extension MediaSummaryModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'remoteId',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'remoteId',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'remoteId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'remoteId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'remoteId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      remoteIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'remoteId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'sourceUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'sourceUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'sourceUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'sourceUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'sourceUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'sourceUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'sourceUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'sourceUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'sourceUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'sourceUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterFilterCondition>
+      sourceUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'sourceUrl',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension MediaSummaryModelQueryObject
@@ -1827,6 +2165,34 @@ extension MediaSummaryModelQuerySortBy
       return query.addSortBy(r'recognizedAt', Sort.desc);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByRemoteId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortByRemoteIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortBySourceUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      sortBySourceUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUrl', Sort.desc);
+    });
+  }
 }
 
 extension MediaSummaryModelQuerySortThenBy
@@ -2025,6 +2391,34 @@ extension MediaSummaryModelQuerySortThenBy
       return query.addSortBy(r'recognizedAt', Sort.desc);
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByRemoteId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenByRemoteIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenBySourceUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QAfterSortBy>
+      thenBySourceUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUrl', Sort.desc);
+    });
+  }
 }
 
 extension MediaSummaryModelQueryWhereDistinct
@@ -2119,6 +2513,20 @@ extension MediaSummaryModelQueryWhereDistinct
       return query.addDistinctBy(r'recognizedAt');
     });
   }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctByRemoteId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'remoteId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, MediaSummaryModel, QDistinct>
+      distinctBySourceUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sourceUrl', caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension MediaSummaryModelQueryProperty
@@ -2211,6 +2619,20 @@ extension MediaSummaryModelQueryProperty
       recognizedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'recognizedAt');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, String?, QQueryOperations>
+      remoteIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteId');
+    });
+  }
+
+  QueryBuilder<MediaSummaryModel, String?, QQueryOperations>
+      sourceUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceUrl');
     });
   }
 }

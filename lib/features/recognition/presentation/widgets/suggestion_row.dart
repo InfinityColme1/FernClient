@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/recognition/domain/entities/media_suggestion_entity.dart';
+import 'package:Fern/features/recognition/domain/services/suggestion_groups.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -16,15 +17,24 @@ import 'package:material_symbols_icons/symbols.dart';
 /// que se leyera igual que algo confirmado convertiría cada equivocación del
 /// modelo en una etiqueta que nadie puso.
 ///
-/// Los dos botones sólo aparecen si hay algo que hacer con ella. Una sugerencia
-/// de un fernie que no enlaza nada —o cuya etiqueta alguien borró— no se puede
-/// aceptar: no hay nada que poner. Enseñar el botón y dar un error al pulsarlo
-/// sería peor que no enseñarlo.
+/// Cada botón aparece sólo si hay algo que hacer con él, y quien monta la fila
+/// es quien lo decide: enseñar uno que da un error al pulsarlo sería peor que no
+/// enseñarlo. El orden es región, aceptar y rechazar — los dos que dan por buena
+/// la sugerencia juntos, y el de descartarla al final.
 class SuggestionRow extends StatelessWidget {
   final MediaSuggestionEntity suggestion;
 
   /// Qué avatar poner cuando lo propuesto no tiene imagen.
   final IconData fallbackIcon;
+
+  /// Todas las veces que el modelo lo ha visto en este contenido.
+  ///
+  /// Una sola fila para todas —es la misma etiqueta, y ponerla cuatro veces no
+  /// significa nada— pero hacen falta enteras: el número se enseña al lado del
+  /// porcentaje, y las cajas son lo que se señala al pasar por encima.
+  final SuggestionGroup? group;
+
+  int get instances => group?.count ?? 1;
 
   /// Qué pasa al decir que sí. Vacío cuando no hay nada que proponer.
   final VoidCallback? onAccept;
@@ -40,12 +50,12 @@ class SuggestionRow extends StatelessWidget {
   /// servicio en sí: la fila no tiene por qué saber quién pinta encima del
   /// contenido, y un widget que va a buscarlo al localizador no se puede montar
   /// en una prueba sin montar medio programa.
-  final void Function(MediaSuggestionEntity?)? onSpotlight;
+  final void Function(SuggestionGroup?)? onSpotlight;
 
   /// Dejar la caja puesta, o quitarla si ya lo estaba.
   ///
   /// Al pulsar la fila. Lo que enseña el ratón se va con él; esto se queda.
-  final void Function(MediaSuggestionEntity)? onSpotlightPinned;
+  final void Function(SuggestionGroup)? onSpotlightPinned;
 
   /// Guardar esta detección como región del fernie que la vio.
   ///
@@ -57,6 +67,7 @@ class SuggestionRow extends StatelessWidget {
     super.key,
     required this.suggestion,
     this.fallbackIcon = Symbols.label,
+    this.group,
     this.onAccept,
     this.onReject,
     this.onMarkRegion,
@@ -96,16 +107,16 @@ class SuggestionRow extends StatelessWidget {
       // pero se va en cuanto el ratón se mueve, y mirar dónde está algo y
       // decidir si la etiqueta es correcta se hacen a la vez: hay que poder
       // dejarla quieta mientras se piensa.
-      onTap: box == null || onSpotlightPinned == null
+      onTap: box == null || onSpotlightPinned == null || group == null
           ? null
-          : () => onSpotlightPinned!(suggestion),
+          : () => onSpotlightPinned!(group!),
       child: MouseRegion(
       // Pasar por encima enseña dónde lo vio. Es la pregunta inmediata al leer
       // «Estrella 66 %», y hasta ahora no tenía respuesta: el rectángulo se
       // guardaba al detectar y no se enseñaba en ninguna parte.
-      onEnter: box == null || onSpotlight == null
+      onEnter: box == null || onSpotlight == null || group == null
           ? null
-          : (_) => onSpotlight!(suggestion),
+          : (_) => onSpotlight!(group),
       onExit: box == null || onSpotlight == null
           ? null
           : (_) => onSpotlight!(null),
@@ -139,6 +150,19 @@ class SuggestionRow extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+          // Cuántas veces lo ha visto, cuando ha sido más de una. El porcentaje
+          // sigue siendo el de la mejor: es lo que ha significado siempre, y
+          // cambiarlo por una media haría que una detección mala arrastrara la
+          // fila hacia abajo.
+          if (instances > 1) ...[
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              texts.suggestionInstances(instances),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: context.colors.unremarked,
+              ),
+            ),
+          ],
           // Lo que el modelo acierta se puede guardar como región con un
           // clic. Es lo que cierra el círculo: sin esto, cada acierto se pierde
           // y hay que volver a marcar a mano lo que ya estaba bien marcado.
@@ -152,13 +176,9 @@ class SuggestionRow extends StatelessWidget {
               ),
               onPressed: onMarkRegion,
             ),
-          if (onReject != null)
-            IconButton(
-              tooltip: texts.actionReject,
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Symbols.close, size: AppSizes.iconSmall),
-              onPressed: onReject,
-            ),
+          // Aceptar entre la región y la cruz: los dos que dan por buena la
+          // sugerencia van juntos, y el de descartarla queda al final, apartado
+          // de ellos y donde ya estaba.
           if (onAccept != null)
             IconButton(
               tooltip: texts.actionAccept,
@@ -169,6 +189,13 @@ class SuggestionRow extends StatelessWidget {
               color: context.colors.terciary,
               icon: const Icon(Symbols.check, size: AppSizes.iconSmall),
               onPressed: onAccept,
+            ),
+          if (onReject != null)
+            IconButton(
+              tooltip: texts.actionReject,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Symbols.close, size: AppSizes.iconSmall),
+              onPressed: onReject,
             ),
         ],
       ),

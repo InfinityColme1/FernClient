@@ -25,6 +25,7 @@ import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -88,11 +89,16 @@ Future<(RemoteMediaRepositoryImpl, PreferencesService)> _repository(
       downloader: _Downloader(),
       registry: _Registry(),
       settingsRepository: _Settings(),
+      blocked: _blocked(),
       preferencesService: preferences,
     ),
     preferences,
   );
 }
+
+/// Sin base de datos: aqui no se prueba el bloqueo, y abrir una entera para
+/// preguntar por algo que esta vacio seria pedir mucho a cambio de nada.
+BlockedImports _blocked() => BlockedImports();
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

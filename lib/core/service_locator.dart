@@ -63,6 +63,7 @@ import 'package:Fern/features/recognition/domain/repositories/model_repository.d
 import 'package:Fern/features/recognition/domain/usecases/assign_fernie_to_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/clear_stale_training_flags_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_model_usecase.dart';
+import 'package:Fern/features/recognition/domain/usecases/forget_training_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_of_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_model_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_models_usecase.dart';
@@ -73,6 +74,9 @@ import 'package:Fern/features/recognition/presentation/blocs/models_bloc.dart';
 import 'package:Fern/features/recognition/presentation/blocs/models_events.dart';
 import 'package:Fern/features/recognition/data/services/recognition_engine.dart';
 import 'package:Fern/features/recognition/domain/repositories/fernie_repository.dart';
+import 'package:Fern/features/recognition/domain/usecases/adopt_fernie_tag_usecase.dart';
+import 'package:Fern/features/recognition/data/services/tag_regions_job_runner.dart';
+import 'package:Fern/features/recognition/domain/usecases/apply_fernie_link_to_media_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/add_fernie_regions_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_region_usecase.dart';
 import 'package:Fern/features/recognition/domain/usecases/delete_fernie_usecase.dart';
@@ -101,7 +105,12 @@ import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/media/data/services/external_media_resolver.dart';
 import 'package:Fern/features/settings/data/services/database_maintenance_service.dart';
+import 'package:Fern/features/settings/data/services/file_deletion_job_runner.dart';
+import 'package:Fern/features/settings/data/services/avatar_janitor.dart';
+import 'package:Fern/features/settings/data/services/leftover_files.dart';
+import 'package:Fern/features/settings/domain/usecases/sweep_unused_files_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/wipe_database_usecase.dart';
+import 'package:Fern/features/settings/domain/usecases/crop_avatar_usecase.dart';
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:Fern/features/media/data/services/import_feed.dart';
 import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
@@ -143,6 +152,10 @@ import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart'
 import 'package:Fern/features/media/domain/usecases/delete_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/add_tag_to_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
+import 'package:Fern/features/media/domain/services/collapsed_tags.dart';
+import 'package:Fern/features/media/domain/services/recent_picks.dart';
+import 'package:Fern/features/media/domain/usecases/set_creator_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_tag_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
@@ -159,6 +172,7 @@ import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart
 import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_media_tag_log_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/purge_deleted_media_usecase.dart';
@@ -171,6 +185,7 @@ import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_by_suggestion_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/search_media_by_criteria_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_suggestions_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
@@ -182,6 +197,7 @@ import 'package:Fern/features/media/domain/usecases/get_remote_creators_usecase.
 import 'package:Fern/features/media/domain/usecases/remember_media_sizes_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_import_directory_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
+import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/tags_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
@@ -257,6 +273,9 @@ Future<void> initializeDependencies() async {
 
   // Y por donde lo piden las pantallas: elegir una imagen es cosa suya, copiarla
   // a la carpeta de avatares no.
+  getIt.registerLazySingleton<CropAvatarUseCase>(
+    () => CropAvatarUseCase(storage: getIt()),
+  );
   getIt.registerLazySingleton<StoreAvatarUseCase>(
     () => StoreAvatarUseCase(storage: getIt()),
   );
@@ -267,11 +286,52 @@ Future<void> initializeDependencies() async {
     () => DatabaseMaintenanceService(
       database: getIt<Isar>(),
       preferences: getIt(),
+      blocked: getIt(),
+      collapsedTags: getIt(),
+      media: getIt<LocalMediaRepository>(),
+      nsfw: getIt<NsfwIndex>(),
     ),
   );
 
+  // Borrar del disco lo que el vaciado deja huérfano. Va por la cola: son miles
+  // de ficheros y minutos de trabajo, y en el diálogo dejaría la ventana
+  // bloqueada sin decir por dónde va.
+  getIt.registerLazySingleton<FileDeletionJobRunner>(
+    () => FileDeletionJobRunner(organizer: getIt<MediaFileOrganizer>()),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.fileCleanup,
+    (context) => getIt<FileDeletionJobRunner>().run(context),
+  );
+
+  // Se lleva las copias de avatar que ya no usa nadie. Necesita la base entera:
+  // un avatar está en uso si lo apunta cualquiera de las cinco colecciones que
+  // tienen imagen, y la que se olvidara perdería sus ficheros.
+  getIt.registerLazySingleton<AvatarJanitor>(
+    () => AvatarJanitor(database: getIt<Isar>(), storage: getIt()),
+  );
+
+  // Los ficheros sueltos de la carpeta de trabajo: avatares sin dueño,
+  // descargas cuya fila ya no está y pesos que no apunta ningún modelo. **No**
+  // el entorno de Python ni los conjuntos de entrenamiento: lo primero no está
+  // en la base de datos y llevárselo rompería el reconocimiento.
+  getIt.registerLazySingleton<LeftoverFiles>(
+    () => LeftoverFiles(
+      database: getIt<Isar>(),
+      avatars: getIt<AvatarJanitor>(),
+      downloadsPath: () => getIt<RemoteMediaDownloader>().downloadsPath,
+      recognitionPath: () =>
+          getIt<SettingsRepository>().getSettings().recognitionPath,
+    ),
+  );
+
+  getIt.registerLazySingleton<SweepUnusedFilesUseCase>(
+    () => SweepUnusedFilesUseCase(leftovers: getIt()),
+  );
+
   getIt.registerLazySingleton<WipeDatabaseUseCase>(
-    () => WipeDatabaseUseCase(maintenance: getIt()),
+    () => WipeDatabaseUseCase(maintenance: getIt(), jobs: getIt<JobQueue>()),
   );
 
   // Los avisos. El sonido va aparte del contador porque son dos cosas que se
@@ -324,6 +384,25 @@ Future<void> initializeDependencies() async {
       SchemaMigrator(preferences: getIt<SharedPreferences>())
   );
   await getIt<SchemaMigrator>().run(getIt<Isar>());
+
+  // Lo que el usuario ha dicho que no quiere volver a importar. Se lee entero al
+  // arrancar: se pregunta una vez por cada pieza de cada importación, y eso no
+  // puede ser una consulta.
+  //
+  // Aquí arriba y no junto a los casos de uso que lo tocan: el repositorio
+  // remoto lo pide al construirse, y como se construye la primera vez que se
+  // usa, registrarlo más abajo dejaba el arranque contando con que nadie
+  // importara antes de llegar a esa línea. No era así.
+  getIt.registerSingleton<BlockedImports>(
+    BlockedImports(database: getIt<Isar>()),
+  );
+  await getIt<BlockedImports>().rebuild();
+
+  // Qué ramas de etiquetas están plegadas. Único y escuchado por las dos listas
+  // que pintan el árbol: plegar desde una tiene que verse en la otra.
+  getIt.registerSingleton<CollapsedTags>(
+    CollapsedTags(preferences: getIt()),
+  );
 
   // Etiquetar con una etiqueta es etiquetar con toda su rama, y de eso se
   // encarga esto: lo usan por igual el guardado a mano y el automático.
@@ -482,6 +561,7 @@ Future<void> initializeDependencies() async {
         registry: getIt(),
         settingsRepository: getIt(),
         preferencesService: getIt(),
+        blocked: getIt(),
       )
   );
 
@@ -591,12 +671,37 @@ Future<void> initializeDependencies() async {
     UpdateTagUseCase(getIt())
   );
 
+  // Darle a un fernie sin enlace la etiqueta que se llama como el: es lo que
+  // hace aceptable su sugerencia, que hasta ahora solo se podia rechazar.
+  // Le pone al contenido lo que el fernie enlaza al marcarle una región: decir
+  // que ahí sale «Marinette» y no ponerle la etiqueta era dejar el trabajo a
+  // medias.
+  getIt.registerLazySingleton<ApplyFernieLinkToMediaUseCase>(
+    () => ApplyFernieLinkToMediaUseCase(getIt<LocalMediaRepository>()),
+  );
+
+  getIt.registerLazySingleton<AdoptFernieTagUseCase>(() =>
+    AdoptFernieTagUseCase(
+      media: getIt<LocalMediaRepository>(),
+      fernies: getIt<FernieRepository>(),
+      saveTag: getIt<SaveTagUseCase>(),
+    )
+  );
+
   getIt.registerSingleton<SaveTagSourceUrlsUseCase>(
     SaveTagSourceUrlsUseCase(getIt())
   );
 
   getIt.registerSingleton<DeleteTagUseCase>(
     DeleteTagUseCase(getIt())
+  );
+
+  getIt.registerSingleton<RecentPicks>(
+    RecentPicks(preferences: getIt(), repository: getIt())
+  );
+
+  getIt.registerSingleton<SetCreatorNsfwUseCase>(
+    SetCreatorNsfwUseCase(getIt())
   );
 
   getIt.registerSingleton<SetTagNsfwUseCase>(
@@ -685,6 +790,11 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Olvidar lo entrenado sin perder cómo se pidió: hiperparámetros, fernies y
+  // reparto se quedan.
+  getIt.registerLazySingleton<ForgetTrainingUseCase>(
+    () => ForgetTrainingUseCase(models: getIt(), files: getIt()),
+  );
   getIt.registerSingleton<DeleteModelUseCase>(
     DeleteModelUseCase(getIt(), getIt()),
   );
@@ -770,6 +880,11 @@ Future<void> initializeDependencies() async {
     GetTagAncestorsUseCase(getIt())
   );
 
+  // Por qué un contenido tiene lo que tiene puesto. Junta la biblioteca y los
+  // fernies, que viven en dos sitios distintos.
+  getIt.registerLazySingleton<GetMediaTagLogUseCase>(
+    () => GetMediaTagLogUseCase(library: getIt(), fernies: getIt()),
+  );
   getIt.registerSingleton<GetTagTreeUseCase>(
     GetTagTreeUseCase(localMediaRepository: getIt())
   );
@@ -784,6 +899,10 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<SearchMediaUseCase>(
     SearchMediaUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SearchMediaByCriteriaUseCase>(
+    SearchMediaByCriteriaUseCase(getIt())
   );
 
   getIt.registerSingleton<SearchMediaBySuggestionUseCase>(
@@ -985,6 +1104,11 @@ Future<void> initializeDependencies() async {
       // que reconocer una biblioteca no sean tres peticiones por contenido.
       predictMany: _predictManyWith,
       durationOf: _durationOf,
+      // Cuántas veces se guarda lo mismo visto en un contenido. Se lee al
+      // reconocer y no al arrancar: cambiarlo en Ajustes vale para el siguiente
+      // trabajo, sin reiniciar.
+      maxDetections: () =>
+          getIt<SettingsRepository>().getSettings().maxDetectionsPerClass,
       extractFrames: _extractFrames,
     ),
   );
@@ -1150,6 +1274,23 @@ Future<void> initializeDependencies() async {
     ),
   );
 
+  // Marcar de una vez todo el contenido de una etiqueta como regiones de un
+  // fernie. Va por la cola porque saber cuánto dura cada vídeo es abrir su
+  // fichero, y con una etiqueta grande eso son minutos.
+  getIt.registerLazySingleton<TagRegionsJobRunner>(
+    () => TagRegionsJobRunner(
+      media: getIt<LocalMediaRepository>(),
+      fernies: getIt<FernieRepository>(),
+      durationOf: _durationOf,
+      onFinished: _notifyTagRegionsFinished,
+    ),
+  );
+
+  getIt<JobQueue>().register(
+    JobType.tagRegions,
+    (context) => getIt<TagRegionsJobRunner>().run(context),
+  );
+
   getIt<JobQueue>().register(
     JobType.duplicateScan,
     (context) => getIt<DuplicateScanRunner>().run(context),
@@ -1227,8 +1368,8 @@ Future<void> initializeDependencies() async {
     rememberSource: (source) =>
         getIt<PreferencesService>().setLastImportSource(source),
         addTagToMediaUseCase: getIt(),
-        searchMediaUseCase: getIt(),
-        searchMediaBySuggestionUseCase: getIt(),
+        searchMediaByCriteriaUseCase: getIt(),
+        blocked: () => getIt<BlockedImports>(),
         preferences: getIt(),
         notifications: getIt(),
       )
@@ -1244,6 +1385,10 @@ Future<void> initializeDependencies() async {
   // cancelar la suscripción porque estos tres viven lo que vive la aplicación.
   getIt<NsfwModeService>().changes.listen((_) {
     getIt<TagsBloc>().add(const LoadTagsEvent());
+    // Los creadores también se marcan, así que su lista también cambia al abrir
+    // y cerrar. Se quedó fuera de aquí cuando no se podían marcar, y el síntoma
+    // era que había que salir de la pantalla y volver para verla al día.
+    getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
     getIt<MediaBloc>().add(const ReloadCurrentMediaEvent());
 
     // Los fernies y los modelos también: son pantallas que se quedan montadas,
@@ -1278,6 +1423,25 @@ Future<void> _notifyRecognitionFinished(Set<int> mediaIds) async {
     count: mediaIds.length,
     route: route,
   );
+}
+
+/// Marcar una etiqueta entera ha terminado: la pantalla de fernies tiene que
+/// enseñar lo que se acaba de escribir.
+///
+/// El trabajo corre en la cola, así que quien lo pidió puede seguir con la ficha
+/// del fernie delante. Sin esto, las regiones estaban en la base y no en la
+/// rejilla, y había que salir de la pantalla y volver a entrar.
+Future<void> _notifyTagRegionsFinished(int fernieId) async {
+  final fernies = getIt<FerniesBloc>();
+
+  // La lista, por el recuento de regiones de cada fernie.
+  fernies.add(const LoadFerniesEvent());
+
+  // Y la rejilla, sólo si es el fernie que se está mirando: recargarla estando
+  // en otro sería leer de más para no enseñar nada.
+  if (fernies.state.selectedFernieId == fernieId) {
+    fernies.add(const ReloadFernieRegionsEvent());
+  }
 }
 
 /// Si alguno de estos contenidos está todavía pendiente de revisar.

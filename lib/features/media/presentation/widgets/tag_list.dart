@@ -2,8 +2,11 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/services/collapsed_tags.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -44,7 +47,34 @@ enum TagDropMode {
 /// podía hacer abriendo la ficha de cada una, y con el árbol grande era ir y
 /// venir por una lista de doscientas.
 class TagList extends StatefulWidget {
+  /// El árbol **entero**, con etiquetas y personas mezcladas. Aquí se reparte.
   final List<TagEntity> tags;
+
+  /// Si esta lista es la de personas. La otra enseña todo lo demás.
+  ///
+  /// El árbol es uno solo y compartido: una persona puede colgar de una etiqueta
+  /// normal y ser hermana suya. Lo único que cambia es quién se pinta dónde.
+  final bool showsPeople;
+
+  /// Enseña las dos clases juntas, sin repartirlas.
+  ///
+  /// Es lo que hace todo lo que no es la pantalla de gestión: fuera de allí una
+  /// persona es una etiqueta más —al asignarla a un contenido, en las
+  /// sugerencias del buscador, en el menú lateral—, y repartirlas obligaría a
+  /// saber en cuál de las dos listas está guardado algo que se usa igual.
+  final bool mixesPeople;
+
+  /// Qué hacer al pulsar el botón de la cabecera, que lleva a la otra lista. Sin
+  /// esto, el botón no sale.
+  final VoidCallback? onSwitchList;
+
+  /// Si al filtrar por nombre, lo que encaja llega con su descendencia.
+  ///
+  /// Sin decir nada se lee del ajuste, como la lista de fernies lee el filtro
+  /// NSFW al pintarse: así cambiarlo en los ajustes se ve al volver, sin que la
+  /// pantalla de encima tenga que enterarse ni pasarlo hacia abajo. Se puede
+  /// forzar para poder probar las dos formas sin localizador de servicios.
+  final bool? showsBranchOnFilter;
 
   /// Etiqueta marcada, por identificador: al guardar cambia el nombre y el
   /// avatar, pero el identificador es el mismo y la fila sigue marcada.
@@ -67,17 +97,123 @@ class TagList extends StatefulWidget {
     required this.onSelected,
     this.selectedTagId,
     this.onDropped,
+    this.showsPeople = false,
+    this.mixesPeople = false,
+    this.onSwitchList,
+    this.showsBranchOnFilter,
   });
+
+  /// El árbol con sólo las etiquetas de una clase, **sin podar ramas enteras**.
+  ///
+  /// Una etiqueta que no entra no se lleva por delante lo que cuelga de ella: sus
+  /// hijas suben al sitio que deja. Es lo que hace que una persona colgada de una
+  /// etiqueta normal aparezca en la raíz de la lista de personas, y al revés, sin
+  /// que ninguna se pierda por estar en la rama equivocada.
+  static List<TagEntity> ofKind(List<TagEntity> tags, {required bool people}) {
+    final kept = <TagEntity>[];
+
+    for (final tag in tags) {
+      final children = ofKind(tag.children, people: people);
+
+      if (tag.isPerson == people) {
+        kept.add(tag.copyWith(children: children));
+      } else {
+        kept.addAll(children);
+      }
+    }
+
+    return kept;
+  }
 
   /// Las etiquetas aplanadas en el orden en el que se pintan, cada una con su
   /// nivel.
-  static List<TagRow> flatten(List<TagEntity> tags, {int depth = 0}) {
+  ///
+  /// [collapsed] son las ramas plegadas: la madre se emite y su descendencia se
+  /// corta ahí. **Se escribe una sola vez y la usan las dos listas** —ésta y el
+  /// menú lateral—: aplanan el mismo árbol, y hacerlo por separado acabaría en
+  /// dos comportamientos distintos en cuanto se arreglara algo en uno.
+  ///
+  /// Vacío es el árbol entero, que es lo que se pintaba antes de poder plegarlo.
+  static List<TagRow> flatten(
+    List<TagEntity> tags, {
+    int depth = 0,
+    Set<int> collapsed = const {},
+  }) {
     return [
       for (final tag in tags) ...[
         (tag: tag, depth: depth),
-        ...flatten(tag.children, depth: depth + 1),
+        if (!collapsed.contains(tag.id))
+          ...flatten(tag.children, depth: depth + 1, collapsed: collapsed),
       ],
     ];
+  }
+
+  /// Las etiquetas aplanadas **tal y como se ven al filtrar por [query]**.
+  ///
+  /// Con el campo vacío es [flatten] con lo plegado: el árbol de siempre.
+  ///
+  /// Buscando **manda el filtro sobre lo plegado**: encontrar una etiqueta y no
+  /// verla porque su madre está cerrada sería un buscador que miente.
+  ///
+  /// Con [showsBranch], cada coincidencia arranca en la raíz y su rama cuelga de
+  /// ella, con la sangría contada **desde ella** y no desde el árbol entero.
+  /// Apagado, lo que encaja sale suelto y a ras, que es lo que se hacía antes de
+  /// que la rama acompañara.
+  ///
+  /// **La usan las dos listas** —la de gestión y la del menú lateral—: aplanan el
+  /// mismo árbol con la misma regla, y hacerlo por separado acabaría en dos
+  /// comportamientos distintos en cuanto se arreglara algo en una.
+  static List<TagRow> rowsOf(
+    List<TagEntity> tags, {
+    String query = '',
+    Set<int> collapsed = const {},
+    bool showsBranch = true,
+  }) {
+    final needle = query.trim().toLowerCase();
+
+    if (needle.isEmpty) return flatten(tags, collapsed: collapsed);
+
+    final all = flatten(tags);
+
+    if (!showsBranch) {
+      return [
+        for (final row in all)
+          if (row.tag.name.toLowerCase().contains(needle)) (tag: row.tag, depth: 0),
+      ];
+    }
+
+    // Sin llevar la cuenta de lo ya emitido, una hija que también encaja saldría
+    // dos veces: una colgando de su madre y otra por su cuenta. Como las madres
+    // van antes en el recorrido, la primera vez sale en su sitio.
+    final emitted = <int>{};
+    final rows = <TagRow>[];
+
+    for (final row in all) {
+      if (!row.tag.name.toLowerCase().contains(needle)) continue;
+      if (emitted.contains(row.tag.id)) continue;
+
+      for (final each in flatten([row.tag])) {
+        if (!emitted.add(each.tag.id)) continue;
+        rows.add(each);
+      }
+    }
+
+    return rows;
+  }
+
+  /// Las etiquetas por encima de [id], de la raíz hacia abajo.
+  ///
+  /// Es lo que hay que desplegar para que una etiqueta se vea: una elegida
+  /// dentro de una rama cerrada no está en pantalla, y la lista estaría diciendo
+  /// que hay algo marcado que no se ve por ninguna parte.
+  static List<TagEntity> ancestorsOf(List<TagEntity> tags, int id) {
+    for (final tag in tags) {
+      if (tag.id == id) return const [];
+
+      if (contains(tag, id)) return [tag, ...ancestorsOf(tag.children, id)];
+    }
+
+    return const [];
   }
 
   /// De quién cuelga [id], o `null` si es raíz.
@@ -116,29 +252,99 @@ class _TagListState extends State<TagList> {
   /// Lo escrito en el filtro. Vacío es el árbol entero.
   String _query = '';
 
+  /// Las ramas plegadas. Se escucha en vez de leerse al montar: plegar desde el
+  /// menú lateral tiene que verse aquí sin salir de la pantalla y volver.
+  late final CollapsedTags? _collapsed = getIt.isRegistered<CollapsedTags>()
+      ? getIt<CollapsedTags>()
+      : null;
+
+  @override
+  void initState() {
+    super.initState();
+    _collapsed?.addListener(_onCollapsedChanged);
+    _revealSelected();
+  }
+
+  @override
+  void didUpdateWidget(TagList old) {
+    super.didUpdateWidget(old);
+
+    if (old.selectedTagId != widget.selectedTagId ||
+        old.tags != widget.tags) {
+      _revealSelected();
+    }
+  }
+
+  /// Abre las ramas que hagan falta para que la etiqueta elegida se vea.
+  ///
+  /// Pasa al crear una hija bajo una madre plegada, y al mover una etiqueta a
+  /// una rama cerrada: sin esto la fila marcada no está en pantalla y parece que
+  /// no se ha hecho nada.
+  void _revealSelected() {
+    final collapsed = _collapsed;
+    final id = widget.selectedTagId;
+    if (collapsed == null || id == null) return;
+
+    final hidden = [
+      for (final ancestor in TagList.ancestorsOf(_tree, id))
+        if (collapsed.isCollapsed(ancestor.id)) ancestor.id,
+    ];
+    if (hidden.isEmpty) return;
+
+    // Después del fotograma: esto se llama desde `initState` y desde
+    // `didUpdateWidget`, y avisar a quien escucha en mitad de una construcción
+    // la deja a medias.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      for (final tagId in hidden) {
+        await collapsed.expand(tagId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _collapsed?.removeListener(_onCollapsedChanged);
+    super.dispose();
+  }
+
+  void _onCollapsedChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Set<int> get _collapsedIds => _collapsed?.ids ?? const {};
+
   /// El menú de soltar, mientras está abierto.
   _Drop? _drop;
 
   /// Para pasar el punto donde se ha soltado a coordenadas de la pila.
   final _stackKey = GlobalKey();
 
+  /// El árbol de esta lista: sólo las de su clase, con las demás apartadas.
+  List<TagEntity> get _tree => widget.mixesPeople
+      ? widget.tags
+      : TagList.ofKind(widget.tags, people: widget.showsPeople);
+
+  /// Si la rama acompaña a lo que encaja. De fábrica sí.
+  bool get _showsBranch =>
+      widget.showsBranchOnFilter ??
+      (getIt.isRegistered<SettingsRepository>()
+          ? getIt<SettingsRepository>().getSettings().showsTagBranchOnFilter
+          : true);
+
   /// Lo que se pinta: el árbol con su sangría, o lo que encaje con el filtro.
   ///
-  /// **Filtrando se pierde la sangría a propósito.** Lo que encaja puede estar a
-  /// tres niveles de distancia de lo siguiente que encaja, y sangrar filas
-  /// sueltas cuyas madres no se ven dibuja un árbol que no existe.
-  List<TagRow> get _rows {
-    final needle = _query.trim().toLowerCase();
-    final all = TagList.flatten(widget.tags);
-
-    if (needle.isEmpty) return all;
-
-    return [
-      for (final row in all)
-        if (row.tag.name.toLowerCase().contains(needle))
-          (tag: row.tag, depth: 0),
-    ];
-  }
+  /// Filtrando hay dos formas, y el motivo de que haya dos es la sangría. Sin la
+  /// rama, **se pierde a propósito**: lo que encaja puede estar a tres niveles de
+  /// distancia de lo siguiente que encaja, y sangrar filas sueltas cuyas madres
+  /// no se ven dibuja un árbol que no existe. Con la rama ese motivo desaparece,
+  /// porque la madre de cada fila sangrada sí está: es la coincidencia de la que
+  /// cuelga.
+  List<TagRow> get _rows => TagList.rowsOf(
+        _tree,
+        query: _query,
+        collapsed: _collapsedIds,
+        showsBranch: _showsBranch,
+      );
 
   /// Si [dragged] se puede soltar sobre [target].
   bool _accepts(TagEntity dragged, TagEntity target) =>
@@ -179,10 +385,30 @@ class _TagListState extends State<TagList> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s),
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.s,
+                right: AppSizes.scrollbarLane,
+              ),
               child: FernSectionHeader(
-                icon: Symbols.label,
-                title: texts.tagsTitle,
+                icon: widget.showsPeople ? Symbols.face : Symbols.label,
+                title:
+                    widget.showsPeople ? texts.peopleTitle : texts.tagsTitle,
+                // A la altura del rótulo y encima del buscador: es el mismo sitio
+                // en las dos listas, así que ir y volver es pulsar donde ya estaba
+                // el dedo.
+                trailing: widget.onSwitchList == null
+                    ? null
+                    : IconButton(
+                        icon: Icon(
+                          widget.showsPeople ? Symbols.label : Symbols.face,
+                          size: AppSizes.iconMedium,
+                        ),
+                        tooltip: widget.showsPeople
+                            ? texts.openTagsTooltip
+                            : texts.openPeopleTooltip,
+                        visualDensity: VisualDensity.compact,
+                        onPressed: widget.onSwitchList,
+                      ),
               ),
             ),
             // Encima de la lista y debajo del rótulo: filtra lo que hay justo
@@ -214,6 +440,14 @@ class _TagListState extends State<TagList> {
                   accepts: (dragged) => _accepts(dragged, rows[index].tag),
                   onDropped: (dragged, at) =>
                       _onDropped(dragged, rows[index].tag, at),
+                  hasChildren: rows[index].tag.children.isNotEmpty,
+                  isCollapsed: _collapsedIds.contains(rows[index].tag.id),
+                  // Buscando no se pliega: lo que se está viendo es el
+                  // resultado de una búsqueda, no el árbol, y plegar ahí
+                  // escondería coincidencias.
+                  onToggleCollapse: _collapsed == null || _query.isNotEmpty
+                      ? null
+                      : () => _collapsed.toggle(rows[index].tag.id),
                 ),
               ),
             ),
@@ -293,6 +527,15 @@ class _TagTile extends StatelessWidget {
   final bool Function(TagEntity dragged) accepts;
   final void Function(TagEntity dragged, Offset at) onDropped;
 
+  /// Si la etiqueta tiene hijas, y si están plegadas.
+  ///
+  /// Sin hijas no se pinta chevron: uno que no hace nada en la mitad de las
+  /// filas es ruido, y además desalinearía los nombres. En su sitio va un hueco
+  /// del mismo ancho, que es lo que mantiene la columna.
+  final bool hasChildren;
+  final bool isCollapsed;
+  final VoidCallback? onToggleCollapse;
+
   const _TagTile({
     required this.row,
     required this.isSelected,
@@ -300,7 +543,34 @@ class _TagTile extends StatelessWidget {
     required this.isDraggable,
     required this.accepts,
     required this.onDropped,
+    this.hasChildren = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
   });
+
+  /// El chevron que pliega la rama, o el hueco que ocupa cuando no hay ninguna.
+  Widget _chevron(BuildContext context) {
+    if (!hasChildren || onToggleCollapse == null) {
+      return const SizedBox(width: tagListChevronWidth);
+    }
+
+    final texts = AppLocalizations.of(context);
+
+    return SizedBox(
+      width: tagListChevronWidth,
+      child: IconButton(
+        tooltip: isCollapsed ? texts.tagExpandBranch : texts.tagCollapseBranch,
+        iconSize: AppSizes.iconSmall,
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: onToggleCollapse,
+        icon: Icon(
+          isCollapsed ? Symbols.chevron_right : Symbols.expand_more,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,6 +657,11 @@ class _TagTile extends StatelessWidget {
         // nombre largo desbordaría la fila.
         child: Row(
           children: [
+            // El chevron va delante del avatar: al final se pisaría con lo que
+            // ya vive ahí en el menú —el distintivo NSFW y el contador— y las
+            // dos listas tienen que plegarse con el mismo gesto en el mismo
+            // sitio.
+            _chevron(context),
             FernAvatar(
               imagePath: tag.picturePath,
               fallbackIcon: Symbols.label,

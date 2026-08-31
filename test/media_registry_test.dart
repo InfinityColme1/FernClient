@@ -10,6 +10,7 @@ import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:Fern/features/media/data/models/media/media_model.dart';
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
 import 'package:Fern/features/media/data/models/persona/creator_model.dart';
 import 'package:Fern/features/media/data/models/persona/persona_model.dart';
@@ -49,6 +50,7 @@ void main() {
         CreatorModelSchema,
         MediaSummaryModelSchema,
         MediaModelSchema,
+        MediaTagLogModelSchema,
       ],
       directory: directory.path,
       inspector: false,

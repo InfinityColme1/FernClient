@@ -225,7 +225,7 @@ void main() {
       final texts = await AppLocalizations.delegate.load(const Locale('en'));
 
       final title = tester.getTopLeft(find.text(texts.jobDuplicateScan));
-      final status = tester.getTopLeft(find.text(texts.jobFailed));
+      final status = tester.getTopLeft(find.textContaining('se ha roto').first);
 
       // Debajo, y a un renglón: el «terminada» caía tan abajo que parecía de la
       // fila siguiente.
@@ -233,6 +233,33 @@ void main() {
       expect(status.dy - title.dy, lessThan(24));
       // Y alineado con él, no centrado ni sangrado.
       expect(status.dx, title.dx);
+    });
+
+    // Un trabajo en rojo que sólo dice «ha fallado» obliga a mirar la consola
+    // para enterarse, y a la consola no llega el usuario. Pasó de verdad: una
+    // tarjeta que no sabía ejecutar el modelo dejaba el reconocimiento sin una
+    // sola sugerencia y sin nada que leer.
+    testWidgets('un fallo dice por qué falló, no sólo que falló', (tester) async {
+      final queue = newQueue();
+
+      queue.register(JobType.duplicateScan, (context) async {
+        throw StateError('la tarjeta no sabe ejecutar esto');
+      });
+
+      await pumpIndicator(tester);
+
+      queue.enqueue(type: JobType.duplicateScan);
+      await settleQueue(tester);
+      await settleQueue(tester);
+      await openPanel(tester);
+
+      final texts = await AppLocalizations.delegate.load(const Locale('en'));
+
+      expect(
+        find.textContaining('la tarjeta no sabe ejecutar esto'),
+        findsWidgets,
+      );
+      expect(find.text(texts.jobFailed), findsNothing);
     });
 
     testWidgets('una tarea terminada se quita sola, sin llevarse las demás',

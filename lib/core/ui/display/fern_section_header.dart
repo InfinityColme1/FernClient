@@ -26,17 +26,22 @@ class FernSectionHeader extends StatelessWidget {
       children: [
         Icon(icon, size: AppSizes.iconMedium, color: context.colors.gray),
         const SizedBox(width: AppSpacing.s),
-        Text(
-          title,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(color: context.colors.gray),
+        // Con el hueco que quede y recortando si no llega, en vez de con el
+        // ancho que pida: la cabecera vive en columnas estrechas y desde que
+        // puede llevar un botón al lado, un título largo (en francés lo son
+        // todos) la desbordaba por la derecha.
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: context.colors.gray),
+          ),
         ),
-        if (trailing != null) ...[
-          const Spacer(),
-          trailing!,
-        ],
+        if (trailing != null) trailing!,
       ],
     );
   }

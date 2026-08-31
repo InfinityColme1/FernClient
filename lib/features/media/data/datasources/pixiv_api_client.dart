@@ -68,6 +68,12 @@ class PixivApiClient {
     /// encontrar esa obra, ese listado se da por recorrido y se pasa al
     /// siguiente. Vacío para traerse todo.
     Map<String, String> stopAt = const {},
+
+    /// Si una obra no hace falta, **por su identificador y antes de
+    /// resolverla**. Lo caro aquí es una animación: baja su paquete de
+    /// fotogramas para armar el GIF, y hacerlo para tirarlo después es el viaje
+    /// más caro de esta fuente.
+    bool Function(String remoteId, String postId)? skip,
   }) async* {
     final userId = credentials.userId;
     if (userId == null) {
@@ -80,6 +86,7 @@ class PixivApiClient {
         userId: userId,
         collection: collection,
         stopAt: stopAt[collection],
+        skip: skip,
       );
     }
   }
@@ -90,6 +97,7 @@ class PixivApiClient {
     required String userId,
     required String collection,
     required String? stopAt,
+    bool Function(String remoteId, String postId)? skip,
   }) async* {
     final headers = _headers(credentials, referer: '$pixivSiteUrl/');
 
@@ -124,6 +132,12 @@ class PixivApiClient {
         // ha ido) sigue apareciendo en los marcadores, pero sin nada detrás.
         if (entry['isMasked'] == true) continue;
 
+        // Antes de resolverla: una animación baja su paquete de fotogramas aquí
+        // dentro, y hacerlo para tirarlo después es el viaje más caro de esta
+        // fuente. Con el nombre basta — es el identificador de una obra de una
+        // sola pieza, que es justo el caso de las animaciones.
+        if (skip?.call(_fileSafe(_nameOf(entry)), id) ?? false) continue;
+
         yield* Stream.fromIterable(
           await _mediaOf(entry, credentials: credentials, collection: collection),
         );
@@ -132,6 +146,18 @@ class PixivApiClient {
       // El listado se ha acabado si esta página no venía llena.
       if (works.length < pixivPageSize) return;
     }
+  }
+
+  /// Con qué nombre se conoce aquí una obra, antes de limpiarlo.
+  ///
+  /// En un solo sitio a propósito: se compone antes de resolverla —para saber si
+  /// hace falta— y al construirla, y dos formas distintas de escribirlo harían
+  /// que el salto nunca coincidiera con lo guardado.
+  static String _nameOf(Map<String, dynamic> work) {
+    final id = work['id'] as String? ?? '';
+    final authorId = work['userId'] as String? ?? '';
+
+    return authorId.isEmpty ? id : '${authorId}_$id';
   }
 
   /// Los ficheros que salen de una obra.
@@ -151,7 +177,7 @@ class PixivApiClient {
     final id = work['id'] as String? ?? '';
     final title = work['title'] as String? ?? '';
     final authorId = work['userId'] as String? ?? '';
-    final name = _fileSafe(authorId.isEmpty ? id : '${authorId}_$id');
+    final name = _fileSafe(_nameOf(work));
     final sourceUrls = _sourceUrls(id, authorId: authorId);
 
     if (work['illustType'] == pixivUgoiraIllustType) {

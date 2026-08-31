@@ -174,10 +174,10 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
   /// cambiar de uno a otro ni al añadirle un enlace.
   Widget _creatorCard(CreatorEntity creator, BoxConstraints space) {
     final cardHeight = math.min(
-      creatorCardHeight,
+      managementCardHeight,
       // En una ventana baja la ficha cede antes que la rejilla, pero sólo hasta
       // el mínimo con el que su formulario sigue cabiendo.
-      math.max(space.maxHeight - creatorGridMinHeight, creatorCardMinHeight),
+      math.max(space.maxHeight - managementGridMinHeight, managementCardMinHeight),
     );
 
     return SizedBox(

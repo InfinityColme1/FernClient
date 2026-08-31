@@ -5,6 +5,10 @@ class CreatorEntity extends PersonaEntity {
 
   final List<String> ? socialProfiles;
 
+  /// Cuáles de [socialProfiles] están marcados como no aptos. Con el bloqueo
+  /// cerrado no se enseñan.
+  final List<String> nsfwSocialProfiles;
+
   /// Direcciones de las que sale contenido de este creador.
   ///
   /// Es lo mismo que las de una etiqueta: lo que se importe de debajo de alguna
@@ -16,26 +20,48 @@ class CreatorEntity extends PersonaEntity {
   /// navegador y éstas sólo trabajan al importar.
   final List<String> sourceUrls;
 
+  /// Cuáles de [sourceUrls] están marcadas como no aptas.
+  ///
+  /// Con el bloqueo cerrado no se enseñan, pero siguen asignando el creador al
+  /// importar: esconder no es apagar.
+  final List<String> nsfwSourceUrls;
+
+  /// El creador está marcado como contenido no apto.
+  ///
+  /// Con el bloqueo puesto no se ve ni él ni lo suyo: su nombre delata tanto
+  /// como el de una etiqueta marcada, y su galería es exactamente lo que la
+  /// marca esconde.
+  final bool isNsfw;
+
   const CreatorEntity({
     required super.id,
     required super.name,
     super.picturePath,
     this.socialProfiles,
+    this.nsfwSocialProfiles = const [],
     this.sourceUrls = const [],
+    this.nsfwSourceUrls = const [],
+    this.isNsfw = false,
   });
 
   CreatorEntity copyWith({
     String? name,
     String? picturePath,
     List<String>? socialProfiles,
+    List<String>? nsfwSocialProfiles,
     List<String>? sourceUrls,
+    List<String>? nsfwSourceUrls,
+    bool? isNsfw,
   }) {
     return CreatorEntity(
       id: id,
       name: name ?? this.name,
       picturePath: picturePath ?? this.picturePath,
       socialProfiles: socialProfiles ?? this.socialProfiles,
+      nsfwSocialProfiles: nsfwSocialProfiles ?? this.nsfwSocialProfiles,
       sourceUrls: sourceUrls ?? this.sourceUrls,
+      nsfwSourceUrls: nsfwSourceUrls ?? this.nsfwSourceUrls,
+      isNsfw: isNsfw ?? this.isNsfw,
     );
   }
 
@@ -45,7 +71,10 @@ class CreatorEntity extends PersonaEntity {
     name,
     picturePath,
     socialProfiles,
-    sourceUrls
+    nsfwSocialProfiles,
+    sourceUrls,
+    nsfwSourceUrls,
+    isNsfw,
   ];
 
 }

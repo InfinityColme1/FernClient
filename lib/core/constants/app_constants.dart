@@ -82,6 +82,18 @@ const deletedRoute = '/deleted';
 const creatorManagerRoute = '/creator-manager';
 const tagManagerRoute = '/tag-manager';
 
+/// Las etiquetas que identifican a una persona o a un personaje.
+///
+/// No está en el menú lateral a propósito: se llega con el botón de la cabecera
+/// de la lista de etiquetas, y desde allí se vuelve. Son la misma pantalla
+/// mirando dos cosas, no dos sitios distintos de la aplicación.
+///
+/// **Cuelga de la de etiquetas**, y por eso: el menú lateral marca el botón cuya
+/// ruta cubre la dirección (ver `sidebarSelectedId`), así que estando aquí sigue
+/// marcado «Etiquetas». Con una ruta suelta no se marcaría ninguno y el menú
+/// diría que no se está en ninguna parte.
+const personaManagerRoute = '$tagManagerRoute/people';
+
 // Reconocimiento. Las pantallas llegan en fases posteriores; las rutas se
 // declaran ya porque los avisos necesitan saber a dónde llevan.
 const fernieManagerRoute = '/fernies';
@@ -134,6 +146,26 @@ const viewerInfoQueryParam = 'info';
 String viewerRouteWithInfo(bool showInfo) =>
     '$viewerRoute?$viewerInfoQueryParam=$showInfo';
 
+/// Parámetro de consulta del visor: se está **revisando** lo importado.
+///
+/// Es lo que permite que guardar pase al siguiente contenido. Ese salto existe
+/// para revisar una tanda recién traída de una fuente sin tener que volver a la
+/// rejilla entre uno y otro, y fuera de ahí no tiene sentido: abrir algo desde
+/// la biblioteca, desde una etiqueta o desde un fernie es ir a **ese**
+/// contenido, y que guardar te llevara a otro sería perder de vista lo que se
+/// estaba mirando.
+///
+/// Va aparte de [viewerInfoQueryParam] a propósito, aunque hoy los ponga la
+/// misma pantalla: uno dice cómo se abre el panel y el otro qué hace el botón de
+/// guardar. Atarlos haría que abrir el panel desde cualquier otro sitio
+/// arrastrara el salto sin que nadie lo pidiera.
+const viewerReviewQueryParam = 'review';
+
+/// El visor tal y como lo abre la pantalla de importación: con el panel
+/// desplegado y pasando al siguiente al guardar.
+String viewerRouteForReview() =>
+    '$viewerRoute?$viewerInfoQueryParam=true&$viewerReviewQueryParam=true';
+
 /// Parámetro de consulta del visor: qué región hay que resaltar al abrirlo.
 ///
 /// Es lo que hace que, al pulsar una celda de la rejilla de fernies (que enseña
@@ -171,11 +203,71 @@ const firstSchemaVersion = 1;
 /// modelos de reconocimiento y sus fernies asignados. Son colecciones nuevas,
 /// así que Isar las crea sola y no hay ninguna migración que escribir: el número
 /// sube igual para dejar constancia de que el esquema no es el mismo.
-const currentSchemaVersion = 6;
+///
+/// La 7 añade además las direcciones marcadas como no aptas (campos nuevos con
+/// valor por defecto, que Isar resuelve sola) y es la primera que sí ejecuta
+/// algo: repara las relaciones de hermandad
+/// que quedaron a medias. El árbol de etiquetas se leía sin ellas, así que la
+/// pantalla de gestión partía siempre de una lista vacía y guardar desde ahí
+/// podía desenlazar por un lado lo que seguía enlazado por el otro.
+const currentSchemaVersion = 7;
 
 // Preferences keys
 /// Hasta qué versión se ha puesto al día la base de datos de este equipo.
 const schemaVersionPreferenceKey = 'schema_version';
+
+/// Con qué claves se guardan las últimas etiquetas y creadores asignados.
+const recentTagsPreferenceKey = 'recent_tags';
+const recentCreatorsPreferenceKey = 'recent_creators';
+
+/// Y los últimos fernies a los que se les asignó una región.
+const recentFerniesPreferenceKey = 'recent_fernies';
+
+/// Si la casilla de «no volver a importar» quedó marcada la última vez.
+const blocksImportOnDiscardPreferenceKey = 'blocks_import_on_discard';
+
+/// Hasta dónde crece la lista de bloqueos de Ajustes.
+///
+/// Doscientos bloqueos no pueden empujar el botón de vaciar fuera del diálogo.
+const blockedListMaxHeight = 220.0;
+
+/// Cuántos recientes se guardan y cuántos se enseñan.
+///
+/// Se guardan más de los que se enseñan a propósito: una etiqueta borrada deja
+/// su identificador sin dueño, y sin colchón la lista se quedaría en dos.
+const recentPicksStored = 10;
+
+/// Qué ramas de etiquetas están plegadas, por identificador.
+///
+/// Se guardan **las plegadas y no las desplegadas**: el conjunto vacío es «todo
+/// abierto», que es lo que hacía el menú antes de que esto existiera. Con la
+/// lista al revés, una clave ausente escondería el árbol entero.
+const collapsedTagsPreferenceKey = 'collapsed_tags';
+
+/// Si lo que se importa entra marcado como no apto.
+///
+/// Se recuerda entre sesiones, como el tope de importación: vaciar una fuente
+/// entera de contenido adulto son varias tandas, y volver a encenderlo cada vez
+/// es justo el olvido que deja media importación sin marcar.
+const importsAsNsfwPreferenceKey = 'imports_as_nsfw';
+
+/// Cuánto hay que posarse sobre una rama plegada, arrastrando, para que se abra.
+///
+/// Un plazo y no al entrar: sin él se abrirían todas las ramas por las que pasa
+/// el puntero de camino a otro sitio, y el menú daría saltos justo mientras se
+/// intenta apuntar. Se abre lo que se mira, no lo que se cruza.
+const collapsedTagSpringDelay = Duration(milliseconds: 600);
+
+/// Lo que ocupa el chevron de plegar en una fila de etiqueta.
+///
+/// Fijo, y también cuando no hay chevron: las filas sin hijas dejan el hueco en
+/// blanco. Sin él, los nombres de una rama bailarían de izquierda a derecha
+/// según qué etiquetas tuvieran descendencia, y la sangría dejaría de leerse.
+const tagListChevronWidth = 24.0;
+
+/// Lo mismo en el menú lateral, que tiene sus propias medidas.
+const sidebarChevronWidth = 20.0;
+const recentPicksShown = 3;
 
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
@@ -260,6 +352,10 @@ const showListAvatarsPreferenceKey = 'show_list_avatars';
 /// sin haberlo pedido es una selección que se arrastra sin querer a lo
 /// siguiente que se haga.
 const keepsSelectionOnDropPreferenceKey = 'keeps_selection_on_drop';
+
+/// Con qué clave se guarda si el filtro de la lista de etiquetas enseña
+/// también la descendencia de lo que encaja.
+const showsTagBranchOnFilterPreferenceKey = 'shows_tag_branch_on_filter';
 
 /// Cuánto se espera como mucho a que termine la relectura para devolver lo que
 /// estaba marcado. Es un tope de seguridad, no un tiempo de espera esperado: la
@@ -363,7 +459,38 @@ const sidecarUltralyticsPackage = 'ultralytics>=8.3.0,<8.4.0';
 /// Índices de ruedas de PyTorch. El de CPU es el de fábrica y pesa una décima
 /// parte que el de CUDA; el de GPU sólo se instala si el usuario lo pide.
 const torchCpuIndexUrl = 'https://download.pytorch.org/whl/cpu';
+
+/// La rueda de CUDA de siempre. Sirve para todo lo anterior a Blackwell.
 const torchCudaIndexUrl = 'https://download.pytorch.org/whl/cu124';
+
+/// La rueda de CUDA 12.8, que es la primera que trae kernels para Blackwell.
+///
+/// Las tarjetas de la serie 50 son `sm_120`, y las ruedas de `cu124` no se
+/// compilaron para esa arquitectura: torch se instala, dice que hay CUDA, coge
+/// la tarjeta, y el primer kernel contesta «no kernel image is available for
+/// execution on the device». Ni el instalador ni el panel se enteraban, porque
+/// tarjeta y controlador **sí** están.
+const torchCuda128IndexUrl = 'https://download.pytorch.org/whl/cu128';
+
+/// A partir de qué capacidad de cálculo hace falta la rueda de CUDA 12.8.
+///
+/// 12.0 es Blackwell (serie 50). Por debajo, la de siempre vale y pesa menos.
+const blackwellComputeCapability = 12.0;
+
+/// Con qué índice de ruedas se instala torch para una tarjeta de capacidad
+/// [capability].
+///
+/// Sin capacidad conocida se elige la de siempre: es lo que ven las tarjetas
+/// viejas y los controladores que no saben contestar a la pregunta, y equivocarse
+/// hacia atrás deja el reconocimiento lento pero funcionando, mientras que
+/// equivocarse hacia delante lo deja sin funcionar.
+String torchCudaIndexUrlFor(double? capability) {
+  if (capability == null) return torchCudaIndexUrl;
+
+  return capability >= blackwellComputeCapability
+      ? torchCuda128IndexUrl
+      : torchCudaIndexUrl;
+}
 
 /// El script del sidecar.
 ///
@@ -1241,6 +1368,23 @@ const mediaSearchDelay = Duration(seconds: 3);
 /// Alto máximo del desplegable de sugerencias del buscador principal.
 const mediaSearchSuggestionsMaxHeight = 320.0;
 
+/// Hasta dónde crece el texto de una pastilla de la barra.
+///
+/// El nombre de una etiqueta puede ser largo y la barra tiene ancho fijo: sin un
+/// tope, una sola pastilla la deja sin sitio para escribir. A partir de aquí el
+/// nombre se recorta.
+const searchChipMaxWidth = 120.0;
+
+/// Lo que se aparta del borde el contenido de una pastilla, por arriba y por
+/// abajo.
+///
+/// Poco: la pastilla va dentro de una barra de 40 px y comparte línea con el
+/// texto que se está escribiendo, así que cuanto menos pese, mejor.
+const searchChipVerticalPadding = 1.0;
+
+/// Lo grande que es el avatar de una pastilla.
+const searchChipAvatarRadius = 9.0;
+
 /// Identificador de las entidades que todavía no están en la base de datos.
 /// Al guardarlas, Isar les asigna uno de verdad.
 const unsavedId = 0;
@@ -1295,6 +1439,47 @@ const fernieMinDistinctMedia = 5;
 /// marcar una cara al fondo de una foto, y lo bastante grande para que un clic
 /// no cuele.
 const fernieMinRegionFraction = 0.0025;
+
+/// Cuánto se espera a que un entrenamiento se pare por las buenas antes de
+/// matar el sidecar.
+///
+/// La señal de parada la mira ultralytics **al cerrar cada época**, así que lo
+/// que se espera es a que termine la que esté en curso. Un minuto cubre de sobra
+/// una época normal; si tarda más, es un conjunto grande, y ahí quien acaba de
+/// cancelar no quiere esperarse a que acabe.
+///
+/// Al matarlo cae también lo que estuviera reconociéndose en paralelo. Es la
+/// decisión tomada: cancelar tarda siempre lo mismo, y lo que caiga lo cuenta la
+/// lista de tareas para poder relanzarlo.
+const trainingCancelGrace = Duration(minutes: 1);
+
+/// Cuántas líneas del registro de etiquetado se conservan por contenido.
+///
+/// Con tope, como el parte de reconocimiento: reconocer la biblioteca entera
+/// varias veces deja decenas de líneas por contenido, y de un registro así nadie
+/// lee más que el final. Se cae lo más viejo.
+const mediaTagLogLimit = 50;
+
+/// Cuántas regiones se escriben de una vez al marcar el contenido de una
+/// etiqueta entera.
+///
+/// Por tandas y no todo al final: con un tag de miles de contenidos, una sola
+/// escritura al terminar significa tenerlo todo en memoria y que cancelar a
+/// mitad no deje nada. Así lo hecho está hecho.
+const tagRegionsBatchSize = 200;
+
+/// Cuántas veces se guarda lo mismo detectado en un contenido.
+///
+/// Un modelo puede ver cuatro coches en una foto: son cuatro detecciones de la
+/// clase «coche» y las cuatro valen, porque cada una es una región distinta que
+/// se puede marcar. Antes se guardaba sólo la mejor y las demás se perdían.
+///
+/// El tope existe porque una foto de un aparcamiento puede dar cincuenta, y eso
+/// son cincuenta filas por contenido en la base y un panel imposible de leer.
+const defaultMaxDetectionsPerClass = 25;
+
+/// Entre cuántas puede elegir el usuario en los ajustes.
+const maxDetectionsPerClassOptions = [1, 5, 10, 25, 50, 100];
 
 /// Por debajo de esta parte del contenido se avisa de que la región es muy
 /// pequeña. No impide guardarla: el aviso es informativo.
@@ -1624,6 +1809,7 @@ const recognitionImportBatchMax = 200;
 
 /// Con qué clave se guarda cuántos fotogramas se miran de un vídeo.
 const frameSamplesPreferenceKey = 'recognition_frame_samples';
+const maxDetectionsPreferenceKey = 'recognition_max_detections';
 
 /// Cuántos fotogramas se miran de un contenido que se mueve, al reconocer.
 ///
@@ -1664,34 +1850,42 @@ const fernieRowsTwoColumnsWidth = 900.0;
 const modelCardWidth = 220.0;
 const modelCardHeight = 280.0;
 
-/// Alto de la ficha de la pantalla de gestión de creadores.
+/// Alto de la ficha de las pantallas de gestión (creadores y etiquetas).
 ///
-/// Va fijo y no lo pone su contenido: así la ficha mide lo mismo tenga el
-/// creador los enlaces que tenga, y cambiar de uno a otro (o añadirle un enlace)
-/// no mueve de sitio la rejilla que hay debajo. El bloque de enlaces se queda con
-/// el hueco que sobra y desplaza lo que no quepa.
-const creatorCardHeight = 360.0;
+/// Va fijo y no lo pone su contenido: así la ficha mide lo mismo tenga los
+/// enlaces que tenga, y cambiar de uno a otro (o añadirle un enlace) no mueve de
+/// sitio la rejilla que hay debajo. El bloque de enlaces se queda con el hueco
+/// que sobra y desplaza lo que no quepa.
+///
+/// Es el mismo para las dos pantallas porque las dos fichas son la misma cosa:
+/// avatar a la izquierda, formulario a la derecha, fila de botones abajo. La de
+/// etiquetas no lo tenía y creció con la lista de direcciones, que es
+/// justamente lo que esto impide.
+const managementCardHeight = 360.0;
 
 /// Hasta dónde puede encogerse esa ficha.
 ///
 /// Es lo que miden su avatar y su formulario, así que por debajo de aquí lo que
 /// lleva dentro ya no cabe: en una ventana más baja que eso lo que se queda sin
 /// sitio es la rejilla.
-const creatorCardMinHeight = 330.0;
+const managementCardMinHeight = 330.0;
 
-/// Lo que se le deja como mínimo a la rejilla de esa pantalla.
+/// Lo que se le deja como mínimo a la rejilla de esas pantallas.
 ///
 /// La ficha es lo primero que cede: en una ventana baja se queda con lo que haya
 /// hasta aquí en vez de empujar la rejilla fuera de la pantalla.
-const creatorGridMinHeight = 220.0;
+const managementGridMinHeight = 220.0;
 
-/// Alto de una fila de enlace de la ficha del creador, y de los botones que la
-/// acompañan.
+/// Alto de una fila de una lista de enlaces, y de los botones que la acompañan.
 ///
 /// Más apretado que el de un `IconButton` suelto (48): son varias filas dentro
 /// de una ficha que comparte el alto de la pantalla con la rejilla, y con el
 /// hueco de por defecto sólo cabría una.
-const creatorProfileRowHeight = 32.0;
+///
+/// Fijo también para que las dos formas de una fila —el enlace en reposo y el
+/// campo mientras se edita— midan lo mismo: dejándolo al contenido, la lista da
+/// un salto cada vez que se entra a editar.
+const linkRowHeight = 32.0;
 
 // Avisos breves
 /// Lo que se queda a la vista un aviso breve, y lo que tarda en aparecer y en

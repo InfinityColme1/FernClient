@@ -56,10 +56,12 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<AutoTagRemoteSourceToggledEvent>(onAutoTagRemoteSourceToggled);
     on<ShowListAvatarsToggledEvent>(onShowListAvatarsToggled);
     on<KeepsSelectionOnDropToggledEvent>(onKeepsSelectionOnDropToggled);
+    on<ShowsTagBranchOnFilterToggledEvent>(onShowsTagBranchOnFilterToggled);
     on<PauseWhenSeekingToggledEvent>(onPauseWhenSeekingToggled);
     on<ReturnToViewedMediaToggledEvent>(onReturnToViewedMediaToggled);
     on<RecognizeOnImportToggledEvent>(onRecognizeOnImportToggled);
     on<ReturnRecognizedToggledEvent>(onReturnRecognizedToggled);
+    on<MaxDetectionsChangedEvent>(onMaxDetectionsChanged);
     on<ThemeModeChangedEvent>(onThemeModeChanged);
     on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
@@ -242,6 +244,16 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     );
   }
 
+  Future<void> onMaxDetectionsChanged(
+    MaxDetectionsChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(maxDetectionsPerClass: event.value),
+      emit,
+    );
+  }
+
   Future<void> onPauseWhenSeekingToggled(
     PauseWhenSeekingToggledEvent event,
     Emitter<SettingsState> emit,
@@ -282,6 +294,17 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(keepsSelectionOnDrop: event.enabled),
+      emit,
+    );
+  }
+
+  /// Se ve en el momento: la lista de etiquetas lee esto al pintarse.
+  Future<void> onShowsTagBranchOnFilterToggled(
+    ShowsTagBranchOnFilterToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(showsTagBranchOnFilter: event.enabled),
       emit,
     );
   }

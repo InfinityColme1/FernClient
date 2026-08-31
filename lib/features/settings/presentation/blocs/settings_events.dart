@@ -125,6 +125,16 @@ class RecognizeOnImportToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Cuántas veces se guarda lo mismo detectado en un contenido.
+class MaxDetectionsChangedEvent extends SettingsEvents {
+  final int value;
+
+  const MaxDetectionsChangedEvent(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
 class ReturnRecognizedToggledEvent extends SettingsEvents {
   final bool enabled;
 
@@ -175,6 +185,16 @@ class KeepsSelectionOnDropToggledEvent extends SettingsEvents {
   final bool enabled;
 
   const KeepsSelectionOnDropToggledEvent(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Enciende o apaga que el filtro de la lista de etiquetas traiga la rama.
+class ShowsTagBranchOnFilterToggledEvent extends SettingsEvents {
+  final bool enabled;
+
+  const ShowsTagBranchOnFilterToggledEvent(this.enabled);
 
   @override
   List<Object?> get props => [enabled];

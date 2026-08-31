@@ -86,13 +86,24 @@ class FernRegionSelectionLayer extends StatefulWidget {
   /// capa: aquí sólo se pide cambiarla.
   final int? selectedIndex;
 
-  /// La región que está resaltando ahora mismo el visor, y con qué intensidad.
-  final int? highlightedIndex;
+  /// Las regiones que está resaltando ahora mismo el visor, y con qué
+  /// intensidad. Varias porque el panel puede estar señalando un grupo de
+  /// detecciones: lo mismo visto cuatro veces son cuatro rectángulos.
+  final Set<int> highlightedIndexes;
   final double highlightIntensity;
 
   /// Cuánto se ven las regiones guardadas, de 0 a 1. A cero no se pinta
   /// ninguna, que es como se queda el visor fuera del modo de marcar.
   final double regionsOpacity;
+
+  /// Lo que se arrastra es un cuadrado, no un rectángulo libre.
+  ///
+  /// Lo enciende el recorte del avatar: el avatar es redondo, así que lo que se
+  /// marca tiene que ser exactamente lo que se va a ver. Con selección libre
+  /// habría que decidir qué hacer con un rectángulo alargado, y las dos salidas
+  /// —deformarlo o volver a recortarlo por dentro— dan un avatar distinto del
+  /// que se eligió.
+  final bool squareSelection;
 
   /// Área mínima, en tanto por uno del contenido, para que un arrastre cuente
   /// como región. Por debajo se descarta sin decir nada: es lo que evita que un
@@ -146,9 +157,10 @@ class FernRegionSelectionLayer extends StatefulWidget {
     this.regions = const [],
     this.previews = const [],
     this.selectedIndex,
-    this.highlightedIndex,
+    this.highlightedIndexes = const {},
     this.highlightIntensity = 0,
     this.regionsOpacity = 1,
+    this.squareSelection = false,
     this.minRegionFraction = 0.0025,
     this.minScale = 0.5,
     this.maxScale = 8.0,
@@ -356,7 +368,16 @@ class _FernRegionSelectionLayerState extends State<FernRegionSelectionLayer> {
     final cursor = _cursor;
     if (anchor == null || cursor == null) return null;
 
-    return Rect.fromPoints(anchor, cursor);
+    if (!widget.squareSelection) return Rect.fromPoints(anchor, cursor);
+
+    // El cuadrado se calcula sobre el contenido tal y como está pintado ahora
+    // mismo —con su zoom y su desplazamiento— porque es contra sus bordes contra
+    // los que hay que pararlo.
+    return squareBetween(
+      anchor,
+      cursor,
+      bounds: _toScreen(const Rect.fromLTWH(0, 0, 1, 1)),
+    );
   }
 
   Rect? get _pendingNormalized {
@@ -740,7 +761,7 @@ class _FernRegionSelectionLayerState extends State<FernRegionSelectionLayer> {
                         previews: widget.previews,
                         pending: _pendingNormalized,
                         selectedIndex: _isEditing ? _selected : null,
-                        highlightedIndex: widget.highlightedIndex,
+                        highlightedIndexes: widget.highlightedIndexes,
                         highlightIntensity: widget.highlightIntensity,
                         regionsOpacity: widget.regionsOpacity,
                         contentSize: contentSize,

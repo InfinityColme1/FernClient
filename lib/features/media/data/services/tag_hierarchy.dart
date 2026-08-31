@@ -29,13 +29,22 @@ class TagHierarchy {
   /// **Las hermanas son de un salto.** Si A es hermana de B y B de C, poner A
   /// pone B pero no C: encadenarlas convertiría una etiqueta en media
   /// biblioteca, y nadie sabría por qué un contenido acabó con veinte.
+  ///
+  /// **Y cada una arrastra a las suyas.** Ser hermanas dice que van juntas; a
+  /// quién arrastra cada una lo dice `TagModel.mutedSiblings`. Una lista vacía
+  /// —que es lo que tiene todo lo anterior a poder elegirlo— arrastra a todas,
+  /// así que sin tocar nada esto se comporta como siempre.
   Future<List<TagModel>> withRelatives(Iterable<TagModel> tags) async {
     final byId = {for (final tag in tags) tag.id: tag};
 
     for (final tag in tags) {
       await tag.siblings.load();
 
+      final muted = tag.mutedSiblings.toSet();
+
       for (final sibling in tag.siblings) {
+        if (muted.contains(sibling.id)) continue;
+
         byId.putIfAbsent(sibling.id, () => sibling);
       }
     }

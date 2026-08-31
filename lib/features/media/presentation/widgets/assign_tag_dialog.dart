@@ -7,6 +7,9 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'dart:async';
+
+import 'package:Fern/features/media/domain/services/recent_picks.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -52,6 +55,7 @@ class AssignTagDialog extends StatefulWidget {
 
 class _AssignTagDialogState extends State<AssignTagDialog> {
   final _searchTags = getIt<SearchTagsUseCase>();
+  final _recents = getIt<RecentPicks>();
   final _tagAncestors = getIt<GetTagAncestorsUseCase>();
 
   /// Las etiquetas que va a llevar el contenido al confirmar.
@@ -75,10 +79,24 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
     return tags.where((tag) => !_isAlreadyAdded(tag)).toList();
   }
 
+  /// Las últimas usadas, para ofrecerlas nada más pulsar el campo.
+  ///
+  /// Sin las que este contenido ya lleva, por lo mismo que en la búsqueda:
+  /// ofrecer algo que no se puede añadir es ofrecer nada.
+  Future<List<TagEntity>> _recentTags() async {
+    final tags = await _recents.tags();
+
+    return tags.where((tag) => !_isAlreadyAdded(tag)).toList();
+  }
+
   /// Elige una etiqueta y propone con ella las que estén por encima en la
   /// jerarquía: elegir "marinette" propone también "miraculous".
   Future<void> _addTag(TagEntity tag) async {
     setState(() => _tags.add(tag));
+
+    // Se apunta la elegida y no sus madres: lo que se ofrece la próxima vez es
+    // lo que se puso a mano, y las de encima ya vienen solas con ella.
+    unawaited(_recents.pushTag(tag.id));
 
     final ancestors = await _missingAncestors([tag], _tags);
     if (!mounted || ancestors.isEmpty) return;
@@ -217,6 +235,7 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
             label: texts.tagNameSearchLabel,
             hintText: texts.tagSearchHint,
             search: _search,
+            recents: _recentTags,
             labelOf: (tag) => tag.name,
             // Al elegir una, el campo se vacía: aquí se ponen varias etiquetas
             // seguidas y la elegida ya se ve como píldora en el panel de la

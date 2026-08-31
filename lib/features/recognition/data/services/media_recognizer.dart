@@ -139,6 +139,13 @@ class MediaRecognizer {
   /// Cuántos fotogramas se miran de un contenido que se mueve.
   final int Function() _frameSamples;
 
+  /// Cuántas veces se guarda lo mismo en un contenido.
+  ///
+  /// Un modelo puede ver cuatro coches en una foto; ésas son cuatro detecciones
+  /// de la misma clase y las cuatro valen. El tope existe porque una foto de un
+  /// aparcamiento puede dar cincuenta, y eso son cincuenta filas por contenido.
+  final int Function() _maxDetections;
+
   MediaRecognizer({
     required ModelRepository models,
     required ImagePredictor predict,
@@ -146,14 +153,18 @@ class MediaRecognizer {
     required FrameExtractor extractFrames,
     required DurationReader durationOf,
     int Function()? frameSamples,
+    int Function()? maxDetections,
   })  : _models = models,
         _predict = predict,
         _predictMany = predictMany,
         _extractFrames = extractFrames,
         _durationOf = durationOf,
-        _frameSamples = frameSamples ?? _defaultSamples;
+        _frameSamples = frameSamples ?? _defaultSamples,
+        _maxDetections = maxDetections ?? _defaultMaxDetections;
 
   static int _defaultSamples() => defaultFrameSamples;
+
+  static int _defaultMaxDetections() => defaultMaxDetectionsPerClass;
 
   /// Pasa [tree] por el contenido de [path]: lo que proponen y lo que pasó.
   ///
@@ -296,7 +307,7 @@ class MediaRecognizer {
         // mismo fernie son la misma sugerencia vista dos veces, y obligarían al
         // usuario a decir dos veces que sí.
         result[mediaId] = MediaRecognition(
-          suggestions: _bestPerModelAndFernie(found[mediaId]!),
+          suggestions: _topPerModelAndFernie(found[mediaId]!),
           log: MediaRecognitionLog(
             mediaId: mediaId,
             name: p.basename(pathOf[mediaId] ?? ''),
@@ -492,12 +503,15 @@ class MediaRecognizer {
 
     return {
       for (final entry in all.entries)
-        entry.key: bestPerFernie(
+        entry.key: topPerFernie(
           entry.value,
           // Todavía por número de clase: la traducción a fernie viene después, y
           // dos clases distintas no se pueden juntar aunque acaben en el mismo.
           fernieOf: (one) => one.detection.classIndex,
           confidenceOf: (one) => one.detection.confidence,
+          // Aquí también: lo visto varias veces en el mismo fotograma son varias
+          // detecciones, y quedarse con una las tiraba antes de traducirlas.
+          limit: _maxDetections(),
         ),
     };
   }
@@ -532,21 +546,72 @@ class MediaRecognizer {
     return byImage;
   }
 
-  List<RecognitionResultEntity> _bestPerModelAndFernie(
+  /// Lo que se guarda de cada modelo y fernie: las mejores, hasta el tope.
+  ///
+  /// Un modelo puede ver **lo mismo varias veces** en un contenido —cuatro
+  /// coches en una foto son cuatro detecciones de «coche»— y quedarse sólo con
+  /// la mejor las tiraba antes de que llegaran a la pantalla. Ahora entran
+  /// todas, con el tope que diga el usuario.
+  ///
+  /// Lo que sí se sigue juntando es **el mismo fernie de dos modelos distintos**:
+  /// eso es la misma sugerencia vista dos veces y obligaría a decir dos veces que
+  /// sí. Por eso la clave lleva el modelo.
+  List<RecognitionResultEntity> _topPerModelAndFernie(
     List<RecognitionResultEntity> found,
   ) {
-    final best = <String, RecognitionResultEntity>{};
+    final byModel = <int, List<RecognitionResultEntity>>{};
 
     for (final one in found) {
-      final key = '${one.modelId}:${one.fernieId}';
-      final current = best[key];
+      byModel.putIfAbsent(one.modelId, () => []).add(one);
+    }
+
+    final limit = _maxDetections();
+
+    return [
+      for (final group in byModel.values)
+        ...topPerFernie(
+          _withoutRepeatedBoxes(group),
+          fernieOf: (one) => one.fernieId,
+          confidenceOf: (one) => one.confidence,
+          limit: limit,
+        ),
+    ];
+  }
+
+  /// Quita lo que es **la misma detección vista dos veces**, no dos instancias.
+  ///
+  /// Lo que las distingue es dónde están. Cuatro coches en una foto son cuatro
+  /// cajas distintas y las cuatro valen; dos clases del modelo que apuntan al
+  /// mismo fernie sobre el mismo sitio son una sola cosa, y contarla dos veces
+  /// obligaría a decir dos veces que sí sobre el mismo rectángulo.
+  ///
+  /// Se compara redondeando: dos cajas que difieren en la quinta cifra son la
+  /// misma caja, y con la igualdad exacta de dos decimales flotantes nunca lo
+  /// serían.
+  List<RecognitionResultEntity> _withoutRepeatedBoxes(
+    List<RecognitionResultEntity> found,
+  ) {
+    final byPlace = <String, RecognitionResultEntity>{};
+
+    String place(RecognitionResultEntity one) => [
+          one.fernieId,
+          one.frameMs,
+          one.x?.toStringAsFixed(3),
+          one.y?.toStringAsFixed(3),
+          one.w?.toStringAsFixed(3),
+          one.h?.toStringAsFixed(3),
+        ].join(':');
+
+    for (final one in found) {
+      final key = place(one);
+      final current = byPlace[key];
 
       if (current == null || one.confidence > current.confidence) {
-        best[key] = one;
+        byPlace[key] = one;
       }
     }
 
-    return best.values.toList();
+    return byPlace.values.toList();
   }
 }
 

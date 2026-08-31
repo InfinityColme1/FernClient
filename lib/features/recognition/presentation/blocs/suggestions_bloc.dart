@@ -47,6 +47,7 @@ class SuggestionsBloc extends Bloc<SuggestionsEvents, SuggestionsState> {
     on<JobsChangedEvent>(_onJobsChanged);
     on<SuggestionsAcceptedEvent>(_onAccepted);
     on<SuggestionsRejectedEvent>(_onRejected);
+    on<SuggestionsResolvedEvent>(_onResolved);
     on<SuggestionsCommittedEvent>(_onCommitted);
 
     // Lo que ya hubiera en marcha al abrir el visor cuenta desde el primer
@@ -130,6 +131,28 @@ class SuggestionsBloc extends Bloc<SuggestionsEvents, SuggestionsState> {
     await _answer(params: AnswerSuggestionsParams(
       ids: ids.toList(),
       status: SuggestionStatus.rejected,
+    ));
+  }
+
+  /// Contestadas y con su efecto ya escrito: se apartan y se guardan a la vez.
+  ///
+  /// Va aparte de aceptar desde el panel porque aquélla espera al guardado del
+  /// contenido —la etiqueta se queda entre los cambios sin guardar— y aquí no
+  /// hay guardado que esperar: al aceptar las regiones que el modelo propuso, la
+  /// región y la etiqueta ya están en la base.
+  Future<void> _onResolved(
+    SuggestionsResolvedEvent event,
+    Emitter<SuggestionsState> emit,
+  ) async {
+    if (event.suggestions.isEmpty) return;
+
+    final ids = {for (final one in event.suggestions) one.id};
+
+    emit(state.copyWith(suggestions: _without(ids)));
+
+    await _answer(params: AnswerSuggestionsParams(
+      ids: ids.toList(),
+      status: event.status,
     ));
   }
 

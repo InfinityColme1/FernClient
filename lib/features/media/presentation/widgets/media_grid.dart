@@ -77,6 +77,14 @@ class MediaGrid extends StatelessWidget {
   /// aquí son regiones, y de esas el bloc de contenido no sabe nada.
   final Set<int> selectedCropIds;
 
+  /// Qué hacer al pulsar un contenido en la variante [MediaGrid.picker].
+  ///
+  /// Es lo que la separa de la rejilla normal: allí pulsar abre el visor y
+  /// marca, y las dos cosas las decide el `MediaBloc`. Aquí se está eligiendo
+  /// una imagen para otra cosa, así que lo que pasa al pulsar lo pone quien
+  /// pregunta.
+  final void Function(MediaSummaryEntity media)? onMediaTap;
+
   final void Function(MediaCrop crop)? onCropTap;
   final void Function(MediaCrop crop)? onCropSelectionToggled;
 
@@ -154,6 +162,7 @@ class MediaGrid extends StatelessWidget {
     this.returnsToViewed = false,
   })  : sections = null,
         crops = null,
+        onMediaTap = null,
         selectedCropIds = const {},
         onCropTap = null,
         onCropSelectionToggled = null,
@@ -193,6 +202,34 @@ class MediaGrid extends StatelessWidget {
         isImporting = false,
         isStopping = false,
         sections = null,
+        onMediaTap = null,
+        onStop = null,
+        returnsToViewed = false;
+
+  /// Rejilla para **elegir** un contenido: pulsar uno lo devuelve y ya está.
+  ///
+  /// Como la de recortes, no necesita un `MediaBloc` por encima. Y por lo mismo
+  /// no lleva selección, ni menú del botón derecho, ni arrastre: aquí no se
+  /// trabaja con la biblioteca, se coge una cosa de ella y se cierra.
+  const MediaGrid.picker({
+    super.key,
+    required this.mediaList,
+    required this.columns,
+    required void Function(MediaSummaryEntity media) this.onMediaTap,
+    this.hasSurface = true,
+    this.isLoading = false,
+    this.emptyMessage,
+    this.emptyDescription,
+  })  : sections = null,
+        crops = null,
+        selectedCropIds = const {},
+        onCropTap = null,
+        onCropSelectionToggled = null,
+        onCropRangeSelectionRequested = null,
+        onCropLoadFailed = null,
+        pendingWarning = null,
+        isImporting = false,
+        isStopping = false,
         onStop = null,
         returnsToViewed = false;
 
@@ -211,6 +248,7 @@ class MediaGrid extends StatelessWidget {
         isImporting = false,
         isStopping = false,
         returnsToViewed = false,
+        onMediaTap = null,
         crops = null,
         selectedCropIds = const {},
         onCropTap = null,
@@ -281,6 +319,26 @@ class MediaGrid extends StatelessWidget {
     }
 
     final orderedIds = _orderedIds;
+
+    // Elegir no pasa por la capa del menú del botón derecho: lo que ese menú
+    // ofrece —borrar, etiquetar, mandar a reconocer— es trabajar con la
+    // biblioteca, y aquí sólo se está cogiendo una imagen prestada.
+    if (onMediaTap case final onTap?) {
+      return Padding(
+        padding: _padding,
+        child: FernBusyOverlay(
+          isBusy: isLoading,
+          radius: hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,
+          child: hasSurface
+              ? FernSurface(
+                  clipBehavior: Clip.antiAlias,
+                  child: _buildPickerGrid(onTap),
+                )
+              : _buildPickerGrid(onTap),
+        ),
+      );
+    }
+
     final content = _MediaContextMenuLayer(
       builder: (context, requestMenu) => switch ((sections, crops)) {
         (final sections?, _) when sections.isNotEmpty =>
@@ -437,6 +495,23 @@ class MediaGrid extends StatelessWidget {
     );
   }
 
+  /// La rejilla de elegir: una celda por contenido y nada más que pulsar.
+  Widget _buildPickerGrid(void Function(MediaSummaryEntity media) onTap) {
+    return ReturningMasonryGrid(
+      padding: _gridPadding,
+      cacheExtent: mediaGridCacheExtent,
+      columns: columns,
+      spacing: AppSpacing.s,
+      ratios: [for (final media in mediaList) _ratioOf(media)],
+      fallbackRatio: mediaFallbackAspectRatio,
+      itemBuilder: (context, index) => MediaItem(
+        key: ValueKey(mediaList[index].id),
+        media: mediaList[index],
+        onTap: () => onTap(mediaList[index]),
+      ),
+    );
+  }
+
   /// La proporción de un recorte: la de la región, no la del fichero.
   ///
   /// Sin el tamaño del fichero no se puede saber: una región es una fracción de
@@ -488,21 +563,25 @@ class MediaGrid extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         for (final section in sections!) ...[
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.m,
-              AppSpacing.l,
-              AppSpacing.m,
-              AppSpacing.xs,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: SearchResultRow.header(
-                label: section.title,
-                imagePath: section.imagePath,
-                type: section.type,
+          // Un grupo sin título no lleva cabecera: es el del cruce de varias
+          // pastillas, y lo que se está buscando ya se lee en la barra. Una
+          // cabecera vacía sería una franja de nada empujando la rejilla.
+          if (section.title.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.m,
+                AppSpacing.l,
+                AppSpacing.m,
+                AppSpacing.xs,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: SearchResultRow.header(
+                  label: section.title,
+                  imagePath: section.imagePath,
+                  type: section.type,
+                ),
               ),
             ),
-          ),
           SliverPadding(
             // Mismo carril para la barra que en la rejilla normal: esto se
             // desplaza igual y esta dentro de la misma superficie.

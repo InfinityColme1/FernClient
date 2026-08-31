@@ -47,6 +47,21 @@ void main() {
     expect(repository.getSettings().keepsSelectionOnDrop, isTrue);
   });
 
+  // Encendido de fábrica: es el comportamiento que se quiere sin tocar nada.
+  // Con la clave ausente vale lo mismo, que es lo que hace que las instalaciones
+  // que ya existen lo tengan puesto sin escribir nada.
+  test('de fábrica, filtrar etiquetas trae la rama entera', () {
+    expect(repository.getSettings().showsTagBranchOnFilter, isTrue);
+  });
+
+  test('apagar la rama al filtrar vuelve tal cual', () async {
+    await repository.saveSettings(
+      repository.getSettings().copyWith(showsTagBranchOnFilter: false),
+    );
+
+    expect(repository.getSettings().showsTagBranchOnFilter, isFalse);
+  });
+
   test('el tema elegido vuelve tal cual', () async {
     await repository.saveSettings(
       repository.getSettings().copyWith(themeMode: AppThemeMode.dark),

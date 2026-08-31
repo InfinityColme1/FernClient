@@ -230,6 +230,14 @@ class AppSettingsEntity extends Equatable {
   /// personajes que salen poco, a cambio de tardar proporcionalmente más.
   final int frameSamples;
 
+  /// Cuántas veces se guarda lo mismo detectado en un contenido.
+  ///
+  /// Un modelo puede ver cuatro coches en una foto: son cuatro detecciones de la
+  /// misma clase y las cuatro valen, porque cada una es una región distinta que
+  /// se puede marcar. El tope está porque una foto de un aparcamiento puede dar
+  /// cincuenta, y eso son cincuenta filas por contenido.
+  final int maxDetectionsPerClass;
+
   /// Si el contenido ya definitivo vuelve a la pantalla de importación cuando se
   /// le encuentra algo que revisar.
   ///
@@ -334,6 +342,15 @@ class AppSettingsEntity extends Equatable {
   /// uso de esto y el que obligaba a volver a marcarlo todo cada vez.
   final bool keepsSelectionOnDrop;
 
+  /// Al filtrar la lista de la pantalla de gestión de etiquetas, lo que encaja
+  /// llega con toda su descendencia colgando.
+  ///
+  /// Encendido de fábrica. Buscar una etiqueta madre y ver sólo su nombre deja a
+  /// medias justo lo que se venía a hacer: casi siempre se busca la rama, no la
+  /// fila. Apagado se comporta como antes, con las coincidencias sueltas y en
+  /// plano.
+  final bool showsTagBranchOnFilter;
+
   /// La lista de etiquetas del menú lateral enseña el avatar de cada una en vez
   /// del icono de siempre.
   ///
@@ -419,6 +436,7 @@ class AppSettingsEntity extends Equatable {
     required this.avatarsPath,
     required this.recognitionPath,
     this.frameSamples = defaultFrameSamples,
+    this.maxDetectionsPerClass = defaultMaxDetectionsPerClass,
     this.returnRecognizedToImport = true,
     this.recognizeOnImport = true,
     this.duplicateThreshold = defaultDuplicateThreshold,
@@ -432,6 +450,7 @@ class AppSettingsEntity extends Equatable {
     this.autoTagRemoteSource = false,
     this.showListAvatars = true,
     this.keepsSelectionOnDrop = false,
+    this.showsTagBranchOnFilter = true,
     this.themeMode = AppThemeMode.system,
     this.customTheme = const CustomThemeEntity(),
     this.viewerSaveBehavior = ViewerSaveBehavior.goToNext,
@@ -460,6 +479,7 @@ class AppSettingsEntity extends Equatable {
     String? avatarsPath,
     String? recognitionPath,
     int? frameSamples,
+    int? maxDetectionsPerClass,
     bool? returnRecognizedToImport,
     bool? recognizeOnImport,
     int? duplicateThreshold,
@@ -473,6 +493,7 @@ class AppSettingsEntity extends Equatable {
     bool? autoTagRemoteSource,
     bool? showListAvatars,
     bool? keepsSelectionOnDrop,
+    bool? showsTagBranchOnFilter,
     AppThemeMode? themeMode,
     CustomThemeEntity? customTheme,
     ViewerSaveBehavior? viewerSaveBehavior,
@@ -496,6 +517,8 @@ class AppSettingsEntity extends Equatable {
       avatarsPath: avatarsPath ?? this.avatarsPath,
       recognitionPath: recognitionPath ?? this.recognitionPath,
       frameSamples: frameSamples ?? this.frameSamples,
+      maxDetectionsPerClass:
+          maxDetectionsPerClass ?? this.maxDetectionsPerClass,
       returnRecognizedToImport:
           returnRecognizedToImport ?? this.returnRecognizedToImport,
       recognizeOnImport: recognizeOnImport ?? this.recognizeOnImport,
@@ -512,6 +535,8 @@ class AppSettingsEntity extends Equatable {
       autoTagRemoteSource: autoTagRemoteSource ?? this.autoTagRemoteSource,
       showListAvatars: showListAvatars ?? this.showListAvatars,
       keepsSelectionOnDrop: keepsSelectionOnDrop ?? this.keepsSelectionOnDrop,
+      showsTagBranchOnFilter:
+          showsTagBranchOnFilter ?? this.showsTagBranchOnFilter,
       themeMode: themeMode ?? this.themeMode,
       customTheme: customTheme ?? this.customTheme,
       viewerSaveBehavior: viewerSaveBehavior ?? this.viewerSaveBehavior,
@@ -538,6 +563,7 @@ class AppSettingsEntity extends Equatable {
         avatarsPath,
         recognitionPath,
         frameSamples,
+        maxDetectionsPerClass,
         returnRecognizedToImport,
         recognizeOnImport,
         duplicateThreshold,
@@ -551,6 +577,7 @@ class AppSettingsEntity extends Equatable {
         autoTagRemoteSource,
         showListAvatars,
         keepsSelectionOnDrop,
+        showsTagBranchOnFilter,
         themeMode,
         customTheme,
         viewerSaveBehavior,

@@ -33,6 +33,15 @@ enum JobType {
 
   /// Traerse los enlaces que alguien ya ha elegido.
   linkImport,
+
+  /// Marcar todo el contenido de una etiqueta como regiones de un fernie.
+  tagRegions,
+
+  /// Borrar del disco los ficheros de un contenido que ya no está en la base.
+  ///
+  /// Va por la cola porque son miles y tarda minutos: en el diálogo que lo pide
+  /// dejaría la ventana bloqueada sin poder decir por dónde va.
+  fileCleanup,
 }
 
 extension JobTypeBehaviour on JobType {
@@ -180,6 +189,14 @@ class Job extends Equatable {
         done,
         total,
         error,
+        // **Sin esto, un cambio sólo de `stage` no se notifica.** La cola
+        // descarta la actualización si el trabajo compara igual, así que la
+        // línea de estado de la barra de tareas se quedaba con lo de antes: es
+        // lo que hacía invisible el «Cancelando…» de un entrenamiento.
+        //
+        // `payload` sigue fuera a propósito: puede llevar listas de miles de
+        // identificadores y se compararía entera en cada avance.
+        stage,
         createdAt,
         startedAt,
         finishedAt,

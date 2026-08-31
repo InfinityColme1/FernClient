@@ -1,3 +1,4 @@
+import 'package:Fern/features/media/data/models/media_tag_log_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
 import 'package:Fern/features/recognition/data/models/fernie_region_model.dart';
 import 'package:Fern/features/recognition/data/models/model_fernie_model.dart';
@@ -12,6 +13,7 @@ import '../models/media/media_model.dart';
 import '../models/media/media_summary_model.dart';
 import '../models/persona/creator_model.dart';
 import '../models/persona/persona_model.dart';
+import '../models/blocked_import_model.dart';
 import '../models/tag_model.dart';
 
 
@@ -23,7 +25,11 @@ class AppDatabase {
     final dir = await getApplicationDocumentsDirectory();
     final isar = await Isar.open(
         [
-          TagModelSchema, PersonaModelSchema, CreatorModelSchema,
+          BlockedImportModelSchema,
+          // Por qué un contenido acabó con cada etiqueta puesta. Colección
+          // nueva: aditiva, y lo que ya hay en la base no se toca.
+          MediaTagLogModelSchema,
+      TagModelSchema, PersonaModelSchema, CreatorModelSchema,
           MediaSummaryModelSchema, MediaModelSchema,
           // Reconocimiento: son colecciones nuevas, así que no hace falta
           // migrar nada. Basta con que estén aquí para que Isar las cree.

@@ -11,13 +11,20 @@
 
 import 'package:Fern/config/theme/app_theme.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/presentation/widgets/tag_relations_dialog.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
-TagEntity _tag(int id, String name) =>
-    TagEntity(id: id, name: name, children: const []);
+TagEntity _tag(int id, String name, {List<int> muted = const []}) =>
+    TagEntity(
+      id: id,
+      name: name,
+      children: const [],
+      mutedSiblings: muted,
+    );
 
 void main() {
   final self = _tag(1, 'la que se edita');
@@ -180,6 +187,152 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(result?.parent?.id, parent.id);
+      expect(result?.siblings.map((one) => one.id), [sibling.id]);
+      // Sin tocar nada, la que tenía: aquí no había ninguna silenciada.
+      expect(result?.directionOf(sibling.id), SiblingDirection.both);
+    });
+  });
+
+  // Ser hermanas dice que van juntas; la dirección dice qué pasa al poner una.
+  //
+  // Se elige aquí porque es donde se ve la forma de la relación: el sentido es
+  // parte de esa forma, y ponerlo en otro sitio obligaría a mirar en dos.
+  group('la dirección', () {
+    testWidgets('sólo la tienen las relacionadas', (tester) async {
+      await open(tester, withParent: parent, withSiblings: [sibling]);
+
+      // De la madre a la hija manda la jerarquía, y de la que se edita no hay
+      // nada que decir: una sola flecha, la de la relacionada.
+      expect(find.byIcon(Symbols.sync_alt), findsOneWidget);
+    });
+
+    testWidgets('sin relacionadas no se explica nada', (tester) async {
+      final texts = await AppLocalizations.delegate.load(const Locale('es'));
+
+      await open(tester, withParent: parent);
+
+      expect(find.text(texts.siblingDirectionNote), findsNothing);
+    });
+
+    testWidgets('con una, se explica', (tester) async {
+      final texts = await AppLocalizations.delegate.load(const Locale('es'));
+
+      await open(tester, withSiblings: [sibling]);
+
+      expect(find.text(texts.siblingDirectionNote), findsOneWidget);
+    });
+
+    testWidgets('se enseña la que hay puesta', (tester) async {
+      // La relacionada no la pone: sólo va en un sentido.
+      await open(
+        tester,
+        withSiblings: [_tag(3, 'la de al lado', muted: [1])],
+      );
+
+      expect(find.byIcon(Symbols.arrow_forward), findsOneWidget);
+      expect(find.byIcon(Symbols.sync_alt), findsNothing);
+    });
+
+    // La tarjeta mide 200 px y ahora lleva avatar, nombre, sentido y aspa. Con
+    // un nombre largo era donde iba a romperse.
+    testWidgets('la tarjeta no desborda con un nombre largo', (tester) async {
+      for (final locale in const [
+        Locale('en'),
+        Locale('es'),
+        Locale('ca'),
+        Locale('fr'),
+      ]) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        tester.takeException();
+
+        tester.view.physicalSize = const Size(1600, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(MaterialApp(
+          theme: AppTheme.lightTheme,
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: TagRelationsDialog(
+              tag: self,
+              parent: parent,
+              siblings: [
+                _tag(3, 'una etiqueta con un nombre larguísimo que no cabe'),
+                _tag(5, 'otra igual de larga para el otro lado del árbol'),
+              ],
+              searchParents: (_) async => const [],
+              searchSiblings: (_) async => const [],
+            ),
+          ),
+        ));
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'la tarjeta desborda en ${locale.languageCode}',
+        );
+      }
+    });
+
+    testWidgets('elegir otra la cambia y sale por la puerta', (tester) async {
+      final texts = await AppLocalizations.delegate.load(const Locale('es'));
+      TagRelations? result;
+
+      tester.view.physicalSize = const Size(1600, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        locale: const Locale('es'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: Builder(
+                builder: (inner) => ElevatedButton(
+                  onPressed: () async {
+                    result = await showDialog<TagRelations>(
+                      context: inner,
+                      builder: (_) => TagRelationsDialog(
+                        tag: self,
+                        siblings: [sibling],
+                        searchParents: (_) async => const [],
+                        searchSiblings: (_) async => const [],
+                      ),
+                    );
+                  },
+                  child: const Text('abrir'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+
+      await tester.tap(find.text('abrir'));
+      await tester.pumpAndSettle();
+
+      // El desplegable, y dentro la opción con los dos nombres escritos: un
+      // icono de flecha a secas no dice hacia dónde apunta cuando la tarjeta
+      // puede estar a un lado o al otro.
+      await tester.tap(find.byIcon(Symbols.sync_alt));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(
+        texts.siblingDirectionOneWay(self.name, sibling.name),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Guardar'));
+      await tester.pumpAndSettle();
+
+      expect(result?.directionOf(sibling.id), SiblingDirection.forward);
+      // Y la relación sigue estando: cambiar el sentido no la deshace.
       expect(result?.siblings.map((one) => one.id), [sibling.id]);
     });
   });

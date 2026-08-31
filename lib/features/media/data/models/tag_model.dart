@@ -21,6 +21,25 @@ class TagModel {
   /// normalizadas. Es lo que mira el etiquetado automático al importar.
   List<String> sourceUrls = const [];
 
+  /// Cuáles de [sourceUrls] están marcadas como no aptas.
+  ///
+  /// Un subconjunto de la otra lista y no una lista de objetos con su marca: así
+  /// el campo es aditivo y las direcciones que ya hay guardadas siguen siendo
+  /// exactamente lo que eran. Se guardan normalizadas, igual que [sourceUrls],
+  /// que es como se comparan las dos listas entre sí.
+  List<String> nsfwSourceUrls = const [];
+
+  /// La etiqueta identifica a una persona o a un personaje.
+  ///
+  /// Es lo único que la separa de las demás, y la separación es sobre todo
+  /// conceptual: se gestiona en su propia pantalla en vez de mezclada con los
+  /// conceptos y las cosas. Fuera de ahí sigue siendo una etiqueta y se comporta
+  /// como tal al asignar, al buscar y al colgar de otra.
+  ///
+  /// De fábrica `false`: lo que ya hay en la base sigue siendo una etiqueta
+  /// normal, que es lo correcto. Separarlas es cosa del usuario, una a una.
+  bool isPerson = false;
+
   /// Contenido no apto: lo que lleve esta etiqueta no se ve con el modo NSFW
   /// apagado.
   ///
@@ -45,7 +64,26 @@ class TagModel {
   ///
   /// **Un solo salto** al aplicarlas: si A es hermana de B y B de C, poner A no
   /// pone C. Encadenarlas convertiría una etiqueta en media biblioteca.
+  ///
+  /// El enlace dice **que van juntas**; a quién arrastra cada una lo dice
+  /// [mutedSiblings].
   final siblings = IsarLinks<TagModel>();
+
+  /// De sus hermanas, a cuáles **no** arrastra ésta.
+  ///
+  /// La relación es simétrica —las dos saben que van juntas— pero el arrastre no
+  /// tiene por qué serlo: «ladybug» puede poner «Marinette» sin que poner
+  /// «Marinette» ponga «ladybug». Con las dos listas salen los cuatro casos: las
+  /// dos se arrastran, sólo una, la otra, o ninguna.
+  ///
+  /// **Se guarda al revés de lo que se pregunta, y es a propósito.** Guardando a
+  /// quién sí arrastra, todo lo que ya está en la base —que no tiene el campo—
+  /// se leería como «no arrastra a nadie», y el día que se instalara esta
+  /// versión el etiquetado automático dejaría de poner hermanas sin decir nada.
+  /// Guardando las excepciones, la lista vacía significa «a todas», que es
+  /// exactamente lo que se venía haciendo: aditivo de verdad, sin migración y
+  /// sin tocar una sola fila.
+  List<int> mutedSiblings = const [];
   
   @Backlink(to: 'tags')
   final personas = IsarLinks<PersonaModel>();
@@ -59,17 +97,38 @@ class TagModel {
     required this.name,
     this.picturePath,
     this.sourceUrls = const [],
+    this.nsfwSourceUrls = const [],
     this.isNsfw = false,
+    this.isPerson = false,
+    this.mutedSiblings = const [],
   });
 
-  TagEntity toEntity() {
+  TagEntity toEntity() =>
+      toEntityWithChildren(children.map((tag) => tag.toEntity()).toList());
+
+  /// La etiqueta con las hijas que se le digan, en vez de con las suyas.
+  ///
+  /// **Es el único sitio donde se mapean los campos de una etiqueta**, y existe
+  /// para que siga siendo el único: quien arma el árbol necesita poner sus
+  /// propias hijas (ordenadas, con el corte de ciclos y con la marca heredada),
+  /// y si para eso tuviera que construir la `TagEntity` a mano acabaría
+  /// dejándose campos por el camino. Es lo que pasó: el árbol se armaba sin las
+  /// direcciones ni las hermanas, y guardar el nombre de una etiqueta le borraba
+  /// las direcciones.
+  ///
+  /// Recorrer la descendencia con `toEntity()` por cada nodo del árbol sería
+  /// además cuadrático, así que quien ya la tiene armada la pasa por aquí.
+  TagEntity toEntityWithChildren(List<TagEntity> children) {
     return TagEntity(
       id: id,
       name: name,
       picturePath: picturePath,
       sourceUrls: sourceUrls,
+      nsfwSourceUrls: nsfwSourceUrls,
       isNsfw: isNsfw,
-      children: children.map((tag) {return tag.toEntity();}).toList(),
+      isPerson: isPerson,
+      mutedSiblings: mutedSiblings,
+      children: children,
       // Planas: sin sus hijas ni sus propias hermanas. Lo que hace falta de una
       // hermana es su nombre, y recorrer sus ramas aquí acabaría cargando media
       // base de datos por pintar una lista de tres nombres.
@@ -80,6 +139,9 @@ class TagModel {
             name: sibling.name,
             picturePath: sibling.picturePath,
             isNsfw: sibling.isNsfw,
+            // Lo suyo sí hace falta: la dirección de la pareja se lee con las
+            // dos listas, y sin la de la hermana sólo se sabría media.
+            mutedSiblings: sibling.mutedSiblings,
             children: const [],
           ),
       ],
@@ -95,7 +157,9 @@ class TagModel {
       picturePath: entity.picturePath,
       name: entity.name,
       sourceUrls: entity.sourceUrls,
+      nsfwSourceUrls: entity.nsfwSourceUrls,
       isNsfw: entity.isNsfw,
+      isPerson: entity.isPerson,
     );
   }
 }

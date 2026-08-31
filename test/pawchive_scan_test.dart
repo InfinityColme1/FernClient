@@ -22,6 +22,7 @@ import 'package:Fern/features/media/domain/services/import_decisions.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
 import 'package:Fern/features/settings/domain/entities/pawchive_settings_entity.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
+import 'package:Fern/features/media/data/services/blocked_imports.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -52,6 +53,10 @@ class _Registry implements MediaRegistry {
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
+/// Sin base de datos: aqui no se prueba el bloqueo, y abrir una entera para
+/// preguntar por algo que esta vacio seria pedir mucho a cambio de nada.
+BlockedImports _blocked() => BlockedImports();
+
 class _Clients {
   static PixivApiClient get pixiv => PixivApiClient();
   static RedditApiClient get reddit => RedditApiClient();
@@ -71,6 +76,7 @@ Future<RemoteMediaRepositoryImpl> repositoryWith(http.Client client) async {
     pinterest: _Clients.pinterest,
     pawchive: PawchiveApiClient(client: client),
     decisions: ImportDecisions(),
+    blocked: _blocked(),
     downloader: _Downloader(),
     registry: _Registry(),
     settingsRepository: _Settings(const AppSettingsEntity(
@@ -162,6 +168,7 @@ void main() {
         avatarsPath: '',
         recognitionPath: '',
       )),
+      blocked: _blocked(),
       preferencesService: PreferencesService(
         await SharedPreferences.getInstance(),
       ),

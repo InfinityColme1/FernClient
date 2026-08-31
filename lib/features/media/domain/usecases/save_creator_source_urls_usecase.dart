@@ -8,9 +8,13 @@ class SaveCreatorSourceUrlsParams {
   final int creatorId;
   final List<String> urls;
 
+  /// Cuáles de [urls] quedan marcadas como no aptas.
+  final List<String> nsfwUrls;
+
   const SaveCreatorSourceUrlsParams({
     required this.creatorId,
     required this.urls,
+    this.nsfwUrls = const [],
   });
 }
 
@@ -24,6 +28,10 @@ class SaveCreatorSourceUrlsUseCase
 
   @override
   Future<DataState<CreatorEntity>> call({SaveCreatorSourceUrlsParams? params}) {
-    return _repository.saveCreatorSourceUrls(params!.creatorId, params.urls);
+    return _repository.saveCreatorSourceUrls(
+      params!.creatorId,
+      params.urls,
+      nsfwUrls: params.nsfwUrls,
+    );
   }
 }

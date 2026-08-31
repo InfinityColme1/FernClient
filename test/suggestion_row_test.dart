@@ -20,6 +20,7 @@ import 'package:Fern/features/recognition/presentation/widgets/suggestion_row.da
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:Fern/features/recognition/domain/services/suggestion_groups.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -59,7 +60,7 @@ Future<AppPalette> _pump(
   VoidCallback? onAccept,
   VoidCallback? onReject,
   VoidCallback? onMarkRegion,
-  void Function(MediaSuggestionEntity?)? onSpotlight,
+  void Function(SuggestionGroup?)? onSpotlight,
 }) async {
   late AppPalette palette;
 
@@ -77,6 +78,9 @@ Future<AppPalette> _pump(
             width: 320,
             child: SuggestionRow(
               suggestion: suggestion,
+              // La fila recibe el grupo entero: lo mismo visto varias veces es
+              // una sola fila, y las cajas de todas son lo que se señala.
+              group: SuggestionGroup([suggestion]),
               onAccept: onAccept,
               onReject: onReject,
               onMarkRegion: onMarkRegion,
@@ -195,14 +199,34 @@ void main() {
       expect(find.byIcon(Symbols.close), findsOneWidget);
     });
 
-    testWidgets('sin nada que poner, sólo se puede rechazar', (tester) async {
-      // Un fernie que no enlaza nada, o cuya etiqueta alguien borró: enseñar el
-      // botón de aceptar y dar un error al pulsarlo sería peor que no
-      // enseñarlo.
+    testWidgets('sin nada que hacer al aceptar, sólo se puede rechazar',
+        (tester) async {
+      // Quién puede aceptar lo decide quien monta la fila, no la fila: aquí lo
+      // único que se sostiene es que un botón sin nada detrás no se pinta.
+      // Enseñarlo y dar un error al pulsarlo sería peor que no enseñarlo.
       await _pump(tester, _suggestion(), onReject: () {});
 
       expect(find.byIcon(Symbols.check), findsNothing);
       expect(find.byIcon(Symbols.close), findsOneWidget);
+    });
+
+    // El orden importa: los dos que dan por buena la sugerencia —guardar la
+    // región y aceptarla— van juntos, y el de descartarla queda al final,
+    // apartado de ellos, para no pulsar uno por otro.
+    testWidgets('van en orden: región, aceptar y rechazar', (tester) async {
+      await _pump(
+        tester,
+        _suggestion(tag: _ladybug, withBox: true),
+        onAccept: () {},
+        onReject: () {},
+        onMarkRegion: () {},
+      );
+
+      double xOf(IconData icon) =>
+          tester.getCenter(find.byIcon(icon)).dx;
+
+      expect(xOf(Symbols.crop_free), lessThan(xOf(Symbols.check)));
+      expect(xOf(Symbols.check), lessThan(xOf(Symbols.close)));
     });
 
     testWidgets('aceptar avisa a quien lo pidió', (tester) async {
@@ -263,7 +287,7 @@ void main() {
     });
 
     testWidgets('pasar por encima avisa con la sugerencia', (tester) async {
-      final seen = <MediaSuggestionEntity?>[];
+      final seen = <SuggestionGroup?>[];
 
       await _pump(
         tester,
@@ -291,7 +315,7 @@ void main() {
     });
 
     testWidgets('sin caja no se señala nada', (tester) async {
-      final seen = <MediaSuggestionEntity?>[];
+      final seen = <SuggestionGroup?>[];
 
       await _pump(tester, _suggestion(), onSpotlight: seen.add);
 

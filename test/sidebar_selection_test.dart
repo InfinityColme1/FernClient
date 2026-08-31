@@ -6,6 +6,7 @@
 // es que mande la dirección, sin perder lo único que la dirección no sabe
 // contar: que filtrar por una etiqueta no cambia de pantalla.
 
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/sidebar_selection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -85,5 +86,28 @@ void main() {
   test('una pantalla que no está en el menú no marca nada', () {
     // El visor, los ajustes: se llega a ellos desde dentro, no desde el menú.
     expect(selected('/viewer'), isNull);
+  });
+
+  // Las personas no tienen botón propio: se llega a ellas desde la cabecera de
+  // la lista de etiquetas. Por eso su ruta cuelga de la de etiquetas, y por eso
+  // estando allí sigue marcado «Etiquetas»: con una ruta suelta no se marcaría
+  // ninguno y el menú diría que no se está en ninguna parte.
+  group('las personas', () {
+    const withTags = [...ids, tagManagerRoute];
+
+    String? selectedIn(String location) =>
+        sidebarSelectedId(location: location, ids: withTags);
+
+    test('cuelgan de las etiquetas', () {
+      expect(personaManagerRoute.startsWith('$tagManagerRoute/'), isTrue);
+    });
+
+    test('y marcan el botón de etiquetas', () {
+      expect(selectedIn(personaManagerRoute), tagManagerRoute);
+    });
+
+    test('las etiquetas siguen marcándose ellas', () {
+      expect(selectedIn(tagManagerRoute), tagManagerRoute);
+    });
   });
 }

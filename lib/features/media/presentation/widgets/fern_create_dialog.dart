@@ -6,6 +6,8 @@ import 'package:Fern/core/resources/app_exceptions.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/media_preview_service.dart';
+import 'package:Fern/features/media/domain/services/avatar_source.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_crop_dialog.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
@@ -30,8 +32,7 @@ import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:go_router/go_router.dart';
@@ -121,25 +122,35 @@ class FernCreateDialog extends StatefulWidget {
   /// no aparece.
   final String? currentMediaPath;
 
+  /// La etiqueta nace ya marcada como persona.
+  ///
+  /// Lo pone a `true` quien abre el diálogo desde la pantalla de personas: allí
+  /// crear una etiqueta normal sería crearla para que desaparezca de la lista.
+  final bool startsAsPerson;
+
   const FernCreateDialog.tag({
     super.key,
     this.initialName = '',
     this.currentMediaPath,
+    this.startsAsPerson = false,
   }) : type = CreateDialogType.tag;
 
   const FernCreateDialog.creator({super.key, this.currentMediaPath})
       : type = CreateDialogType.creator,
-        initialName = '';
+        initialName = '',
+        startsAsPerson = false;
 
   const FernCreateDialog.fernie({super.key})
       : type = CreateDialogType.fernie,
         initialName = '',
-        currentMediaPath = null;
+        currentMediaPath = null,
+        startsAsPerson = false;
 
   const FernCreateDialog.model({super.key})
       : type = CreateDialogType.model,
         initialName = '',
-        currentMediaPath = null;
+        currentMediaPath = null,
+        startsAsPerson = false;
 
   @override
   State<FernCreateDialog> createState() => _FernCreateDialogState();
@@ -156,7 +167,6 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// son detección, y quien no sepa cuál quiere casi siempre quiere saber si
   /// algo está o no está.
   ModelFunction _function = ModelFunction.boolean;
-  final _storeAvatar = getIt<StoreAvatarUseCase>();
 
   /// Lo que falla del nombre, si falla algo. Se enseña bajo el campo.
   ///
@@ -176,13 +186,16 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
   /// La etiqueta nace marcada como NSFW.
   bool _isNsfw = false;
+
+  /// La etiqueta nace identificando a una persona o a un personaje.
+  late bool _isPerson = widget.startsAsPerson;
   TagEntity? _parentTag;
 
   /// Direcciones vinculadas a la etiqueta que se está creando.
   ///
   /// Se quedan aquí hasta que se confirma: la etiqueta todavía no existe, así
   /// que no hay a qué engancharlas. Se guardan con ella de una vez.
-  List<String> _sourceUrls = const [];
+  List<FernLink> _sourceUrls = const [];
 
   /// Hay una escritura en marcha: la de guardar o la de copiar el avatar
   /// elegido. El botón de confirmar pasa a ser el indicador de espera y no admite
@@ -202,20 +215,19 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     }
   }
 
-  /// Elige la imagen del avatar y se queda con la copia que guarda la
-  /// aplicación: los avatares se cargan siempre de la carpeta de avatares, no
-  /// de donde el usuario tuviera la imagen.
+  /// Elige el avatar: de dónde sale la imagen, cuál, y qué trozo de ella.
+  ///
+  /// El explorador de ficheros era la única respuesta a la primera pregunta, y
+  /// obligaba a buscar por el disco una imagen que la aplicación ya tiene
+  /// guardada y sabe enseñar.
   Future<void> _pickImage() async {
-    final result = await FilePicker.pickFiles(type: FileType.image);
+    final choice = await chooseAvatarImage(context);
+    if (choice == null || !mounted) return;
 
-    final path = result?.files.single.path;
-    if (path == null) return;
-
-    // La copia a la carpeta de avatares puede tardar, así que se hace con el
-    // diálogo en espera. El explorador de ficheros no: allí el tiempo lo pone el
-    // usuario.
+    // Guardar sí puede tardar, así que se hace con la ficha en espera. Elegir
+    // no: allí el tiempo lo pone el usuario.
     await _run(() async {
-      final storedPath = await _storeAvatar(params: path);
+      final storedPath = await storeChosenAvatar(choice, replacing: _selectedImagePath);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);
@@ -228,18 +240,33 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// carpeta de avatares no se puede pintar en ningún círculo. El fotograma ya
   /// está sacado y cacheado —es el que se ve en la rejilla—, así que esto no
   /// abre nada.
+  ///
+  /// De una imagen quieta se pregunta **qué trozo**: el contenido entero en una
+  /// ilustración apaisada con cuatro personajes deja el avatar de uno de ellos
+  /// siendo la escena completa metida en un círculo. En vídeo y GIF no se
+  /// pregunta: allí lo que se ve no es lo que hay en el fichero, y un recorte
+  /// marcado sobre un fotograma que se mueve señalaría algo que ya no está.
   Future<void> _useCurrentMedia() async {
     final path = widget.currentMediaPath;
     if (path == null) return;
 
+    final source = path.isVideoPath
+        ? (await MediaPreviewService.instance.load(path))?.thumbnailPath
+        : path;
+
+    if (source == null || !mounted) return;
+
+    // El recorte se decide por el contenido y no por el fichero que sale de
+    // él: de un vídeo lo que se guarda es su miniatura, que es una imagen y se
+    // dejaría recortar, pero lo que se está mirando es un vídeo.
+    final choice = cropsAvatarOf(path)
+        ? await cropOf(context, source)
+        : (path: source, rect: wholeImageRect);
+
+    if (choice == null || !mounted) return;
+
     await _run(() async {
-      final source = path.isVideoPath
-          ? (await MediaPreviewService.instance.load(path))?.thumbnailPath
-          : path;
-
-      if (source == null || !mounted) return;
-
-      final storedPath = await _storeAvatar(params: source);
+      final storedPath = await storeChosenAvatar(choice, replacing: _selectedImagePath);
       if (!mounted) return;
 
       setState(() => _selectedImagePath = storedPath);
@@ -259,11 +286,15 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// creación no se ha ido a ninguna parte, sólo tenía otro delante. Si se cierra
   /// sin confirmar no llega nada y las direcciones se quedan como estuvieran.
   Future<void> _assignUrls() async {
-    final urls = await showFernDialog<List<String>, TagsBloc>(
+    final urls = await showFernDialog<List<FernLink>, TagsBloc>(
       context: context,
       builder: (_) => AssignUrlDialog(
         urls: _sourceUrls,
         name: _nameController.text.trim(),
+        canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+        // Aquí nunca se esconden: la etiqueta se está creando ahora y lo que se
+        // acaba de escribir tiene que poder verse y corregirse.
+        hidesMarked: false,
       ),
     );
     if (urls == null || !mounted) return;
@@ -303,8 +334,13 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
               name: name,
               picturePath: _selectedImagePath,
               children: const [],
-              sourceUrls: _sourceUrls,
+              sourceUrls: [for (final link in _sourceUrls) link.url],
+              nsfwSourceUrls: [
+                for (final link in _sourceUrls)
+                  if (link.isNsfw) link.url,
+              ],
               isNsfw: _isNsfw,
+              isPerson: _isPerson,
             ),
             parent: _parentTag,
           ),
@@ -422,6 +458,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                _personToggle(texts),
                 _nsfwToggle(texts),
                 _assignUrlsButton(texts),
               ],
@@ -595,6 +632,27 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           color: _isNsfw ? context.colors.terciary : null,
         ),
         onPressed: () => setState(() => _isNsfw = !_isNsfw),
+      ),
+    );
+  }
+
+  /// Decir ya al crearla que es una persona.
+  ///
+  /// Un icono más de la fila de arriba, junto a los otros dos: son las tres
+  /// cosas que se le hacen a la etiqueta y que no son rellenar su ficha. Lo que
+  /// hace lo cuenta su tooltip.
+  ///
+  /// A diferencia del de NSFW, éste sale siempre: no depende de que haya
+  /// contraseña puesta ni esconde nada, sólo dice en qué lista se gestiona.
+  Widget _personToggle(AppLocalizations texts) {
+    return Tooltip(
+      message: texts.tagIsPerson,
+      child: IconButton(
+        icon: Icon(
+          Symbols.face,
+          color: _isPerson ? context.colors.terciary : null,
+        ),
+        onPressed: () => setState(() => _isPerson = !_isPerson),
       ),
     );
   }

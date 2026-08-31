@@ -586,16 +586,65 @@ void main() {
       }
     });
 
-    testWidgets('ninguno se hace largo', (tester) async {
-      // Un recorrido de veinte pasos no se termina. El general es el mas largo
-      // porque es el unico que tiene que cubrir la aplicacion entera.
+    testWidgets('ninguno se hace interminable', (tester) async {
+      // Los recorridos son el manual de la aplicacion: entre todos tienen que
+      // explicarlo todo, asi que se les dejo crecer. Lo que este tope evita es lo
+      // otro: un recorrido de veinte pasos no se termina, y lo que no se termina
+      // no explica nada.
+      //
+      // La profundidad se consigue **repartiendo en mas recorridos**, no
+      // alargando uno: por eso son diez y no seis.
       for (final entry in (await tours(tester, const Locale('es'))).entries) {
-        expect(entry.value.length, lessThanOrEqualTo(8),
+        expect(entry.value.length, lessThanOrEqualTo(12),
             reason: entry.key.name);
       }
     });
 
-    testWidgets('los seis salen en la ayuda con su nombre', (tester) async {
+    testWidgets('y ninguno se queda en dos pasos', (tester) async {
+      // Un recorrido de dos pasos no es un recorrido: es un aviso. Si una
+      // materia da para tan poco, va dentro de otra.
+      for (final entry in (await tours(tester, const Locale('es'))).entries) {
+        expect(entry.value.length, greaterThanOrEqualTo(5),
+            reason: entry.key.name);
+      }
+    });
+
+    // Un titulo repetido en dos recorridos es casi siempre un copiar y pegar que
+    // dejo el texto de otro paso.
+    testWidgets('ningun paso repite el titulo de otro', (tester) async {
+      final vistos = <String, String>{};
+
+      for (final entry in (await tours(tester, const Locale('es'))).entries) {
+        for (final step in entry.value) {
+          expect(
+            vistos[step.title],
+            isNull,
+            reason: '${step.title}: en ${entry.key.name} y en '
+                '${vistos[step.title]}',
+          );
+
+          vistos[step.title] = entry.key.name;
+        }
+      }
+    });
+
+    // Son el manual: un paso que despacha un concepto en seis palabras no lo
+    // explica, lo menciona.
+    testWidgets('todos los pasos explican algo', (tester) async {
+      for (final locale in AppLocalizations.supportedLocales) {
+        for (final entry in (await tours(tester, locale)).entries) {
+          for (final step in entry.value) {
+            expect(
+              step.body.length,
+              greaterThanOrEqualTo(80),
+              reason: '${step.title} en $locale',
+            );
+          }
+        }
+      }
+    });
+
+    testWidgets('los diez salen en la ayuda con su nombre', (tester) async {
       final built = await tours(tester, const Locale('es'));
 
       expect(built.keys.length, TutorialTour.values.length);
@@ -604,6 +653,14 @@ void main() {
       expect(TutorialTour.values, contains(TutorialTour.duplicates));
       expect(TutorialTour.values, contains(TutorialTour.managers));
       expect(TutorialTour.values, contains(TutorialTour.importing));
+
+      // Las cuatro materias que faltaban: sin ellas, alguien que siguiera todos
+      // los recorridos seguiria sin saber que es el bloqueo de contenido ni
+      // donde viven sus ficheros.
+      expect(TutorialTour.values, contains(TutorialTour.library));
+      expect(TutorialTour.values, contains(TutorialTour.searching));
+      expect(TutorialTour.values, contains(TutorialTour.nsfw));
+      expect(TutorialTour.values, contains(TutorialTour.files));
     });
   });
 }
