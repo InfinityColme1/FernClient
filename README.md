@@ -12,6 +12,35 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.2.2
+
+Un arreglo de etiquetado, dos mejoras pedidas y tres correcciones de trato.
+
+- **Poner una etiqueta a mano ya trae a sus hermanas.** Estaban bien guardadas y
+  la dirección se respetaba, pero el diálogo de asignar proponía **sólo las
+  madres**, y guardar desde el panel escribe la lista tal cual se deja: lo que el
+  diálogo no propusiera no se ponía nunca. Al importar, al aceptar una sugerencia
+  o al marcar un fernie sí venían, así que la misma etiqueta daba dos resultados
+  distintos según por dónde se pusiera. Ahora los dos caminos piden lo mismo.
+- **Los resultados de una búsqueda se pueden ordenar.** El desplegable de orden
+  ya no desaparece al buscar: ordena dentro de cada grupo, que es donde hay tanto
+  contenido como en la biblioteca.
+- **Enter valida en los diálogos del bloqueo.** En los cinco —abrir, configurar,
+  cambiar la contraseña, desactivar y recuperar—, escribir y pulsar Enter hace lo
+  mismo que el botón.
+- **Descartar desde el visor revisando una importación pasa al siguiente** en vez
+  de cerrarlo. Es la misma regla que ya tenía guardar: repasar una tanda es
+  abrir, decidir y pasar. Fuera de una revisión se cierra, como antes.
+- **Un creador se vincula y se marca desde su propio diálogo de creación.** Sus
+  direcciones son lo que hace que se le asigne solo al importar, y antes había
+  que crearlo, buscarlo en su lista y volver a abrirlo para ponérselas.
+- **Pulsar una etiqueta del menú desde otra pantalla filtra siempre por ella.**
+  Había una carrera —el menú mandaba la búsqueda y la pantalla, al abrirse, pedía
+  además lo que hubiera en marcha— y unas veces ganaba una y otras la otra. Ahora
+  la etiqueta viaja con la navegación: una sola petición.
+
+---
+
 ## Novedades de la 2.2.1
 
 Tres arreglos: dos del reconocimiento, que se rompió en la 2.2.0, y uno del
