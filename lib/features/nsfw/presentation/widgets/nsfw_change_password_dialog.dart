@@ -92,18 +92,24 @@ class _NsfwChangePasswordDialogState extends State<NsfwChangePasswordDialog> {
             FernLabeledTextField(
               label: texts.nsfwChangeCurrentLabel,
               controller: _current,
+              // Enter valida: escribir y pulsar Enter es el gesto de todo
+              // el mundo en un campo de contrasena, y sin esto habia que
+              // soltar el teclado e ir a por el boton.
+              onSubmitted: _isWorking ? null : (_) => _change(texts),
               obscureText: true,
             ),
             const SizedBox(height: AppSpacing.m),
             FernLabeledTextField(
               label: texts.nsfwChangeNewLabel,
               controller: _password,
+              onSubmitted: _isWorking ? null : (_) => _change(texts),
               obscureText: true,
             ),
             const SizedBox(height: AppSpacing.m),
             FernLabeledTextField(
               label: texts.nsfwPasswordRepeatLabel,
               controller: _repeated,
+              onSubmitted: _isWorking ? null : (_) => _change(texts),
               obscureText: true,
             ),
             if (_error case final error?) ...[

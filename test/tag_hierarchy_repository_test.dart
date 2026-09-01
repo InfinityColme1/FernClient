@@ -14,6 +14,7 @@ import 'package:Fern/features/media/data/services/media_file_organizer.dart';
 import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/settings/data/services/avatar_storage_service.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -293,8 +294,9 @@ void main() {
     expect(await tagsOf(mediaId), ['Queda']);
   });
 
-  Future<List<String>> ancestorsOf(List<TagEntity> tags) async {
-    final result = await repository.getTagAncestors(tags);
+  /// Lo que viene con estas etiquetas: hermanas y rama, sin ellas mismas.
+  Future<List<String>> relativesOf(List<TagEntity> tags) async {
+    final result = await repository.getTagRelatives(tags);
     return (result as DataSuccess<List<TagEntity>>)
         .data!
         .map((tag) => tag.name)
@@ -306,13 +308,13 @@ void main() {
     final parent = await newTag('Madre', parent: grandparent);
     final child = await newTag('Hija', parent: parent);
 
-    expect(await ancestorsOf([child]), ['Madre', 'Abuela']);
+    expect(await relativesOf([child]), ['Madre', 'Abuela']);
   });
 
   test('una etiqueta raíz no tiene ninguna encima', () async {
     final tag = await newTag('Sola');
 
-    expect(await ancestorsOf([tag]), isEmpty);
+    expect(await relativesOf([tag]), isEmpty);
   });
 
   test('las ramas que se juntan no repiten etiqueta', () async {
@@ -320,7 +322,7 @@ void main() {
     final first = await newTag('Personaje', parent: root);
     final second = await newTag('Escenario', parent: root);
 
-    expect(await ancestorsOf([first, second]), ['Serie']);
+    expect(await relativesOf([first, second]), ['Serie']);
   });
 
   test('la que ya está elegida no vuelve como ancestro', () async {
@@ -328,7 +330,96 @@ void main() {
     final parent = await newTag('Madre', parent: grandparent);
     final child = await newTag('Hija', parent: parent);
 
-    expect(await ancestorsOf([child, parent]), ['Abuela']);
+    expect(await relativesOf([child, parent]), ['Abuela']);
+  });
+
+  // Lo que fallaba: una etiqueta de personaje hermana de una convencional, con
+  // la direccion puesta para que el personaje arrastre a la otra. Al ponerla a
+  // mano desde el panel no pasaba nada, porque el dialogo pedia **solo las
+  // madres**; guardar desde el panel escribe la lista tal cual se deja, asi que
+  // lo que el dialogo no proponga no se pone nunca.
+  group('lo que viene con una etiqueta', () {
+    test('una hermana viene con ella', () async {
+      final serie = await newTag('Miraculous');
+      final personaje = await newTag('Marinette');
+
+      await repository.saveTagSiblings(
+        personaje.id,
+        {serie.id: SiblingDirection.both},
+      );
+
+      expect(await relativesOf([personaje]), ['Miraculous']);
+    });
+
+    // La direccion es lo que se pidio: el personaje pone la serie, la serie no
+    // pone al personaje.
+    test('y respeta la direccion en un sentido', () async {
+      final serie = await newTag('Miraculous');
+      final personaje = await newTag('Marinette');
+
+      await repository.saveTagSiblings(
+        personaje.id,
+        {serie.id: SiblingDirection.forward},
+      );
+
+      expect(await relativesOf([personaje]), ['Miraculous']);
+    });
+
+    test('y en el otro no arrastra nada', () async {
+      final serie = await newTag('Miraculous');
+      final personaje = await newTag('Marinette');
+
+      await repository.saveTagSiblings(
+        personaje.id,
+        {serie.id: SiblingDirection.forward},
+      );
+
+      expect(await relativesOf([serie]), isEmpty);
+    });
+
+    test('sin direccion en ninguna, ninguna arrastra', () async {
+      final serie = await newTag('Miraculous');
+      final personaje = await newTag('Marinette');
+
+      await repository.saveTagSiblings(
+        personaje.id,
+        {serie.id: SiblingDirection.none},
+      );
+
+      expect(await relativesOf([personaje]), isEmpty);
+      expect(await relativesOf([serie]), isEmpty);
+    });
+
+    // Una hermana arrastra su rama igual que la elegida arrastra la suya.
+    test('la hermana trae ademas su rama', () async {
+      final universo = await newTag('Universo');
+      final serie = await newTag('Miraculous', parent: universo);
+      final personaje = await newTag('Marinette');
+
+      await repository.saveTagSiblings(
+        personaje.id,
+        {serie.id: SiblingDirection.both},
+      );
+
+      expect(
+        (await relativesOf([personaje]))..sort(),
+        ['Miraculous', 'Universo'],
+      );
+    });
+
+    // Es la otra mitad de lo que ya hacia: las madres siguen viniendo.
+    test('y las madres siguen viniendo', () async {
+      final madre = await newTag('Figuras');
+      final hija = await newTag('Rombo', parent: madre);
+
+      expect(await relativesOf([hija]), ['Figuras']);
+    });
+
+    test('la elegida no se devuelve a si misma', () async {
+      final sola = await newTag('Sola');
+
+      expect(await relativesOf([sola]), isEmpty);
+    });
   });
 }
 

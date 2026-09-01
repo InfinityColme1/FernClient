@@ -6,7 +6,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
-import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_relatives_usecase.dart';
 import 'dart:async';
 
 import 'package:Fern/features/media/domain/services/recent_picks.dart';
@@ -56,7 +56,7 @@ class AssignTagDialog extends StatefulWidget {
 class _AssignTagDialogState extends State<AssignTagDialog> {
   final _searchTags = getIt<SearchTagsUseCase>();
   final _recents = getIt<RecentPicks>();
-  final _tagAncestors = getIt<GetTagAncestorsUseCase>();
+  final _tagRelatives = getIt<GetTagRelativesUseCase>();
 
   /// Las etiquetas que va a llevar el contenido al confirmar.
   late final List<TagEntity> _tags = [...(widget.selectedTags ?? _mediaTags)];
@@ -98,10 +98,14 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
     // lo que se puso a mano, y las de encima ya vienen solas con ella.
     unawaited(_recents.pushTag(tag.id));
 
-    final ancestors = await _missingAncestors([tag], _tags);
-    if (!mounted || ancestors.isEmpty) return;
+    // Lo que viene con ella: sus hermanas y la rama de todas. **Las hermanas
+    // hacen falta aquí**: guardar desde el panel escribe la lista tal cual se
+    // deja, así que lo que no se proponga ahora no se pone nunca — al revés que
+    // al importar o al aceptar una sugerencia, donde se añaden solas.
+    final relatives = await _missingRelatives([tag], _tags);
+    if (!mounted || relatives.isEmpty) return;
 
-    setState(() => _tags.addAll(ancestors.where((e) => !_isAlreadyAdded(e))));
+    setState(() => _tags.addAll(relatives.where((e) => !_isAlreadyAdded(e))));
   }
 
   /// Quita una etiqueta de las elegidas, sea de las propuestas o de las que el
@@ -110,12 +114,12 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
     setState(() => _tags.removeWhere((e) => e.id == tag.id));
   }
 
-  /// Las etiquetas por encima de [tags] que no estén ya en [current].
-  Future<List<TagEntity>> _missingAncestors(
+  /// Lo que viene con [tags] —hermanas y rama— y no está ya en [current].
+  Future<List<TagEntity>> _missingRelatives(
     List<TagEntity> tags,
     List<TagEntity> current,
   ) async {
-    final result = await _tagAncestors(params: tags);
+    final result = await _tagRelatives(params: tags);
     if (result is! DataSuccess) return const [];
 
     final ids = {for (final tag in current) tag.id};
@@ -161,13 +165,13 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
       builder: (_) => FernCreateDialog.tag(currentMediaPath: media.path),
     );
 
-    // Las de encima se piden aquí y no al volver: este estado ya no existe, y
-    // proponerlas otra vez sobre toda la lista devolvería las que se hubieran
-    // quitado.
+    // Lo que viene con ella se pide aquí y no al volver: este estado ya no
+    // existe, y proponerlo otra vez sobre toda la lista devolvería lo que se
+    // hubiera quitado.
     if (created != null) {
       selected
         ..add(created)
-        ..addAll(await _missingAncestors([created], selected));
+        ..addAll(await _missingRelatives([created], selected));
     }
 
     if (!navigatorContext.mounted) return;

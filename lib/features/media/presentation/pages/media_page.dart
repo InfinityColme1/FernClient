@@ -6,6 +6,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
+import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
@@ -26,7 +27,17 @@ import 'package:go_router/go_router.dart';
 /// y guardado desde el visor. Lo pendiente de revisar vive en la pantalla de
 /// importación.
 class MediaPage extends StatefulWidget {
-  const MediaPage({super.key});
+  /// La etiqueta por la que hay que filtrar nada más abrir, si se ha llegado
+  /// aquí pulsando una del menú lateral.
+  ///
+  /// **Viaja con la navegación y no en un evento aparte.** Antes el menú
+  /// navegaba y mandaba la búsqueda por su cuenta, y esta pantalla, al abrirse,
+  /// pedía lo que hubiera en el estado —que todavía era lo de antes—: dos
+  /// peticiones a la vez sobre el mismo bloc, y la rejilla se quedaba con la que
+  /// terminara la última. A veces la etiqueta, a veces la biblioteca entera.
+  final SearchSuggestionEntity? initialFilter;
+
+  const MediaPage({super.key, this.initialFilter});
 
   @override
   State<MediaPage> createState() => _MediaPageState();
@@ -81,11 +92,14 @@ class _MediaPageState extends State<MediaPage> {
     super.initState();
     _highlight.addListener(_onRecognized);
 
-    // Si hay una búsqueda en marcha (se ha escrito en el buscador desde otra
-    // pantalla) se repite, no se descarta: es lo que se ha pedido ver. Y se
-    // repite tal cual era: si venía de pulsar una sugerencia, por esa
-    // sugerencia; si no, por el texto.
-    getIt<MediaBloc>().add(_reload);
+    // Una sola petición, siempre. Si se ha llegado pulsando una etiqueta del
+    // menú, se busca por ella; si no, se repite lo que hubiera en marcha —se ha
+    // escrito en el buscador desde otra pantalla— tal cual era.
+    final filter = widget.initialFilter;
+
+    getIt<MediaBloc>().add(
+      filter == null ? _reload : SearchSuggestionSelectedEvent(filter),
+    );
   }
 
   @override
@@ -216,23 +230,23 @@ class _MediaViewState extends State<_MediaView> {
                       context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
                 ),
                 const SizedBox(width: AppSpacing.s),
-                // El orden sólo manda sobre la biblioteca: en una búsqueda el
-                // contenido va agrupado por etiqueta y creador, y ahí el orden
-                // lo pone el grupo.
-                if (state.searchSections == null)
-                  FernDropdownPill<MediaSortOrder>(
-                    value: _sortOrder,
-                    items: MediaSortOrder.values,
-                    labelBuilder: (order) => _sortLabel(order, texts),
-                    onChanged: (order) {
-                      if (order == null) return;
+                // El orden vale también sobre una búsqueda: ordena **dentro de
+                // cada grupo**, que es donde hay tanto contenido como en la
+                // biblioteca. Sin esto, buscar era la única pantalla en la que
+                // había que mirar lo que saliera en el orden que saliera.
+                FernDropdownPill<MediaSortOrder>(
+                  value: _sortOrder,
+                  items: MediaSortOrder.values,
+                  labelBuilder: (order) => _sortLabel(order, texts),
+                  onChanged: (order) {
+                    if (order == null) return;
 
-                      setState(() => _sortOrder = order);
-                      context.read<MediaBloc>().add(
-                        MediaSortOrderChangedEvent(order),
-                      );
-                    },
-                  ),
+                    setState(() => _sortOrder = order);
+                    context.read<MediaBloc>().add(
+                      MediaSortOrderChangedEvent(order),
+                    );
+                  },
+                ),
                 // Son dos controles distintos: pegados se leen como uno partido
                 // en dos, que es lo mismo que pasaba en la cabecera de
                 // importación entre el desplegable y el menú de ver.

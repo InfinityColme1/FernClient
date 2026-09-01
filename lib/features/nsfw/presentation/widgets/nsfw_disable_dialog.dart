@@ -108,6 +108,10 @@ class _NsfwDisableDialogState extends State<NsfwDisableDialog> {
             FernLabeledTextField(
               label: texts.nsfwDisableSecretLabel,
               controller: _secret,
+              // Enter valida: escribir y pulsar Enter es el gesto de todo
+              // el mundo en un campo de contrasena, y sin esto habia que
+              // soltar el teclado e ir a por el boton.
+              onSubmitted: _isWorking ? null : (_) => _disable(texts),
               obscureText: true,
             ),
             if (_error case final error?) ...[

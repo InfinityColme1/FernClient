@@ -422,8 +422,9 @@ class _FakeRepository implements LocalMediaRepository {
 
   @override
   Future<DataState<List<MediaSearchSectionEntity>>> searchMediaByCriteria(
-    List<SearchCriterionEntity> criteria,
-  ) async {
+    List<SearchCriterionEntity> criteria, {
+    MediaSortOrder order = MediaSortOrder.newestFirst,
+  }) async {
     asked.add(criteria);
 
     return DataSuccess([

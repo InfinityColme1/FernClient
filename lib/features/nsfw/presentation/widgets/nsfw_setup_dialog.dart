@@ -103,18 +103,24 @@ class _NsfwSetupDialogState extends State<NsfwSetupDialog> {
             FernLabeledTextField(
               label: texts.nsfwPasswordLabel,
               controller: _password,
+              // Enter valida: escribir y pulsar Enter es el gesto de todo
+              // el mundo en un campo de contrasena, y sin esto habia que
+              // soltar el teclado e ir a por el boton.
+              onSubmitted: _isWorking ? null : (_) => _save(texts),
               obscureText: true,
             ),
             const SizedBox(height: AppSpacing.m),
             FernLabeledTextField(
               label: texts.nsfwPasswordRepeatLabel,
               controller: _repeated,
+              onSubmitted: _isWorking ? null : (_) => _save(texts),
               obscureText: true,
             ),
             const SizedBox(height: AppSpacing.m),
             FernLabeledTextField(
               label: texts.nsfwHintLabel,
               controller: _hint,
+              onSubmitted: _isWorking ? null : (_) => _save(texts),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(

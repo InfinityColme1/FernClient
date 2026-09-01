@@ -11,6 +11,13 @@ class FernLabeledTextField extends StatefulWidget {
   final String hintText;
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
+
+  /// Qué hacer al pulsar Enter dentro del campo.
+  ///
+  /// En un diálogo que pide una contraseña, escribir y pulsar Enter es el gesto
+  /// de todo el mundo: sin esto había que soltar el teclado e ir a por el botón.
+  final ValueChanged<String>? onSubmitted;
+
   final int? maxLines;
 
   /// El texto se pinta con puntos: es para los campos que nadie tiene por qué
@@ -26,6 +33,7 @@ class FernLabeledTextField extends StatefulWidget {
     this.hintText = '',
     this.controller,
     this.onChanged,
+    this.onSubmitted,
     this.maxLines = 1,
     this.obscureText = false,
   });
@@ -65,6 +73,11 @@ class _FernLabeledTextFieldState extends State<FernLabeledTextField> {
         TextField(
           controller: widget.controller,
           onChanged: widget.onChanged,
+          onSubmitted: widget.onSubmitted,
+          // Con algo que hacer al enviar, la tecla de entrada dice lo que va a
+          // pasar en vez de meter un salto de línea.
+          textInputAction:
+              widget.onSubmitted == null ? null : TextInputAction.done,
           // Un campo oculto es siempre de una línea: `maxLines` distinto de uno
           // no se lleva con `obscureText`.
           maxLines: widget.obscureText ? 1 : widget.maxLines,

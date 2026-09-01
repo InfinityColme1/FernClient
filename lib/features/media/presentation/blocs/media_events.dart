@@ -422,7 +422,18 @@ class DeleteMediaEvent extends MediaEvents {
   final MediaEntity media;
   final bool deleteFiles;
 
-  const DeleteMediaEvent(this.media, {this.deleteFiles = false});
+  /// Con `true`, el visor se queda enseñando el siguiente en vez de cerrarse.
+  ///
+  /// Es lo que se quiere revisando una importación: descartar es parte de
+  /// repasar la tanda, y salir del visor en cada descarte obliga a volver a
+  /// entrar por el siguiente. Fuera de ahí se cierra, como siempre.
+  final bool goToNext;
+
+  const DeleteMediaEvent(
+    this.media, {
+    this.deleteFiles = false,
+    this.goToNext = false,
+  });
 }
 
 /// Borrado definitivo del contenido que se está viendo en el visor.

@@ -1574,21 +1574,36 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Llegan sin sus hijas: quien las pide es para ponerlas en un contenido, y
   /// para eso lo único que hace falta es el identificador y cómo se pintan.
   @override
-  Future<DataState<List<TagEntity>>> getTagAncestors(List<TagEntity> tags) async {
+  Future<DataState<List<TagEntity>>> getTagRelatives(List<TagEntity> tags) async {
     try {
-      final ancestors =
-          await _tagHierarchy.ancestorsOf(tags.map((tag) => tag.id));
+      // Se releen de la base: las que llegan del diálogo vienen sin hermanas
+      // cargadas, y sin ellas esto contestaría sólo media pregunta.
+      final models = (await _appDatabase.tagModels
+              .getAll([for (final tag in tags) tag.id]))
+          .nonNulls
+          .toList(growable: false);
+
+      if (models.isEmpty) return const DataSuccess([]);
+
+      final chosen = {for (final model in models) model.id};
+
+      // **Por el mismo camino que el etiquetado automático.** Si esto usara su
+      // propia regla, poner una etiqueta a mano y ponerla desde una sugerencia
+      // dejarían el contenido distinto.
+      final relatives = await _tagHierarchy.withRelatives(models);
 
       return DataSuccess([
-        for (final model in _visibleTags(ancestors))
-          TagEntity(
-            id: model.id,
-            name: model.name,
-            picturePath: model.picturePath,
-            sourceUrls: model.sourceUrls,
-            isNsfw: model.isNsfw,
-            children: const [],
-          ),
+        for (final model in _visibleTags(relatives))
+          if (!chosen.contains(model.id))
+            TagEntity(
+              id: model.id,
+              name: model.name,
+              picturePath: model.picturePath,
+              sourceUrls: model.sourceUrls,
+              isNsfw: model.isNsfw,
+              isPerson: model.isPerson,
+              children: const [],
+            ),
       ]);
     } on Exception catch (e) {
       return DataException(e);
@@ -1702,7 +1717,11 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       final model = CreatorModel.fromEntity(creator)
         ..name = name
-        ..sourceUrls = normalizedSourceUrls(creator.sourceUrls);
+        ..sourceUrls = normalizedSourceUrls(creator.sourceUrls)
+        // Las marcadas también, y con la misma forma: se comparan con las otras
+        // para saber cuáles esconder, y dos formas de escribir lo mismo dejarían
+        // una dirección marcada que no se reconoce como marcada.
+        ..nsfwSourceUrls = normalizedSourceUrls(creator.nsfwSourceUrls);
 
       // La comprobación va dentro de la misma transacción que el alta: fuera de
       // ella, dos altas seguidas del mismo nombre podrían pasar las dos.
@@ -2604,8 +2623,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// resultados de varias clases cuando lo que hay es uno solo.
   @override
   Future<DataState<List<MediaSearchSectionEntity>>> searchMediaByCriteria(
-    List<SearchCriterionEntity> criteria,
-  ) async {
+    List<SearchCriterionEntity> criteria, {
+    MediaSortOrder order = MediaSortOrder.newestFirst,
+  }) async {
     try {
       final wanted = [
         for (final criterion in criteria)
@@ -2613,7 +2633,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       ];
 
       if (wanted.isEmpty) return const DataSuccess([]);
-      if (wanted.length == 1) return _singleSection(wanted.single);
+      if (wanted.length == 1) {
+        return _singleSection(wanted.single, order: order);
+      }
 
       // Se empieza por las más baratas —una etiqueta o un creador van por enlace,
       // el texto libre recorre la colección— y se cruzan de menor a mayor: cada
@@ -2634,6 +2656,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final media = await _importedSummaries(
         (await _appDatabase.mediaModels.getAll(crossed.toList())).nonNulls
             .toList(),
+        order: order,
       );
       if (media.isEmpty) return const DataSuccess([]);
 
@@ -2666,7 +2689,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// El grupo de una sola pastilla, tal y como se enseñaba antes de que las
   /// hubiera.
   Future<DataState<List<MediaSearchSectionEntity>>> _singleSection(
-    SearchCriterionEntity criterion,
+    SearchCriterionEntity criterion, {
+    required MediaSortOrder order,
+  }
   ) async {
     final sections = <MediaSearchSectionEntity>[];
 
@@ -2674,7 +2699,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       case SearchCriterionKind.text:
         final term = criterion.label.trim();
 
-        final byText = await _importedSummaries(await _mediaByText(term));
+        final byText =
+            await _importedSummaries(await _mediaByText(term), order: order);
         if (byText.isNotEmpty) {
           sections.add(MediaSearchSectionEntity(
             type: SearchResultType.media,
@@ -2684,28 +2710,32 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         }
 
         for (final tag in await _tagsByName(term)) {
-          final section = await _tagSection(tag);
+          final section = await _tagSection(tag, order: order);
           if (section != null) sections.add(section);
         }
 
         for (final creator in await _creatorsByName(term)) {
-          final section = await _creatorSection(creator);
+          final section = await _creatorSection(creator, order: order);
           if (section != null) sections.add(section);
         }
 
       case SearchCriterionKind.tag:
-        final section =
-            await _tagSection(await _appDatabase.tagModels.get(criterion.id!));
+        final section = await _tagSection(
+          await _appDatabase.tagModels.get(criterion.id!),
+          order: order,
+        );
         if (section != null) sections.add(section);
 
       case SearchCriterionKind.creator:
         final section = await _creatorSection(
           await _appDatabase.creatorModels.get(criterion.id!),
+          order: order,
         );
         if (section != null) sections.add(section);
 
       case SearchCriterionKind.media:
-        final section = await _mediaSectionById(criterion.id!, criterion.label);
+        final section =
+            await _mediaSectionById(criterion.id!, criterion.label);
         if (section != null) sections.add(section);
     }
 
@@ -2792,7 +2822,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
   /// Grupo de una etiqueta: su contenido definitivo, o `null` si no tiene (o si
   /// la etiqueta ya no está en la base).
-  Future<MediaSearchSectionEntity?> _tagSection(TagModel? tag) async {
+  Future<MediaSearchSectionEntity?> _tagSection(
+    TagModel? tag, {
+    MediaSortOrder? order,
+  }) async {
     if (tag == null) return null;
 
     final media = await _importedSummaries(
@@ -2800,6 +2833,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .filter()
           .tags((q) => q.idEqualTo(tag.id))
           .findAll(),
+      order: order,
     );
     if (media.isEmpty) return null;
 
@@ -2811,7 +2845,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     );
   }
 
-  Future<MediaSearchSectionEntity?> _creatorSection(CreatorModel? creator) async {
+  Future<MediaSearchSectionEntity?> _creatorSection(
+    CreatorModel? creator, {
+    MediaSortOrder? order,
+  }) async {
     if (creator == null) return null;
     if (_visibility.hidesCreator(creator.id)) return null;
 
@@ -2820,6 +2857,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
           .filter()
           .creator((q) => q.idEqualTo(creator.id))
           .findAll(),
+      order: order,
     );
     if (media.isEmpty) return null;
 
@@ -2938,15 +2976,26 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Lo pendiente de revisar vive en la pantalla de importación y lo marcado
   /// para borrar en la de eliminados, así que ninguno de los dos tiene nada que
   /// hacer en los resultados de búsqueda.
-  Future<List<MediaSummaryEntity>> _importedSummaries(List<MediaModel> media) async {
+  Future<List<MediaSummaryEntity>> _importedSummaries(
+    List<MediaModel> media, {
+    MediaSortOrder? order,
+  }) async {
     if (media.isEmpty) return const [];
 
     final summaries = await _appDatabase.mediaSummaryModels
         .getAll(media.map((e) => e.id!).toList());
 
-    return _visible(
+    final visible = _visible(
       summaries.nonNulls
           .where((summary) => summary.isImported && !summary.isDeleted),
-    ).map((summary) => summary.toEntity()).toList();
+    ).toList();
+
+    // Con orden pedido, el mismo que la biblioteca: **por aquí pasan todos los
+    // grupos de una búsqueda**, así que ordenar aquí ordena el resultado entero
+    // sin que cada grupo tenga que acordarse. Sin pedirlo se devuelve como venía,
+    // que es lo que quiere quien sólo va a contar o a cruzar.
+    final sorted = order == null ? visible : await _sorted(visible, order);
+
+    return [for (final summary in sorted) summary.toEntity()];
   }
 }

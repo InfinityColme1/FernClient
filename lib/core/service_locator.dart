@@ -171,7 +171,7 @@ import 'package:Fern/features/media/domain/usecases/get_media_details_usecase.da
 import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart';
 import 'package:Fern/features/media/domain/usecases/get_last_import_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_scanned_media_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_relatives_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_tag_log_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_tag_tree_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/mark_media_deleted_usecase.dart';
@@ -876,8 +876,8 @@ Future<void> initializeDependencies() async {
     SearchTagsUseCase(getIt())
   );
 
-  getIt.registerSingleton<GetTagAncestorsUseCase>(
-    GetTagAncestorsUseCase(getIt())
+  getIt.registerSingleton<GetTagRelativesUseCase>(
+    GetTagRelativesUseCase(getIt())
   );
 
   // Por qué un contenido tiene lo que tiene puesto. Junta la biblioteca y los

@@ -7,6 +7,7 @@ import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/services/avatar_source.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
@@ -126,7 +127,9 @@ class _AvatarLibraryDialogState extends State<AvatarLibraryDialog> {
   Future<List<MediaSummaryEntity>> _matching(
     List<SearchCriterionEntity> criteria,
   ) async {
-    final result = await _search(params: criteria);
+    final result = await _search(
+      params: (criteria: criteria, order: MediaSortOrder.newestFirst),
+    );
     if (result is! DataSuccess) return const [];
 
     final seen = <int>{};

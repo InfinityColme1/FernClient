@@ -184,17 +184,17 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
   String? _selectedImagePath;
 
-  /// La etiqueta nace marcada como NSFW.
+  /// Nace marcada como NSFW. Vale para la etiqueta y para el creador.
   bool _isNsfw = false;
 
   /// La etiqueta nace identificando a una persona o a un personaje.
   late bool _isPerson = widget.startsAsPerson;
   TagEntity? _parentTag;
 
-  /// Direcciones vinculadas a la etiqueta que se está creando.
+  /// Direcciones vinculadas a lo que se está creando, sea etiqueta o creador.
   ///
-  /// Se quedan aquí hasta que se confirma: la etiqueta todavía no existe, así
-  /// que no hay a qué engancharlas. Se guardan con ella de una vez.
+  /// Se quedan aquí hasta que se confirma: todavía no existe, así que no hay a
+  /// qué engancharlas. Se guardan con ello de una vez.
   List<FernLink> _sourceUrls = const [];
 
   /// Hay una escritura en marcha: la de guardar o la de copiar el avatar
@@ -291,6 +291,11 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       builder: (_) => AssignUrlDialog(
         urls: _sourceUrls,
         name: _nameController.text.trim(),
+        // Lo que explica el diálogo cambia: una etiqueta recoge lo que llegue de
+        // esa dirección, y un creador se queda con lo que publique en ella.
+        target: widget.type == CreateDialogType.creator
+            ? AssignUrlTarget.creator
+            : AssignUrlTarget.tag,
         canMarkNsfw: getIt<NsfwModeService>().isConfigured,
         // Aquí nunca se esconden: la etiqueta se está creando ahora y lo que se
         // acaba de escribir tiene que poder verse y corregirse.
@@ -373,6 +378,12 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
             name: name,
             picturePath: _selectedImagePath,
             socialProfiles: links.isEmpty ? null : links,
+            sourceUrls: [for (final link in _sourceUrls) link.url],
+            nsfwSourceUrls: [
+              for (final link in _sourceUrls)
+                if (link.isNsfw) link.url,
+            ],
+            isNsfw: _isNsfw,
           ),
         );
         if (!mounted) return;
@@ -448,22 +459,33 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
 
     return FernDialog(
       onClose: () => context.pop(),
-      // Sólo las etiquetas se vinculan con direcciones: un creador se relaciona
-      // con el contenido de otra manera.
-      // Las dos acciones que no son el formulario, juntas arriba: vincular
-      // direcciones y marcar la etiqueta. Estaba al lado del campo de la madre
-      // y ahí parecía parte de él, cuando no tiene nada que ver con de quién
-      // cuelga la etiqueta.
-      trailingAction: widget.type == CreateDialogType.tag
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _personToggle(texts),
-                _nsfwToggle(texts),
-                _assignUrlsButton(texts),
-              ],
-            )
-          : null,
+      // Las acciones que no son el formulario, juntas arriba: vincular
+      // direcciones y marcar. Estaban al lado del campo de la madre y ahí
+      // parecían parte de él, cuando no tienen nada que ver con de quién cuelga
+      // la etiqueta.
+      //
+      // **Las dos valen igual para un creador**: sus direcciones son de donde
+      // sale su contenido —y es lo que hace que se le asigne solo al importar—,
+      // y marcarlo esconde todo lo suyo. Había que crearlo primero e ir a la
+      // pantalla de gestión a por las dos cosas.
+      trailingAction: switch (widget.type) {
+        CreateDialogType.tag => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _personToggle(texts),
+              _nsfwToggle(texts),
+              _assignUrlsButton(texts),
+            ],
+          ),
+        CreateDialogType.creator => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _nsfwToggle(texts),
+              _assignUrlsButton(texts),
+            ],
+          ),
+        _ => null,
+      },
       leftContent: FernDialogSidePanel(
         // Mientras no haya nombre se enseña el título de la variante, en tono
         // apagado para que se lea como un hueco por rellenar.
@@ -624,11 +646,22 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       return const SizedBox.shrink();
     }
 
+    // El aviso dice de qué se está hablando: una etiqueta esconde lo que la
+    // lleva y un creador esconde todo lo suyo.
+    final isCreator = widget.type == CreateDialogType.creator;
+
     return Tooltip(
-      message: _isNsfw ? texts.tagNsfwOnTooltip : texts.tagNsfwOffTooltip,
+      message: switch ((isCreator, _isNsfw)) {
+        (true, true) => texts.creatorNsfwOnTooltip,
+        (true, false) => texts.creatorNsfwOffTooltip,
+        (false, true) => texts.tagNsfwOnTooltip,
+        (false, false) => texts.tagNsfwOffTooltip,
+      },
       child: IconButton(
+        // Lo que distingue marcado de sin marcar es el color: el icono es el
+        // mismo en los dos estados, como en las fichas.
         icon: Icon(
-          _isNsfw ? Symbols.visibility_off : Symbols.visibility_off,
+          Symbols.visibility_off,
           color: _isNsfw ? context.colors.terciary : null,
         ),
         onPressed: () => setState(() => _isNsfw = !_isNsfw),

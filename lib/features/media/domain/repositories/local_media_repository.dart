@@ -234,7 +234,13 @@ abstract class LocalMediaRepository {
   /// hace por su cuenta; esto es para que la pantalla pueda enseñar las que se
   /// van a poner **antes** de guardar, en vez de que aparezcan de la nada al
   /// recargar.
-  Future<DataState<List<TagEntity>>> getTagAncestors(List<TagEntity> tags);
+  /// Lo que viene con [tags] al ponerlas: las hermanas que arrastran y todo lo
+  /// que hay por encima de unas y otras, **sin ellas mismas**.
+  ///
+  /// Es lo que el etiquetado automático pone solo, y por eso los diálogos lo
+  /// piden: enseñarlo mientras se elige evita que aparezcan etiquetas sin que
+  /// nadie las haya visto venir.
+  Future<DataState<List<TagEntity>>> getTagRelatives(List<TagEntity> tags);
 
   /// Borra la etiqueta [tagId] de la base de datos.
   ///
@@ -418,7 +424,12 @@ abstract class LocalMediaRepository {
   /// creadores cuyo nombre encaje. Una pastilla de entidad va por su
   /// identificador y no por su nombre.
   Future<DataState<List<MediaSearchSectionEntity>>> searchMediaByCriteria(
-    List<SearchCriterionEntity> criteria,
+    List<SearchCriterionEntity> criteria, {
+    /// En qué orden sale el contenido de cada grupo. El mismo que la
+    /// biblioteca: buscar no puede ser la única pantalla donde no se pueda
+    /// elegir cómo se mira lo que hay.
+    MediaSortOrder order,
+  }
   );
 
   Future<DataState<List<MediaSearchSectionEntity>>> searchMedia(String query);

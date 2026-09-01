@@ -743,7 +743,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     await _preferences.setMediaSortOrder(event.order);
 
-    if (state.searchSections != null) return;
+    // Buscando se vuelve a buscar con el orden nuevo. **El orden vale también
+    // aquí**: dentro de cada grupo hay tanto contenido como en la biblioteca, y
+    // no poder cambiarlo dejaba la búsqueda como la única pantalla donde se mira
+    // lo que salga en el orden que salga.
+    final criteria = state.searchCriteria;
+    if (criteria.isNotEmpty) {
+      await _searchBy(criteria, emit);
+      return;
+    }
 
     await _reloadFiltered(emit);
   }
@@ -794,7 +802,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     emit(state.copyWith(isBusy: true));
 
-    final result = await _searchMediaByCriteriaUseCase(params: wanted);
+    final result = await _searchMediaByCriteriaUseCase(
+      params: (criteria: wanted, order: _preferences.getMediaSortOrder()),
+    );
     if (result is! DataSuccess) {
       emit(_idle);
       return;
@@ -1075,7 +1085,45 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       return;
     }
 
+    if (event.goToNext) {
+      await _showNextAfterRemoving(id, emit);
+      return;
+    }
+
     _emitWithoutViewerMedia(id, emit);
+  }
+
+  /// Saca el contenido de la lista y deja el visor en **el siguiente**.
+  ///
+  /// El sitio al que apuntaba el índice lo ocupa ahora el que venía detrás, así
+  /// que pasar a él es leer sus detalles — lo mismo que hace guardar y seguir.
+  /// Si no queda nada, el visor se cierra solo al quedarse el estado sin
+  /// contenido, igual que al borrar el último.
+  Future<void> _showNextAfterRemoving(
+    int id,
+    Emitter<MediaStates> emit,
+  ) async {
+    final list = List<MediaSummaryEntity>.from(state.mediaList ?? const [])
+      ..removeWhere((each) => each.id == id);
+
+    if (list.isEmpty) {
+      _emitWithoutViewerMedia(id, emit);
+      return;
+    }
+
+    final index = (state.currentMediaIndex ?? 0).clamp(0, list.length - 1);
+
+    // La lista recortada tiene que estar en el estado antes de pedir los
+    // detalles: es de ahí de donde los lee.
+    emit(state.copyWith(
+      mediaList: list,
+      currentMediaIndex: index,
+      selectedIds: Set<int>.from(state.selectedIds)..remove(id),
+      searchSections: _sectionsWithout((summary) => summary.id == id),
+      isBusy: true,
+    ));
+
+    emit(await _detailsOf(list[index], index));
   }
 
   /// Si el contenido [id] está marcado para borrar, según la lista que se está

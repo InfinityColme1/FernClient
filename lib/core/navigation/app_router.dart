@@ -9,6 +9,7 @@ import 'package:Fern/features/media/presentation/pages/creator_manager_page.dart
 import 'package:Fern/features/media/presentation/pages/delete_page.dart';
 import 'package:Fern/features/media/presentation/pages/favorites_page.dart';
 import 'package:Fern/features/media/presentation/pages/import_page.dart';
+import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
 import 'package:Fern/features/media/presentation/pages/media_page.dart';
 import 'package:Fern/features/media/presentation/pages/tag_manager_page.dart';
 import 'package:Fern/features/media/presentation/pages/viewer_page.dart';
@@ -78,7 +79,14 @@ final appRouter = GoRouter(
               key: state.pageKey,
               location: mediaRoute,
               family: ScreenFamily.grid,
-              child: const MediaPage(),
+              // Lo que llega con la navegación: la etiqueta que se acaba de
+              // pulsar en el menú, para que la pantalla abra ya filtrando por
+              // ella en vez de pedir dos cosas a la vez.
+              child: MediaPage(
+                initialFilter: state.extra is SearchSuggestionEntity
+                    ? state.extra as SearchSuggestionEntity
+                    : null,
+              ),
             ),
         ),
         GoRoute(

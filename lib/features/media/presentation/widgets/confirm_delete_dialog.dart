@@ -28,12 +28,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// que cerrar el visor detrás.
 Future<bool> deleteMediaWithConfirmation(
   BuildContext context,
-  MediaEntity media,
-) async {
+  MediaEntity media, {
+  /// Con `true`, el visor se queda en el siguiente en vez de cerrarse.
+  bool goToNext = false,
+}) async {
   final bloc = context.read<MediaBloc>();
 
   if (media.isImported) {
-    bloc.add(DeleteMediaEvent(media));
+    bloc.add(DeleteMediaEvent(media, goToNext: goToNext));
     return true;
   }
 
@@ -50,7 +52,11 @@ Future<bool> deleteMediaWithConfirmation(
   if (decision.blocksImport) await blockImportOf(context, [media.id]);
   if (!context.mounted) return true;
 
-  bloc.add(DeleteMediaEvent(media, deleteFiles: decision.deletesFiles));
+  bloc.add(DeleteMediaEvent(
+    media,
+    deleteFiles: decision.deletesFiles,
+    goToNext: goToNext,
+  ));
   return true;
 }
 

@@ -103,23 +103,32 @@ class _SidebarState extends State<Sidebar> {
   /// Se busca por la etiqueta y no por su nombre, así que es la misma búsqueda
   /// que hace el buscador al elegir una de sus sugerencias: sólo sale el
   /// contenido de **esta** etiqueta.
+  /// Filtra la biblioteca por [tag], se esté donde se esté.
+  ///
+  /// **Una sola petición, y por un solo camino.** Estando ya en la biblioteca se
+  /// manda la búsqueda; llegando de otra pantalla, la etiqueta viaja con la
+  /// navegación y la busca la propia pantalla al abrirse.
+  ///
+  /// Antes se hacían las dos cosas: se navegaba y se mandaba la búsqueda en el
+  /// fotograma siguiente. Pero la pantalla, al abrirse, pide también lo que
+  /// hubiera en marcha —que todavía era lo de antes—, así que llegaban dos
+  /// peticiones al mismo bloc y la rejilla se quedaba con la que terminara la
+  /// última: unas veces la etiqueta y otras la biblioteca entera.
   void _filterByTag(TagEntity tag) {
     final router = GoRouter.of(context);
-    if (router.state.matchedLocation != mediaRoute) router.go(mediaRoute);
+    final filter = SearchSuggestionEntity(
+      id: tag.id,
+      type: SearchResultType.tag,
+      label: tag.name,
+      imagePath: tag.picturePath,
+    );
 
-    // La pantalla de media repite al abrirse la búsqueda que encuentre en el
-    // estado, y eso pasa en el fotograma siguiente: el filtro se manda después
-    // para que esa repetición, que todavía no lo conoce, no lo deshaga.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      getIt<MediaBloc>().add(SearchSuggestionSelectedEvent(
-        SearchSuggestionEntity(
-          id: tag.id,
-          type: SearchResultType.tag,
-          label: tag.name,
-          imagePath: tag.picturePath,
-        ),
-      ));
-    });
+    if (router.state.matchedLocation == mediaRoute) {
+      getIt<MediaBloc>().add(SearchSuggestionSelectedEvent(filter));
+      return;
+    }
+
+    router.go(mediaRoute, extra: filter);
   }
 
   /// Con los avisos apagados no se pinta ningún contador: lo que hubiera

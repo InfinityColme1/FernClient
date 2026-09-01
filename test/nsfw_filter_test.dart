@@ -284,7 +284,7 @@ void main() {
     // ponerle a un contenido la rama entera de lo que se le acaba de marcar, y
     // por ahí el nombre de la etiqueta bloqueada acaba en un diálogo.
     test('los ancestros bloqueados tampoco salen', () async {
-      final branch = ok(await repository.getTagAncestors([
+      final branch = ok(await repository.getTagRelatives([
         const TagEntity(id: 3, name: 'prohibido de rama', children: []),
       ]));
 

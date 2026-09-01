@@ -27,7 +27,7 @@ import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/recognition/data/services/suggestion_spotlight.dart';
 import 'package:Fern/features/recognition/domain/services/suggestion_groups.dart';
 import 'package:Fern/features/recognition/domain/usecases/adopt_fernie_tag_usecase.dart';
-import 'package:Fern/features/media/domain/usecases/get_tag_ancestors_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_tag_relatives_usecase.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
@@ -152,11 +152,23 @@ class MediaInfo extends StatelessWidget {
                       return;
                     }
 
+                    // Revisando una importación se sigue con el siguiente:
+                    // descartar es parte de repasar la tanda, y salir del visor
+                    // en cada descarte obliga a volver a entrar por el que
+                    // venía detrás. Fuera de ahí se cierra, como siempre.
+                    final deleted = await deleteMediaWithConfirmation(
+                      context,
+                      media,
+                      goToNext: isReviewing,
+                    );
+
                     // El visor sólo se cierra si el borrado ha salido adelante:
-                    // cancelar el aviso deja al usuario donde estaba.
-                    final deleted =
-                        await deleteMediaWithConfirmation(context, media);
-                    if (deleted && context.mounted) context.pop();
+                    // cancelar el aviso deja al usuario donde estaba. Y no se
+                    // cierra si va a quedarse en el siguiente — de eso se
+                    // encarga el bloc, que además sabe si queda alguno.
+                    if (deleted && !isReviewing && context.mounted) {
+                      context.pop();
+                    }
                   },
                 ),
               ],
@@ -859,10 +871,10 @@ void _updateMedia(BuildContext context, MediaEntity media) {
 /// Sin repetir: dos modelos distintos pueden proponer la misma etiqueta, y
 /// aceptar las dos no puede dejarla puesta dos veces.
 ///
-/// Con las que están **por encima** de las aceptadas, igual que al ponerlas a
-/// mano desde el diálogo. Sin eso, aceptar «Rombo simple» no pone «Rombo» y el
-/// contenido no aparece al buscar por la etiqueta padre: la misma acción daría
-/// dos resultados distintos según por dónde se haga.
+/// Con lo que viene con ellas —sus hermanas y la rama de todas—, igual que al
+/// ponerlas a mano desde el diálogo. Sin eso, aceptar «Rombo simple» no pone
+/// «Rombo» y el contenido no aparece al buscar por la etiqueta padre: la misma
+/// acción daría dos resultados distintos según por dónde se haga.
 Future<List<TagEntity>> _withTags(
   MediaEntity media,
   List<MediaSuggestionEntity> accepted,
@@ -881,10 +893,10 @@ Future<List<TagEntity>> _withTags(
 
   if (puestas.isEmpty) return tags;
 
-  final ancestors = await getIt<GetTagAncestorsUseCase>()(params: puestas);
-  if (ancestors is! DataSuccess || ancestors.data == null) return tags;
+  final relatives = await getIt<GetTagRelativesUseCase>()(params: puestas);
+  if (relatives is! DataSuccess || relatives.data == null) return tags;
 
-  for (final tag in ancestors.data!) {
+  for (final tag in relatives.data!) {
     if (tags.any((existing) => existing.id == tag.id)) continue;
 
     tags.add(tag);
