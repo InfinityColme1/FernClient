@@ -40,6 +40,39 @@ class FastScrollScope extends InheritedWidget {
   bool updateShouldNotify(FastScrollScope old) => old.isFast != isFast;
 }
 
+/// Pide que las celdas no empiecen a cargar nada, por un motivo que no es la
+/// velocidad.
+///
+/// Hoy lo pone la transición de pantalla: entrar en una es construir la rejilla
+/// y, con ella, treinta miniaturas que se abren y se descodifican **justo
+/// encima de la animación**. Son el trabajo que hace que la transición se vea a
+/// tirones, y no hay ninguna prisa por hacerlo ahí: la pantalla acaba de
+/// aparecer y nadie ha mirado todavía.
+///
+/// Va aparte de [FastScrollScope] porque lo pone otro y desde más arriba, y
+/// [FastScrollDetector] lo suma a lo suyo: la pregunta que contesta la celda
+/// sigue siendo una sola, «¿empiezo a cargar ahora?».
+class HoldThumbnailsScope extends InheritedWidget {
+  final bool hold;
+
+  const HoldThumbnailsScope({
+    super.key,
+    required this.hold,
+    required super.child,
+  });
+
+  /// Si por encima de [context] alguien ha pedido esperar.
+  static bool of(BuildContext context) {
+    final scope =
+        context.dependOnInheritedWidgetOfExactType<HoldThumbnailsScope>();
+
+    return scope?.hold ?? false;
+  }
+
+  @override
+  bool updateShouldNotify(HoldThumbnailsScope old) => old.hold != hold;
+}
+
 /// Mira lo que se desplaza lo de dentro y lo cuenta por [FastScrollScope].
 ///
 /// La velocidad se mide **por ventanas** y no entre dos avisos seguidos, y es la
@@ -167,7 +200,12 @@ class _FastScrollDetectorState extends State<FastScrollDetector> {
         // seguir recibiéndolo.
         return false;
       },
-      child: FastScrollScope(isFast: _isFast, child: widget.child),
+      // Lo suyo **más** lo que pidan desde arriba: para la celda es la misma
+      // pregunta, y contestarla en dos sitios acabaría en dos respuestas.
+      child: FastScrollScope(
+        isFast: _isFast || HoldThumbnailsScope.of(context),
+        child: widget.child,
+      ),
     );
   }
 }

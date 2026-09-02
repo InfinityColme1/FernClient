@@ -1,4 +1,5 @@
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
+import 'package:Fern/core/utils/same_instance.dart';
 import 'package:equatable/equatable.dart';
 
 /// Los creadores de la aplicación, ordenados por nombre.
@@ -36,5 +37,6 @@ class CreatorsState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [creators, isLoaded, isBusy];
+  // Por identidad, como el árbol de etiquetas y por lo mismo.
+  List<Object?> get props => [SameInstance(creators), isLoaded, isBusy];
 }

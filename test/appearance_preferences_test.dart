@@ -62,6 +62,21 @@ void main() {
     expect(repository.getSettings().showsTagBranchOnFilter, isFalse);
   });
 
+  // Encendido de fabrica: es lo que la aplicacion hacia antes de que esto se
+  // pudiera elegir, asi que las instalaciones que ya existen —con la clave
+  // ausente— se comportan igual que ayer sin escribir nada.
+  test('de fábrica, una etiqueta marcada esconde su contenido', () {
+    expect(repository.getSettings().nsfwTagsHideMedia, isTrue);
+  });
+
+  test('dejar la marca sólo en la etiqueta vuelve tal cual', () async {
+    await repository.saveSettings(
+      repository.getSettings().copyWith(nsfwTagsHideMedia: false),
+    );
+
+    expect(repository.getSettings().nsfwTagsHideMedia, isFalse);
+  });
+
   test('el tema elegido vuelve tal cual', () async {
     await repository.saveSettings(
       repository.getSettings().copyWith(themeMode: AppThemeMode.dark),

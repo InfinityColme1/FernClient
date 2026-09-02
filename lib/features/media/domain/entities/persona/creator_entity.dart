@@ -1,4 +1,5 @@
 import 'package:Fern/features/media/domain/entities/persona/persona_entity.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 
 
 class CreatorEntity extends PersonaEntity {
@@ -33,6 +34,16 @@ class CreatorEntity extends PersonaEntity {
   /// marca esconde.
   final bool isNsfw;
 
+  /// Las etiquetas que trae consigo.
+  ///
+  /// Ponerle este creador a un contenido se las pone tambien, con lo que ellas
+  /// arrastran: es lo mismo que hacen las direcciones vinculadas al importar,
+  /// dicho desde el creador.
+  ///
+  /// Llega **vacia** salvo que quien lo lea las haya pedido: cargarlas es una
+  /// consulta por creador, y la lista de la pantalla de gestion no las enseña.
+  final List<TagEntity> tags;
+
   const CreatorEntity({
     required super.id,
     required super.name,
@@ -42,6 +53,7 @@ class CreatorEntity extends PersonaEntity {
     this.sourceUrls = const [],
     this.nsfwSourceUrls = const [],
     this.isNsfw = false,
+    this.tags = const [],
   });
 
   CreatorEntity copyWith({
@@ -52,6 +64,7 @@ class CreatorEntity extends PersonaEntity {
     List<String>? sourceUrls,
     List<String>? nsfwSourceUrls,
     bool? isNsfw,
+    List<TagEntity>? tags,
   }) {
     return CreatorEntity(
       id: id,
@@ -62,6 +75,7 @@ class CreatorEntity extends PersonaEntity {
       sourceUrls: sourceUrls ?? this.sourceUrls,
       nsfwSourceUrls: nsfwSourceUrls ?? this.nsfwSourceUrls,
       isNsfw: isNsfw ?? this.isNsfw,
+      tags: tags ?? this.tags,
     );
   }
 
@@ -75,6 +89,7 @@ class CreatorEntity extends PersonaEntity {
     sourceUrls,
     nsfwSourceUrls,
     isNsfw,
+    tags,
   ];
 
 }

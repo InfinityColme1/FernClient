@@ -117,7 +117,19 @@ class AppSizes {
   static const double toolbarHeight = 64.0;
   
   // Panel Widths
-  static const double infoPanelWidth = 350.0;
+
+  /// El panel de información del visor.
+  ///
+  /// **Lo manda su cabecera.** Cada sección lleva su título y el botón de añadir
+  /// con el texto entero, y eso son unos trescientos sesenta puntos en las
+  /// lenguas largas: a 350 el título salía recortado a «Etiq…». Lo que sobra es
+  /// el margen justo para que una traducción algo más larga no lo vuelva a
+  /// romper.
+  ///
+  /// De ahí que esas dos cabeceras vayan **sin icono**: con él haría falta un
+  /// panel de 430, y treinta puntos de imagen valen más que un dibujo al lado de
+  /// una palabra que ya lo dice.
+  static const double infoPanelWidth = 400.0;
   static const double dialogMaxWidth = 800.0;
 
   /// Ancho y alto del diálogo que elige una imagen de la biblioteca.

@@ -59,7 +59,14 @@ const CreatorModelSchema = CollectionSchema(
   deserializeProp: _creatorModelDeserializeProp,
   idName: r'id',
   indexes: {},
-  links: {},
+  links: {
+    r'tags': LinkSchema(
+      id: -7646058287218928682,
+      name: r'tags',
+      target: r'Tags',
+      single: false,
+    )
+  },
   embeddedSchemas: {},
   getId: _creatorModelGetId,
   getLinks: _creatorModelGetLinks,
@@ -181,12 +188,13 @@ Id _creatorModelGetId(CreatorModel object) {
 }
 
 List<IsarLinkBase<dynamic>> _creatorModelGetLinks(CreatorModel object) {
-  return [];
+  return [object.tags];
 }
 
 void _creatorModelAttach(
     IsarCollection<dynamic> col, Id id, CreatorModel object) {
   object.id = id;
+  object.tags.attach(col, col.isar.collection<TagModel>(), r'tags', id);
 }
 
 extension CreatorModelQueryWhereSort
@@ -1548,7 +1556,68 @@ extension CreatorModelQueryObject
     on QueryBuilder<CreatorModel, CreatorModel, QFilterCondition> {}
 
 extension CreatorModelQueryLinks
-    on QueryBuilder<CreatorModel, CreatorModel, QFilterCondition> {}
+    on QueryBuilder<CreatorModel, CreatorModel, QFilterCondition> {
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition> tags(
+      FilterQuery<TagModel> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'tags');
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      tagsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'tags', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      tagsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'tags', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      tagsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'tags', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      tagsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'tags', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      tagsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'tags', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<CreatorModel, CreatorModel, QAfterFilterCondition>
+      tagsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(
+          r'tags', lower, includeLower, upper, includeUpper);
+    });
+  }
+}
 
 extension CreatorModelQuerySortBy
     on QueryBuilder<CreatorModel, CreatorModel, QSortBy> {

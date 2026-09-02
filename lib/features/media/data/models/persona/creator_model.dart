@@ -1,5 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/features/media/data/models/tag_model.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:isar/isar.dart';
 
 part 'creator_model.g.dart';
@@ -38,6 +40,19 @@ class CreatorModel {
   /// escondería gran cosa, y además ese contenido aparecería sin creador.
   bool isNsfw = false;
 
+  /// Las etiquetas que trae consigo: ponerle este creador a un contenido se las
+  /// pone tambien.
+  ///
+  /// Es la misma idea que las direcciones vinculadas, pero por el otro lado. Un
+  /// artista que solo dibuja una serie, o un estudio cuyo contenido siempre
+  /// lleva la misma etiqueta: hasta ahora habia que ponerlas a mano una por una
+  /// despues de asignar el creador, sabiendo de antemano cuales iban a ser.
+  ///
+  /// Un enlace y no una lista de identificadores: borrar una etiqueta la saca de
+  /// aqui sola. Con identificadores sueltos quedaria uno que no apunta a nada, y
+  /// eso no da ningun error: simplemente deja de etiquetar sin decirlo.
+  final tags = IsarLinks<TagModel>();
+
   CreatorModel({
     required this.id,
     required this.name,
@@ -59,6 +74,10 @@ class CreatorModel {
         sourceUrls: sourceUrls,
         nsfwSourceUrls: nsfwSourceUrls,
         isNsfw: isNsfw,
+        // Perezosas, como todos los enlaces de Isar: quien las quiera tiene que
+        // haber hecho `tags.load()` antes. Sin cargar llegan vacias, que es lo
+        // correcto para las listas que no las enseñan.
+        tags: [for (final tag in tags) tag.toEntity()],
     );
   }
 

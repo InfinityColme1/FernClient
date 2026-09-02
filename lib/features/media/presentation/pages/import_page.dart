@@ -44,8 +44,10 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:Fern/features/media/presentation/widgets/assign_creator_to_selection_dialog.dart';
 
 import '../../../../core/service_locator.dart';
+import 'package:Fern/core/navigation/screen_entry.dart';
 
 /// Cómo se llama cada fuente en la pantalla. Las plataformas se llaman igual en
 /// todos los idiomas, así que sólo se traducen la del equipo y la de "todas".
@@ -74,11 +76,19 @@ class ImportPage extends StatefulWidget {
   State<ImportPage> createState() => _ImportPageState();
 }
 
-class _ImportPageState extends State<ImportPage> {
+class _ImportPageState extends State<ImportPage>
+    with ScreenEntryTask<ImportPage> {
   @override
   void initState() {
     super.initState();
-    // CARGA AUTOMÁTICA: Disparamos el evento al iniciar la pantalla
+    getIt<MediaBloc>().add(
+      const MediaScreenOpenedEvent(MediaListing.scanned),
+    );
+  }
+
+  @override
+  void onScreenEntered() {
+    // CARGA AUTOMÁTICA: al terminar de entrar, no encima de la transición.
     getIt<MediaBloc>().add(const LoadScannedMediaEvent());
   }
 
@@ -803,6 +813,13 @@ class _ImportViewState extends State<_ImportView> {
                     state.selectedIds.toList(),
                     name: texts.recognizeJobSelection,
                   ),
+                  onAssignCreator: () => showFernDialog<void, MediaBloc>(
+                    context: context,
+                    bloc: context.read<MediaBloc>(),
+                    builder: (_) => AssignCreatorToSelectionDialog(
+                      count: selectedCount,
+                    ),
+                  ),
                   selectAll: SelectAllButton(
                     visible: visible,
                     selectedIds: state.selectedIds,
@@ -1029,6 +1046,9 @@ class _SelectionBar extends StatelessWidget {
   /// El botón de marcarlo todo, que la pantalla arma con lo que hay a la vista.
   final Widget selectAll;
 
+  /// Ponerle el mismo creador a toda la selección.
+  final VoidCallback onAssignCreator;
+
   /// Mandar la selección a los modelos.
   ///
   /// Es el sitio donde más falta hace y donde no estaba: aquí es donde se
@@ -1043,6 +1063,7 @@ class _SelectionBar extends StatelessWidget {
     required this.onDelete,
     required this.selectAll,
     required this.onRecognize,
+    required this.onAssignCreator,
   });
 
   @override
@@ -1063,7 +1084,11 @@ class _SelectionBar extends StatelessWidget {
         ),
         selectAll,
         const SizedBox(width: AppSpacing.s),
-        Flexible(
+        // Con tope y recortada, en vez de flexible: es la unica pieza que no
+        // es un boton, asi que si se le deja crecer se come el sitio de los que
+        // si hay que poder pulsar.
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _countWidth),
           child: Text(
             texts.selectedOfCount(selected, total),
             maxLines: 1,
@@ -1074,72 +1099,110 @@ class _SelectionBar extends StatelessWidget {
             ),
           ),
         ),
-        const Spacer(),
-        // Esconder lo marcado detrás del filtro NSFW, igual que en la
-        // biblioteca. Aquí hace más falta que allí: es lo primero que se ve de
-        // una tanda recién traída, y obligar a confirmarla antes para poder
-        // marcarla es obligar a pasarla por la biblioteca sin esconder.
+        // Todo lo que se puede hacer con la seleccion, pegado a la derecha y
+        // **desplazable**.
         //
-        // Marca, no interruptor: la selección puede mezclar marcado y sin
-        // marcar. Para quitarla está el visor, que sabe cómo está cada uno.
-        if (getIt<NsfwModeService>().isConfigured) ...[
-          IconButton(
-            tooltip: texts.mediaNsfwMark,
-            onPressed: () => context.read<MediaBloc>().add(
-              const SetSelectedMediaNsfwEvent(isNsfw: true),
+        // Son siete controles con sus rotulos, y en frances o en catalan eso no
+        // cabe en una ventana estrecha: sin esto la fila desbordaba y los
+        // ultimos —borrar y confirmar, que son los que se buscan— se quedaban
+        // fuera de la pantalla sin forma de llegar a ellos. Desplazandose se
+        // llega a todos, y con la ventana ancha no se nota nada porque el
+        // contenido cabe entero.
+        //
+        // `reverse` es lo que lo pega a la derecha: sin el, sobrando sitio, el
+        // grupo se quedaria en medio de la fila.
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            reverse: true,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Esconder lo marcado detrás del filtro NSFW, igual que en la
+                // biblioteca. Aquí hace más falta que allí: es lo primero que se ve de
+                // una tanda recién traída, y obligar a confirmarla antes para poder
+                // marcarla es obligar a pasarla por la biblioteca sin esconder.
+                //
+                // Marca, no interruptor: la selección puede mezclar marcado y sin
+                // marcar. Para quitarla está el visor, que sabe cómo está cada uno.
+                if (getIt<NsfwModeService>().isConfigured) ...[
+                  IconButton(
+                    tooltip: texts.mediaNsfwMark,
+                    onPressed: () => context.read<MediaBloc>().add(
+                      const SetSelectedMediaNsfwEvent(isNsfw: true),
+                    ),
+                    icon: const Icon(Symbols.visibility_off),
+                  ),
+                  const SizedBox(width: AppSpacing.s),
+                ],
+                // Ponerle el mismo creador a toda la tanda. Aqui es donde mas falta
+                // hace: lo que acaba de llegar de una plataforma suele ser de un solo
+                // artista, y sin esto habia que abrirlo de uno en uno.
+                IconButton(
+                  tooltip: texts.assignCreatorSelectedTooltip,
+                  onPressed: onAssignCreator,
+                  icon: const Icon(Symbols.person_edit),
+                ),
+                const SizedBox(width: AppSpacing.s),
+                // Antes que «aceptar los seguros»: para que haya sugerencias que aceptar
+                // primero tiene que haber pasado esto.
+                FernPillButton(
+                  label: texts.recognizeSelectedTooltip,
+                  icon: Symbols.auto_awesome,
+                  backgroundColor: context.colors.secondary,
+                  foregroundColor: context.colors.black,
+                  onPressed: onRecognize,
+                ),
+                const SizedBox(width: AppSpacing.s),
+                // Despachar de golpe lo que los modelos ven con más seguridad. Es lo que
+                // hace usable revisar trescientos: decir que sí trescientas veces a lo
+                // evidente es lo que hace que nadie revise nada.
+                Tooltip(
+                  message: texts.acceptAboveTooltip(
+                    (suggestionHighConfidence * 100).round(),
+                  ),
+                  child: FernPillButton(
+                    label: texts.acceptAboveLabel(
+                      (suggestionHighConfidence * 100).round(),
+                    ),
+                    icon: Symbols.done_all,
+                    backgroundColor: context.colors.secondary,
+                    foregroundColor: context.colors.black,
+                    onPressed: onAcceptAbove,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s),
+                FernPillButton(
+                  label: texts.actionDelete,
+                  icon: Symbols.delete,
+                  backgroundColor: context.colors.error,
+                  foregroundColor: Colors.white,
+                  onPressed: onDelete,
+                ),
+                const SizedBox(width: AppSpacing.s),
+                FernPillButton(
+                  label: texts.actionConfirm,
+                  icon: Symbols.check,
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.black,
+                  onPressed: () => context
+                      .read<MediaBloc>()
+                      .add(const ConfirmSelectedMediaEvent()),
+                ),
+              ],
             ),
-            icon: const Icon(Symbols.visibility_off),
           ),
-          const SizedBox(width: AppSpacing.s),
-        ],
-        // Antes que «aceptar los seguros»: para que haya sugerencias que aceptar
-        // primero tiene que haber pasado esto.
-        FernPillButton(
-          label: texts.recognizeSelectedTooltip,
-          icon: Symbols.auto_awesome,
-          backgroundColor: context.colors.secondary,
-          foregroundColor: context.colors.black,
-          onPressed: onRecognize,
-        ),
-        const SizedBox(width: AppSpacing.s),
-        // Despachar de golpe lo que los modelos ven con más seguridad. Es lo que
-        // hace usable revisar trescientos: decir que sí trescientas veces a lo
-        // evidente es lo que hace que nadie revise nada.
-        Tooltip(
-          message: texts.acceptAboveTooltip(
-            (suggestionHighConfidence * 100).round(),
-          ),
-          child: FernPillButton(
-            label: texts.acceptAboveLabel(
-              (suggestionHighConfidence * 100).round(),
-            ),
-            icon: Symbols.done_all,
-            backgroundColor: context.colors.secondary,
-            foregroundColor: context.colors.black,
-            onPressed: onAcceptAbove,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s),
-        FernPillButton(
-          label: texts.actionDelete,
-          icon: Symbols.delete,
-          backgroundColor: context.colors.error,
-          foregroundColor: Colors.white,
-          onPressed: onDelete,
-        ),
-        const SizedBox(width: AppSpacing.s),
-        FernPillButton(
-          label: texts.actionConfirm,
-          icon: Symbols.check,
-          backgroundColor: context.colors.primary,
-          foregroundColor: context.colors.black,
-          onPressed: () =>
-              context.read<MediaBloc>().add(const ConfirmSelectedMediaEvent()),
         ),
       ],
     );
   }
 }
+
+/// Lo maximo que ocupa la cuenta de lo seleccionado.
+///
+/// Lo que sobre se recorta: la cuenta se lee de un vistazo y el sitio lo
+/// necesitan los botones.
+const double _countWidth = 240;
 
 /// Un control con un rótulo encima que dice qué es.
 ///

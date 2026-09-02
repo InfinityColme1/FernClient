@@ -24,8 +24,8 @@ import 'package:isar/isar.dart';
 ///   migraciones que reescriban media biblioteca.
 ///
 /// Hay **tres** formas de que un contenido esté marcado y aquí se suman: la suya
-/// propia, puesta a mano sobre él, la que hereda de sus etiquetas y la de su
-/// creador. Ninguna pisa a las otras: desmarcar una etiqueta no toca lo que se
+/// propia, puesta a mano sobre él, la que hereda de sus etiquetas —que se puede
+/// apagar desde los ajustes— y la de su creador. Ninguna pisa a las otras: desmarcar una etiqueta no toca lo que se
 /// marcó a mano, y quitarle la marca a un contenido no lo saca de la rama de una
 /// etiqueta que sigue marcada ni de la galería de un creador que sigue marcado.
 ///
@@ -43,6 +43,21 @@ class NsfwIndex {
   /// reconstruir.
   final bool Function() _marksChildren;
 
+  /// Si una etiqueta marcada esconde también el contenido que la lleva.
+  ///
+  /// Apagado, la marca se queda en la etiqueta: su nombre no se enseña en
+  /// ninguna parte, pero el contenido que la lleva sigue en la rejilla con sus
+  /// demás etiquetas. Llega como función por lo mismo que [_marksChildren].
+  final bool Function() _hidesTaggedMedia;
+
+  /// Se avisa cada vez que se rehace.
+  ///
+  /// Rehacerse quiere decir que lo que se puede enseñar ha cambiado, y eso puede
+  /// pasar **sin tocar una sola fila de contenido**: marcar una etiqueta esconde
+  /// lo suyo. Quien guarde una biblioteca ya leída tiene que enterarse, o la
+  /// devolverá con dentro justo lo que se acaba de esconder.
+  final void Function()? _onRebuilt;
+
   Set<int> _tags = const {};
   Set<int> _creators = const {};
   Set<int> _media = const {};
@@ -54,9 +69,13 @@ class NsfwIndex {
     required Isar database,
     required TagHierarchy hierarchy,
     bool Function()? marksChildren,
+    bool Function()? hidesTaggedMedia,
+    void Function()? onRebuilt,
   })  : _database = database,
         _hierarchy = hierarchy,
-        _marksChildren = marksChildren ?? _always;
+        _marksChildren = marksChildren ?? _always,
+        _hidesTaggedMedia = hidesTaggedMedia ?? _always,
+        _onRebuilt = onRebuilt;
 
   static bool _always() => true;
 
@@ -148,7 +167,11 @@ class NsfwIndex {
 
     _media = {
       ...byHand,
-      if (_tags.isNotEmpty) ...await _mediaWithAny(_tags),
+      // Lo que la etiqueta arrastra sólo si se ha pedido. Apagado, la marca
+      // esconde el nombre de la etiqueta y nada más: el contenido se queda a la
+      // vista con las suyas que no estén marcadas.
+      if (_tags.isNotEmpty && _hidesTaggedMedia())
+        ...await _mediaWithAny(_tags),
       if (_creators.isNotEmpty) ...await _mediaOfCreators(_creators),
     };
 
@@ -156,6 +179,10 @@ class NsfwIndex {
     // creadores, y los modelos heredan de sus fernies.
     _fernies = await _blockedFernies(_tags, _creators);
     _models = await _blockedModels(_fernies);
+
+    // Al final y no al principio: quien se entere va a preguntar por lo que hay
+    // escondido ahora, no por lo que había.
+    _onRebuilt?.call();
   }
 
   /// Los fernies que no se pueden enseñar: los marcados y los que proponen una
@@ -197,10 +224,13 @@ class NsfwIndex {
 
   /// Los creadores que alguien marcó.
   Future<Set<int>> _markedCreators() async {
-    final rows =
-        await _database.creatorModels.filter().isNsfwEqualTo(true).findAll();
+    final ids = await _database.creatorModels
+        .filter()
+        .isNsfwEqualTo(true)
+        .idProperty()
+        .findAll();
 
-    return {for (final row in rows) row.id};
+    return ids.toSet();
   }
 
   /// El contenido de estos creadores.
@@ -211,15 +241,14 @@ class NsfwIndex {
     final blocked = <int>{};
 
     for (final creatorId in creatorIds) {
-      final rows = await _database.mediaModels
+      // Igual que con las etiquetas: sólo el número, no la fila entera.
+      final ids = await _database.mediaModels
           .filter()
           .creator((q) => q.idEqualTo(creatorId))
+          .idProperty()
           .findAll();
 
-      for (final media in rows) {
-        final id = media.id;
-        if (id != null) blocked.add(id);
-      }
+      blocked.addAll(ids.nonNulls);
     }
 
     return blocked;
@@ -237,7 +266,18 @@ class NsfwIndex {
   /// El modelo **sin fernies** no se esconde: no habla de nada todavía.
   Future<Set<int>> _blockedModels(Set<int> blockedFernies) async {
     final rows = await _database.recognitionModelModels.where().findAll();
-    final blocked = <int>{};
+
+    final blocked = {
+      for (final row in rows)
+        if (row.isNsfw) row.id,
+    };
+
+    // Sin ningún fernie escondido, ningún modelo puede quedar escondido por sus
+    // clases: sólo cuentan los marcados, que ya están. Y recorrer las
+    // asignaciones cuesta **dos consultas por asignación** —cada una carga sus
+    // dos enlaces—, así que hacerlo para acabar sin añadir nada era el trabajo
+    // más caro del arranque en una biblioteca con modelos.
+    if (blockedFernies.isEmpty) return blocked;
 
     // Las asignaciones se leen de una vez y se reparten por modelo: preguntar
     // por modelo sería una consulta por tarjeta de la rejilla.
@@ -255,10 +295,7 @@ class NsfwIndex {
     }
 
     for (final row in rows) {
-      if (row.isNsfw) {
-        blocked.add(row.id);
-        continue;
-      }
+      if (blocked.contains(row.id)) continue;
 
       final fernies = ferniesOf[row.id];
       if (fernies == null || fernies.isEmpty) continue;
@@ -270,11 +307,17 @@ class NsfwIndex {
   }
 
   /// Los contenidos que alguien marcó uno a uno.
+  ///
+  /// Sólo los identificadores: es lo único que hace falta, y este índice se
+  /// rehace cada vez que se guarda algo que pueda cambiar lo que se esconde.
   Future<Set<int>> _markedByHand() async {
-    final rows =
-        await _database.mediaSummaryModels.filter().isNsfwEqualTo(true).findAll();
+    final ids = await _database.mediaSummaryModels
+        .filter()
+        .isNsfwEqualTo(true)
+        .idProperty()
+        .findAll();
 
-    return {for (final row in rows) row.id};
+    return ids.toSet();
   }
 
   /// El contenido que lleva alguna de estas etiquetas.
@@ -282,19 +325,20 @@ class NsfwIndex {
   /// Se pregunta por etiqueta y no por contenido: las marcadas son unas pocas y
   /// los contenidos son decenas de miles, y el enlace de vuelta de la etiqueta
   /// da justo los suyos.
+  /// Por consulta y no por el enlace de vuelta de la etiqueta: cargar el enlace
+  /// trae las filas enteras, y de una etiqueta con cinco mil contenidos eso son
+  /// cinco mil objetos con su descripción para quedarse con su número.
   Future<Set<int>> _mediaWithAny(Set<int> tagIds) async {
     final blocked = <int>{};
 
     for (final tagId in tagIds) {
-      final tag = await _database.tagModels.get(tagId);
-      if (tag == null) continue;
+      final ids = await _database.mediaModels
+          .filter()
+          .tags((q) => q.idEqualTo(tagId))
+          .idProperty()
+          .findAll();
 
-      await tag.media.load();
-
-      for (final media in tag.media) {
-        final id = media.id;
-        if (id != null) blocked.add(id);
-      }
+      blocked.addAll(ids.nonNulls);
     }
 
     return blocked;

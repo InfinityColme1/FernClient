@@ -75,6 +75,9 @@ CustomTransitionPage<void> fernShellPage({
       // Lo que no tiene piezas declaradas se queda sin animación, y es lo
       // correcto: mover una pantalla entera de la que no se sabe cómo está
       // hecha es lo que produce esos deslizamientos en bloque que no dicen nada.
+      // Las que declaran piezas congelan cada pieza por su cuenta, dentro de
+      // `ScreenSlotTransition`; aquí no hay piezas, así que la pantalla entera
+      // es la unidad.
       child: family == ScreenFamily.plain
           ? _PlainFade(
               entering: animation,

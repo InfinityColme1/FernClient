@@ -808,7 +808,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tagsTitle => 'Etiquetas';
 
   @override
-  String get addTag => 'Añadir etiqueta';
+  String get addTags => 'Añadir etiquetas';
+
+  @override
+  String get addFernies => 'Añadir fernies';
 
   @override
   String get noTagsYet => 'Todavía no hay etiquetas';
@@ -1094,6 +1097,36 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String tagLogFernieOf(String fernie) {
     return 'Marcaste aquí a $fernie';
+  }
+
+  @override
+  String get assignCreatorSelectedTooltip => 'Poner creador a la selección';
+
+  @override
+  String assignCreatorToSelectionHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Se les pondrá a $count contenidos, encima del creador que tengan ahora.',
+      one: 'Se le pondrá a 1 contenido, encima del creador que tenga ahora.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorTagsTooltip => 'Etiquetas de este creador';
+
+  @override
+  String get creatorTagsHint =>
+      'Lo que se le ponga a un contenido junto con este creador. No toca lo que ya está etiquetado: vale de aquí en adelante.';
+
+  @override
+  String get tagLogCreator => 'La trae su creador';
+
+  @override
+  String tagLogCreatorOf(String name) {
+    return 'La trae $name';
   }
 
   @override
@@ -2699,9 +2732,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ferniesTitle => 'Fernies';
 
   @override
-  String get addFernie => 'Añadir fernie';
-
-  @override
   String get noFerniesYet => 'Aún no hay fernies';
 
   @override
@@ -3480,6 +3510,14 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get nsfwChildTagsDescription =>
       'Una etiqueta que cuelga de una marcada esconde también su contenido, sin tener que marcarla aparte. Apagado, cada etiqueta responde sólo por lo suyo. No se reescribe nada en ningún caso: enciéndelo y apágalo las veces que quieras.';
+
+  @override
+  String get nsfwTagsHideMediaLabel =>
+      'Una etiqueta marcada esconde también su contenido';
+
+  @override
+  String get nsfwTagsHideMediaDescription =>
+      'Encendido, basta con que un contenido lleve una etiqueta marcada para que desaparezca entero. Apagado, la marca se queda en la etiqueta: el contenido se sigue viendo con sus demás etiquetas, y de la marcada no queda ni el nombre. Sirve para una etiqueta que dice algo delicado sobre contenido que no lo es. Lo marcado a mano y lo de un creador marcado se esconden igual en los dos casos.';
 
   @override
   String get nsfwLockedViewNote =>

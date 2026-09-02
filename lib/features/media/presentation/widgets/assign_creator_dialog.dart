@@ -10,6 +10,7 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'dart:async';
 
 import 'package:Fern/features/media/domain/services/recent_picks.dart';
+import 'package:Fern/features/media/presentation/widgets/creator_tags.dart';
 import 'package:Fern/features/media/domain/usecases/search_creators_usecase.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -58,18 +59,40 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
     return result.data ?? const [];
   }
 
-  void _confirm(BuildContext context) {
+  /// Deja el creador elegido en el panel, con lo que el creador trae consigo.
+  ///
+  /// **Las etiquetas se proponen aquí y no al guardar**, por lo mismo que las
+  /// madres y las hermanas al elegir una etiqueta: guardar desde el panel
+  /// escribe la lista tal cual se deja, así que lo que este diálogo no proponga
+  /// no se pone nunca. Y proponer es proponer: se ven en el panel y se quitan
+  /// como cualquier otra antes de guardar.
+  ///
+  /// Se manda **sólo lo que hay que sumar**: el panel lo junta con lo que tenga
+  /// en ese momento. Mandando el contenido entero se devolvía la foto de cuando
+  /// se abrió el diálogo, y con ella se perdía todo lo que se hubiera tocado
+  /// mientras.
+  Future<void> _confirm(BuildContext context) async {
     final creator = _pendingCreator;
-    if (creator != null) {
-      // Al confirmar y no al elegir: mientras el diálogo esté abierto todavía no
-      // se le ha puesto a nadie, y cerrarlo sin confirmar no es haberlo usado.
-      unawaited(_recents.pushCreator(creator.id));
-      context.read<MediaBloc>().add(
-            UpdateMediaInfoEvent(widget.media.copyWith(creator: creator)),
-          );
+    if (creator == null) {
+      context.pop();
+      return;
     }
+
+    // Al confirmar y no al elegir: mientras el diálogo esté abierto todavía no
+    // se le ha puesto a nadie, y cerrarlo sin confirmar no es haberlo usado.
+    unawaited(_recents.pushCreator(creator.id));
+
+    final bloc = context.read<MediaBloc>();
+    final brings = await tagsOfCreator(creator);
+
+    if (!context.mounted) return;
+
+    bloc.add(MediaCreatorAssignedEvent(creator, brings: brings));
+
     context.pop();
   }
+
+
 
   /// Cede el sitio al diálogo de creación y, al cerrarse éste, vuelve aquí: si
   /// se ha creado un creador llega ya elegido, y si no se mantiene el que
@@ -152,7 +175,9 @@ class _AssignCreatorDialogState extends State<AssignCreatorDialog> {
           ),
         ],
       ),
-      actionButton: FernConfirmButton(onPressed: () => _confirm(context)),
+      actionButton: FernConfirmButton(
+        onPressed: () => unawaited(_confirm(context)),
+      ),
     );
   }
 }

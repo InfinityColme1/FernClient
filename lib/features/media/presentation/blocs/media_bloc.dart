@@ -31,6 +31,10 @@ import 'package:Fern/features/media/domain/usecases/get_media_list_usercase.dart
 import 'package:Fern/features/media/data/services/blocked_imports.dart';
 import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/data/services/library_revision.dart';
+import 'package:Fern/features/media/domain/services/opening_grid.dart';
+import 'package:Fern/features/media/domain/services/refreshed_media.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_list_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_media_by_criteria_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_favorite_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usecase.dart';
@@ -102,6 +106,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   final SetMediaFavoriteUseCase _setMediaFavoriteUseCase;
   final SetMediaListFavoriteUseCase _setMediaListFavoriteUseCase;
   final SetMediaNsfwUseCase _setMediaNsfwUseCase;
+  final SetMediaListCreatorUseCase _setMediaListCreatorUseCase;
   final AddTagToMediaUseCase _addTagToMediaUseCase;
   final SearchMediaByCriteriaUseCase _searchMediaByCriteriaUseCase;
 
@@ -128,6 +133,29 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// marcado o desmarcado a mano. No forma parte del estado porque no se pinta,
   /// sólo decide desde dónde se extiende el siguiente mayúsculas + clic.
   int? _selectionAnchorId;
+
+  /// La última biblioteca leída, para poder devolverla al volver a su pantalla.
+  ///
+  /// Con [_libraryStamp] al día es exactamente lo que habría vuelto a leerse, y
+  /// leerla otra vez con veinte mil contenidos es lo que se notaba al ir y venir
+  /// entre pantallas. Se guarda **después** de aplicar los filtros, que es lo
+  /// que la rejilla enseña; cambiar un filtro relee y vuelve a guardarla.
+  List<MediaSummaryEntity>? _libraryCache;
+
+  /// Por qué versión de la base se leyó la biblioteca que hay en el estado.
+  ///
+  /// `null` mientras no se haya leído ninguna. Junto con el orden es lo que
+  /// contesta a «¿hace falta volver a leerla?».
+  ({
+    int revision,
+    MediaSortOrder order,
+    Set<ImportSource> sources,
+    Set<MediaKind> types,
+  })? _libraryStamp;
+
+  /// Por qué versión va la base. Sin él, todo está siempre por releer, que es
+  /// lo que hacía la aplicación hasta ahora y lo que hacen las pruebas.
+  final LibraryRevision? _libraryRevision;
 
   /// Si lo que se suelta sobre una etiqueta se queda marcado.
   ///
@@ -161,6 +189,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required SetMediaFavoriteUseCase setMediaFavoriteUseCase,
     required SetMediaListFavoriteUseCase setMediaListFavoriteUseCase,
     required SetMediaNsfwUseCase setMediaNsfwUseCase,
+    required SetMediaListCreatorUseCase setMediaListCreatorUseCase,
     ImportSource? Function()? rememberedSource,
     Future<void> Function(ImportSource source)? rememberSource,
     required AddTagToMediaUseCase addTagToMediaUseCase,
@@ -171,7 +200,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     required ImportDecisions decisions,
     bool Function()? keepsSelectionOnDrop,
     BlockedImports Function()? blocked,
+    LibraryRevision? libraryRevision,
   })  : _selectImportDirectoryUsecase = selectImportDirectoryUsecase,
+        _libraryRevision = libraryRevision,
         _keepsSelectionOnDrop = keepsSelectionOnDrop ?? _dropClearsSelection,
         _blocked = blocked,
         _jobs = jobs,
@@ -197,6 +228,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _setMediaFavoriteUseCase = setMediaFavoriteUseCase,
         _setMediaListFavoriteUseCase = setMediaListFavoriteUseCase,
         _setMediaNsfwUseCase = setMediaNsfwUseCase,
+        _setMediaListCreatorUseCase = setMediaListCreatorUseCase,
         _rememberedSource = rememberedSource,
         _rememberSource = rememberSource,
         _addTagToMediaUseCase = addTagToMediaUseCase,
@@ -207,6 +239,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         _decisions = decisions,
         super(const MediaLoading()) {
     on<LoadScannedMediaEvent>(onLoadScannedMedia);
+    on<MediaScreenOpenedEvent>(onMediaScreenOpened);
     on<LoadMediaLibraryEvent>(onLoadMediaLibrary);
     on<ReloadCurrentMediaEvent>(onReloadCurrent);
     on<RefreshCurrentMediaTagsEvent>(onRefreshCurrentMediaTags);
@@ -249,11 +282,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     on<DeleteSelectedMediaEvent>(onDeleteSelectedMedia);
     on<FavoriteSelectedMediaEvent>(onFavoriteSelectedMedia);
     on<SetSelectedMediaNsfwEvent>(onSetSelectedMediaNsfw);
+    on<SetSelectedMediaCreatorEvent>(onSetSelectedMediaCreator);
     on<SetMediaNsfwEvent>(onSetMediaNsfw);
     on<RestoreSelectedMediaEvent>(onRestoreSelectedMedia);
     on<PurgeDeletedMediaEvent>(onPurgeDeletedMedia);
     on<ConfirmSelectedMediaEvent>(onConfirmSelectedMedia);
     on<UpdateMediaInfoEvent>(onUpdateMediaInfo);
+    on<MediaCreatorAssignedEvent>(onMediaCreatorAssigned);
     on<UpdateMediaDescriptionEvent>(onUpdateMediaDescription);
   }
 
@@ -281,8 +316,15 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   void onEvent(MediaEvents event) {
     super.onEvent(event);
 
+    if (event is LoadMediaLibraryEvent) {
+      // Sin el «sólo si hace falta»: quien repita el último listado —abrir el
+      // bloqueo, terminar un reconocimiento— quiere leer de verdad.
+      _lastListing = const LoadMediaLibraryEvent();
+
+      return;
+    }
+
     if (event is LoadScannedMediaEvent ||
-        event is LoadMediaLibraryEvent ||
         event is LoadDeletedMediaEvent ||
         event is LoadFavoriteMediaEvent ||
         event is LoadMediaByTagEvent ||
@@ -305,9 +347,14 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// enlazan se le acaba de poner al contenido en la base de datos, y el panel
   /// seguía enseñando las de antes.
   ///
-  /// **Se sustituyen sólo las etiquetas.** Lo demás del contenido se queda como
-  /// está en el estado, que es donde viven los cambios del panel sin guardar: una
-  /// descripción a medio escribir no puede perderse por haber marcado una región.
+  /// **Se suma lo que haya aparecido, no se sustituye nada.** Lo del estado es
+  /// lo que el panel tiene ahora, y ahí viven los cambios sin guardar: unas
+  /// etiquetas recién elegidas, un creador recién puesto. Sustituyendo, marcar
+  /// una región los borraba a todos —la base todavía no los tiene— y no había
+  /// nada que lo explicara.
+  ///
+  /// Quitar una etiqueta desde el panel **se escribe en el momento**, así que lo
+  /// que ya no está en la base tampoco está aquí: sumar no la resucita.
   Future<void> onRefreshCurrentMediaTags(
     RefreshCurrentMediaTagsEvent event,
     Emitter<MediaStates> emit,
@@ -318,10 +365,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final result = await _getMediaDetailsUsecase(params: current.id);
     if (result is! DataSuccess || result.data == null) return;
 
-    emit(state.copyWith(currentMedia: current.copyWith(
-      tags: result.data!.tags,
-      creator: result.data!.creator,
-    )));
+    emit(state.copyWith(
+      currentMedia: refreshedMedia(current, result.data!),
+    ));
   }
 
   /// Al entrar en la pantalla de importación.
@@ -363,7 +409,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // contenido justo ahí lo tomaba como que no había nada. Además de eso, con
     // el hueco la pantalla parpadeaba en blanco cada vez que se volvía a ella.
     emit(MediaLoading(
-      mediaList: state.mediaList,
+      // Lo de aquí se conserva y lo de otra pantalla no: ver [_loadLibrary].
+      mediaList:
+          state.listing == MediaListing.scanned ? state.mediaList : null,
+      listing: MediaListing.scanned,
       importSource: source,
       lastImportAt: await _getLastImportUseCase(params: source),
       isBusy: true,
@@ -381,6 +430,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     emit(MediaLoading(
       mediaList: mediaList,
+      listing: MediaListing.scanned,
       importSource: source,
       lastImportAt: state.lastImportAt,
     ));
@@ -390,8 +440,73 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   ///
   /// Se descarta el contenido que hubiera en el estado (que es el de la
   /// pantalla anterior) para que la rejilla no mezcle las dos listas.
-  void onLoadMediaLibrary(LoadMediaLibraryEvent event, Emitter<MediaStates> emit) async {
+  /// Se abre una pantalla: la rejilla pasa a ser la suya.
+  ///
+  /// Lo que hubiera de otra **se suelta aquí y ahora**, sin esperar a la
+  /// lectura: es lo que hace que la pantalla entre con su hueco de carga en vez
+  /// de con el contenido de la anterior. La selección se va con ella, que era de
+  /// aquel contenido.
+  ///
+  /// Y si la que se abre es la biblioteca y la que hay guardada sigue valiendo,
+  /// se devuelve entera en el acto: ni lectura, ni hueco, ni espera.
+  void onMediaScreenOpened(
+    MediaScreenOpenedEvent event,
+    Emitter<MediaStates> emit,
+  ) {
+    final decision = gridOnOpening(
+      shown: state.listing,
+      opening: event.listing,
+      hasFreshLibrary: _libraryIsFresh,
+    );
+
+    // La misma que ya estaba: no se toca nada. Volver del visor a la biblioteca
+    // no puede vaciarla ni tirar la búsqueda que hubiera puesta.
+    if (decision == OpeningGrid.keep) return;
+
+    final restored =
+        decision == OpeningGrid.restore ? _libraryCache : null;
+
+    emit(MediaLoading(
+      listing: event.listing,
+      mediaList: restored,
+      // Los filtros de la cabecera son del contenido, no de la pantalla: de
+      // dónde llegó algo y de qué clase es no cambia por mirarlo en otro sitio.
+      sourceFilters: state.sourceFilters,
+      typeFilters: state.typeFilters,
+      searchCriteria: state.searchCriteria,
+      favoritesOnly: event.listing == MediaListing.favorites,
+      importSource: state.importSource,
+      lastImportAt: state.lastImportAt,
+      isBusy: restored == null,
+    ));
+  }
+
+  void onLoadMediaLibrary(
+    LoadMediaLibraryEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    if (event.ifStale && _libraryIsFresh) return;
+
     await _loadLibrary(emit);
+  }
+
+  /// Si lo que hay en el estado es la biblioteca de ahora mismo.
+  ///
+  /// Tres cosas tienen que darse: que haya una leída, que la base no se haya
+  /// tocado desde entonces y que el orden siga siendo el mismo. Sin contador de
+  /// versiones no se da por buena nunca: entre releer de más y enseñar algo
+  /// viejo, de más.
+  bool get _libraryIsFresh {
+    final stamp = _libraryStamp;
+    final revision = _libraryRevision;
+
+    return stamp != null &&
+        revision != null &&
+        _libraryCache != null &&
+        stamp.revision == revision.value &&
+        stamp.order == _preferences.getMediaSortOrder() &&
+        stamp.sources == state.sourceFilters &&
+        stamp.types == state.typeFilters;
   }
 
   /// Contenido marcado para borrar, el de la pantalla de eliminados.
@@ -403,7 +518,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// aplicación puede llevar días abierta y lo que se enseñe aquí (y su contador)
   /// tiene que ser lo que de verdad queda en la papelera.
   void onLoadDeletedMedia(LoadDeletedMediaEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading(isBusy: true));
+    emit(const MediaLoading(isBusy: true, listing: MediaListing.deleted));
 
     // La caducidad se pasa sola, así que no hay aviso en el que preguntar por
     // los ficheros: se hace lo mismo que la última vez que se vació la papelera
@@ -414,9 +529,12 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     final result = await _getDeletedMediaUseCase();
     if (result is DataSuccess && result.data != null) {
-      emit(MediaLoading(mediaList: result.data!));
+      emit(MediaLoading(
+        mediaList: result.data!,
+        listing: MediaListing.deleted,
+      ));
     } else {
-      emit(const MediaLoading(mediaList: []));
+      emit(const MediaLoading(mediaList: [], listing: MediaListing.deleted));
     }
   }
 
@@ -442,7 +560,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // relee, con el velo de ocupado encima. Vaciarlo hace que la rejilla
     // desaparezca y vuelva, y eso se ve como un temblor.
     emit(MediaLoading(
-      mediaList: state.mediaList,
+      mediaList:
+          state.listing == MediaListing.favorites ? state.mediaList : null,
+      listing: MediaListing.favorites,
       favoritesOnly: true,
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
@@ -459,6 +579,7 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     emit(MediaLoading(
       mediaList: mediaList,
+      listing: MediaListing.favorites,
       favoritesOnly: true,
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
@@ -483,14 +604,14 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   /// etiqueta es cambiar de rejilla, así que la selección de la anterior no tiene
   /// nada que ver con la nueva.
   void onLoadMediaByTag(LoadMediaByTagEvent event, Emitter<MediaStates> emit) async {
-    emit(const MediaLoading(isBusy: true));
+    emit(const MediaLoading(isBusy: true, listing: MediaListing.byTag));
 
     final result = await _getMediaByTagUseCase(params: event.tagId);
     final mediaList = (result is DataSuccess && result.data != null)
         ? result.data!
         : const <MediaSummaryEntity>[];
 
-    emit(MediaLoading(mediaList: mediaList));
+    emit(MediaLoading(mediaList: mediaList, listing: MediaListing.byTag));
   }
 
   /// Quita la etiqueta de la selección de la rejilla.
@@ -567,14 +688,14 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     LoadMediaByCreatorEvent event,
     Emitter<MediaStates> emit,
   ) async {
-    emit(const MediaLoading(isBusy: true));
+    emit(const MediaLoading(isBusy: true, listing: MediaListing.byCreator));
 
     final result = await _getMediaByCreatorUseCase(params: event.creatorId);
     final mediaList = (result is DataSuccess && result.data != null)
         ? result.data!
         : const <MediaSummaryEntity>[];
 
-    emit(MediaLoading(mediaList: mediaList));
+    emit(MediaLoading(mediaList: mediaList, listing: MediaListing.byCreator));
   }
 
   /// Quita el creador de la selección de la rejilla.
@@ -660,7 +781,13 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     //
     // El velo de ocupado ya dice que se está leyendo, y para eso está.
     emit(MediaLoading(
-      mediaList: state.mediaList,
+      // Lo que ya hay **sólo si es de aquí**: releer la biblioteca no cambia lo
+      // que se está mirando, así que vaciarla mientras tanto sólo consigue que
+      // la rejilla desaparezca y vuelva. Pero si lo que hay es de otra pantalla,
+      // enseñarlo mientras se lee es enseñar el contenido equivocado.
+      mediaList:
+          state.listing == MediaListing.library ? state.mediaList : null,
+      listing: MediaListing.library,
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
       isBusy: true,
@@ -668,8 +795,14 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     // El orden se lee aquí y no se guarda en el estado: es un ajuste, y lo que
     // manda es lo que haya puesto en el momento de leer.
-    final result =
-        await _getMediaListUsecase(params: _preferences.getMediaSortOrder());
+    final order = _preferences.getMediaSortOrder();
+
+    // La versión **de antes** de leer: si algo se escribe mientras se lee, lo
+    // leído ya es viejo y el sello tiene que decirlo. Con la de después se daría
+    // por buena una biblioteca a la que le falta lo último.
+    final revision = _libraryRevision?.value;
+
+    final result = await _getMediaListUsecase(params: order);
 
     final mediaList = (result is DataSuccess && result.data != null)
         ? [
@@ -678,8 +811,22 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
           ]
         : const <MediaSummaryEntity>[];
 
+    // Sólo se sella lo que ha salido bien: con una lectura fallida el estado se
+    // queda con una biblioteca vacía, y darla por buena la dejaría vacía hasta
+    // que alguien escribiera algo.
+    if (result is DataSuccess && revision != null) {
+      _libraryStamp = (
+        revision: revision,
+        order: order,
+        sources: sourceFilters,
+        types: typeFilters,
+      );
+      _libraryCache = mediaList;
+    }
+
     emit(MediaLoading(
       mediaList: mediaList,
+      listing: MediaListing.library,
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
     ));
@@ -851,6 +998,9 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
         state.typeFilters,
         crossesCriteria: crosses,
       ),
+      // Buscar es la biblioteca con un recorte: es la misma pantalla, y decir
+      // otra cosa la vaciaria al volver a ella.
+      listing: MediaListing.library,
       searchCriteria: criteria,
       searchSections: sections,
       searchFilters: state.searchFilters,
@@ -972,6 +1122,28 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
   void onUpdateMediaInfo(UpdateMediaInfoEvent event, Emitter<MediaStates> emit) {
     emit(state.copyWith(
       currentMedia: event.media,
+      isModified: true,
+    ));
+  }
+
+  /// Le pone el creador al contenido que se esta mirando y le suma lo que el
+  /// creador trae.
+  ///
+  /// **Sobre lo que el panel tiene ahora**, no sobre lo que tuviera cuando se
+  /// abrio el dialogo: lo segundo es lo que borraba las etiquetas recien
+  /// elegidas y la descripcion a medio escribir.
+  ///
+  /// Se suma y no se sustituye: elegir un creador no le quita al contenido nada
+  /// de lo que ya llevaba puesto.
+  void onMediaCreatorAssigned(
+    MediaCreatorAssignedEvent event,
+    Emitter<MediaStates> emit,
+  ) {
+    final current = state.currentMedia;
+    if (current == null) return;
+
+    emit(state.copyWith(
+      currentMedia: mediaWithCreator(current, event.creator, event.brings),
       isModified: true,
     ));
   }
@@ -1453,6 +1625,42 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
     // El ocupado se queda encendido hasta que la relectura termina: apagarlo
     // aquí levanta y baja el velo en unos milisegundos, y eso parpadea.
+    emit(state.copyWith(selectedIds: const {}));
+    add(const ReloadCurrentMediaEvent());
+  }
+
+  /// Le pone el mismo creador a toda la seleccion.
+  ///
+  /// Se recarga el listado al terminar y no se tocan las celdas a mano: con el
+  /// creador entran sus etiquetas, y una de ellas puede ser la que esconde el
+  /// contenido. Quien desaparece lo decide el filtro, y adivinarlo aqui seria
+  /// escribir la misma regla dos veces.
+  ///
+  /// La seleccion se suelta: el trabajo esta hecho, y dejarla puesta arrastra a
+  /// lo siguiente que se haga cien contenidos que ya nadie estaba mirando.
+  Future<void> onSetSelectedMediaCreator(
+    SetSelectedMediaCreatorEvent event,
+    Emitter<MediaStates> emit,
+  ) async {
+    final selectedIds = state.selectedIds;
+    if (selectedIds.isEmpty) return;
+
+    emit(state.copyWith(isBusy: true));
+
+    final result = await _setMediaListCreatorUseCase(
+      params: SetMediaListCreatorParams(
+        mediaIds: selectedIds.toList(),
+        creatorId: event.creatorId,
+      ),
+    );
+
+    if (result is! DataSuccess) {
+      emit(_idle);
+      return;
+    }
+
+    // El ocupado se queda encendido hasta que la relectura termina: apagarlo
+    // aqui levanta y baja el velo en unos milisegundos, y eso parpadea.
     emit(state.copyWith(selectedIds: const {}));
     add(const ReloadCurrentMediaEvent());
   }

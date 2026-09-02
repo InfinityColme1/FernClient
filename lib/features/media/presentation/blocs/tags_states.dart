@@ -1,4 +1,5 @@
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/core/utils/same_instance.dart';
 import 'package:equatable/equatable.dart';
 
 /// Las etiquetas de la aplicación tal y como las pinta el menú lateral: sólo las
@@ -34,5 +35,8 @@ class TagsState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [tags, isLoaded, isBusy];
+  // El árbol se compara por identidad: mirarlo por dentro es recorrer cada
+  // etiqueta con sus hijas y sus hermanas, y eso corre en cada emisión con el
+  // menú lateral escuchando. Ver [SameInstance].
+  List<Object?> get props => [SameInstance(tags), isLoaded, isBusy];
 }

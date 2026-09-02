@@ -132,8 +132,16 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         width: widthAnimation.value,
         color: widget.backgroundColor,
         child: Builder(builder: (context) {
-          // Los botones se arman todos, pero sólo se pintan los que se ven:
-          // las etiquetas pueden ser muchas.
+          // Las filas van **sin armar**: la lista lleva los rótulos y
+          // separadores ya hechos (son cuatro) y, por cada botón, el
+          // `SidebarItem` que lo describe. El widget se construye en
+          // `itemBuilder`, o sea sólo para los que se ven.
+          //
+          // Armarlos todos costaba media docena de widgets por etiqueta en cada
+          // pintado del menú, y el menú se vuelve a pintar al cambiar de
+          // pantalla y en cada pulsación del buscador. Con un árbol grande eso
+          // es el trabajo que se notaba al navegar.
+          final selectedId = _selectedId();
           final content = _sectionsContent(context);
 
           // **El menú es el único sitio sin carril para la barra, y va pegada
@@ -151,7 +159,13 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
               itemCount: content.length,
-              itemBuilder: (context, index) => content[index],
+              itemBuilder: (context, index) {
+                final entry = content[index];
+
+                return entry is SidebarItem
+                    ? _tile(entry, selectedId)
+                    : entry as Widget;
+              },
             ),
           );
         }),
@@ -159,23 +173,29 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
     );
   }
 
+  /// Cuál de los botones está marcado ahora mismo.
+  String? _selectedId() =>
+      sidebarSelectedId(
+        location: widget.currentLocation,
+        ids: [
+          for (final section in widget.sections)
+            for (final item in section.items) item.id,
+        ],
+        tapped: _tappedId,
+        tappedLocation: _tappedLocation,
+      ) ??
+      _defaultSelectedId;
+
   /// Las secciones una detrás de otra, con su separador en medio.
   ///
   /// Una sección sin botones sólo ocupa sitio si tiene algo que decir (y hay
   /// ancho para leerlo); si no, desaparece con su separador.
-  List<Widget> _sectionsContent(BuildContext context) {
-    final selectedId = sidebarSelectedId(
-          location: widget.currentLocation,
-          ids: [
-            for (final section in widget.sections)
-              for (final item in section.items) item.id,
-          ],
-          tapped: _tappedId,
-          tappedLocation: _tappedLocation,
-        ) ??
-        _defaultSelectedId;
-
-    final content = <Widget>[];
+  ///
+  /// Devuelve una lista mezclada: los rótulos, separadores y avisos ya son
+  /// widgets —son unos pocos y no dependen de nada que cambie— y los botones van
+  /// como el [SidebarItem] que los describe, para armarlos sólo cuando se vean.
+  List<Object> _sectionsContent(BuildContext context) {
+    final content = <Object>[];
     for (final section in widget.sections) {
       final isEmpty = section.items.isEmpty;
       final header = _isExpanded ? section.header : null;
@@ -224,47 +244,53 @@ class _CollapsingNavigationDrawerState extends State<CollapsingNavigationDrawer>
         continue;
       }
 
-      // Cada fila se apunta con su propio identificador, que es la pantalla a la
-      // que lleva: así el tutorial puede señalar cualquiera de ellas sin que
-      // haya que preparar aquí nada por cada paso que se añada.
-      content.addAll(section.items.map((item) => TutorialAnchor(
-            id: item.id,
-            child: _dropTarget(
-            item,
-            CollapsingListTile(
-            onTap: () {
-              // La pantalla de **antes** de navegar: mientras se siga en ella,
-              // lo pulsado manda; en cuanto se cambie, manda la dirección.
-              setState(() {
-                _tappedId = item.id;
-                _tappedLocation = widget.currentLocation;
-              });
-              item.onTap.call();
-            },
-            isSelected: selectedId == item.id,
-            isExpanded: _isExpanded,
-            title: item.title,
-            icon: item.icon,
-            isNsfw: item.isNsfw,
-            avatarPath: item.avatarPath,
-            depth: item.depth,
-            hasChildren: item.hasChildren,
-            isCollapsed: item.isCollapsed,
-            onToggleCollapse: item.onToggleCollapse,
-            badgeCount: item.badgeCount,
-            animationController: _animationController,
-            textStyle: widget.textStyle,
-            selectedColor: widget.selectedColor,
-            textSelectedColor: widget.textSelectedColor,
-            unselectedColor: widget.unselectedColor,
-            textUnselectedColor: widget.textUnselectedColor,
-            iconSize: widget.iconSize,
-          ),
-          ),
-          )));
+      content.addAll(section.items);
     }
 
     return content;
+  }
+
+  /// El botón de una fila.
+  ///
+  /// Se apunta con su propio identificador, que es la pantalla a la que lleva:
+  /// así el tutorial puede señalar cualquiera de ellas sin que haya que preparar
+  /// aquí nada por cada paso que se añada.
+  Widget _tile(SidebarItem item, String? selectedId) {
+    return TutorialAnchor(
+      id: item.id,
+      child: _dropTarget(
+        item,
+        CollapsingListTile(
+          onTap: () {
+            // La pantalla de **antes** de navegar: mientras se siga en ella, lo
+            // pulsado manda; en cuanto se cambie, manda la dirección.
+            setState(() {
+              _tappedId = item.id;
+              _tappedLocation = widget.currentLocation;
+            });
+            item.onTap.call();
+          },
+          isSelected: selectedId == item.id,
+          isExpanded: _isExpanded,
+          title: item.title,
+          icon: item.icon,
+          isNsfw: item.isNsfw,
+          avatarPath: item.avatarPath,
+          depth: item.depth,
+          hasChildren: item.hasChildren,
+          isCollapsed: item.isCollapsed,
+          onToggleCollapse: item.onToggleCollapse,
+          badgeCount: item.badgeCount,
+          animationController: _animationController,
+          textStyle: widget.textStyle,
+          selectedColor: widget.selectedColor,
+          textSelectedColor: widget.textSelectedColor,
+          unselectedColor: widget.unselectedColor,
+          textUnselectedColor: widget.textUnselectedColor,
+          iconSize: widget.iconSize,
+        ),
+      ),
+    );
   }
 
   /// La fila, envuelta en un destino de arrastre si acepta contenido.

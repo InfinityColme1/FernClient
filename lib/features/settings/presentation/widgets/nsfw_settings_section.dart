@@ -293,6 +293,18 @@ class _NsfwSettingsSectionState extends State<NsfwSettingsSection> {
                   .read<SettingsBloc>()
                   .add(NsfwChildTagsToggledEvent(value)),
             ),
+            const SizedBox(height: AppSpacing.m),
+            // Justo debajo del anterior: los dos dicen **cuánto** abarca la marca
+            // de una etiqueta, uno hacia los lados del árbol y el otro hacia el
+            // contenido. Y tampoco lleva `_repaintLibrary`, por lo mismo.
+            FernCheckboxTile(
+              label: texts.nsfwTagsHideMediaLabel,
+              description: texts.nsfwTagsHideMediaDescription,
+              value: settings.nsfwTagsHideMedia,
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(NsfwTagsHideMediaToggledEvent(value)),
+            ),
           ],
         );
       },

@@ -270,7 +270,8 @@
   "tagDropped": "{count, plural, =1{Étiqueté avec {tag}} other{{count} contenus étiquetés avec {tag}}}",
   "contextMenuTarget": "{count, plural, =1{Sur ce contenu} other{Sur les {count} sélectionnés}}",
   "tagsTitle": "Tags",
-  "addTag": "Ajouter un tag",
+  "addTags": "Ajouter des tags",
+  "addFernies": "Ajouter des fernies",
 
   "noTagsYet": "Aucun tag pour l'instant",
   "creatorsTitle": "Créateurs",
@@ -367,6 +368,18 @@
   "tagLogRecognition": "Vous avez accepté ce qu'un modèle proposait",
   "tagLogFernie": "Ce qu'un fernie marqué relie",
   "tagLogFernieOf": "Vous avez marqué {fernie} ici",
+  "assignCreatorSelectedTooltip": "Mettre un créateur à la sélection",
+  "assignCreatorToSelectionHint": "{count, plural, =1{Il sera mis sur 1 contenu, par-dessus le créateur qu'il a actuellement.} other{Il sera mis sur {count} contenus, par-dessus le créateur qu'ils ont actuellement.}}",
+  "@assignCreatorToSelectionHint": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "creatorTagsTooltip": "Étiquettes de ce créateur",
+  "creatorTagsHint": "Ce qui sera mis sur un contenu en même temps que ce créateur. Cela ne touche pas ce qui est déjà étiqueté : cela vaut à partir de maintenant.",
+  "tagLogCreator": "Elle vient de son créateur",
+  "tagLogCreatorOf": "Elle vient de {name}",
+  "@tagLogCreatorOf": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "tagLogUnknown": "Rien de noté",
   "actionTagLog": "D'où vient tout ça",
 
@@ -931,7 +944,6 @@
   "newFernieTitle": "Nouveau fernie",
   "fernieNameLabel": "Nom du fernie",
   "ferniesTitle": "Fernies",
-  "addFernie": "Ajouter un fernie",
   "noFerniesYet": "Aucun fernie pour l’instant",
   "fernieNoRegions": "Ce fernie n’a encore aucune région",
   "fernieNoneHere": "Aucun fernie marqué ici pour l’instant",
@@ -1139,6 +1151,8 @@
   "nsfwLockedViewBlurred": "Il apparaît couvert",
   "nsfwChildTagsLabel": "Marquer une étiquette marque aussi celles qui en dépendent",
   "nsfwChildTagsDescription": "Une étiquette qui dépend d'une étiquette marquée cache aussi son contenu, sans avoir à la marquer séparément. Désactivé, chaque étiquette ne répond que du sien. Rien n'est réécrit dans un cas comme dans l'autre : activez-le et désactivez-le autant que vous voulez.",
+  "nsfwTagsHideMediaLabel": "Une étiquette marquée cache aussi son contenu",
+  "nsfwTagsHideMediaDescription": "Activé, il suffit qu'un contenu porte une étiquette marquée pour qu'il disparaisse entièrement. Désactivé, la marque reste sur l'étiquette : le contenu reste visible avec ses autres étiquettes, et de celle qui est marquée il ne reste même pas le nom. Cela sert pour une étiquette qui dit quelque chose de délicat sur un contenu qui ne l'est pas. Ce qui est marqué à la main et ce qui vient d'un créateur marqué se cachent de la même façon dans les deux cas.",
   "nsfwLockedViewNote": "Couvert, le contenu marqué garde sa place dans la grille, flouté et avec un cadenas ; le toucher demande le mot de passe. C’est plus pratique, mais cela laisse voir qu’il y a quelque chose : combien, et de quelle forme.",
   "nsfwSectionTitle": "Filtre de contenu NSFW",
   "nsfwSectionNote": "Ce que vous marquez comme NSFW est caché : avec le filtre actif, cela n’apparaît nulle part, ni dans la corbeille ni dans les recherches.",

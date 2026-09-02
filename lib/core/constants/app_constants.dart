@@ -1199,6 +1199,15 @@ const screenTransitionDuration = Duration(milliseconds: 540);
 /// como para que sea un parpadeo, que es lo que era.
 const screenCrossfadeDuration = Duration(milliseconds: 400);
 
+/// Cuánto se espera como mucho a que termine la transición antes de cargar la
+/// pantalla de todas formas.
+///
+/// Es una red, no un plazo: en el camino normal manda el final de la animación
+/// y esto no llega a saltar. Está por encima de [screenTransitionDuration] para
+/// no adelantarse a ella, y es corto para que una transición que se quede a
+/// medias no deje la pantalla vacía más de un parpadeo.
+const screenEntryTaskFallback = Duration(milliseconds: 900);
+
 /// Las dos curvas del fundido cruzado, y por qué no son una y su inversa.
 ///
 /// **El problema del fundido cruzado ingenuo.** Las dos pantallas van una encima
@@ -1776,6 +1785,31 @@ const nsfwLockedViewPreferenceKey = 'nsfw_locked_view';
 
 /// Si marcar una etiqueta arrastra a las que cuelgan de ella.
 const nsfwChildTagsPreferenceKey = 'nsfw_marks_child_tags';
+
+/// Si una etiqueta marcada esconde también el contenido que la lleva.
+const nsfwTagsHideMediaPreferenceKey = 'nsfw_tags_hide_media';
+
+/// De cuántas en cuántas se leen las filas de contenido.
+///
+/// Leer veinte mil de una vez no tarda más, pero **tarda todo junto**: pasar
+/// esas filas a objetos es un único tramo de trabajo en el hilo de la
+/// interfaz, y la ventana se queda quieta justo al abrir la pantalla. Por
+/// tandas es el mismo trabajo repartido, y entre una y otra la aplicación
+/// puede pintar.
+///
+/// El número no es crítico: lo bastante grande para que las idas y venidas a
+/// la base no se noten, y lo bastante pequeño para que ninguna tanda dure más
+/// de un fotograma.
+const mediaReadChunkSize = 1500;
+
+/// Cómo se reparten el alto que queda las dos listas del panel de información.
+///
+/// Los fernies de un contenido son unos pocos y las etiquetas crecen sin techo,
+/// así que el reparto es holgado para las segundas. Ninguna de las dos pide más
+/// de lo que necesita: lo que sobre de una no se lo queda, se ve como hueco, y
+/// lo que a la otra le falte se desplaza dentro de la suya.
+const mediaInfoFerniesFlex = 2;
+const mediaInfoTagsFlex = 3;
 
 /// Con qué clave se guarda de qué fuente se estuvo importando la última vez.
 const lastImportSourcePreferenceKey = 'import_last_source';

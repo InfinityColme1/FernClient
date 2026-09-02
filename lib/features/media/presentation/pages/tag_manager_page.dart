@@ -26,6 +26,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:Fern/core/navigation/screen_entry.dart';
 
 /// Gestión de etiquetas: a la derecha todas las etiquetas de la aplicación y, a
 /// la izquierda, la etiqueta elegida.
@@ -51,7 +52,8 @@ class TagManagerPage extends StatefulWidget {
   State<TagManagerPage> createState() => _TagManagerPageState();
 }
 
-class _TagManagerPageState extends State<TagManagerPage> {
+class _TagManagerPageState extends State<TagManagerPage>
+    with ScreenEntryTask<TagManagerPage> {
   final _tagsBloc = getIt<TagsBloc>();
 
   /// La etiqueta elegida, por identificador y no por entidad: al guardarla
@@ -62,7 +64,11 @@ class _TagManagerPageState extends State<TagManagerPage> {
   void initState() {
     super.initState();
 
-    if (!_tagsBloc.state.isLoaded) _tagsBloc.add(const LoadTagsEvent());
+    // Lo que hubiera de otra pantalla se suelta ya: aquí la rejilla es la del
+    // elemento que se elija, y hasta que se elija no hay nada que enseñar.
+    getIt<MediaBloc>().add(
+      const MediaScreenOpenedEvent(MediaListing.byTag),
+    );
 
     // Si las etiquetas ya estaban leídas no va a llegar ningún estado nuevo que
     // dispare la selección por defecto, así que se resuelve en cuanto se puede
@@ -71,6 +77,11 @@ class _TagManagerPageState extends State<TagManagerPage> {
       if (!mounted) return;
       _syncSelection(_tagsBloc.state);
     });
+  }
+
+  @override
+  void onScreenEntered() {
+    if (!_tagsBloc.state.isLoaded) _tagsBloc.add(const LoadTagsEvent());
   }
 
   /// Deja elegida una etiqueta que exista.

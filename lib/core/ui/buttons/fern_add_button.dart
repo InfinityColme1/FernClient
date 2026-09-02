@@ -16,7 +16,8 @@ enum _AddButtonLayout { stacked, inline, compact }
 ///   listado vertical de filas con avatar (las etiquetas del panel de
 ///   información, por ejemplo);
 /// * [FernAddButton.compact], la misma fila pero menuda, para añadir campos
-///   dentro de un formulario, donde el círculo grande pesaría demasiado.
+///   dentro de un formulario o al lado del título de una sección, donde el
+///   círculo grande pesaría demasiado.
 ///
 /// Las tres son el mismo botón porque son la misma acción: antes la variante
 /// menuda era un componente aparte y acabaron divergiendo dos veces.
@@ -63,6 +64,7 @@ class FernAddButton extends StatefulWidget {
   })  : radius = AppSizes.addButtonRadius,
         _layout = _AddButtonLayout.compact;
 
+
   @override
   State<FernAddButton> createState() => _FernAddButtonState();
 }
@@ -72,6 +74,16 @@ class _FernAddButtonState extends State<FernAddButton> {
   bool _isPressed = false;
 
   bool get _isCompact => widget._layout == _AddButtonLayout.compact;
+
+  /// Las dos variantes que llevan el rótulo **al lado** del círculo.
+  ///
+  /// En ellas el realce va en la píldora entera y no en el círculo: el botón es
+  /// ancho —de eso se trata, que sea fácil de acertar— y encender sólo el
+  /// círculo dejaba el aviso lejos del cursor cuando se pasa por el rótulo, que
+  /// es la mitad del botón. Se lee como que no responde.
+  bool get _isRow =>
+      widget._layout == _AddButtonLayout.compact ||
+      widget._layout == _AddButtonLayout.inline;
 
   bool get _isEnabled => widget.onTap != null;
 
@@ -98,6 +110,21 @@ class _FernAddButtonState extends State<FernAddButton> {
   /// que se ve es un parpadeo de dos colores. Con el mismo color a cero, lo
   /// único que cambia por el camino es la opacidad.
   Color get _background {
+    final highlight = context.colors.secondary;
+
+    // Con el rótulo al lado, lo que se enciende es la píldora. Ver [_isRow].
+    if (_isRow) return highlight.withValues(alpha: 0);
+
+    return _isEnabled && (_isHovered || _isPressed)
+        ? highlight
+        : highlight.withValues(alpha: 0);
+  }
+
+  /// El fondo de la píldora, en las variantes con el rótulo al lado.
+  ///
+  /// El mismo color de realce y por el mismo motivo que en el círculo: uno solo,
+  /// no uno por estado. Lo que distingue la pulsación es el encogido.
+  Color get _pillBackground {
     final highlight = context.colors.secondary;
 
     return _isEnabled && (_isHovered || _isPressed)
@@ -187,32 +214,62 @@ class _FernAddButtonState extends State<FernAddButton> {
                 ),
               ],
             ),
-            _AddButtonLayout.inline => Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                circle,
-                const SizedBox(width: AppSpacing.m),
-                Text(
-                  widget.label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: _foreground,
+            _AddButtonLayout.inline => AnimatedContainer(
+              duration: hoverAnimationDuration,
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: _pillBackground,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  circle,
+                  const SizedBox(width: AppSpacing.m),
+                  // Con el hueco que quede y recortando si no llega: vive en
+                  // filas de ancho fijo y hay rótulos que en francés se van
+                  // largos.
+                  Flexible(
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: _foreground,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             // La menuda lleva su propio relleno porque va suelta entre campos de
             // un formulario y necesita algo de aire alrededor.
-            _AddButtonLayout.compact => Padding(
+            _AddButtonLayout.compact => AnimatedContainer(
+              duration: hoverAnimationDuration,
+              curve: Curves.easeOut,
               padding: const EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: _pillBackground,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   circle,
                   const SizedBox(width: AppSpacing.s),
-                  Text(
-                    widget.label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: _foreground,
+                  // Con el hueco que quede y recortando si no llega: puede vivir
+                  // en un sitio de ancho fijo —la cabecera de una sección, para
+                  // que dos botones seguidos midan lo mismo— y ahí un rótulo
+                  // largo lo desbordaría.
+                  Flexible(
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: _foreground,
+                      ),
                     ),
                   ),
                 ],

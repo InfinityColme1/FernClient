@@ -1,3 +1,4 @@
+import 'package:Fern/core/utils/grid_layout_cache.dart';
 import 'package:Fern/core/utils/masonry_layout.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -33,6 +34,12 @@ class FernMasonryGrid extends StatefulWidget {
   final ScrollController? controller;
   final Widget Function(BuildContext context, int index) itemBuilder;
 
+  /// Dónde buscar el reparto ya calculado, si lo hay.
+  ///
+  /// Sin ella se calcula cada vez, que es lo que hacía y lo que hacen las
+  /// pruebas que montan la rejilla a pelo.
+  final GridLayoutCache? cache;
+
   /// Se llama con la rejilla ya calculada, cada vez que cambia.
   ///
   /// Es por donde se entera quien necesita las cuentas: a qué altura está una
@@ -50,6 +57,7 @@ class FernMasonryGrid extends StatefulWidget {
     this.fallbackRatio = 1,
     this.controller,
     this.onLayout,
+    this.cache,
   });
 
   @override
@@ -69,13 +77,27 @@ class _FernMasonryGridState extends State<FernMasonryGrid> {
     if (width == _width && widget.ratios.length == _layout.cells.length) return;
 
     _width = width;
-    _layout = MasonryLayout.of(
-      ratios: widget.ratios,
-      columns: widget.columns,
-      crossAxisExtent: width,
-      spacing: widget.spacing,
-      fallbackRatio: widget.fallbackRatio,
-    );
+
+    // Por la caché cuando la hay: el reparto de veinte mil celdas es el trozo
+    // más grande del primer fotograma de una pantalla, y volviendo a la misma
+    // lista es exactamente el mismo reparto.
+    final cache = widget.cache;
+
+    _layout = cache == null
+        ? MasonryLayout.of(
+            ratios: widget.ratios,
+            columns: widget.columns,
+            crossAxisExtent: width,
+            spacing: widget.spacing,
+            fallbackRatio: widget.fallbackRatio,
+          )
+        : cache.layoutOf(
+            ratios: widget.ratios,
+            columns: widget.columns,
+            crossAxisExtent: width,
+            spacing: widget.spacing,
+            fallbackRatio: widget.fallbackRatio,
+          );
 
     widget.onLayout?.call(_layout);
   }

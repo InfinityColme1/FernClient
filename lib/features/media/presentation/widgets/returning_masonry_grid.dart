@@ -1,4 +1,5 @@
 import 'package:Fern/core/ui/ui.dart';
+import 'package:Fern/core/utils/grid_layout_cache.dart';
 import 'package:Fern/core/utils/masonry_layout.dart';
 import 'package:flutter/material.dart';
 
@@ -37,6 +38,9 @@ class ReturningMasonryGrid extends StatefulWidget {
 
   final Widget Function(BuildContext context, int index) itemBuilder;
 
+  /// Dónde buscar el reparto ya calculado. Ver [GridLayoutCache].
+  final GridLayoutCache? cache;
+
   const ReturningMasonryGrid({
     super.key,
     required this.columns,
@@ -47,6 +51,7 @@ class ReturningMasonryGrid extends StatefulWidget {
     required this.itemBuilder,
     required this.fallbackRatio,
     this.focusIndex,
+    this.cache,
   });
 
   @override
@@ -119,6 +124,7 @@ class _ReturningMasonryGridState extends State<ReturningMasonryGrid> {
         spacing: widget.spacing,
         ratios: widget.ratios,
         fallbackRatio: widget.fallbackRatio,
+        cache: widget.cache,
         onLayout: (layout) => _layout = layout,
         itemBuilder: widget.itemBuilder,
       ),

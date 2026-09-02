@@ -4,6 +4,7 @@ import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/presentation/widgets/media_context_menu.dart';
 import 'package:Fern/core/utils/region_geometry.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/utils/grid_layout_cache.dart';
 import 'package:Fern/features/recognition/data/services/recognition_highlight.dart';
 import 'package:Fern/features/settings/domain/repositories/settings_repository.dart';
 import 'package:Fern/features/media/presentation/widgets/highlight_scroll_marks.dart';
@@ -258,17 +259,42 @@ class MediaGrid extends StatelessWidget {
         pendingWarning = null,
         emptyMessage = null;
 
+  /// De dónde sale todo lo que la rejilla deriva: la lista que está pintando.
+  ///
+  /// Es la clave de la caché, así que tiene que ser **la instancia** y no una
+  /// copia: ninguna de las tres se toca por dentro, cada cambio construye una
+  /// nueva.
+  Object get _source => sections ?? crops ?? mediaList;
+
+  /// Dónde se guarda lo derivado entre pantallas. Ver [GridLayoutCache].
+  ///
+  /// Sin localizador montado —una prueba que pinta la rejilla y nada más— vale
+  /// una suelta: la clave es la identidad de la lista, así que una caché
+  /// compartida no puede contestar por la lista de otro.
+  GridLayoutCache get _cache => getIt.isRegistered<GridLayoutCache>()
+      ? getIt<GridLayoutCache>()
+      : _looseCache;
+
+  static final GridLayoutCache _looseCache = GridLayoutCache();
+
   /// Todo el contenido de la rejilla en el orden en el que se pinta, que es el
   /// que sigue la selección por rango. Con grupos, los recorre de arriba abajo
   /// como una sola lista, igual que se ven.
-  List<int> get _orderedIds => switch ((sections, crops)) {
-        (final sections?, _) => [
-            for (final section in sections)
-              for (final media in section.media) media.id,
-          ],
-        (_, final crops?) => [for (final crop in crops) crop.id],
-        _ => [for (final media in mediaList) media.id],
-      };
+  List<int> get _orderedIds => _cache.idsOf(
+        _source,
+        () => switch ((sections, crops)) {
+          (final sections?, _) => [
+              for (final section in sections)
+                for (final media in section.media) media.id,
+            ],
+          (_, final crops?) => [for (final crop in crops) crop.id],
+          _ => [for (final media in mediaList) media.id],
+        },
+      );
+
+  /// La proporción de cada celda, por la caché y por lo mismo.
+  List<double?> get _ratios =>
+      _cache.ratiosOf(_source, () => [for (final media in mediaList) _ratioOf(media)]);
 
   /// El hueco que la rejilla deja hasta el borde de la ventana.
   ///
@@ -480,7 +506,8 @@ class MediaGrid extends StatelessWidget {
       spacing: AppSpacing.s,
       // Con esto la rejilla se calcula entera antes de pintar nada, y la barra
       // de desplazamiento deja de moverse sola.
-      ratios: [for (final media in mediaList) _ratioOf(media)],
+      ratios: _ratios,
+      cache: _cache,
       fallbackRatio: mediaFallbackAspectRatio,
       focusIndex: _returnIndex,
       itemBuilder: (context, index) =>
@@ -502,7 +529,8 @@ class MediaGrid extends StatelessWidget {
       cacheExtent: mediaGridCacheExtent,
       columns: columns,
       spacing: AppSpacing.s,
-      ratios: [for (final media in mediaList) _ratioOf(media)],
+      ratios: _ratios,
+      cache: _cache,
       fallbackRatio: mediaFallbackAspectRatio,
       itemBuilder: (context, index) => MediaItem(
         key: ValueKey(mediaList[index].id),

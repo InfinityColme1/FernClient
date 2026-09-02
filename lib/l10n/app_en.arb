@@ -324,7 +324,8 @@
   "contextMenuTarget": "{count, plural, =1{On this item} other{On the {count} selected}}",
   "@contextMenuTarget": {"placeholders": {"count": {"type": "int"}}},
   "tagsTitle": "Tags",
-  "addTag": "Add Tag",
+  "addTags": "Add tags",
+  "addFernies": "Add fernies",
 
   "noTagsYet": "No tags yet",
   "creatorsTitle": "Creators",
@@ -424,6 +425,18 @@
   "tagLogFernie": "What a marked fernie links to",
   "tagLogFernieOf": "You marked {fernie} here",
   "@tagLogFernieOf": { "placeholders": { "fernie": {"type": "String"} } },
+  "assignCreatorSelectedTooltip": "Set creator on the selection",
+  "assignCreatorToSelectionHint": "{count, plural, =1{It will be set on 1 item, over whatever creator it has now.} other{It will be set on {count} items, over whatever creator they have now.}}",
+  "@assignCreatorToSelectionHint": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "creatorTagsTooltip": "Tags of this creator",
+  "creatorTagsHint": "What gets put on content along with this creator. It does not touch what is already tagged: it applies from now on.",
+  "tagLogCreator": "Comes with its creator",
+  "tagLogCreatorOf": "Comes with {name}",
+  "@tagLogCreatorOf": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "tagLogUnknown": "No record of it",
   "actionTagLog": "Where this came from",
 
@@ -1033,7 +1046,6 @@
   "newFernieTitle": "New fernie",
   "fernieNameLabel": "Fernie name",
   "ferniesTitle": "Fernies",
-  "addFernie": "Add fernie",
   "noFerniesYet": "No fernies yet",
   "fernieNoRegions": "This fernie has no regions yet",
   "fernieNoneHere": "No fernies marked here yet",
@@ -1282,6 +1294,8 @@
   "nsfwLockedViewBlurred": "It shows up covered",
   "nsfwChildTagsLabel": "Marking a tag also marks the ones under it",
   "nsfwChildTagsDescription": "A tag that hangs from a marked one hides its content too, without having to mark it as well. Turned off, each tag answers only for its own. Nothing is rewritten either way: turn it on and off as you like.",
+  "nsfwTagsHideMediaLabel": "A marked tag hides its content too",
+  "nsfwTagsHideMediaDescription": "Turned on, a single marked tag is enough for the content to disappear entirely. Turned off, the mark stays on the tag: the content is still shown with its other tags, and not even the name of the marked one is left. It is for a tag that says something sensitive about content that isn't. Content marked by hand and content of a marked creator are hidden either way.",
   "nsfwLockedViewNote": "Covered, marked content keeps its place in the grid, blurred and with a padlock; touching it asks for the password. It is handier, but it does show that something is there: how much, and what shape it has.",
   "nsfwSectionTitle": "NSFW content filter",
   "nsfwSectionNote": "What you mark as NSFW gets hidden: with the filter on it shows up nowhere, not in the trash and not in searches.",

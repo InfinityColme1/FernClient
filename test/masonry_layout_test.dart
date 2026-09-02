@@ -138,6 +138,48 @@ void main() {
       }
     });
 
+    // El fallo de la captura: cuatro contenidos, uno mucho mas alto que los
+    // demas, y la rejilla enseñaba uno. La celda alta se quedaba ella sola con
+    // los tramos de abajo, asi que preguntar por el final de la pantalla
+    // contestaba con su indice y las otras tres no se llegaban a construir.
+    test('una celda alta no se lleva por delante a las de al lado', () {
+      final grid = layout(
+        [0.42, 1.4, 1.4, 1.4],
+        columns: 4,
+        width: 1900,
+      );
+
+      // Las cuatro empiezan arriba del todo, asi que las cuatro se ven.
+      expect(grid.firstVisibleAt(0), 0);
+      expect(grid.lastVisibleAt(900), 3);
+    });
+
+    // Lo mismo mas abajo: una columna con una celda larguisima y las de al lado
+    // avanzando en indices mas altos.
+    test('y tampoco a media rejilla', () {
+      final ratios = <double?>[
+        for (var i = 0; i < 10; i++) 1.0,
+        0.2,
+        for (var i = 0; i < 10; i++) 1.0,
+      ];
+      final grid = layout(ratios, columns: 3);
+
+      const viewport = 900.0;
+
+      for (var top = 0.0; top < grid.extent; top += 100) {
+        final first = grid.firstVisibleAt(top);
+        final last = grid.lastVisibleAt(top + viewport);
+
+        for (var index = 0; index < grid.cells.length; index++) {
+          final cell = grid.cells[index];
+          if (cell.bottom <= top || cell.top >= top + viewport) continue;
+
+          expect(index, greaterThanOrEqualTo(first), reason: 'a $top');
+          expect(index, lessThanOrEqualTo(last), reason: 'a $top');
+        }
+      }
+    });
+
     test('preguntar mas alla del final no se sale', () {
       final grid = layout([for (var i = 0; i < 20; i++) 1.0]);
 

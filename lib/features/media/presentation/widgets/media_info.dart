@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
@@ -33,6 +35,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/media/domain/services/viewer_save_action.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
+import 'package:Fern/features/media/presentation/widgets/creator_tags.dart';
 import 'package:Fern/features/media/presentation/widgets/tag_log_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -180,12 +183,58 @@ class MediaInfo extends StatelessWidget {
   }
 }
 
-/// Zona desplazable del panel.
+/// Lo que ocupa el botón de añadir en la cabecera de una sección del panel.
 ///
-/// Está construida con slivers a propósito: las etiquetas se pintan bajo
-/// demanda, así que el panel aguanta igual con tres etiquetas que con cientos.
-/// La sección de fernies encaja como un sliver más; la de colecciones, cuando
-/// llegue, hará lo mismo.
+/// **El mayor de los dos rótulos, medido aquí y no una constante.** Los dos
+/// botones tienen que ocupar lo mismo o sus dos «+» caen en columnas distintas y
+/// las dos secciones dejan de parecer la misma cosa; y sus rótulos son de
+/// distinto largo —«Añadir etiquetas» y «Añadir fernies»— y de distinto largo en
+/// cada lengua. Una constante habría que revisarla cada vez que se toque una
+/// traducción, y el día que se olvide el rótulo sale recortado.
+///
+/// Se mide el texto y se le suma lo que el botón pone alrededor: el círculo, el
+/// hueco hasta el rótulo y su propio relleno.
+double _addButtonWidth(BuildContext context, List<String> labels) {
+  final style = Theme.of(context).textTheme.labelSmall;
+
+  var widest = 0.0;
+
+  for (final label in labels) {
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: Directionality.of(context),
+    )..layout();
+
+    widest = math.max(widest, painter.width);
+  }
+
+  return widest + _addButtonChrome;
+}
+
+/// Lo que el botón menudo ocupa además del rótulo.
+///
+/// Su relleno, el círculo —con su borde, que también ocupa— y el hueco hasta el
+/// texto, sacados de las mismas medidas con las que se dibuja: así no hay dos
+/// sitios que puedan decir cosas distintas.
+const double _addButtonChrome = AppSpacing.xs * 2 +
+    (AppSizes.borderThin * 2 + AppSpacing.xxs * 2 + AppSizes.iconSmall) +
+    AppSpacing.s;
+
+/// Los dos rótulos que tienen que caber, para medirlos juntos.
+List<String> _addLabels(AppLocalizations texts) =>
+    [texts.addTags, texts.addFernies];
+
+/// El contenido del panel: lo que el contenido tiene puesto.
+///
+/// **El panel no se desplaza; se desplaza cada lista por su cuenta.** Con un
+/// solo desplazamiento para todo, veinte etiquetas empujaban lo demás fuera de
+/// la pantalla: para ver los fernies había que subir y para llegar al final de
+/// las etiquetas, bajar del todo. Ahora lo de arriba —descripción y creador— se
+/// queda fijo, y las dos listas se reparten el alto que sobra y se recorren por
+/// dentro.
+///
+/// Las etiquetas siguen pintándose bajo demanda, con slivers dentro de su
+/// sección: el panel aguanta igual con tres que con cientos.
 class _InfoContent extends StatelessWidget {
   final MediaEntity media;
   final FernieModeBloc fernieMode;
@@ -220,12 +269,16 @@ class _InfoContent extends StatelessWidget {
     final texts = AppLocalizations.of(context);
     final tags = media.tags ?? const [];
 
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Lo de arriba, con el alto que pida: son cuatro cosas de tamaño
+        // acotado —el título, la descripción (que tiene tope de líneas), el
+        // creador y lo que un modelo proponga para él—, así que no hay nada que
+        // desplazar aquí.
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               Row(
                 children: [
                   Expanded(
@@ -272,23 +325,114 @@ class _InfoContent extends StatelessWidget {
                 title: texts.suggestionCreatorTitle,
                 // El creador es uno: aceptar el último sustituye al anterior,
                 // que es lo mismo que hace el diálogo de asignarlo.
-                apply: (context, which) => _updateMedia(
-                  context,
-                  media.copyWith(creator: which.last.creator),
-                ),
+                //
+                // Y con lo que el creador trae consigo, por el mismo sitio que
+                // el diálogo: sin eso, aceptar la sugerencia y elegirlo a mano
+                // dejaban el contenido distinto.
+                apply: (context, which) async {
+                  final creator = which.last.creator;
+                  if (creator == null) return;
+
+                  // Por el mismo sitio que el diálogo: sin eso, aceptar la
+                  // sugerencia y elegirlo a mano dejaban el contenido distinto.
+                  final brings = await tagsOfCreator(creator);
+
+                  if (!context.mounted) return;
+
+                  context
+                      .read<MediaBloc>()
+                      .add(MediaCreatorAssignedEvent(creator, brings: brings));
+                },
               ),
               const SizedBox(height: AppSpacing.l),
-              _FerniesSection(media: media, fernieMode: fernieMode),
-              const SizedBox(height: AppSpacing.l),
-              FernSectionHeader(
-                icon: Symbols.label,
-                title: texts.tagsTitle,
-              ),
-              const SizedBox(height: AppSpacing.m),
             ],
-          ),
         ),
 
+        const SizedBox(height: AppSpacing.l),
+
+        // **Cada lista se desplaza por su cuenta, y el panel no.**
+        //
+        // Con un solo desplazamiento para todo, veinte etiquetas empujaban lo
+        // demás fuera de la pantalla: para ver los fernies había que subir y
+        // para llegar al final de las etiquetas, bajar del todo. Ahora las dos
+        // secciones se reparten lo que queda de alto y lo que no cabe se
+        // desplaza dentro de la suya, así que las dos están siempre a la vista.
+        //
+        // El reparto es holgado para las etiquetas: son las que crecen.
+        Flexible(
+          flex: mediaInfoFerniesFlex,
+          child: _FerniesSection(media: media, fernieMode: fernieMode),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        Flexible(
+          flex: mediaInfoTagsFlex,
+          child: _TagsSection(
+            media: media,
+            fernieMode: fernieMode,
+            suggestions: suggestions,
+            tags: tags,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Las etiquetas del contenido y lo que los modelos proponen, con su propio
+/// desplazamiento.
+///
+/// El "+" va **en la cabecera** y no al final de la lista: con veinte etiquetas
+/// puestas quedaba en el fondo, así que añadir una empezaba por desplazarse
+/// hasta abajo del todo para encontrar el botón — y cuantas más se ponen, más
+/// lejos queda. Arriba está siempre a la vista y siempre en el mismo sitio.
+class _TagsSection extends StatelessWidget {
+  final MediaEntity media;
+  final FernieModeBloc fernieMode;
+  final SuggestionsBloc suggestions;
+  final List<TagEntity> tags;
+
+  const _TagsSection({
+    required this.media,
+    required this.fernieMode,
+    required this.suggestions,
+    required this.tags,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Sin icono: al lado del botón con su texto entero no cabía, y lo que
+        // el icono dice ya lo dice el título que tiene pegado. Ver
+        // [AppSizes.infoPanelWidth].
+        FernSectionHeader(
+          title: texts.tagsTitle,
+          // A la altura del título y con su texto entero: es un botón ancho, se
+          // acierta sin apuntar, y está siempre a la vista por muchas etiquetas
+          // que haya debajo. El hueco es el mismo que el de los fernies, que es
+          // lo que deja los dos «+» en la misma columna.
+          trailing: SizedBox(
+            width: _addButtonWidth(context, _addLabels(texts)),
+            child: FernAddButton.compact(
+              label: texts.addTags,
+              onTap: () => showFernDialog(
+                context: context,
+                bloc: context.read<MediaBloc>(),
+                builder: (_) => AssignTagDialog(media: media),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.m),
+        // Con slivers a propósito: las etiquetas se pintan bajo demanda, así que
+        // esto aguanta igual con tres que con cientos.
+        Flexible(
+          child: CustomScrollView(
+            slivers: [
         // Las etiquetas van directamente sobre el fondo del panel: ni píldora,
         // ni sombra, ni esquinas redondeadas.
         SliverList.separated(
@@ -340,27 +484,24 @@ class _InfoContent extends StatelessWidget {
             ],
             fallbackIcon: Symbols.label,
             adoptsUnlinked: true,
-            apply: (context, which) async => _updateMedia(
-              context,
-              media.copyWith(tags: await _withTags(media, which)),
-            ),
+            apply: (context, which) async {
+              // Lo que viene con las aceptadas se pide a la base, y en esa
+              // espera el panel puede haberse cerrado: sin la comprobación,
+              // aceptar una sugerencia y cambiar de contenido a la vez
+              // reventaba.
+              final tags = await _withTags(media, which);
+
+              if (!context.mounted) return;
+
+              _updateMedia(context, media.copyWith(tags: tags));
+            },
           ),
         ),
 
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.l),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FernAddButton.inline(
-                label: texts.addTag,
-                onTap: () => showFernDialog(
-                  context: context,
-                  bloc: context.read<MediaBloc>(),
-                  builder: (_) => AssignTagDialog(media: media),
-                ),
-              ),
-            ),
+        // Un respiro al final: la última etiqueta no puede quedar pegada al
+        // borde del panel.
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.l)),
+            ],
           ),
         ),
       ],
@@ -396,26 +537,40 @@ class _FerniesSection extends StatelessWidget {
       bloc: fernieMode,
       builder: (context, state) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // La cabecera no lleva botón: el "+" de abajo ya entra al modo de
-          // marcar, y dos botones para lo mismo en la misma sección sólo hacen
-          // dudar de si hacen cosas distintas. El atajo de siempre está en la
-          // barra del visor.
+          // El botón de añadir a la altura del título, igual que el de las
+          // etiquetas y con el mismo hueco: las dos secciones son lo mismo —una
+          // lista de lo que el contenido lleva puesto— y ponerlo en un sitio en
+          // una y en otro en la otra obliga a buscarlo cada vez.
+          //
+          // El atajo de siempre sigue en la barra del visor.
+          // Sin icono, como la de etiquetas y por lo mismo.
           FernSectionHeader(
-            icon: Symbols.face_retouching_natural,
             title: texts.ferniesTitle,
+            trailing: SizedBox(
+              width: _addButtonWidth(context, _addLabels(texts)),
+              child: FernAddButton.compact(
+                label: texts.addFernies,
+                onTap: () => _enterFernieMode(context),
+              ),
+            ),
           ),
           const SizedBox(height: AppSpacing.m),
+          // Con su propio desplazamiento: la cabecera se queda fija y lo que no
+          // quepa se recorre aquí dentro, sin empujar a las etiquetas de abajo.
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
           // En fila y bajando de línea: el panel es estrecho y los fernies de un
           // mismo contenido pueden ser unos cuantos.
           Wrap(
             spacing: AppSpacing.l,
             runSpacing: AppSpacing.m,
             children: [
-              FernAddButton(
-                label: texts.addFernie,
-                onTap: () => _enterFernieMode(context),
-              ),
               // Los que siguen atados al contenido, no los que se han llegado
               // a tocar: borrar la última región de un fernie lo desata, y aquí
               // tiene que dejar de verse en el acto.
@@ -447,6 +602,10 @@ class _FerniesSection extends StatelessWidget {
                     ?.copyWith(color: context.colors.unremarked),
               ),
             ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

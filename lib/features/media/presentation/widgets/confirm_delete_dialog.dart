@@ -49,6 +49,11 @@ Future<bool> deleteMediaWithConfirmation(
   );
   if (decision == null) return false;
 
+  // Comprobado **antes** de usarlo: entre abrir el aviso y contestarlo se
+  // puede haber cerrado el visor, y bloquear la importación enseña un aviso
+  // sobre una pantalla que ya no está.
+  if (!context.mounted) return true;
+
   if (decision.blocksImport) await blockImportOf(context, [media.id]);
   if (!context.mounted) return true;
 

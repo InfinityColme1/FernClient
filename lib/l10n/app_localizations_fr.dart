@@ -808,7 +808,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tagsTitle => 'Tags';
 
   @override
-  String get addTag => 'Ajouter un tag';
+  String get addTags => 'Ajouter des tags';
+
+  @override
+  String get addFernies => 'Ajouter des fernies';
 
   @override
   String get noTagsYet => 'Aucun tag pour l\'instant';
@@ -1094,6 +1097,38 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String tagLogFernieOf(String fernie) {
     return 'Vous avez marqué $fernie ici';
+  }
+
+  @override
+  String get assignCreatorSelectedTooltip =>
+      'Mettre un créateur à la sélection';
+
+  @override
+  String assignCreatorToSelectionHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Il sera mis sur $count contenus, par-dessus le créateur qu\'ils ont actuellement.',
+      one:
+          'Il sera mis sur 1 contenu, par-dessus le créateur qu\'il a actuellement.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorTagsTooltip => 'Étiquettes de ce créateur';
+
+  @override
+  String get creatorTagsHint =>
+      'Ce qui sera mis sur un contenu en même temps que ce créateur. Cela ne touche pas ce qui est déjà étiqueté : cela vaut à partir de maintenant.';
+
+  @override
+  String get tagLogCreator => 'Elle vient de son créateur';
+
+  @override
+  String tagLogCreatorOf(String name) {
+    return 'Elle vient de $name';
   }
 
   @override
@@ -2699,9 +2734,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ferniesTitle => 'Fernies';
 
   @override
-  String get addFernie => 'Ajouter un fernie';
-
-  @override
   String get noFerniesYet => 'Aucun fernie pour l’instant';
 
   @override
@@ -3488,6 +3520,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get nsfwChildTagsDescription =>
       'Une étiquette qui dépend d\'une étiquette marquée cache aussi son contenu, sans avoir à la marquer séparément. Désactivé, chaque étiquette ne répond que du sien. Rien n\'est réécrit dans un cas comme dans l\'autre : activez-le et désactivez-le autant que vous voulez.';
+
+  @override
+  String get nsfwTagsHideMediaLabel =>
+      'Une étiquette marquée cache aussi son contenu';
+
+  @override
+  String get nsfwTagsHideMediaDescription =>
+      'Activé, il suffit qu\'un contenu porte une étiquette marquée pour qu\'il disparaisse entièrement. Désactivé, la marque reste sur l\'étiquette : le contenu reste visible avec ses autres étiquettes, et de celle qui est marquée il ne reste même pas le nom. Cela sert pour une étiquette qui dit quelque chose de délicat sur un contenu qui ne l\'est pas. Ce qui est marqué à la main et ce qui vient d\'un créateur marqué se cachent de la même façon dans les deux cas.';
 
   @override
   String get nsfwLockedViewNote =>

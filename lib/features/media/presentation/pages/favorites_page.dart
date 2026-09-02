@@ -10,6 +10,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:Fern/core/navigation/screen_entry.dart';
 
 /// El contenido marcado con el corazón del visor.
 ///
@@ -23,10 +24,18 @@ class FavoritesPage extends StatefulWidget {
   State<FavoritesPage> createState() => _FavoritesPageState();
 }
 
-class _FavoritesPageState extends State<FavoritesPage> {
+class _FavoritesPageState extends State<FavoritesPage>
+    with ScreenEntryTask<FavoritesPage> {
   @override
   void initState() {
     super.initState();
+    getIt<MediaBloc>().add(
+      const MediaScreenOpenedEvent(MediaListing.favorites),
+    );
+  }
+
+  @override
+  void onScreenEntered() {
     getIt<MediaBloc>().add(const LoadFavoriteMediaEvent());
   }
 

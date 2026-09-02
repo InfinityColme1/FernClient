@@ -270,7 +270,8 @@
   "tagDropped": "{count, plural, =1{Etiquetat amb {tag}} other{{count} continguts etiquetats amb {tag}}}",
   "contextMenuTarget": "{count, plural, =1{Sobre aquest contingut} other{Sobre els {count} seleccionats}}",
   "tagsTitle": "Etiquetes",
-  "addTag": "Afegeix una etiqueta",
+  "addTags": "Afegir etiquetes",
+  "addFernies": "Afegir fernies",
 
   "noTagsYet": "Encara no hi ha etiquetes",
   "creatorsTitle": "Creadors",
@@ -367,6 +368,18 @@
   "tagLogRecognition": "Vas acceptar el que va proposar un model",
   "tagLogFernie": "El que enllaça un fernie marcat",
   "tagLogFernieOf": "Vas marcar aquí en/na {fernie}",
+  "assignCreatorSelectedTooltip": "Posar creador a la selecció",
+  "assignCreatorToSelectionHint": "{count, plural, =1{Se li posarà a 1 contingut, per damunt del creador que tingui ara.} other{Se'ls posarà a {count} continguts, per damunt del creador que tinguin ara.}}",
+  "@assignCreatorToSelectionHint": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "creatorTagsTooltip": "Etiquetes d'aquest creador",
+  "creatorTagsHint": "El que se li posarà a un contingut juntament amb aquest creador. No toca el que ja està etiquetat: val d'ara endavant.",
+  "tagLogCreator": "La porta el seu creador",
+  "tagLogCreatorOf": "La porta {name}",
+  "@tagLogCreatorOf": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "tagLogUnknown": "No hi consta",
   "actionTagLog": "D'on surt això",
 
@@ -931,7 +944,6 @@
   "newFernieTitle": "Nou fernie",
   "fernieNameLabel": "Nom del fernie",
   "ferniesTitle": "Fernies",
-  "addFernie": "Afegir fernie",
   "noFerniesYet": "Encara no hi ha cap fernie",
   "fernieNoRegions": "Aquest fernie encara no té regions",
   "fernieNoneHere": "Encara no hi ha fernies marcats aquí",
@@ -1139,6 +1151,8 @@
   "nsfwLockedViewBlurred": "Apareix tapat",
   "nsfwChildTagsLabel": "Marcar una etiqueta marca també les que en pengen",
   "nsfwChildTagsDescription": "Una etiqueta que penja d'una de marcada amaga també el seu contingut, sense haver de marcar-la a part. Apagat, cada etiqueta respon només pel que és seu. No es reescriu res en cap cas: encén-ho i apaga-ho les vegades que vulguis.",
+  "nsfwTagsHideMediaLabel": "Una etiqueta marcada amaga també el seu contingut",
+  "nsfwTagsHideMediaDescription": "Encès, n'hi ha prou que un contingut porti una etiqueta marcada perquè desaparegui sencer. Apagat, la marca es queda a l'etiqueta: el contingut es continua veient amb les altres etiquetes, i de la marcada no en queda ni el nom. Serveix per a una etiqueta que diu alguna cosa delicada sobre contingut que no ho és. El marcat a mà i el d'un creador marcat s'amaguen igual en tots dos casos.",
   "nsfwLockedViewNote": "Tapat, el contingut marcat continua ocupant el seu lloc a la graella, borrós i amb un cadenat; en tocar-lo es demana la contrasenya. És més còmode, però deixa veure que allà hi ha alguna cosa: quanta n’hi ha i de quina forma és.",
   "nsfwSectionTitle": "Filtre de contingut NSFW",
   "nsfwSectionNote": "El que marquis com a NSFW s’amaga: amb el filtre posat no apareix enlloc, ni a la paperera ni a les cerques.",

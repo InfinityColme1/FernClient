@@ -9,6 +9,7 @@
 
 import 'package:Fern/config/theme/app_theme.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/media/domain/usecases/save_creator_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
@@ -41,6 +42,7 @@ void main() {
     getIt.registerSingleton<SearchTagsUseCase>(_NoSearch());
     getIt.registerSingleton<SaveTagUseCase>(_NoSaveTag());
     getIt.registerSingleton<SaveCreatorUseCase>(_NoSaveCreator());
+    getIt.registerSingleton<SaveCreatorTagsUseCase>(_NoSaveCreatorTags());
     getIt.registerSingleton<SaveFernieUseCase>(_NoSaveFernie());
     getIt.registerSingleton<SaveModelUseCase>(_NoSaveModel());
 
@@ -63,6 +65,15 @@ void main() {
       await pump(tester, isConfigured: false);
 
       expect(find.byTooltip(texts.assignUrlsTooltip), findsOneWidget);
+    });
+
+    // Los mismos que su ficha de la pantalla de gestion: lo que trae puesto es
+    // parte de como se define un creador, y tenerlo solo despues de crearlo
+    // obligaba a crearlo, ir a buscarlo y volver a abrirlo.
+    testWidgets('y decir que etiquetas trae consigo', (tester) async {
+      await pump(tester, isConfigured: false);
+
+      expect(find.byTooltip(texts.creatorTagsTooltip), findsOneWidget);
     });
 
     testWidgets('y marcarlo, con contraseña puesta', (tester) async {
@@ -136,6 +147,11 @@ class _NoSaveTag implements SaveTagUseCase {
 }
 
 class _NoSaveCreator implements SaveCreatorUseCase {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+class _NoSaveCreatorTags implements SaveCreatorTagsUseCase {
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }

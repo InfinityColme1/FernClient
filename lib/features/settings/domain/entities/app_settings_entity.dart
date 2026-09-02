@@ -295,6 +295,24 @@ class AppSettingsEntity extends Equatable {
   /// encenderlo y apagarlo es reversible y no toca una sola etiqueta.
   final bool nsfwMarksChildTags;
 
+  /// Si una etiqueta marcada esconde también el contenido que la lleva.
+  ///
+  /// Encendido —lo de siempre— una sola etiqueta marcada basta para que el
+  /// contenido desaparezca entero. Apagado, la marca se queda **en la etiqueta**:
+  /// el contenido se sigue viendo con sus otras etiquetas puestas y de la marcada
+  /// no queda ni el nombre.
+  ///
+  /// Para qué sirve apagarlo: una etiqueta que dice algo delicado sobre
+  /// contenido que no lo es. Escondiendo la etiqueta ya no se lee lo que
+  /// contaba, y esconder además el contenido sería esconder de más.
+  ///
+  /// No toca a los creadores: un creador marcado sigue escondiendo lo suyo. Ahí
+  /// lo delicado no es el nombre, es la galería entera.
+  ///
+  /// Tampoco reescribe nada: el índice se rehace al leerlo, así que encenderlo y
+  /// apagarlo es reversible.
+  final bool nsfwTagsHideMedia;
+
   final NsfwUnlockedView nsfwUnlockedView;
 
   /// Qué se ve con el modo NSFW cerrado: nada o el contenido tapado.
@@ -444,6 +462,7 @@ class AppSettingsEntity extends Equatable {
     this.duplicateScanPeriod = DuplicateScanPeriod.quarterly,
     this.duplicateScanIncludesMoving = true,
     this.nsfwMarksChildTags = true,
+    this.nsfwTagsHideMedia = true,
     this.nsfwUnlockedView = NsfwUnlockedView.mixed,
     this.nsfwLockedView = NsfwLockedView.hidden,
     this.organization = FileOrganizationCriteria.flat,
@@ -487,6 +506,7 @@ class AppSettingsEntity extends Equatable {
     DuplicateScanPeriod? duplicateScanPeriod,
     bool? duplicateScanIncludesMoving,
     bool? nsfwMarksChildTags,
+    bool? nsfwTagsHideMedia,
     NsfwUnlockedView? nsfwUnlockedView,
     NsfwLockedView? nsfwLockedView,
     FileOrganizationCriteria? organization,
@@ -529,6 +549,7 @@ class AppSettingsEntity extends Equatable {
       duplicateScanIncludesMoving:
           duplicateScanIncludesMoving ?? this.duplicateScanIncludesMoving,
       nsfwMarksChildTags: nsfwMarksChildTags ?? this.nsfwMarksChildTags,
+      nsfwTagsHideMedia: nsfwTagsHideMedia ?? this.nsfwTagsHideMedia,
       nsfwUnlockedView: nsfwUnlockedView ?? this.nsfwUnlockedView,
       nsfwLockedView: nsfwLockedView ?? this.nsfwLockedView,
       organization: organization ?? this.organization,
@@ -571,6 +592,7 @@ class AppSettingsEntity extends Equatable {
         duplicateScanPeriod,
         duplicateScanIncludesMoving,
         nsfwMarksChildTags,
+        nsfwTagsHideMedia,
         nsfwUnlockedView,
         nsfwLockedView,
         organization,

@@ -31,6 +31,13 @@ enum TagLogReason {
   /// Es lo que enlaza un fernie marcado en el contenido.
   fernie,
 
+  /// La trae el creador del contenido.
+  ///
+  /// Se pone al asignarle el creador, sea a mano o por una direccion vinculada.
+  /// Va al final del enum a proposito: los valores anteriores conservan su
+  /// sitio, asi que lo que ya esta apuntado se sigue leyendo igual.
+  creator,
+
   /// No consta.
   ///
   /// **No se guarda nunca**: sale sólo de la deducción del contenido anterior al

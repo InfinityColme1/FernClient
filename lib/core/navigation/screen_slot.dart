@@ -1,6 +1,7 @@
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/navigation/screen_choreography.dart';
 import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/core/ui/display/fast_scroll_scope.dart';
 import 'package:flutter/widgets.dart';
 
 /// Las dos animaciones de la pantalla, puestas al alcance de lo que lleva
@@ -76,7 +77,16 @@ class ScreenSlotTransition extends StatelessWidget {
       // vez y lo único que cambia por fotograma es la transparencia con la que
       // esa capa se estampa. Es la diferencia entre una transición fluida y una
       // que va a tirones justo donde más contenido hay.
-      child: RepaintBoundary(child: child),
+      // Mientras la pantalla entra, las celdas de dentro no empiezan a cargar
+      // nada: abrir y descodificar treinta miniaturas justo encima de la
+      // animación es lo que la hacía ir a tirones. Al terminar se cargan de una
+      // vez, que es cuando alguien va a mirarlas.
+      child: RepaintBoundary(
+        child: _FrozenWhileLeaving(
+          leaving: scope.leaving,
+          child: _HoldsWhileEntering(entering: scope.entering, child: child),
+        ),
+      ),
       builder: (context, child) {
         if (choreography.isWithinFamily) {
           // **Un fundido cruzado de verdad**, los dos a la vez.
@@ -137,4 +147,128 @@ double _crossfade(ScreenTransitionScope scope) {
   final saliendo = crossfadeOutCurve.transform(scope.leaving.value.clamp(0.0, 1.0));
 
   return (entrando * (1 - saliendo)).clamp(0.0, 1.0);
+}
+
+/// Pide esperar mientras [entering] no ha terminado.
+///
+/// Con estado y escuchando al final y no al valor: lo que hay que saber es
+/// «¿ha entrado ya?», que cambia dos veces, y no en qué punto va, que cambia en
+/// cada fotograma. Reconstruir la rejilla sesenta veces por segundo sería peor
+/// que el problema.
+class _HoldsWhileEntering extends StatefulWidget {
+  final Animation<double> entering;
+  final Widget child;
+
+  const _HoldsWhileEntering({required this.entering, required this.child});
+
+  @override
+  State<_HoldsWhileEntering> createState() => _HoldsWhileEnteringState();
+}
+
+class _HoldsWhileEnteringState extends State<_HoldsWhileEntering> {
+  late bool _entering = !_hasArrived;
+
+  bool get _hasArrived =>
+      widget.entering.status == AnimationStatus.completed ||
+      widget.entering.value >= 1;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.entering.addStatusListener(_onStatus);
+  }
+
+  @override
+  void didUpdateWidget(_HoldsWhileEntering old) {
+    super.didUpdateWidget(old);
+    if (identical(old.entering, widget.entering)) return;
+
+    old.entering.removeStatusListener(_onStatus);
+    widget.entering.addStatusListener(_onStatus);
+    _onStatus(widget.entering.status);
+  }
+
+  void _onStatus(AnimationStatus status) {
+    final entering = !_hasArrived;
+    if (entering == _entering || !mounted) return;
+
+    setState(() => _entering = entering);
+  }
+
+  @override
+  void dispose() {
+    widget.entering.removeStatusListener(_onStatus);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      HoldThumbnailsScope(hold: _entering, child: widget.child);
+}
+
+/// La pantalla que se va, estampada una vez en lugar de repintada.
+///
+/// Durante un fundido cruzado hay **dos pantallas vivas a la vez**, y las dos se
+/// miden y se pintan en cada fotograma. Con dos rejillas de miniaturas eso es el
+/// doble de trabajo justo donde no sobra.
+///
+/// La que se va no cambia mientras se va: se rasteriza una vez y lo que se anima
+/// es esa imagen. La que entra sí se pinta de verdad, que es la que hay que
+/// mirar.
+///
+/// Sólo mientras dura la salida: en cuanto termina —o si nunca empieza— la
+/// pantalla vuelve a ser ella misma. Congelarla siempre dejaría el contenido
+/// quieto.
+class _FrozenWhileLeaving extends StatefulWidget {
+  final Animation<double> leaving;
+  final Widget child;
+
+  const _FrozenWhileLeaving({required this.leaving, required this.child});
+
+  @override
+  State<_FrozenWhileLeaving> createState() => _FrozenWhileLeavingState();
+}
+
+class _FrozenWhileLeavingState extends State<_FrozenWhileLeaving> {
+  final _controller = SnapshotController();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.leaving.addListener(_onLeaving);
+    _onLeaving();
+  }
+
+  @override
+  void didUpdateWidget(_FrozenWhileLeaving old) {
+    super.didUpdateWidget(old);
+    if (identical(old.leaving, widget.leaving)) return;
+
+    old.leaving.removeListener(_onLeaving);
+    widget.leaving.addListener(_onLeaving);
+    _onLeaving();
+  }
+
+  void _onLeaving() {
+    final leaving = widget.leaving.value > 0;
+    if (leaving == _controller.allowSnapshotting) return;
+
+    _controller.allowSnapshotting = leaving;
+  }
+
+  @override
+  void dispose() {
+    widget.leaving.removeListener(_onLeaving);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SnapshotWidget(
+        controller: _controller,
+        // Sin la imagen todavía hecha se pinta lo de siempre: el primer
+        // fotograma de la salida no puede quedarse en blanco.
+        mode: SnapshotMode.permissive,
+        child: widget.child,
+      );
 }

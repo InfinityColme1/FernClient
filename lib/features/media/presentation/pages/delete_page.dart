@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:Fern/core/navigation/screen_entry.dart';
 
 /// Papelera: el contenido marcado para borrar desde cualquier otra pantalla.
 ///
@@ -29,10 +30,18 @@ class DeletePage extends StatefulWidget {
   State<DeletePage> createState() => _DeletePageState();
 }
 
-class _DeletePageState extends State<DeletePage> {
+class _DeletePageState extends State<DeletePage>
+    with ScreenEntryTask<DeletePage> {
   @override
   void initState() {
     super.initState();
+    getIt<MediaBloc>().add(
+      const MediaScreenOpenedEvent(MediaListing.deleted),
+    );
+  }
+
+  @override
+  void onScreenEntered() {
     getIt<MediaBloc>().add(const LoadDeletedMediaEvent());
   }
 

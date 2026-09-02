@@ -22,6 +22,8 @@ import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:Fern/features/media/presentation/widgets/assign_creator_to_selection_dialog.dart';
+import 'package:Fern/core/navigation/screen_entry.dart';
 
 /// Todo el contenido definitivo de la base de datos: el que ya se ha revisado
 /// y guardado desde el visor. Lo pendiente de revisar vive en la pantalla de
@@ -43,7 +45,8 @@ class MediaPage extends StatefulWidget {
   State<MediaPage> createState() => _MediaPageState();
 }
 
-class _MediaPageState extends State<MediaPage> {
+class _MediaPageState extends State<MediaPage>
+    with ScreenEntryTask<MediaPage> {
   late final RecognitionHighlight _highlight = getIt<RecognitionHighlight>();
 
   /// Con qué evento se vuelve a leer lo que se está viendo.
@@ -92,15 +95,32 @@ class _MediaPageState extends State<MediaPage> {
     super.initState();
     _highlight.addListener(_onRecognized);
 
+    // Antes de la transición y no al cargar: lo que hubiera de otra pantalla se
+    // suelta ya, así que ésta entra con lo suyo (o con su hueco de carga) en vez
+    // de enseñando el contenido de la anterior mientras dura la animación.
+    getIt<MediaBloc>().add(
+      const MediaScreenOpenedEvent(MediaListing.library),
+    );
+  }
+
+  @override
+  void onScreenEntered() {
     // Una sola petición, siempre. Si se ha llegado pulsando una etiqueta del
     // menú, se busca por ella; si no, se repite lo que hubiera en marcha —se ha
     // escrito en el buscador desde otra pantalla— tal cual era.
     final filter = widget.initialFilter;
 
     getIt<MediaBloc>().add(
-      filter == null ? _reload : SearchSuggestionSelectedEvent(filter),
+      filter == null
+          // Al entrar, sólo si hace falta: con la biblioteca ya leída y sin
+          // nada que haya cambiado desde entonces, volver a leerla es el
+          // trabajo que se notaba al ir y venir entre pantallas.
+          ? (_hasSearch ? _reload : const LoadMediaLibraryEvent(ifStale: true))
+          : SearchSuggestionSelectedEvent(filter),
     );
   }
+
+  bool get _hasSearch => getIt<MediaBloc>().state.searchCriteria.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -360,6 +380,20 @@ class _SelectionActions extends StatelessWidget {
 
                 // --- Herramientas ------------------------------------------
                 const SizedBox(width: AppSpacing.s),
+                // Ponerle el mismo creador a toda la tanda. Va con las
+                // herramientas y no con lo que se marca: no es una marca, es
+                // rellenar un dato que faltaba en cien contenidos a la vez.
+                IconButton(
+                  tooltip: texts.assignCreatorSelectedTooltip,
+                  onPressed: () => showFernDialog<void, MediaBloc>(
+                    context: context,
+                    bloc: context.read<MediaBloc>(),
+                    builder: (_) => AssignCreatorToSelectionDialog(
+                      count: selectedIds.length,
+                    ),
+                  ),
+                  icon: const Icon(Symbols.person_edit),
+                ),
                 // Reconocer lo que esté seleccionado. Es el segundo de los
                 // cuatro puntos de entrada del D16, y pasa por el mismo sitio
                 // que los otros tres.

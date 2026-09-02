@@ -22,6 +22,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:Fern/core/navigation/screen_entry.dart';
 
 /// Gestión de creadores: a la derecha todos los creadores de la aplicación y, a
 /// la izquierda, el elegido.
@@ -37,7 +38,8 @@ class CreatorManagerPage extends StatefulWidget {
   State<CreatorManagerPage> createState() => _CreatorManagerPageState();
 }
 
-class _CreatorManagerPageState extends State<CreatorManagerPage> {
+class _CreatorManagerPageState extends State<CreatorManagerPage>
+    with ScreenEntryTask<CreatorManagerPage> {
   final _creatorsBloc = getIt<CreatorsBloc>();
 
   /// El creador elegido, por identificador y no por entidad: al guardarlo
@@ -48,11 +50,11 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
   void initState() {
     super.initState();
 
-    // Se releen siempre al entrar y no sólo la primera vez: mientras la pantalla
-    // no estaba puede haberse creado un creador desde cualquier otro sitio (el
-    // "+" del menú o el diálogo que se lo asigna a un contenido), y lo que hay
-    // en el bloc sería de antes.
-    _creatorsBloc.add(const LoadCreatorsEvent());
+    // Lo que hubiera de otra pantalla se suelta ya: aquí la rejilla es la del
+    // elemento que se elija, y hasta que se elija no hay nada que enseñar.
+    getIt<MediaBloc>().add(
+      const MediaScreenOpenedEvent(MediaListing.byCreator),
+    );
 
     // Los creadores que ya hubiera leídos se enseñan mientras llega la relectura,
     // y con ellos no va a llegar ningún estado nuevo que dispare la selección por
@@ -61,6 +63,15 @@ class _CreatorManagerPageState extends State<CreatorManagerPage> {
       if (!mounted) return;
       _syncSelection(_creatorsBloc.state);
     });
+  }
+
+  @override
+  void onScreenEntered() {
+    // Se releen siempre al entrar y no sólo la primera vez: mientras la pantalla
+    // no estaba puede haberse creado un creador desde cualquier otro sitio (el
+    // "+" del menú o el diálogo que se lo asigna a un contenido), y lo que hay
+    // en el bloc sería de antes.
+    _creatorsBloc.add(const LoadCreatorsEvent());
   }
 
   /// Deja elegido un creador que exista.

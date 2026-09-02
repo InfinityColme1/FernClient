@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
@@ -10,6 +12,10 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'package:Fern/features/media/domain/usecases/delete_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_source_urls_usecase.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/domain/usecases/get_creator_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_creator_tags_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/assign_creator_tags_dialog.dart';
 import 'package:Fern/features/media/domain/usecases/set_creator_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_creator_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
@@ -54,6 +60,8 @@ class _CreatorCardState extends State<CreatorCard> {
   final _updateCreator = getIt<UpdateCreatorUseCase>();
   final _deleteCreator = getIt<DeleteCreatorUseCase>();
   final _saveCreatorSourceUrls = getIt<SaveCreatorSourceUrlsUseCase>();
+  final _saveCreatorTags = getIt<SaveCreatorTagsUseCase>();
+  final _getCreator = getIt<GetCreatorUseCase>();
   final _setCreatorNsfw = getIt<SetCreatorNsfwUseCase>();
 
   late final TextEditingController _nameController =
@@ -81,12 +89,51 @@ class _CreatorCardState extends State<CreatorCard> {
       FernLink(url, isNsfw: widget.creator.nsfwSourceUrls.contains(url)),
   ];
 
+  /// Las etiquetas que el creador trae consigo.
+  ///
+  /// Como las direcciones: se guardan desde su propio diálogo, así que aquí sólo
+  /// se llevan para saber con cuáles abrirlo y para que el botón sepa si ya hay
+  /// alguna.
+  ///
+  /// Se piden aparte porque la lista de creadores no las trae: cargarlas allí
+  /// sería una consulta por fila para pintar algo que la lista no enseña. Hasta
+  /// que llegan, el botón sale como si no hubiera ninguna —que es lo cierto
+  /// mientras no se sepa— y se corrige solo al llegar.
+  List<TagEntity> _tags = const [];
+
   /// El creador está marcado como contenido no apto.
   ///
   /// Se guarda al tocar el interruptor y no con el botón de guardar: es una
   /// decisión que hace desaparecer contenido, y dejarla a medias —marcada en
   /// pantalla, sin marcar en la base— sería la peor forma de contarlo.
   late bool _isNsfw = widget.creator.isNsfw;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadTags());
+  }
+
+  @override
+  void didUpdateWidget(CreatorCard old) {
+    super.didUpdateWidget(old);
+
+    // Al cambiar de fila la ficha es la misma con otro creador dentro: sin esto
+    // se quedaría enseñando las etiquetas del anterior.
+    if (old.creator.id != widget.creator.id) {
+      setState(() => _tags = const []);
+      unawaited(_loadTags());
+    }
+  }
+
+  Future<void> _loadTags() async {
+    final result = await _getCreator(params: widget.creator.id);
+
+    final creator = result.data;
+    if (result is! DataSuccess || creator == null || !mounted) return;
+
+    setState(() => _tags = creator.tags);
+  }
 
   /// El creador desconocido no se borra: es el respaldo al que van a parar los
   /// contenidos cuando se borra otro, así que sin él no habría dónde dejarlos.
@@ -274,6 +321,7 @@ class _CreatorCardState extends State<CreatorCard> {
               children: [
                 _nsfwButton(texts),
                 _recognizeButton(texts),
+                _creatorTagsButton(texts),
                 _assignUrlsButton(texts),
               ],
             ),
@@ -356,6 +404,57 @@ class _CreatorCardState extends State<CreatorCard> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Abre el diálogo de las etiquetas que el creador trae consigo.
+  ///
+  /// Como el de las direcciones: el creador ya existe, así que lo que se
+  /// confirma se escribe en el momento y no espera al botón de guardar de la
+  /// ficha. Cerrarlo sin confirmar deja las etiquetas como estaban.
+  ///
+  /// **No reetiqueta nada de lo que ya hay.** Lo que se deja aquí vale para lo
+  /// siguiente que se le ponga este creador: relacionar una etiqueta con un
+  /// creador de cuatrocientos contenidos no puede etiquetar cuatrocientos
+  /// contenidos sin decir nada.
+  Future<void> _assignTags() async {
+    final tags = await showFernDialog<List<TagEntity>, MediaBloc>(
+      context: context,
+      builder: (_) => AssignCreatorTagsDialog(
+        tags: _tags,
+        name: widget.creator.name,
+      ),
+    );
+    if (tags == null || !mounted) return;
+
+    await _run(() async {
+      final result = await _saveCreatorTags(
+        params: SaveCreatorTagsParams(
+          creatorId: widget.creator.id,
+          tagIds: [for (final tag in tags) tag.id],
+        ),
+      );
+
+      final creator = result.data;
+      if (result is! DataSuccess || creator == null || !mounted) return;
+
+      setState(() => _tags = creator.tags);
+    });
+  }
+
+  /// El botón que las abre.
+  ///
+  /// Cambia de icono cuando ya hay alguna, como el de las direcciones: es la
+  /// única señal de que este creador etiqueta solo, porque sus etiquetas no
+  /// salen en el formulario.
+  Widget _creatorTagsButton(AppLocalizations texts) {
+    return IconButton(
+      icon: Icon(
+        _tags.isEmpty ? Symbols.new_label : Symbols.label,
+        size: AppSizes.iconCardAction,
+      ),
+      tooltip: texts.creatorTagsTooltip,
+      onPressed: _isBusy ? null : _assignTags,
     );
   }
 

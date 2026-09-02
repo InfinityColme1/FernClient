@@ -6,11 +6,49 @@ import 'package:Fern/features/media/domain/entities/media/media_summary_entity.d
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
+import 'package:Fern/core/utils/same_instance.dart';
 import 'package:equatable/equatable.dart';
 
 
+/// De qué pantalla es la rejilla que hay en el estado.
+///
+/// El bloc de contenido es **uno solo** y lo comparten seis pantallas, así que
+/// su lista sobrevive al cambio de pantalla. Sin decir de quién es, la
+/// biblioteca se abría enseñando lo que hubiera dejado la importación, y la
+/// pantalla de gestión lo que hubiera dejado la biblioteca: contenido de otro
+/// sitio, con la cabecera y los botones de éste.
+///
+/// Con esto, cada pantalla dice al abrirse cuál es la suya, y lo que no es suyo
+/// no se pinta.
+enum MediaListing {
+  /// Todavía no se ha abierto ninguna.
+  none,
+
+  /// La biblioteca, con o sin búsqueda: las dos son la misma pantalla.
+  library,
+
+  /// Lo que está esperando en la pantalla de importación.
+  scanned,
+
+  /// La papelera.
+  deleted,
+
+  /// Los favoritos.
+  favorites,
+
+  /// El contenido de una etiqueta: la rejilla de la pantalla de gestión de
+  /// etiquetas.
+  byTag,
+
+  /// El contenido de un creador, en su pantalla de gestión.
+  byCreator,
+}
+
 abstract class MediaStates extends Equatable {
   final List<MediaSummaryEntity> ? mediaList;
+
+  /// De qué pantalla es [mediaList]. Ver [MediaListing].
+  final MediaListing listing;
 
   final MediaEntity? currentMedia;
   final int? currentMediaIndex;
@@ -114,6 +152,7 @@ abstract class MediaStates extends Equatable {
   const MediaStates({
     this.currentMedia,
     this.mediaList,
+    this.listing = MediaListing.none,
     this.currentMediaIndex,
     this.showInfo = false,
     this.isModified = false,
@@ -210,6 +249,7 @@ abstract class MediaStates extends Equatable {
   MediaStates copyWith({
     MediaEntity ? currentMedia,
     List<MediaSummaryEntity> ? mediaList,
+    MediaListing ? listing,
     int ? currentMediaIndex,
     bool ? showInfo,
     bool ? isModified,
@@ -228,15 +268,30 @@ abstract class MediaStates extends Equatable {
 
   @override
   List<Object?> get props => [
-    mediaList,
+    // Las tres colecciones grandes se comparan **por identidad** y no por
+    // dentro.
+    //
+    // El bloc mira si el estado nuevo es igual al anterior antes de emitirlo, y
+    // con veinte mil contenidos eso era recorrer veinte mil entidades —cada una
+    // con sus doce campos— en **cada** cambio de estado: marcar una celda, pasar
+    // el ratón, abrir el panel. Ahí se iban los fotogramas.
+    //
+    // Comparar por identidad es correcto porque ninguna de las tres se toca por
+    // dentro: cada cambio construye una colección nueva (`copyWith` conserva la
+    // misma instancia de lo que no cambia, y quien la cambia la sustituye
+    // entera). Y si alguna vez se construyera una lista nueva con lo mismo
+    // dentro, lo que pasaría es una emisión de más —un repintado—, nunca una de
+    // menos.
+    SameInstance(mediaList),
+    listing,
     currentMedia,
     currentMediaIndex,
     showInfo,
     isModified,
     isNew,
-    selectedIds,
+    SameInstance(selectedIds),
     searchCriteria,
-    searchSections,
+    SameInstance(searchSections),
     searchFilters,
     sourceFilters,
     typeFilters,
@@ -258,6 +313,7 @@ class MediaLoading extends MediaStates {
     super.emptySource,
     super.emptyHint,
     super.mediaList,
+    super.listing,
     super.showInfo,
     super.isModified,
     super.isNew,
@@ -277,6 +333,7 @@ class MediaLoading extends MediaStates {
   MediaLoading copyWith({
     MediaEntity ? currentMedia,
     List<MediaSummaryEntity> ? mediaList,
+    MediaListing ? listing,
     int ? currentMediaIndex,
     bool ? showInfo,
     bool ? isModified,
@@ -294,6 +351,7 @@ class MediaLoading extends MediaStates {
   }) {
     return MediaLoading(
       mediaList: mediaList ?? this.mediaList,
+      listing: listing ?? this.listing,
       showInfo: showInfo ?? this.showInfo,
       isModified: isModified ?? this.isModified,
       isNew: isNew ?? this.isNew,
@@ -319,6 +377,7 @@ class DetailedMedia extends MediaStates {
 
   const DetailedMedia({
     super.mediaList,
+    super.listing,
     required this.currentMediaIndex,
     required this.currentMedia,
     super.showInfo,
@@ -340,6 +399,7 @@ class DetailedMedia extends MediaStates {
   MediaStates copyWith({
     MediaEntity ? currentMedia,
     List<MediaSummaryEntity> ? mediaList,
+    MediaListing ? listing,
     int ? currentMediaIndex,
     bool ? showInfo,
     bool ? isModified,
@@ -357,6 +417,7 @@ class DetailedMedia extends MediaStates {
   }) {
     return DetailedMedia(
         mediaList: mediaList ?? this.mediaList,
+        listing: listing ?? this.listing,
         currentMediaIndex: currentMediaIndex ?? this.currentMediaIndex,
         currentMedia: currentMedia ?? this.currentMedia,
         showInfo: showInfo ?? this.showInfo,

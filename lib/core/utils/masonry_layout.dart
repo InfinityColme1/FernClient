@@ -175,8 +175,9 @@ class MasonryLayout {
     // Y el índice por tramos, para poder preguntar qué hay a una altura sin
     // recorrer las mil trescientas.
     final buckets = math.max(1, (extent / bucketSize).ceil() + 1);
-    final firstAt = List<int>.filled(buckets, cells.length - 1);
+    final firstAt = List<int>.filled(buckets, 0);
     final lastAt = List<int>.filled(buckets, 0);
+    final touched = List<bool>.filled(buckets, false);
 
     for (var index = 0; index < cells.length; index++) {
       final cell = cells[index];
@@ -184,19 +185,32 @@ class MasonryLayout {
       final from = (cell.top / bucketSize).floor().clamp(0, buckets - 1);
       final to = (cell.bottom / bucketSize).floor().clamp(0, buckets - 1);
 
+      // Los índices llegan de menor a mayor, así que el primero que toca un
+      // tramo es el menor y el último que lo toca es el mayor: no hay nada que
+      // comparar.
       for (var bucket = from; bucket <= to; bucket++) {
-        if (index < firstAt[bucket]) firstAt[bucket] = index;
-        if (index > lastAt[bucket]) lastAt[bucket] = index;
+        if (!touched[bucket]) {
+          touched[bucket] = true;
+          firstAt[bucket] = index;
+        }
+
+        lastAt[bucket] = index;
       }
     }
 
-    // Un tramo por el que no pasa ninguna celda —no debería haberlo, pero el
-    // redondeo existe— hereda el de arriba, que es lo prudente.
     for (var bucket = 1; bucket < buckets; bucket++) {
-      if (firstAt[bucket] > lastAt[bucket]) {
-        firstAt[bucket] = firstAt[bucket - 1];
-        lastAt[bucket] = lastAt[bucket - 1];
-      }
+      // Un tramo por el que no pasa ninguna celda —el redondeo existe— hereda
+      // el de arriba, que es lo prudente.
+      if (!touched[bucket]) firstAt[bucket] = firstAt[bucket - 1];
+
+      // Y el mayor **nunca baja**. Esto no es «la celda de índice más alto que
+      // cruza este tramo» sino «la de índice más alto que ya ha empezado a esta
+      // altura», que es lo que la rejilla pregunta para saber hasta dónde
+      // construir. Sin arrastrarlo, una celda muy alta se queda ella sola con
+      // los tramos de abajo y las que empezaron antes y ya terminaron —que se
+      // siguen viendo más arriba de la misma pantalla— no se construían: con
+      // cuatro contenidos y uno alargado, la rejilla enseñaba **uno**.
+      if (lastAt[bucket] < lastAt[bucket - 1]) lastAt[bucket] = lastAt[bucket - 1];
     }
 
     return MasonryLayout._(

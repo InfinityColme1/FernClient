@@ -332,6 +332,25 @@ abstract class LocalMediaRepository {
   /// descubra por su cuenta.
   Future<DataState<int>> setCreatorNsfw(int creatorId, {required bool isNsfw});
 
+  /// Deja al creador con las etiquetas de [tagIds], ni mas ni menos.
+  ///
+  /// Son las que se le pondran al contenido al asignarle este creador. **No
+  /// toca lo que ya esta puesto**: dicen que se pone de aqui en adelante, no
+  /// reescriben la biblioteca.
+  Future<DataState<CreatorEntity>> saveCreatorTags(
+    int creatorId,
+    List<int> tagIds,
+  );
+
+  /// Le pone [creatorId] a todos los contenidos de [mediaIds].
+  ///
+  /// Devuelve a cuantos ha llegado a cambiarselo. Va por el mismo sitio que el
+  /// de uno solo, asi que las etiquetas del creador entran igual.
+  Future<DataState<int>> setMediaListCreator(
+    List<int> mediaIds,
+    int creatorId,
+  );
+
   Future<DataState<CreatorEntity>> saveCreatorSourceUrls(
     int creatorId,
     List<String> urls, {

@@ -174,11 +174,19 @@ class MediaRegistry {
     // distinguen sin ambigüedad**, y por eso el registro se escribe aquí a mano
     // en vez de pasar por `addTagsToMedia`.
     final byUrl = await tagsForSourceUrls(sourceUrls);
-    final automaticTags = await _tagHierarchy.withRelatives(byUrl);
+    // Y las que trae el creador, que es lo mismo dicho desde el otro lado: si
+    // se le ha puesto uno por su direccion, lo suyo entra con el.
+    final byCreator = await tagsForCreator(creator);
+
+    final automaticTags = await _tagHierarchy.withRelatives([
+      ...byUrl,
+      ...byCreator,
+    ]);
 
     final entries = _tagEntries(
       mediaId: id,
       byUrl: byUrl,
+      byCreator: byCreator,
       put: automaticTags,
       sourceTag: sourceTag,
       creator: creator,
@@ -226,26 +234,34 @@ class MediaRegistry {
   List<TagLogEntryEntity> _tagEntries({
     required int mediaId,
     required List<TagModel> byUrl,
+    required List<TagModel> byCreator,
     required List<TagModel> put,
     required TagModel? sourceTag,
     required CreatorModel creator,
   }) {
     final asked = {for (final tag in byUrl) tag.id};
+    final fromCreator = {for (final tag in byCreator) tag.id};
     final at = DateTime.now();
 
     return [
       for (final tag in put)
         TagLogEntryEntity(
           mediaId: mediaId,
-          reason: asked.contains(tag.id)
-              ? TagLogReason.sourceUrl
-              : TagLogReason.ancestor,
+          reason: switch (tag.id) {
+            final id when asked.contains(id) => TagLogReason.sourceUrl,
+            final id when fromCreator.contains(id) => TagLogReason.creator,
+            _ => TagLogReason.ancestor,
+          },
           tagId: tag.id,
           label: tag.name,
           // La dirección que casó no se guarda una por una: la etiqueta puede
           // tener varias y la que casó se sabe mirando la del contenido, que
           // está a un clic en el mismo panel.
-          detail: asked.contains(tag.id) ? null : byUrl.firstOrNull?.name,
+          detail: switch (tag.id) {
+            final id when asked.contains(id) => null,
+            final id when fromCreator.contains(id) => creator.name,
+            _ => byUrl.firstOrNull?.name,
+          },
           at: at,
         ),
       if (sourceTag != null)
@@ -283,6 +299,23 @@ class MediaRegistry {
       model.id = await _database.creatorModels.put(model);
     });
     return model;
+  }
+
+  /// Las etiquetas que trae el creador consigo.
+  ///
+  /// La otra mitad de [tagsForSourceUrls], dicha desde el creador: un artista
+  /// que solo dibuja una serie lleva su etiqueta puesta, y ponersela al
+  /// contenido cada vez a mano era saber de antemano cual iba a ser.
+  ///
+  /// El «desconocido» no trae nada: es el de reserva con el que nace todo lo
+  /// que llega sin saber de quien es, y etiquetar por el seria etiquetar por no
+  /// saber.
+  Future<List<TagModel>> tagsForCreator(CreatorModel creator) async {
+    if (creator.name == unknownCreator.name) return const [];
+
+    await creator.tags.load();
+
+    return creator.tags.toList();
   }
 
   /// Las etiquetas que el usuario ha vinculado con alguna de [urls].

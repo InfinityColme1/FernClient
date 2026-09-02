@@ -180,6 +180,8 @@ String _whyOf(AppLocalizations texts, TagLogEntryEntity entry) {
     TagLogReason.recognition => texts.tagLogRecognition,
     TagLogReason.fernie =>
       detail == null ? texts.tagLogFernie : texts.tagLogFernieOf(detail),
+    TagLogReason.creator =>
+      detail == null ? texts.tagLogCreator : texts.tagLogCreatorOf(detail),
     TagLogReason.unknown => texts.tagLogUnknown,
   };
 }

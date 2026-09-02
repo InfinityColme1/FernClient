@@ -259,6 +259,19 @@ class NsfwChildTagsToggledEvent extends SettingsEvents {
   List<Object?> get props => [marksChildren];
 }
 
+/// Enciende o apaga que una etiqueta marcada esconda el contenido que la lleva.
+///
+/// Apagado, lo que se esconde es la etiqueta y no el contenido: se sigue viendo,
+/// con sus demás etiquetas, y de la marcada no queda ni el nombre.
+class NsfwTagsHideMediaToggledEvent extends SettingsEvents {
+  final bool hidesMedia;
+
+  const NsfwTagsHideMediaToggledEvent(this.hidesMedia);
+
+  @override
+  List<Object?> get props => [hidesMedia];
+}
+
 class NsfwUnlockedViewChangedEvent extends SettingsEvents {
   final NsfwUnlockedView view;
 

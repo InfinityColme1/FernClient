@@ -4,6 +4,9 @@ import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/entities/media/media_entity.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
+import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
+import 'package:Fern/features/media/domain/entities/tag_entity.dart';
+import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
@@ -31,10 +34,41 @@ class ImportSourceChangedEvent extends MediaEvents {
   const ImportSourceChangedEvent(this.source);
 }
 
+/// Se acaba de abrir una pantalla, y esta es la rejilla que le toca.
+///
+/// **Se manda al abrirse, no al cargar.** El bloc es uno solo y lo comparten
+/// seis pantallas, asi que su lista sobrevive al cambio: sin esto, la
+/// biblioteca se abria enseñando lo que hubiera dejado la importacion, con la
+/// cabecera y los botones de la biblioteca. Contenido de otro sitio, y durante
+/// toda la transicion.
+///
+/// Abriendo la misma que ya estaba no se toca nada: volver del visor a la
+/// biblioteca no puede vaciarla.
+class MediaScreenOpenedEvent extends MediaEvents {
+  final MediaListing listing;
+
+  const MediaScreenOpenedEvent(this.listing);
+
+  @override
+  List<Object?> get props => [listing];
+}
+
 /// Carga el contenido definitivo de la base de datos: el de la pantalla de
 /// media, ya revisado y guardado.
+///
+/// Con [ifStale] sólo si hace falta: si la biblioteca que hay en el estado se
+/// leyó con la base tal y como está ahora, no se vuelve a leer. Lo pide la
+/// pantalla al abrirse, que es donde se notaba —ir a importar y volver releía
+/// entera una biblioteca que no había cambiado— y **sólo ahí**: quien manda
+/// releer a propósito (abrir el bloqueo, terminar un reconocimiento) tiene sus
+/// motivos y no pregunta.
 class LoadMediaLibraryEvent extends MediaEvents {
-  const LoadMediaLibraryEvent();
+  final bool ifStale;
+
+  const LoadMediaLibraryEvent({this.ifStale = false});
+
+  @override
+  List<Object?> get props => [ifStale];
 }
 
 /// Cambian las pastillas de la barra: se busca lo que las cumple **todas**.
@@ -253,10 +287,51 @@ class ReloadCurrentMediaEvent extends MediaEvents {
 ///
 /// **Sólo las etiquetas, a propósito.** Releer el contenido entero se llevaría
 /// por delante lo que el panel tenga sin guardar —una descripción a medio
-/// escribir, un creador recién elegido—, y recargar el listado (que es lo que
-/// hace [ReloadCurrentMediaEvent]) es mucho más de lo que hace falta.
+/// escribir—, y recargar el listado (que es lo que hace
+/// [ReloadCurrentMediaEvent]) es mucho más de lo que hace falta.
+///
+/// Y **se suma**, no se sustituye: lo que el panel lleve sin guardar no está en
+/// la base, así que sustituir con lo de la base lo borraba.
 class RefreshCurrentMediaTagsEvent extends MediaEvents {
   const RefreshCurrentMediaTagsEvent();
+}
+
+/// Le pone un creador al contenido que se esta mirando, con lo que el creador
+/// trae consigo.
+///
+/// **No lleva el contenido dentro, y ese es todo el motivo de que exista.** El
+/// dialogo mandaba el contenido entero tal y como estaba al abrirlo, asi que
+/// confirmar devolvia esa foto al panel y se llevaba por delante cualquier cosa
+/// que se hubiera tocado mientras. Aqui solo viaja lo que hay que sumar, y el
+/// bloc lo suma sobre lo que el panel tenga **en ese momento**.
+///
+/// [brings] son las etiquetas del creador con lo que ellas arrastran. Se suman:
+/// ponerle un creador a un contenido no le quita nada de lo que ya llevaba.
+class MediaCreatorAssignedEvent extends MediaEvents {
+  final CreatorEntity creator;
+  final List<TagEntity> brings;
+
+  const MediaCreatorAssignedEvent(this.creator, {this.brings = const []});
+
+  @override
+  List<Object?> get props => [creator, brings];
+}
+
+/// Le pone el mismo creador a toda la seleccion de la rejilla.
+///
+/// Es el trabajo que hacia imposible revisar una tanda: cien imagenes del mismo
+/// artista se abrian de una en una para escribir cien veces el mismo nombre.
+///
+/// **Pisa el que hubiera.** Quien marca cien contenidos y elige un creador esta
+/// diciendo de quien son; lo automatico, que si respeta lo que ya hay, va por
+/// otro camino.
+class SetSelectedMediaCreatorEvent extends MediaEvents {
+  final int creatorId;
+
+  const SetSelectedMediaCreatorEvent(this.creatorId);
+
+  @override
+  List<Object?> get props => [creatorId];
 }
 
 /// Carga el contenido marcado como favorito: el de la pantalla de favoritos.

@@ -124,6 +124,8 @@ import 'package:Fern/features/media/data/services/media_registry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:Fern/core/services/secret_storage.dart';
 import 'package:Fern/features/settings/domain/entities/app_settings_entity.dart';
+import 'package:Fern/core/utils/grid_layout_cache.dart';
+import 'package:Fern/features/media/data/services/library_revision.dart';
 import 'package:Fern/features/media/data/services/nsfw_index.dart';
 import 'package:Fern/features/nsfw/data/services/preferences_nsfw_storage.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
@@ -161,6 +163,9 @@ import 'package:Fern/features/media/domain/usecases/get_creators_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/get_media_by_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/remove_creator_from_media_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_source_urls_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/get_creator_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_creator_tags_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/set_media_list_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/update_creator_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_source_urls_usecase.dart';
@@ -423,6 +428,22 @@ Future<void> initializeDependencies() async {
             getIt<ImportRecognitionHook>().mediaArrived(mediaId),
       ));
 
+  // Lo que la rejilla deriva de una lista, guardado entre pantallas: las
+  // proporciones, el orden y el reparto en columnas.
+  getIt.registerLazySingleton<GridLayoutCache>(() => GridLayoutCache());
+
+  // Por qué versión va la biblioteca. Escucha a Isar, así que se registra con
+  // la base ya abierta y antes que quien pregunta.
+  getIt.registerLazySingleton<LibraryRevision>(
+    () => LibraryRevision(
+      database: getIt<Isar>(),
+      // Abrir y cerrar el bloqueo no escribe nada y cambia la biblioteca
+      // entera: sin esto, volver a ella después de cerrarlo devolvía la
+      // guardada, con el contenido escondido todavía dentro.
+      visibilityChanges: getIt<NsfwModeService>().changes,
+    ),
+  );
+
   // El bloqueo de contenido no apto. Las tres piezas van juntas y en este
   // orden: el índice sabe **qué** está bloqueado, el modo sabe **si** el
   // bloqueo está levantado, y lo que el repositorio pregunta es la suma de las
@@ -435,6 +456,11 @@ Future<void> initializeDependencies() async {
         // los ajustes y lo siguiente que se pinte ya sale como toca.
         marksChildren: () =>
             getIt<SettingsRepository>().getSettings().nsfwMarksChildTags,
+        hidesTaggedMedia: () =>
+            getIt<SettingsRepository>().getSettings().nsfwTagsHideMedia,
+        // Marcar una etiqueta o un creador esconde su contenido sin tocar una
+        // sola fila de contenido, así que Isar no se entera: se avisa aquí.
+        onRebuilt: () => getIt<LibraryRevision>().bump(),
       )
   );
 
@@ -730,6 +756,18 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<UpdateCreatorUseCase>(
     UpdateCreatorUseCase(getIt())
+  );
+
+  getIt.registerSingleton<GetCreatorUseCase>(
+    GetCreatorUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SaveCreatorTagsUseCase>(
+    SaveCreatorTagsUseCase(getIt())
+  );
+
+  getIt.registerSingleton<SetMediaListCreatorUseCase>(
+    SetMediaListCreatorUseCase(getIt())
   );
 
   getIt.registerSingleton<SaveCreatorSourceUrlsUseCase>(
@@ -1364,6 +1402,8 @@ Future<void> initializeDependencies() async {
         setMediaFavoriteUseCase: getIt(),
         setMediaListFavoriteUseCase: getIt(),
     setMediaNsfwUseCase: getIt(),
+    setMediaListCreatorUseCase: getIt(),
+    libraryRevision: getIt<LibraryRevision>(),
     rememberedSource: () => getIt<PreferencesService>().getLastImportSource(),
     rememberSource: (source) =>
         getIt<PreferencesService>().setLastImportSource(source),

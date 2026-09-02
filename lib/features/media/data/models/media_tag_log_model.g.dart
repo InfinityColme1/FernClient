@@ -170,6 +170,8 @@ const _MediaTagLogModelreasonEnumValueMap = {
   r'sibling': r'sibling',
   r'recognition': r'recognition',
   r'fernie': r'fernie',
+  r'creator': r'creator',
+  r'unknown': r'unknown',
 };
 const _MediaTagLogModelreasonValueEnumMap = {
   r'manual': TagLogReason.manual,
@@ -179,6 +181,8 @@ const _MediaTagLogModelreasonValueEnumMap = {
   r'sibling': TagLogReason.sibling,
   r'recognition': TagLogReason.recognition,
   r'fernie': TagLogReason.fernie,
+  r'creator': TagLogReason.creator,
+  r'unknown': TagLogReason.unknown,
 };
 
 Id _mediaTagLogModelGetId(MediaTagLogModel object) {

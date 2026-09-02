@@ -14,7 +14,9 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_creator_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
+import 'package:Fern/features/media/presentation/widgets/assign_creator_tags_dialog.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_events.dart';
@@ -196,6 +198,12 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   /// Se quedan aquí hasta que se confirma: todavía no existe, así que no hay a
   /// qué engancharlas. Se guardan con ello de una vez.
   List<FernLink> _sourceUrls = const [];
+
+  /// Las etiquetas que el creador va a traer consigo.
+  ///
+  /// Como las direcciones: se quedan aquí hasta que se confirma, porque todavía
+  /// no existe a quién engancharlas, y se guardan con él de una vez.
+  List<TagEntity> _creatorTags = const [];
 
   /// Hay una escritura en marcha: la de guardar o la de copiar el avatar
   /// elegido. El botón de confirmar pasa a ser el indicador de espera y no admite
@@ -402,6 +410,18 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         final creator = result.data;
         if (result is! DataSuccess || creator == null) return;
 
+        // Sus etiquetas, que van aparte: son una lista con su propio diálogo,
+        // igual que en la ficha. Después de crearlo, que es cuando ya hay a
+        // quién engancharlas.
+        if (_creatorTags.isNotEmpty) {
+          await getIt<SaveCreatorTagsUseCase>()(
+            params: SaveCreatorTagsParams(
+              creatorId: creator.id,
+              tagIds: [for (final tag in _creatorTags) tag.id],
+            ),
+          );
+        }
+
         // El creador nuevo tiene que salir en la pantalla de gestión sin tener
         // que reiniciar, igual que la etiqueta en el menú lateral.
         getIt<CreatorsBloc>().add(const LoadCreatorsEvent());
@@ -477,10 +497,16 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
               _assignUrlsButton(texts),
             ],
           ),
+        // Los mismos que su ficha de la pantalla de gestión, que son los que
+        // describen al creador: marcarlo, decir qué trae puesto y de dónde sale
+        // lo suyo. Falta el de reconocer, y no por olvido: reconoce **el
+        // contenido del creador**, y uno que se está creando todavía no tiene
+        // ninguno; sale en su ficha, que es donde ya lo tiene.
         CreateDialogType.creator => Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _nsfwToggle(texts),
+              _creatorTagsButton(texts),
               _assignUrlsButton(texts),
             ],
           ),
@@ -580,6 +606,39 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       tooltip: texts.assignUrlsTooltip,
       onPressed: _isBusy ? null : _assignUrls,
     );
+  }
+
+  /// Las etiquetas que el creador traerá consigo.
+  ///
+  /// Se marca cuando ya hay alguna, como el de las direcciones y por lo mismo:
+  /// es la única señal de que este creador va a etiquetar solo, porque sus
+  /// etiquetas no salen en el formulario.
+  Widget _creatorTagsButton(AppLocalizations texts) {
+    return IconButton(
+      icon: Icon(
+        _creatorTags.isEmpty ? Symbols.new_label : Symbols.label,
+        size: AppSizes.iconExtraLarge,
+      ),
+      tooltip: texts.creatorTagsTooltip,
+      onPressed: _isBusy ? null : _assignCreatorTags,
+    );
+  }
+
+  Future<void> _assignCreatorTags() async {
+    final tags = await showFernDialog<List<TagEntity>, TagsBloc>(
+      context: context,
+      builder: (_) => AssignCreatorTagsDialog(
+        tags: _creatorTags,
+        // Sin nombre todavía, el del propio diálogo: el panel dice de quién son
+        // estas etiquetas, y «» no dice nada.
+        name: _nameController.text.trim().isEmpty
+            ? widget.type.title(AppLocalizations.of(context))
+            : _nameController.text.trim(),
+      ),
+    );
+    if (tags == null || !mounted) return;
+
+    setState(() => _creatorTags = tags);
   }
 
   /// Qué pregunta va a responder el modelo.

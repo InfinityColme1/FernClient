@@ -69,6 +69,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<DuplicateScanPeriodChangedEvent>(onDuplicateScanPeriodChanged);
     on<DuplicateScanMovingToggledEvent>(onDuplicateScanMovingToggled);
     on<NsfwChildTagsToggledEvent>(onNsfwChildTagsToggled);
+    on<NsfwTagsHideMediaToggledEvent>(onNsfwTagsHideMediaToggled);
     on<NsfwUnlockedViewChangedEvent>(onNsfwUnlockedViewChanged);
     on<NsfwLockedViewChangedEvent>(onNsfwLockedViewChanged);
     on<DuplicateThresholdChangedEvent>(onDuplicateThresholdChanged);
@@ -367,6 +368,21 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) async {
     await _apply(
       state.settings.copyWith(nsfwMarksChildTags: event.marksChildren),
+      emit,
+    );
+
+    await _onNsfwScopeChanged?.call();
+  }
+
+  /// Por lo mismo que el anterior: cambia **qué** está escondido, no cómo se
+  /// pinta, así que el índice tiene que rehacerse antes de que nadie vuelva a
+  /// pintar.
+  Future<void> onNsfwTagsHideMediaToggled(
+    NsfwTagsHideMediaToggledEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    await _apply(
+      state.settings.copyWith(nsfwTagsHideMedia: event.hidesMedia),
       emit,
     );
 

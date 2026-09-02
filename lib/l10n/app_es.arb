@@ -270,7 +270,8 @@
   "tagDropped": "{count, plural, =1{Etiquetado con {tag}} other{{count} contenidos etiquetados con {tag}}}",
   "contextMenuTarget": "{count, plural, =1{Sobre este contenido} other{Sobre los {count} seleccionados}}",
   "tagsTitle": "Etiquetas",
-  "addTag": "Añadir etiqueta",
+  "addTags": "Añadir etiquetas",
+  "addFernies": "Añadir fernies",
 
   "noTagsYet": "Todavía no hay etiquetas",
   "creatorsTitle": "Creadores",
@@ -367,6 +368,18 @@
   "tagLogRecognition": "Aceptaste lo que propuso un modelo",
   "tagLogFernie": "Lo que enlaza un fernie marcado",
   "tagLogFernieOf": "Marcaste aquí a {fernie}",
+  "assignCreatorSelectedTooltip": "Poner creador a la selección",
+  "assignCreatorToSelectionHint": "{count, plural, =1{Se le pondrá a 1 contenido, encima del creador que tenga ahora.} other{Se les pondrá a {count} contenidos, encima del creador que tengan ahora.}}",
+  "@assignCreatorToSelectionHint": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "creatorTagsTooltip": "Etiquetas de este creador",
+  "creatorTagsHint": "Lo que se le ponga a un contenido junto con este creador. No toca lo que ya está etiquetado: vale de aquí en adelante.",
+  "tagLogCreator": "La trae su creador",
+  "tagLogCreatorOf": "La trae {name}",
+  "@tagLogCreatorOf": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "tagLogUnknown": "No consta",
   "actionTagLog": "De dónde sale esto",
 
@@ -931,7 +944,6 @@
   "newFernieTitle": "Nuevo fernie",
   "fernieNameLabel": "Nombre del fernie",
   "ferniesTitle": "Fernies",
-  "addFernie": "Añadir fernie",
   "noFerniesYet": "Aún no hay fernies",
   "fernieNoRegions": "Este fernie aún no tiene regiones",
   "fernieNoneHere": "Aún no hay fernies marcados aquí",
@@ -1139,6 +1151,8 @@
   "nsfwLockedViewBlurred": "Aparece tapado",
   "nsfwChildTagsLabel": "Marcar una etiqueta marca también las que cuelgan de ella",
   "nsfwChildTagsDescription": "Una etiqueta que cuelga de una marcada esconde también su contenido, sin tener que marcarla aparte. Apagado, cada etiqueta responde sólo por lo suyo. No se reescribe nada en ningún caso: enciéndelo y apágalo las veces que quieras.",
+  "nsfwTagsHideMediaLabel": "Una etiqueta marcada esconde también su contenido",
+  "nsfwTagsHideMediaDescription": "Encendido, basta con que un contenido lleve una etiqueta marcada para que desaparezca entero. Apagado, la marca se queda en la etiqueta: el contenido se sigue viendo con sus demás etiquetas, y de la marcada no queda ni el nombre. Sirve para una etiqueta que dice algo delicado sobre contenido que no lo es. Lo marcado a mano y lo de un creador marcado se esconden igual en los dos casos.",
   "nsfwLockedViewNote": "Tapado, el contenido marcado sigue ocupando su sitio en la rejilla, borroso y con un candado; al tocarlo se pide la contraseña. Es más cómodo, pero deja ver que ahí hay algo: cuánto hay y de qué forma es.",
   "nsfwSectionTitle": "Filtro de contenido NSFW",
   "nsfwSectionNote": "Lo que marques como NSFW se esconde: con el filtro puesto no aparece en ninguna parte, ni en la papelera ni en las búsquedas.",

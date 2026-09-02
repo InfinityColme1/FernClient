@@ -193,6 +193,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
           _preferences.getBool(duplicateScanMovingPreferenceKey) ?? true,
       nsfwMarksChildTags:
           _preferences.getBool(nsfwChildTagsPreferenceKey) ?? true,
+      nsfwTagsHideMedia:
+          _preferences.getBool(nsfwTagsHideMediaPreferenceKey) ?? true,
       nsfwUnlockedView: NsfwUnlockedView.fromId(
         _preferences.getString(nsfwUnlockedViewPreferenceKey),
       ),
@@ -329,6 +331,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setBool(
       nsfwChildTagsPreferenceKey,
       settings.nsfwMarksChildTags,
+    );
+    await _preferences.setBool(
+      nsfwTagsHideMediaPreferenceKey,
+      settings.nsfwTagsHideMedia,
     );
     await _preferences.setString(
       nsfwUnlockedViewPreferenceKey,

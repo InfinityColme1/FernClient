@@ -1326,11 +1326,17 @@ abstract class AppLocalizations {
   /// **'Tags'**
   String get tagsTitle;
 
-  /// No description provided for @addTag.
+  /// No description provided for @addTags.
   ///
   /// In en, this message translates to:
-  /// **'Add Tag'**
-  String get addTag;
+  /// **'Add tags'**
+  String get addTags;
+
+  /// No description provided for @addFernies.
+  ///
+  /// In en, this message translates to:
+  /// **'Add fernies'**
+  String get addFernies;
 
   /// No description provided for @noTagsYet.
   ///
@@ -1847,6 +1853,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You marked {fernie} here'**
   String tagLogFernieOf(String fernie);
+
+  /// No description provided for @assignCreatorSelectedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Set creator on the selection'**
+  String get assignCreatorSelectedTooltip;
+
+  /// No description provided for @assignCreatorToSelectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{It will be set on 1 item, over whatever creator it has now.} other{It will be set on {count} items, over whatever creator they have now.}}'**
+  String assignCreatorToSelectionHint(int count);
+
+  /// No description provided for @creatorTagsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags of this creator'**
+  String get creatorTagsTooltip;
+
+  /// No description provided for @creatorTagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What gets put on content along with this creator. It does not touch what is already tagged: it applies from now on.'**
+  String get creatorTagsHint;
+
+  /// No description provided for @tagLogCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'Comes with its creator'**
+  String get tagLogCreator;
+
+  /// No description provided for @tagLogCreatorOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Comes with {name}'**
+  String tagLogCreatorOf(String name);
 
   /// No description provided for @tagLogUnknown.
   ///
@@ -4386,12 +4428,6 @@ abstract class AppLocalizations {
   /// **'Fernies'**
   String get ferniesTitle;
 
-  /// No description provided for @addFernie.
-  ///
-  /// In en, this message translates to:
-  /// **'Add fernie'**
-  String get addFernie;
-
   /// No description provided for @noFerniesYet.
   ///
   /// In en, this message translates to:
@@ -5501,6 +5537,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A tag that hangs from a marked one hides its content too, without having to mark it as well. Turned off, each tag answers only for its own. Nothing is rewritten either way: turn it on and off as you like.'**
   String get nsfwChildTagsDescription;
+
+  /// No description provided for @nsfwTagsHideMediaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'A marked tag hides its content too'**
+  String get nsfwTagsHideMediaLabel;
+
+  /// No description provided for @nsfwTagsHideMediaDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Turned on, a single marked tag is enough for the content to disappear entirely. Turned off, the mark stays on the tag: the content is still shown with its other tags, and not even the name of the marked one is left. It is for a tag that says something sensitive about content that isn\'t. Content marked by hand and content of a marked creator are hidden either way.'**
+  String get nsfwTagsHideMediaDescription;
 
   /// No description provided for @nsfwLockedViewNote.
   ///

@@ -807,7 +807,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagsTitle => 'Tags';
 
   @override
-  String get addTag => 'Add Tag';
+  String get addTags => 'Add tags';
+
+  @override
+  String get addFernies => 'Add fernies';
 
   @override
   String get noTagsYet => 'No tags yet';
@@ -1092,6 +1095,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String tagLogFernieOf(String fernie) {
     return 'You marked $fernie here';
+  }
+
+  @override
+  String get assignCreatorSelectedTooltip => 'Set creator on the selection';
+
+  @override
+  String assignCreatorToSelectionHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'It will be set on $count items, over whatever creator they have now.',
+      one: 'It will be set on 1 item, over whatever creator it has now.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorTagsTooltip => 'Tags of this creator';
+
+  @override
+  String get creatorTagsHint =>
+      'What gets put on content along with this creator. It does not touch what is already tagged: it applies from now on.';
+
+  @override
+  String get tagLogCreator => 'Comes with its creator';
+
+  @override
+  String tagLogCreatorOf(String name) {
+    return 'Comes with $name';
   }
 
   @override
@@ -2690,9 +2723,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ferniesTitle => 'Fernies';
 
   @override
-  String get addFernie => 'Add fernie';
-
-  @override
   String get noFerniesYet => 'No fernies yet';
 
   @override
@@ -3461,6 +3491,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nsfwChildTagsDescription =>
       'A tag that hangs from a marked one hides its content too, without having to mark it as well. Turned off, each tag answers only for its own. Nothing is rewritten either way: turn it on and off as you like.';
+
+  @override
+  String get nsfwTagsHideMediaLabel => 'A marked tag hides its content too';
+
+  @override
+  String get nsfwTagsHideMediaDescription =>
+      'Turned on, a single marked tag is enough for the content to disappear entirely. Turned off, the mark stays on the tag: the content is still shown with its other tags, and not even the name of the marked one is left. It is for a tag that says something sensitive about content that isn\'t. Content marked by hand and content of a marked creator are hidden either way.';
 
   @override
   String get nsfwLockedViewNote =>
