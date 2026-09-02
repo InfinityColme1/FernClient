@@ -12,6 +12,41 @@ detrás del reconocimiento de imagen: se entrena y se infiere en local.
 
 ---
 
+## Novedades de la 2.2.3
+
+Los creadores etiquetan solos, se les puede poner uno a toda una selección, y
+cambiar de pantalla deja de trabarse por muchos contenidos que haya.
+
+- **Un creador puede traer etiquetas consigo.** Se le relacionan desde su ficha
+  —o al crearlo— y, a partir de ahí, ponérselo a un contenido se las pone
+  también, con lo que ellas arrastran. Es la otra mitad de las direcciones
+  vinculadas: aquéllas dicen de dónde sale lo suyo, éstas qué lleva puesto lo
+  suyo. Entran por donde sea que se ponga el creador: a mano, en tanda, por un
+  fernie o al importar.
+- **Y se le puede poner un creador a toda una selección**, desde la biblioteca y
+  desde la pantalla de importación. Cien imágenes del mismo artista se abrían de
+  una en una para escribir cien veces el mismo nombre.
+- **Una etiqueta marcada puede esconderse sin esconder su contenido.** Ajuste
+  nuevo en el filtro NSFW, encendido de fábrica: apagado, la marca se queda en la
+  etiqueta y el contenido sigue a la vista con sus demás etiquetas. Sirve para
+  una etiqueta que dice algo delicado sobre contenido que no lo es.
+- **Cambiar de pantalla es fluido.** La lectura ya no cae encima de la
+  transición, la biblioteca no se relee si nada ha cambiado, y lo que sí hay que
+  leer se lee por tandas. Además, cada pantalla enseña lo suyo: antes la
+  biblioteca podía abrirse con el contenido de la importación dentro.
+- **La rejilla enseñaba uno de cada cuatro** cuando había un contenido mucho más
+  alto que los demás. Arreglado.
+- **Marcar una región ya no vacía el panel.** Se rellenaba el creador y las
+  etiquetas, se marcaba un fernie, y todo eso desaparecía.
+- **El panel de información no se desplaza entero**: las etiquetas y los fernies
+  se recorren por dentro de su sección, cada uno con su botón de añadir siempre a
+  la vista.
+- Enter valida en los diálogos del bloqueo, ordenar los resultados de una
+  búsqueda, descartar desde el visor pasa al siguiente y las etiquetas hermanas
+  al ponerlas a mano — todo eso ya venía de la 2.2.2.
+
+---
+
 ## Novedades de la 2.2.2
 
 Un arreglo de etiquetado, dos mejoras pedidas y tres correcciones de trato.
