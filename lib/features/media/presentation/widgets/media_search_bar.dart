@@ -18,9 +18,13 @@ import 'package:Fern/features/media/domain/services/search_criteria.dart';
 import 'package:Fern/features/media/presentation/widgets/search_criteria_field.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
+import 'package:Fern/features/media/presentation/widgets/search_scope_menu.dart';
+import 'package:Fern/features/media/data/services/search_suggestion_pool.dart';
+import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
 import 'package:Fern/features/nsfw/domain/services/nsfw_visibility.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/core/navigation/escape_back.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -68,6 +72,12 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
 
   List<SearchSuggestionEntity> _suggestions = const [];
 
+  /// Las sugerencias de los tipos que están encendidos junto a la barra.
+  List<SearchSuggestionEntity> get _visibleSuggestions => [
+        for (final suggestion in _suggestions)
+          if (_bloc.state.searchFilters.contains(suggestion.type)) suggestion,
+      ];
+
   /// Se están buscando las sugerencias. Mientras dure, el buscador enseña el
   /// indicador de espera en el sitio del botón de borrar.
   bool _isSuggesting = false;
@@ -87,10 +97,48 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
   /// Mientras el bloqueo se abra y se cierre, hay que revisar las pastillas.
   StreamSubscription<bool>? _nsfwChanges;
 
+  /// Lo que se ofrece sin nada escrito. Ver [SearchSuggestionPool].
+  SearchSuggestionPool? get _pool => getIt.isRegistered<SearchSuggestionPool>()
+      ? getIt<SearchSuggestionPool>()
+      : null;
+
+  /// Lo que agrupa el campo y su desplegable: pulsar fuera de los dos cierra
+  /// el desplegable, pulsar dentro de cualquiera no.
+  final Object _tapGroup = Object();
+
+  /// Si lo que está en el desplegable es lo sorteado (sin nada escrito) y no
+  /// sugerencias de lo escrito.
+  bool _isShowingPool = false;
+
+  /// Al entrar en la barra sin nada escrito, lo sorteado.
+  void _onFocusChanged() {
+    if (_focusNode.hasFocus && _controller.pendingText.isEmpty) _showPool();
+  }
+
+  void _showPool() {
+    final pool = _pool;
+    if (pool == null || !_focusNode.hasFocus) return;
+
+    setState(() {
+      _isShowingPool = true;
+      _suggestions = pool.suggestions;
+      _isSuggesting = false;
+    });
+    _refreshOverlay();
+  }
+
+  /// Se ha sorteado (al abrir, tarda un poco) o se ha fijado algo: si el
+  /// desplegable está enseñando lo sorteado, se pone al día.
+  void _onPoolChanged() {
+    if (_isShowingPool) _showPool();
+  }
+
   @override
   void initState() {
     super.initState();
     _adopt(_bloc.state.searchCriteria);
+    _focusNode.addListener(_onFocusChanged);
+    _pool?.addListener(_onPoolChanged);
 
     if (getIt.isRegistered<NsfwModeService>()) {
       _nsfwChanges =
@@ -177,15 +225,14 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
       // Quedan las pastillas: borrar lo escrito no deshace la búsqueda entera,
       // sólo el trozo que todavía no se había confirmado.
       _suggestionsDebouncer.cancel();
-      _hideOverlay();
-      setState(() {
-        _suggestions = const [];
-        _isSuggesting = false;
-      });
       _searchDebouncer.run(_search);
+
+      // Sin nada escrito, lo sorteado: igual que al entrar en la barra.
+      _showPool();
       return;
     }
 
+    _isShowingPool = false;
     _suggestionsDebouncer.run(() => _loadSuggestions(term));
     _searchDebouncer.run(_search);
   }
@@ -260,6 +307,10 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
     _suggestionsDebouncer.cancel();
     _searchDebouncer.cancel();
     _hideOverlay();
+    _isShowingPool = false;
+
+    // Lo buscado tiene más papeletas la próxima vez que se sortee.
+    unawaited(_pool?.recordSearch(suggestion));
 
     _addChip(SearchCriterionEntity.of(suggestion));
   }
@@ -324,7 +375,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
   }
 
   void _refreshOverlay() {
-    if (_suggestions.isEmpty) {
+    if (_visibleSuggestions.isEmpty) {
       _hideOverlay();
       return;
     }
@@ -338,12 +389,20 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
     final size = renderBox.size;
 
     return OverlayEntry(
-      builder: (context) => Positioned(
+      // Escape cierra las sugerencias antes que nada de lo de debajo.
+      builder: (context) => EscapeDismiss(
+        onEscape: () {
+          _hideOverlay();
+          return true;
+        },
+        child: Positioned(
         width: size.width,
         child: CompositedTransformFollower(
           link: _layerLink,
           showWhenUnlinked: false,
           offset: Offset(0.0, size.height + AppSpacing.xs),
+          child: TapRegion(
+          groupId: _tapGroup,
           child: Material(
             elevation: 0.0,
             color: Colors.transparent,
@@ -353,26 +412,42 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                 border: Border.all(color: context.colors.lightgray),
               ),
+              // Cuatro a la vez y el resto desplazándose: una lista que crece
+              // hasta media pantalla tapa la rejilla que se está buscando.
               constraints: const BoxConstraints(
-                maxHeight: mediaSearchSuggestionsMaxHeight,
+                maxHeight: mediaSearchSuggestionsVisible *
+                    SearchResultRow.suggestionHeight,
               ),
               child: ListView(
                 padding: EdgeInsets.zero,
                 shrinkWrap: true,
+                itemExtent: SearchResultRow.suggestionHeight,
                 children: [
-                  for (final suggestion in _suggestions)
+                  for (final suggestion in _visibleSuggestions)
                     SearchResultRow.suggestion(
                       label: suggestion.label,
                       imagePath: suggestion.imagePath,
                       type: suggestion.type,
                       isNsfw: suggestion.isNsfw,
                       onTap: () => _onSuggestionSelected(suggestion),
+                      // Fijar para que salga siempre arriba al entrar en la
+                      // barra. Sólo etiquetas y creadores.
+                      isPinned: _pool?.isPinned(suggestion) ?? false,
+                      onPinToggled: _pool == null ||
+                              suggestion.type == SearchResultType.media
+                          ? null
+                          : () async {
+                              await _pool!.togglePin(suggestion);
+                              _overlayEntry?.markNeedsBuild();
+                            },
                     ),
                 ],
               ),
             ),
           ),
+          ),
         ),
+      ),
       ),
     );
   }
@@ -384,6 +459,8 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
     _suggestionsDebouncer.dispose();
     _searchDebouncer.dispose();
     _controller.dispose();
+    _pool?.removeListener(_onPoolChanged);
+    _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
     super.dispose();
   }
@@ -399,12 +476,37 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
       // escribiendo en ese momento.
       listenWhen: (_, current) => current.searchCriteria != _criteria,
       listener: (_, current) => setState(() => _adopt(current.searchCriteria)),
-      child: _bar(context, hasSomething: hasSomething),
+      child: BlocListener<MediaBloc, MediaStates>(
+        bloc: _bloc,
+        // Cambiar qué tipos se buscan cambia las sugerencias a la vista.
+        listenWhen: (previous, current) =>
+            previous.searchFilters != current.searchFilters,
+        listener: (_, _) => _refreshOverlay(),
+        child: _bar(context, hasSomething: hasSomething),
+      ),
     );
   }
 
   Widget _bar(BuildContext context, {required bool hasSomething}) {
-    return SizedBox(
+    // Qué tipos de resultado devuelve, pegado a la barra: es lo que recorta.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _field(context, hasSomething: hasSomething),
+        const SizedBox(width: AppSpacing.s),
+        SearchScopeMenu(bloc: _bloc),
+      ],
+    );
+  }
+
+  Widget _field(BuildContext context, {required bool hasSomething}) {
+    return TapRegion(
+      groupId: _tapGroup,
+      onTapOutside: (_) {
+        _isShowingPool = false;
+        _hideOverlay();
+      },
+      child: SizedBox(
       width: AppSizes.searchBarWidth,
       height: AppSizes.searchBarHeight,
       child: CompositedTransformTarget(
@@ -458,6 +560,7 @@ class _MediaSearchBarState extends State<MediaSearchBar> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

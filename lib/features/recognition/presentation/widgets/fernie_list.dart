@@ -1,6 +1,7 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
@@ -44,6 +45,54 @@ class FernieList extends StatefulWidget {
 class _FernieListState extends State<FernieList> {
   /// Lo escrito en el filtro. Vacío es la lista entera.
   String _query = '';
+
+  /// Lo que se ha desplazado la lista, para poder llevarla hasta el elegido.
+  final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _revealSelected();
+  }
+
+  @override
+  void didUpdateWidget(FernieList old) {
+    super.didUpdateWidget(old);
+
+    if (old.selectedFernieId != widget.selectedFernieId ||
+        old.fernies != widget.fernies) {
+      _revealSelected();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Lleva la lista hasta el elegido, si no se ve.
+  ///
+  /// Es lo que hace que llegar por uno concreto —pulsándolo en el panel del
+  /// visor— se note también aquí: con cincuenta fernies, el elegido quedaba
+  /// marcado muy abajo sin que se viera. Después del fotograma, que es cuando la
+  /// lista ya mide lo que va a medir.
+  void _revealSelected() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final fernies = _visible;
+      revealListRow(
+        _scroll,
+        index: fernies.indexWhere(
+          (fernie) => fernie.id == widget.selectedFernieId,
+        ),
+        count: fernies.length,
+        duration: context.motion(motionStandard),
+        curve: motionEnterCurve,
+      );
+    });
+  }
 
   /// Los que encajan con lo escrito.
   ///
@@ -92,6 +141,7 @@ class _FernieListState extends State<FernieList> {
         Expanded(
           // Las filas se pintan bajo demanda: los fernies pueden ser muchos.
           child: ListView.builder(
+            controller: _scroll,
             // Apartado por la derecha lo que ocupa la barra de desplazamiento,
             // como en las otras dos listas: sin ese carril la pastilla queda
             // pegada al borde de la ficha y parece parte de ella.

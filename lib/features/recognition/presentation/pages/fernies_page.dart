@@ -88,6 +88,21 @@ class _FerniesPageState extends State<FerniesPage> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant FerniesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Llegar otra vez por otro fernie tiene que elegirlo. Pasa al pulsar uno en
+    // el panel del visor con esta pantalla debajo: la ruta la reutiliza en vez
+    // de montarla de nuevo, y como la ruta sólo mandaba la primera vez, se
+    // quedaba en el que ya estuviera elegido.
+    final wanted = widget.selectedFernieId;
+    if (wanted == null || wanted == oldWidget.selectedFernieId) return;
+
+    _appliedRouteSelection = false;
+    _syncSelection(_ferniesBloc.state);
+  }
+
   /// Deja elegido un fernie que exista.
   ///
   /// Se llama al entrar y cada vez que cambia la lista: por defecto queda

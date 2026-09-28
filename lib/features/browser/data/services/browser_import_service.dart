@@ -116,7 +116,15 @@ class BrowserImportService {
           sourceTagName: settings.autoTagRemoteSource ? tagName : null,
           sourceUrls: [pageUrl],
         );
-        summary == null ? known++ : imported++;
+
+        if (summary == null) {
+          // Ya estaba: lo recién bajado no lo nombra ninguna fila, así que en la
+          // carpeta de descargas sólo ocupa.
+          known++;
+          await _registry.discardUnusedFile(path);
+        } else {
+          imported++;
+        }
       }
 
       onProgress?.call(++done, urls.length);

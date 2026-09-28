@@ -7,6 +7,7 @@ import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart'
 import 'package:Fern/features/media/domain/entities/search/media_search_section_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/suggestion_candidate.dart';
 import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
@@ -28,11 +29,17 @@ abstract class LocalMediaRepository {
   /// fichero nunca más sólo para saber cómo colocarlo.
   Future<DataState<int>> rememberSizes(Map<int, MediaSize> sizes);
   
-  /// Guarda el contenido y lo marca como definitivo.
+  /// Guarda el contenido y, con [confirm], lo marca como definitivo.
   ///
   /// Devuelve la ruta nueva del fichero si los ajustes de archivos han hecho
   /// que cambie de carpeta, y `null` si se ha quedado donde estaba.
-  Future<DataState> saveMedia(MediaEntity media);
+  ///
+  /// **Sin [confirm] sólo se guarda lo que el usuario ha escrito**: la
+  /// descripción, el creador y las etiquetas. Ni pasa a definitivo ni se mueve
+  /// el fichero de carpeta. Es lo que usa el guardado automático del panel, que
+  /// escribe conforme se trabaja: dar por revisado un contenido es una decisión
+  /// aparte, y escribir una etiqueta no puede tomarla por el usuario.
+  Future<DataState> saveMedia(MediaEntity media, {bool confirm});
 
   /// El contenido definitivo de la biblioteca, en el orden pedido.
   Future<DataState<List<MediaSummaryEntity>>> getMediaList({
@@ -420,6 +427,11 @@ abstract class LocalMediaRepository {
 
   /// Creadores cuyo nombre se parece a [query], como mucho [limit].
   Future<DataState<List<CreatorEntity>>> searchCreators(String query, {int limit});
+
+  /// Las etiquetas y los creadores que se pueden ver y tienen contenido, cada
+  /// uno con cuánto lleva y cuánto de eso está en favoritos. De aquí se sortean
+  /// las sugerencias de la barra general sin nada escrito.
+  Future<DataState<List<SuggestionCandidate>>> suggestionCandidates();
 
   /// Sugerencias del buscador principal: contenidos (por su descripción),
   /// etiquetas y creadores que se parecen a [query], como mucho [limit] en

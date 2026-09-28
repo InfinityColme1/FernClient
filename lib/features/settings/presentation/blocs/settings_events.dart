@@ -125,6 +125,16 @@ class RecognizeOnImportToggledEvent extends SettingsEvents {
   List<Object?> get props => [enabled];
 }
 
+/// Desde qué solapamiento se juntan las detecciones de lo mismo.
+class RegionMergeOverlapChangedEvent extends SettingsEvents {
+  final int value;
+
+  const RegionMergeOverlapChangedEvent(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
 /// Cuántas veces se guarda lo mismo detectado en un contenido.
 class MaxDetectionsChangedEvent extends SettingsEvents {
   final int value;

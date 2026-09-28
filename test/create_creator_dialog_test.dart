@@ -102,6 +102,14 @@ void main() {
       expect(find.byTooltip(texts.tagNsfwOnTooltip), findsNothing);
     });
 
+    // Los perfiles con la lista de la ficha, que deja marcarlos.
+    testWidgets('con sus perfiles en la lista de la ficha', (tester) async {
+      await pump(tester, isConfigured: true);
+
+      expect(find.text(texts.socialProfilesLabel), findsOneWidget);
+      expect(find.text(texts.noSocialProfiles), findsOneWidget);
+    });
+
     // Lo que no es de un creador se queda donde estaba: decir que es una
     // persona sólo tiene sentido en una etiqueta.
     testWidgets('pero no que sea una persona', (tester) async {
@@ -112,12 +120,23 @@ void main() {
   });
 
   group('y el de crear una etiqueta sigue igual', () {
-    testWidgets('con sus tres botones', (tester) async {
+    // Los mismos que su ficha: también las relaciones, madre y hermanas.
+    testWidgets('con los botones de su ficha', (tester) async {
       await pump(tester, isConfigured: true, isTag: true);
 
       expect(find.byTooltip(texts.tagIsPerson), findsOneWidget);
       expect(find.byTooltip(texts.tagNsfwOffTooltip), findsOneWidget);
+      expect(find.byTooltip(texts.tagRelationsTooltip), findsOneWidget);
       expect(find.byTooltip(texts.assignUrlsTooltip), findsOneWidget);
+    });
+
+    // Aquí un buscador de madre y no la lista de direcciones de la ficha: al
+    // crear una etiqueta lo que se sabe es dónde va en el árbol.
+    testWidgets('y el campo de la etiqueta madre', (tester) async {
+      await pump(tester, isConfigured: true, isTag: true);
+
+      expect(find.text(texts.parentTagLabel), findsOneWidget);
+      expect(find.text(texts.sourceUrlsLabel), findsNothing);
     });
   });
 }

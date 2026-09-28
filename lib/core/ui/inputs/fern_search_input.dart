@@ -1,9 +1,11 @@
 import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/display/fern_progress_indicator.dart';
 import 'package:Fern/core/ui/inputs/fern_outlined_field.dart';
 import 'package:flutter/foundation.dart';
+import 'package:Fern/core/navigation/escape_back.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -33,7 +35,12 @@ class FernSearchInput extends StatefulWidget {
   final Widget? Function(String suggestion)? trailingOf;
   final ValueChanged<String>? onSelected;
   final ValueChanged<String>? onChanged;
-  final double maxSuggestionsHeight;
+  /// Cuántas sugerencias se ven a la vez; el resto se desplaza.
+  ///
+  /// Eran 200 puntos de filas altas, y en los diálogos de asignar eso llegaba
+  /// hasta el botón de confirmar y lo tapaba: había que pulsar fuera para
+  /// quitarlas antes de poder confirmar.
+  final int maxVisibleSuggestions;
 
   /// Si es `false`, [suggestions] se muestra sin filtrar por el texto escrito.
   final bool filterSuggestions;
@@ -77,7 +84,7 @@ class FernSearchInput extends StatefulWidget {
     this.trailingOf,
     this.onSelected,
     this.onChanged,
-    this.maxSuggestionsHeight = 200,
+    this.maxVisibleSuggestions = searchInputVisibleSuggestions,
     this.filterSuggestions = true,
     this.isSearching = false,
     this.clearOnSelected = false,
@@ -167,7 +174,13 @@ class _FernSearchInputState extends State<FernSearchInput> {
     final size = renderBox.size;
 
     return OverlayEntry(
-      builder: (context) => Positioned(
+      // Escape cierra las sugerencias antes que nada de lo de debajo.
+      builder: (context) => EscapeDismiss(
+        onEscape: () {
+          _hideOverlay();
+          return true;
+        },
+        child: Positioned(
         width: size.width,
         child: CompositedTransformFollower(
           link: _layerLink,
@@ -189,12 +202,19 @@ class _FernSearchInputState extends State<FernSearchInput> {
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
                 border: Border.all(color: context.colors.lightgray),
               ),
-              constraints: BoxConstraints(maxHeight: widget.maxSuggestionsHeight),
+              constraints: BoxConstraints(
+                maxHeight:
+                    widget.maxVisibleSuggestions * searchInputSuggestionHeight,
+              ),
               child: ListView(
                 padding: EdgeInsets.zero,
                 shrinkWrap: true,
+                // Filas bajas y de alto fijo: así se sabe cuántas caben.
+                itemExtent: searchInputSuggestionHeight,
                 children: _visibleSuggestions
                     .map((suggestion) => ListTile(
+                          dense: true,
+                          visualDensity: VisualDensity.compact,
                           trailing: widget.trailingOf?.call(suggestion),
                           title: Text(
                             suggestion,
@@ -234,6 +254,7 @@ class _FernSearchInputState extends State<FernSearchInput> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

@@ -145,6 +145,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     final marker = untilLastImport
         ? _preferencesService.getLastImportMarker(ImportSource.reddit)
         : null;
+
+    // Lo que ya está dado de alta de esta fuente, para no volver a bajarlo.
+    final known = await _alreadyIn(ImportSource.reddit);
+
     String? newest;
     var imported = 0;
     var failed = 0;
@@ -165,6 +169,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           _blocked.noteSkipped();
           continue;
         }
+
+        // Y lo que ya está en la biblioteca. Se mira aquí por lo mismo: el
+        // identificador se conoce antes de bajar nada, así que un contenido que
+        // ya se tiene no cuesta ni una descarga.
+        if (known.contains(item.id)) continue;
 
         final path = await _downloader.download(
           url: item.url,
@@ -188,10 +197,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? redditSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) {
-          imported++;
-          yield DataSuccess(summary);
+        if (summary == null) {
+          // Ya estaba: el fichero recién bajado no es de nadie.
+          await _registry.discardUnusedFile(path);
+          continue;
         }
+
+        imported++;
+        known.add(item.id);
+        yield DataSuccess(summary);
       }
     } on Exception catch (e) {
       yield DataException(e);
@@ -246,6 +260,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
             collection: marker,
     };
 
+    // Lo que ya está dado de alta de esta fuente, para no volver a bajarlo.
+    final known = await _alreadyIn(ImportSource.pixiv);
+
     // Lo más nuevo que había en cada listado al empezar, que es lo que quedará
     // como marca cuando el recorrido termine.
     final newest = <String, String>{};
@@ -260,7 +277,16 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         // Antes de resolver la obra: una animación baja aquí dentro su paquete
         // de fotogramas para armar el GIF, y hacerlo para tirarlo después es el
         // viaje más caro de esta fuente.
-        skip: (remoteId, postId) => _skips(ImportSource.pixiv, remoteId),
+        //
+        // El nombre que llega es el de la obra entera, sin número de página, así
+        // que sólo coincide con lo guardado cuando la obra es de una sola pieza
+        // — que es justo el caso de las animaciones, el caro. Las de varias
+        // páginas se resuelven (una consulta pequeña) y se saltan página a
+        // página más abajo, antes de bajar ninguna imagen: una obra a la que le
+        // faltara una página se quedaría fuera para siempre si se descartara
+        // entera aquí.
+        skip: (remoteId, postId) =>
+            _skips(ImportSource.pixiv, remoteId) || known.contains(remoteId),
       )) {
         final collection = item.collection;
         if (collection != null) newest.putIfAbsent(collection, () => item.postId);
@@ -272,6 +298,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           _blocked.noteSkipped();
           continue;
         }
+
+        // Y lo que ya está en la biblioteca. Se mira aquí por lo mismo: el
+        // identificador se conoce antes de bajar nada, así que un contenido que
+        // ya se tiene no cuesta ni una descarga.
+        if (known.contains(item.id)) continue;
 
         final path = await _downloader.download(
           url: item.url,
@@ -298,10 +329,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? pixivSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) {
-          imported++;
-          yield DataSuccess(summary);
+        if (summary == null) {
+          // Ya estaba: el fichero recién bajado no es de nadie.
+          await _registry.discardUnusedFile(path);
+          continue;
         }
+
+        imported++;
+        known.add(item.id);
+        yield DataSuccess(summary);
       }
     } on Exception catch (e) {
       yield DataException(e);
@@ -343,6 +379,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         ? _preferencesService.getLastImportMarker(ImportSource.danbooru)
         : null;
 
+    // Lo que ya está dado de alta de esta fuente, para no volver a bajarlo.
+    final known = await _alreadyIn(ImportSource.danbooru);
+
     // Lo más nuevo que había al empezar, que es lo que quedará como marca
     // cuando el recorrido termine.
     String? newest;
@@ -362,6 +401,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           continue;
         }
 
+        // Y lo que ya está en la biblioteca. Se mira aquí por lo mismo: el
+        // identificador se conoce antes de bajar nada, así que un contenido que
+        // ya se tiene no cuesta ni una descarga.
+        if (known.contains(item.id)) continue;
+
         final path = await _downloader.download(
           url: item.url,
           name: item.id,
@@ -380,10 +424,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? danbooruSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) {
-          imported++;
-          yield DataSuccess(summary);
+        if (summary == null) {
+          // Ya estaba: el fichero recién bajado no es de nadie.
+          await _registry.discardUnusedFile(path);
+          continue;
         }
+
+        imported++;
+        known.add(item.id);
+        yield DataSuccess(summary);
       }
     } on Exception catch (e) {
       yield DataException(e);
@@ -424,6 +473,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         ? _preferencesService.getLastImportMarker(ImportSource.gelbooru)
         : null;
 
+    // Lo que ya está dado de alta de esta fuente, para no volver a bajarlo.
+    final known = await _alreadyIn(ImportSource.gelbooru);
+
     String? newest;
     var imported = 0;
     var failed = 0;
@@ -440,7 +492,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           // ha mirado, y dejarla atrás obligaría a recorrerlo otra vez.
           newest ??= postId;
 
-          return _skips(ImportSource.gelbooru, remoteId);
+          // Lo que ya está en la biblioteca se salta aquí igual que lo
+          // bloqueado: aquí cada publicación cuesta su propia petición, así que
+          // saltarla ahorra el viaje entero y no sólo la descarga.
+          return _skips(ImportSource.gelbooru, remoteId) ||
+              known.contains(remoteId);
         },
       )) {
         newest ??= item.postId;
@@ -452,6 +508,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           _blocked.noteSkipped();
           continue;
         }
+
+        // Y lo que ya está en la biblioteca. Se mira aquí por lo mismo: el
+        // identificador se conoce antes de bajar nada, así que un contenido que
+        // ya se tiene no cuesta ni una descarga.
+        if (known.contains(item.id)) continue;
 
         final path = await _downloader.download(
           url: item.url,
@@ -473,10 +534,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? gelbooruSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) {
-          imported++;
-          yield DataSuccess(summary);
+        if (summary == null) {
+          // Ya estaba: el fichero recién bajado no es de nadie.
+          await _registry.discardUnusedFile(path);
+          continue;
         }
+
+        imported++;
+        known.add(item.id);
+        yield DataSuccess(summary);
       }
     } on Exception catch (e) {
       yield DataException(e);
@@ -511,6 +577,16 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
 
     return true;
   }
+
+  /// Lo que ya está en la biblioteca de [source], por su identificador en ella.
+  ///
+  /// Se pide **una vez por recorrido** y se consulta pieza a pieza antes de
+  /// descargar. Es la misma pregunta que el registro contestaba al dar de alta,
+  /// pero contestada a tiempo: hasta ahora un contenido ya importado se bajaba
+  /// entero para descubrir al final que ya estaba, y en una fuente lenta como
+  /// Pixiv eso es casi toda la importación bajando lo que ya se tiene.
+  Future<Set<String>> _alreadyIn(ImportSource source) =>
+      _registry.registeredIdsOf(source);
 
   /// El fallo que hay que contar cuando se ha encontrado contenido y no ha
   /// entrado nada de nada, o `null` si no hay nada que contar.
@@ -554,6 +630,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         ? _preferencesService.getLastImportMarker(ImportSource.pinterest)
         : null;
 
+    // Lo que ya está dado de alta de esta fuente, para no volver a bajarlo.
+    final known = await _alreadyIn(ImportSource.pinterest);
+
     String? newest;
     var imported = 0;
     var failed = 0;
@@ -570,6 +649,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
           _blocked.noteSkipped();
           continue;
         }
+
+        // Y lo que ya está en la biblioteca. Se mira aquí por lo mismo: el
+        // identificador se conoce antes de bajar nada, así que un contenido que
+        // ya se tiene no cuesta ni una descarga.
+        if (known.contains(item.id)) continue;
 
         final path = await _downloader.download(
           url: item.url,
@@ -590,10 +674,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
               settings.autoTagRemoteSource ? pinterestSourceTagName : null,
           sourceUrls: item.sourceUrls,
         );
-        if (summary != null) {
-          imported++;
-          yield DataSuccess(summary);
+        if (summary == null) {
+          // Ya estaba: el fichero recién bajado no es de nadie.
+          await _registry.discardUnusedFile(path);
+          continue;
         }
+
+        imported++;
+        known.add(item.id);
+        yield DataSuccess(summary);
       }
     } on Exception catch (e) {
       yield DataException(e);
@@ -745,6 +834,9 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     final tagName = settings.autoTagRemoteSource ? pawchiveSourceTagName : null;
     final pool = DownloadPool();
 
+    // Lo que ya está dado de alta de esta fuente, para no volver a bajarlo.
+    final known = await _alreadyIn(ImportSource.pawchive);
+
     /// Se trae un fichero y lo da de alta. Es lo que corre en paralelo.
     Future<void> bring(
       String url,
@@ -758,6 +850,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         _blocked.noteSkipped();
         return;
       }
+
+      // Y lo que ya está en la biblioteca, por lo mismo: se sabe antes de bajar
+      // nada, así que un contenido que ya se tiene no cuesta ni una descarga.
+      if (known.contains(name)) return;
 
       final path = await _downloader.download(
         url: url,
@@ -778,7 +874,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         sourceUrls: sourceUrls,
       );
 
-      if (summary != null && !out.isClosed) {
+      if (summary == null) {
+        // Ya estaba: el fichero recién bajado no es de nadie.
+        await _registry.discardUnusedFile(path);
+        return;
+      }
+
+      known.add(name);
+
+      if (!out.isClosed) {
         imported++;
         out.add(DataSuccess(summary));
       }
@@ -863,6 +967,7 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
             description: post.title,
             tagName: tagName,
             sourceUrls: post.sourceUrls,
+            known: known,
             out: out,
           );
 
@@ -944,6 +1049,11 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
     required String description,
     required String? tagName,
     required List<String> sourceUrls,
+    /// Lo que ya está dado de alta de esta fuente. Se le añade lo que entre:
+    /// todo lo que sale de un mismo comprimido se guarda con el nombre del
+    /// comprimido, así que basta con que entre uno para que el siguiente
+    /// recorrido ni lo baje ni lo abra.
+    required Set<String> known,
     required StreamController<DataState<MediaSummaryEntity>> out,
   }) async {
     // Lo mismo que en `bring`, y aquí hace falta igual: un comprimido bloqueado
@@ -952,6 +1062,10 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
       _blocked.noteSkipped();
       return 0;
     }
+
+    // Y uno que ya se abrió tampoco: es la descarga más cara de esta fuente y
+    // encima hay que abrirla entera para descubrir que no traía nada nuevo.
+    if (known.contains(name)) return 0;
 
     final path = await _downloader.download(
       url: url,
@@ -980,7 +1094,15 @@ class RemoteMediaRepositoryImpl implements RemoteMediaRepository {
         sourceUrls: sourceUrls,
       );
 
-      if (summary != null && !out.isClosed) {
+      if (summary == null) {
+        // Un fichero del comprimido que ya estaba: no lo nombra ninguna fila y
+        // en la carpeta de descargas sólo ocupa.
+        await _registry.discardUnusedFile(file);
+        continue;
+      }
+
+      known.add(name);
+      if (!out.isClosed) {
         entered++;
         out.add(DataSuccess(summary));
       }

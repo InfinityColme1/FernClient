@@ -12,9 +12,11 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Cómo se ve la aplicación: con qué tema se pinta, qué colores lleva ese tema
-/// cuando es el del usuario, y si la lista de etiquetas del menú lateral enseña
-/// los avatares.
+/// Cómo se ve la aplicación: con qué tema se pinta y qué colores lleva ese tema
+/// cuando es el del usuario.
+///
+/// Lo del menú lateral se fue a «Biblioteca»: cambia cómo se trabaja con las
+/// etiquetas, no de qué color se pinta nada.
 class AppearanceSettingsSection extends StatelessWidget {
   const AppearanceSettingsSection({super.key});
 
@@ -119,45 +121,6 @@ class AppearanceSettingsSection extends StatelessWidget {
                     .add(CustomThemeColorChangedEvent(slot, null)),
               ),
 
-            const Divider(height: AppSpacing.xxl),
-
-            Text(texts.sidebarSectionTitle, style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.s),
-            Text(
-              texts.sidebarSectionNote,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.colors.gray),
-            ),
-            const SizedBox(height: AppSpacing.l),
-            FernCheckboxTile(
-              label: texts.showListAvatars,
-              description: texts.showListAvatarsDescription,
-              value: settings.showListAvatars,
-              onChanged: (value) => context
-                  .read<SettingsBloc>()
-                  .add(ShowListAvatarsToggledEvent(value)),
-            ),
-            // Va aquí porque aquí es donde se suelta: las etiquetas del menú
-            // lateral son el único sitio de la aplicación al que se puede
-            // arrastrar contenido.
-            FernCheckboxTile(
-              label: texts.keepsSelectionOnDrop,
-              description: texts.keepsSelectionOnDropDescription,
-              value: settings.keepsSelectionOnDrop,
-              onChanged: (value) => context
-                  .read<SettingsBloc>()
-                  .add(KeepsSelectionOnDropToggledEvent(value)),
-            ),
-            // Y aquí porque es otra cosa de las listas: cómo se comportan al
-            // buscar en ellas.
-            FernCheckboxTile(
-              label: texts.showsTagBranchOnFilter,
-              description: texts.showsTagBranchOnFilterDescription,
-              value: settings.showsTagBranchOnFilter,
-              onChanged: (value) => context
-                  .read<SettingsBloc>()
-                  .add(ShowsTagBranchOnFilterToggledEvent(value)),
-            ),
           ],
         );
       },

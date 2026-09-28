@@ -7,6 +7,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_events.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
 import 'package:Fern/features/settings/presentation/settings_status_labels.dart';
+import 'package:Fern/features/settings/presentation/widgets/leftover_cleanup_tile.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -103,6 +104,9 @@ class FilesSettingsSection extends StatelessWidget {
                         AvatarsDirectoryChangedEvent.new,
                       ),
             ),
+
+            _separator(),
+            const LeftoverCleanupTile(),
 
             _separator(),
             _title(context, texts.organizationTitle),

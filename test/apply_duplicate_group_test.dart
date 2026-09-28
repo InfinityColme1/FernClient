@@ -253,7 +253,7 @@ class _FakeMedia implements LocalMediaRepository {
   var brokenTrash = false;
 
   @override
-  Future<DataState> saveMedia(MediaEntity media) async {
+  Future<DataState> saveMedia(MediaEntity media, {bool confirm = true}) async {
     if (brokenSave) return DataException(Exception('roto'));
 
     order.add('save');

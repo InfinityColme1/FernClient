@@ -134,22 +134,6 @@ class _RemoteSourcesSettingsSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Arriba del todo y fuera de los apartados de cada plataforma: vale para
-        // todas, y por eso no cuelga de ninguna. Esta sí es de `BlocSelector`,
-        // que una casilla se repinta entera con cada cambio sin mover ningún
-        // cursor de sitio.
-        BlocSelector<SettingsBloc, SettingsState, bool>(
-          selector: (state) => state.settings.autoTagRemoteSource,
-          builder: (context, enabled) => FernCheckboxTile(
-            label: texts.autoTagRemoteSource,
-            description: texts.autoTagRemoteSourceDescription,
-            value: enabled,
-            onChanged: (value) => context
-                .read<SettingsBloc>()
-                .add(AutoTagRemoteSourceToggledEvent(value)),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
         _title(context, ImportSource.pixiv.label ?? ''),
         _description(context, texts.pixivGuideIntro),
         _guide(context, ImportSource.pixiv),

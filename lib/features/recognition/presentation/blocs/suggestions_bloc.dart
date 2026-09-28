@@ -100,18 +100,30 @@ class SuggestionsBloc extends Bloc<SuggestionsEvents, SuggestionsState> {
     ));
   }
 
-  /// Saca de la lista lo que se acaba de contestar y lo aparta como aceptado.
-  void _onAccepted(
+  /// Saca de la lista lo que se acaba de aceptar y lo da por contestado.
+  ///
+  /// **Baja en el acto, igual que rechazar.** Antes se apartaba y esperaba al
+  /// botón de guardar del panel, porque la etiqueta también esperaba: apuntar la
+  /// respuesta antes de que la etiqueta llegara a ponerse habría dejado la
+  /// sugerencia contestada sin efecto ninguno. Desde que el panel guarda solo,
+  /// la etiqueta baja al aceptarla, así que la respuesta tiene que bajar con
+  /// ella — si no, salir del visor dejaría el contenido etiquetado y la
+  /// sugerencia volviendo a preguntar lo mismo.
+  Future<void> _onAccepted(
     SuggestionsAcceptedEvent event,
     Emitter<SuggestionsState> emit,
-  ) {
+  ) async {
     if (event.suggestions.isEmpty) return;
 
     final ids = {for (final one in event.suggestions) one.id};
 
-    emit(state.copyWith(
-      suggestions: _without(ids),
-      accepted: [...state.accepted, ...event.suggestions],
+    // Se quita de la lista antes de escribir: el usuario acaba de pulsar y la
+    // fila tiene que irse en ese momento, no cuando la base de datos conteste.
+    emit(state.copyWith(suggestions: _without(ids)));
+
+    await _answer(params: AnswerSuggestionsParams(
+      ids: ids.toList(),
+      status: SuggestionStatus.accepted,
     ));
   }
 
@@ -157,6 +169,12 @@ class SuggestionsBloc extends Bloc<SuggestionsEvents, SuggestionsState> {
   }
 
   /// El contenido se ha guardado: lo aceptado pasa a estarlo de verdad.
+  /// Cierra lo que hubiera quedado apartado sin contestar.
+  ///
+  /// Desde que aceptar baja en el acto no queda nada aquí en lo normal, y esto
+  /// es una red: lo que se aceptara por un camino que sí aparta —o lo guardado
+  /// por una versión anterior de la aplicación— se contesta al confirmar el
+  /// contenido en vez de quedarse preguntando para siempre.
   Future<void> _onCommitted(
     SuggestionsCommittedEvent event,
     Emitter<SuggestionsState> emit,

@@ -66,6 +66,7 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     on<ProposedRegionsOfferedEvent>(_onProposedRegionsOffered);
     on<ProposedRegionAcceptedEvent>(_onProposedRegionAccepted);
     on<AllProposedRegionsAcceptedEvent>(_onAllProposedRegionsAccepted);
+    on<ProposedRegionDiscardedEvent>(_onProposedRegionDiscarded);
   }
 
   /// Lee de la base de datos lo que este contenido tiene marcado.
@@ -165,14 +166,36 @@ class FernieModeBloc extends Bloc<FernieModeEvents, FernieModeState> {
     if (index < 0 || index >= state.proposed.length) return;
 
     final one = state.proposed[index];
+    final fernie = event.fernie;
 
     emit(state.copyWith(
-      pending: [...state.pending, one.accepted],
+      pending: [
+        ...state.pending,
+        one.accepted.copyWith(rect: event.rect, fernieId: fernie?.id),
+      ],
       proposed: [
         for (final (position, each) in state.proposed.indexed)
           if (position != index) each,
       ],
+      // El fernie al que se ha cambiado entra en el catálogo del modo: sin él,
+      // el rectángulo recién aceptado saldría sin nombre.
+      fernies: fernie == null ? null : _merged(state.fernies, [fernie]),
       acceptedOffered: true,
+    ));
+  }
+
+  void _onProposedRegionDiscarded(
+    ProposedRegionDiscardedEvent event,
+    Emitter<FernieModeState> emit,
+  ) {
+    final index = event.index;
+    if (index < 0 || index >= state.proposed.length) return;
+
+    emit(state.copyWith(
+      proposed: [
+        for (final (position, each) in state.proposed.indexed)
+          if (position != index) each,
+      ],
     ));
   }
 

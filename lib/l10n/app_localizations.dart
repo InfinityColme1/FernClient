@@ -129,7 +129,7 @@ abstract class AppLocalizations {
   /// No description provided for @navMedia.
   ///
   /// In en, this message translates to:
-  /// **'Media'**
+  /// **'Library'**
   String get navMedia;
 
   /// No description provided for @navImport.
@@ -1320,6 +1320,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{On this item} other{On the {count} selected}}'**
   String contextMenuTarget(int count);
 
+  /// No description provided for @tagsNoneHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing tagged here yet'**
+  String get tagsNoneHere;
+
   /// No description provided for @tagsTitle.
   ///
   /// In en, this message translates to:
@@ -1644,6 +1650,66 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearance;
 
+  /// No description provided for @settingsLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get settingsLibrary;
+
+  /// No description provided for @settingsImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get settingsImport;
+
+  /// No description provided for @libraryGridSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get libraryGridSectionTitle;
+
+  /// No description provided for @libraryGridSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'How the library grid behaves when you come back to it.'**
+  String get libraryGridSectionNote;
+
+  /// No description provided for @importTaggingSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When bringing content in'**
+  String get importTaggingSectionTitle;
+
+  /// No description provided for @importTaggingSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What Fern does on its own with every item that comes in from a remote source.'**
+  String get importTaggingSectionNote;
+
+  /// No description provided for @filtersNsfw.
+  ///
+  /// In en, this message translates to:
+  /// **'NSFW content'**
+  String get filtersNsfw;
+
+  /// No description provided for @filterNsfwHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide NSFW'**
+  String get filterNsfwHide;
+
+  /// No description provided for @suggestionPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to top'**
+  String get suggestionPin;
+
+  /// No description provided for @suggestionUnpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get suggestionUnpin;
+
   /// No description provided for @settingsViewer.
   ///
   /// In en, this message translates to:
@@ -1683,7 +1749,7 @@ abstract class AppLocalizations {
   /// No description provided for @sidebarSectionNote.
   ///
   /// In en, this message translates to:
-  /// **'How the tag list of the side menu is drawn.'**
+  /// **'How the side menu is drawn and how its lists behave.'**
   String get sidebarSectionNote;
 
   /// No description provided for @showListAvatars.
@@ -4602,6 +4668,18 @@ abstract class AppLocalizations {
   /// **'Mark the whole frame'**
   String get fernieToolWholeFrame;
 
+  /// No description provided for @fernieProposedAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept this region'**
+  String get fernieProposedAccept;
+
+  /// No description provided for @fernieProposedDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this region'**
+  String get fernieProposedDiscard;
+
   /// No description provided for @fernieAcceptAllProposed.
   ///
   /// In en, this message translates to:
@@ -4788,23 +4866,149 @@ abstract class AppLocalizations {
   /// **'{percent}%'**
   String suggestionConfidence(int percent);
 
+  /// No description provided for @sectionBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the summary'**
+  String get sectionBack;
+
+  /// No description provided for @sectionFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter…'**
+  String get sectionFilterHint;
+
+  /// No description provided for @sectionSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sectionSort;
+
+  /// No description provided for @sortAlphabetical.
+  ///
+  /// In en, this message translates to:
+  /// **'By name'**
+  String get sortAlphabetical;
+
+  /// No description provided for @sortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Most recent first'**
+  String get sortRecent;
+
+  /// No description provided for @sortConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'By confidence'**
+  String get sortConfidence;
+
+  /// No description provided for @sectionSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected} other{{count} selected}}'**
+  String sectionSelected(int count);
+
+  /// No description provided for @sectionRemoveSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from this item'**
+  String get sectionRemoveSelected;
+
+  /// No description provided for @sectionOpenManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the management screen'**
+  String get sectionOpenManager;
+
+  /// No description provided for @sectionNothingMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches that'**
+  String get sectionNothingMatches;
+
+  /// No description provided for @suggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions · {count}'**
+  String suggestionsTitle(int count);
+
+  /// No description provided for @suggestionsKindCreators.
+  ///
+  /// In en, this message translates to:
+  /// **'Creators'**
+  String get suggestionsKindCreators;
+
+  /// No description provided for @suggestionsKindTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get suggestionsKindTags;
+
+  /// No description provided for @suggestionsKindUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked'**
+  String get suggestionsKindUnlinked;
+
+  /// No description provided for @suggestionsSubheader.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · {count}'**
+  String suggestionsSubheader(String kind, int count);
+
+  /// No description provided for @suggestionsSubheaderFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · {shown} of {total}'**
+  String suggestionsSubheaderFiltered(String kind, int shown, int total);
+
+  /// No description provided for @suggestionAcceptAllCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Accept the one} other{Accept all {count}}}'**
+  String suggestionAcceptAllCount(int count);
+
+  /// No description provided for @suggestionRejectAllCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Reject the one} other{Reject all {count}}}'**
+  String suggestionRejectAllCount(int count);
+
+  /// No description provided for @suggestionThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum confidence'**
+  String get suggestionThresholdLabel;
+
+  /// No description provided for @suggestionThresholdAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get suggestionThresholdAll;
+
+  /// No description provided for @suggestionThresholdFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'≥{percent}%'**
+  String suggestionThresholdFrom(int percent);
+
+  /// No description provided for @suggestionsBelowThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 below the bar} other{{count} below the bar}}'**
+  String suggestionsBelowThreshold(int count);
+
+  /// No description provided for @suggestionFromModelNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} — suggested by a model, not confirmed yet'**
+  String suggestionFromModelNamed(String label);
+
   /// No description provided for @suggestionInstances.
   ///
   /// In en, this message translates to:
   /// **'×{count}'**
   String suggestionInstances(int count);
-
-  /// No description provided for @suggestionFromModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggested by a model, not confirmed yet'**
-  String get suggestionFromModel;
-
-  /// No description provided for @suggestionCreatorTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggested creator'**
-  String get suggestionCreatorTitle;
 
   /// No description provided for @actionAccept.
   ///
@@ -4817,18 +5021,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reject'**
   String get actionReject;
-
-  /// No description provided for @suggestionAcceptAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Accept all'**
-  String get suggestionAcceptAll;
-
-  /// No description provided for @suggestionRejectAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Reject all'**
-  String get suggestionRejectAll;
 
   /// No description provided for @recognizeNoModelsInTree.
   ///
@@ -5105,6 +5297,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send recognised content back to importing'**
   String get returnRecognizedLabel;
+
+  /// No description provided for @regionMergeApplyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to every fernie'**
+  String get regionMergeApplyAll;
+
+  /// No description provided for @regionMergeAppliedAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Every fernie now uses this value'**
+  String get regionMergeAppliedAll;
+
+  /// No description provided for @regionMergeOverrideCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No fernie has its own} =1{1 fernie has its own} other{{count} fernies have their own}}'**
+  String regionMergeOverrideCount(int count);
+
+  /// No description provided for @fernieMergeOverlapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge its overlapping detections'**
+  String get fernieMergeOverlapLabel;
+
+  /// No description provided for @fernieMergeOverlapDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Like everyone · {value}'**
+  String fernieMergeOverlapDefault(String value);
+
+  /// No description provided for @regionMergeOverlapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge overlapping detections'**
+  String get regionMergeOverlapLabel;
+
+  /// No description provided for @regionMergeOverlapDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When a model sees the same thing several times in almost the same place — the face and the head of the same person — boxes overlapping at least this much are merged into a single region, at the average of all of them. It is measured against the smaller one. Boxes that are just next to each other stay as they are. This is the value for every fernie: each one can have its own on its card.'**
+  String get regionMergeOverlapDescription;
+
+  /// No description provided for @regionMergeOverlapPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlapping from {percent} %'**
+  String regionMergeOverlapPercent(int percent);
+
+  /// No description provided for @regionMergeOverlapInside.
+  ///
+  /// In en, this message translates to:
+  /// **'Only if one is inside the other'**
+  String get regionMergeOverlapInside;
 
   /// No description provided for @maxDetectionsLabel.
   ///

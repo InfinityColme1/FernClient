@@ -538,6 +538,15 @@ class UpdateMediaInfoEvent extends MediaEvents {
   const UpdateMediaInfoEvent(this.media);
 }
 
+/// Baja al disco lo que el panel tenga puesto sin guardar.
+///
+/// Lo pide el campo de la descripción, que es lo único que no se guarda en cada
+/// cambio: escribir un párrafo serían doscientas escrituras. Se manda al parar
+/// de escribir, al salir del campo y al cambiar de contenido.
+class PersistMediaEditsEvent extends MediaEvents {
+  const PersistMediaEditsEvent();
+}
+
 class UpdateMediaDescriptionEvent extends MediaEvents {
   final String description;
   const UpdateMediaDescriptionEvent(this.description);

@@ -25,6 +25,32 @@ class ViewedMedia extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Si el visor está abierto encima de la rejilla.
+  ///
+  /// Mientras lo está, la rejilla de debajo **se queda quieta**: no se rehace
+  /// con cada contenido que se pasa en el visor ni va siguiéndolo por debajo.
+  /// Hacerlo era trabajo para nada —no se ve— y, sobre todo, lo que se
+  /// amontonaba después de mirar cientos de contenidos seguidos: saltos,
+  /// celdas montadas y miniaturas pedidas para sitios por los que sólo se
+  /// pasaba. Al cerrar el visor se pone al día **una vez**, en lo último que
+  /// se miró.
+  bool get isViewerOpen => _isViewerOpen;
+  bool _isViewerOpen = false;
+
+  void viewerOpened() {
+    if (_isViewerOpen) return;
+
+    _isViewerOpen = true;
+    notifyListeners();
+  }
+
+  void viewerClosed() {
+    if (!_isViewerOpen) return;
+
+    _isViewerOpen = false;
+    notifyListeners();
+  }
+
   /// Ya no hay a dónde volver.
   ///
   /// Lo usa quien cambia de pantalla o de lista: el contenido número mil de la

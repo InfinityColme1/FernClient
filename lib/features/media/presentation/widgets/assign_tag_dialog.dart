@@ -10,6 +10,7 @@ import 'package:Fern/features/media/domain/usecases/get_tag_relatives_usecase.da
 import 'dart:async';
 
 import 'package:Fern/features/media/domain/services/recent_picks.dart';
+import 'package:Fern/features/media/presentation/widgets/media_info_avatar_strip.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/core/ui/display/nsfw_tag_mark.dart';
 import 'package:Fern/l10n/app_localizations.dart';
@@ -70,24 +71,24 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
 
   bool _isAlreadyAdded(TagEntity tag) => _tags.any((e) => e.id == tag.id);
 
+  /// Las que ya están elegidas, que no se sugieren: no se pueden añadir dos
+  /// veces.
+  Set<int> get _addedIds => {for (final tag in _tags) tag.id};
+
   Future<List<TagEntity>> _search(String query) async {
-    final result = await _searchTags(params: query);
+    // Quitadas **al buscar** y no después: quitándolas del resultado ya
+    // recortado, cada una asignada dejaba un hueco en las sugerencias.
+    final result = await _searchTags.excluding(query, _addedIds);
     if (result is! DataSuccess) return const [];
 
-    // Las que ya están elegidas no se sugieren: no se pueden añadir dos veces.
-    final tags = result.data ?? const <TagEntity>[];
-    return tags.where((tag) => !_isAlreadyAdded(tag)).toList();
+    return result.data ?? const <TagEntity>[];
   }
 
   /// Las últimas usadas, para ofrecerlas nada más pulsar el campo.
   ///
-  /// Sin las que este contenido ya lleva, por lo mismo que en la búsqueda:
-  /// ofrecer algo que no se puede añadir es ofrecer nada.
-  Future<List<TagEntity>> _recentTags() async {
-    final tags = await _recents.tags();
-
-    return tags.where((tag) => !_isAlreadyAdded(tag)).toList();
-  }
+  /// Sin las que este contenido ya lleva, y con su sitio ocupado por las
+  /// siguientes de la pila: al asignar una de las tres, siguen saliendo tres.
+  Future<List<TagEntity>> _recentTags() => _recents.tags(excluding: _addedIds);
 
   /// Elige una etiqueta y propone con ella las que estén por encima en la
   /// jerarquía: elegir "marinette" propone también "miraculous".
@@ -183,34 +184,37 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
     );
   }
 
-  /// Píldora de etiqueta igual que la del panel de información, con el botón de
-  /// quitarla; apagada mientras la etiqueta esté pendiente de confirmar.
-  Widget _tagChip(TagEntity tag) {
-    final isPending = _isPending(tag);
-
-    return FernChip(
-      label: tag.name,
-      backgroundColor: isPending ? context.colors.background : context.colors.white,
-      labelColor: isPending ? context.colors.unremarked : null,
-      onRemove: () => _removeTag(tag),
-      leading: FernAvatar(
-        imagePath: tag.picturePath,
-        fallbackIcon: Symbols.label,
-        radius: AppSizes.avatarSmall,
-        iconSize: AppSizes.iconCompact,
-        backgroundColor:
-            isPending ? context.colors.lightgray : context.colors.secondary,
-        iconColor: isPending ? context.colors.gray : context.colors.primary,
-      ),
-      trailing: tag.isUnderNsfw ? const NsfwTagMark() : null,
+  /// Las etiquetas que va a llevar, **como en el resumen del panel**: avatares
+  /// en filas que se desplazan de lado, con la cruz al pasar el ratón.
+  ///
+  /// Eran píldoras una debajo de otra, y en un diálogo sin apenas alto —donde
+  /// además se suelen poner muchas— había que desplazarse sin parar para ver
+  /// qué se estaba poniendo. En filas caen varias a la vista, y las que todavía
+  /// no están puestas van apagadas.
+  Widget _tagStrip() {
+    return MediaInfoAvatarStrip(
+      // Sin margen propio: el avatar de la primera cae en el borde del panel,
+      // debajo de la cabecera.
+      gutter: (mediaInfoAvatarItemWidth - AppSizes.avatarMedium * 2) / 2,
+      maxRows: assignTagDialogRows,
+      availableHeight: assignTagDialogListHeight,
+      items: [
+        for (final tag in _tags)
+          MediaInfoAvatarItem(
+            label: tag.name,
+            picturePath: tag.picturePath,
+            fallbackIcon: Symbols.label,
+            isPending: _isPending(tag),
+            isNsfw: tag.isUnderNsfw,
+            onRemove: () => _removeTag(tag),
+          ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-
-    final chips = [for (final tag in _tags) _tagChip(tag)];
 
     return FernDialog(
       onClose: () => context.pop(),
@@ -219,8 +223,10 @@ class _AssignTagDialogState extends State<AssignTagDialog> {
           icon: Symbols.label,
           title: texts.tagsTitle,
         ),
-        items: chips.isNotEmpty
-            ? chips
+        // La tira mide su propio alto, así que la lista no la recorta.
+        maxItemsHeight: assignTagDialogListHeight,
+        items: _tags.isNotEmpty
+            ? [_tagStrip()]
             : [
                 Text(
                   texts.noTagsYet,

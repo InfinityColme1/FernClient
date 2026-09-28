@@ -81,10 +81,12 @@ class FernDialogSidePanel extends StatelessWidget {
       const SizedBox(height: AppSpacing.s),
       const Divider(thickness: 2),
       const SizedBox(height: AppSpacing.m),
-      // La lista se pinta bajo demanda y con altura acotada: el panel aguanta
-      // igual con dos elementos que con cien.
-      ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxItemsHeight),
+      // La lista se pinta bajo demanda y con **alto fijo**: el panel aguanta
+      // igual con dos elementos que con cien, y el diálogo no cambia de tamaño
+      // a cada etiqueta que se pone o se quita. Con un alto máximo crecía con
+      // las primeras y el botón de confirmar se iba moviendo de sitio.
+      SizedBox(
+        height: maxItemsHeight,
         child: ListView.separated(
           shrinkWrap: true,
           padding: EdgeInsets.zero,

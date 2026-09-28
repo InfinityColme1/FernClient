@@ -272,6 +272,13 @@ class _FakeResults implements RecognitionResultRepository {
       DataException(Exception('aquí no se contesta nada'));
 
   @override
+  Future<DataState<int>> setStatuses({
+    required List<int> ids,
+    required SuggestionStatus status,
+  }) async =>
+      DataException(Exception('aquí no se contesta nada'));
+
+  @override
   Future<DataState<int>> purgeRejectedBefore(DateTime before) async =>
       const DataSuccess(0);
 }

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// Estructura común de los diálogos de la aplicación: botón de cierre arriba a
-/// la izquierda, dos columnas de contenido y una acción abajo a la derecha.
+/// la derecha, dos columnas de contenido y una acción abajo a la derecha.
 class FernDialog extends StatelessWidget {
   final Widget? leftContent;
   final Widget? rightContent;
@@ -15,7 +15,7 @@ class FernDialog extends StatelessWidget {
   final double maxWidth;
   final double columnSpacing;
 
-  /// Acción secundaria de la esquina superior derecha, enfrente del botón de
+  /// Acción secundaria de la esquina superior izquierda, enfrente del botón de
   /// cierre. Es donde va lo que abre otro diálogo sobre este (vincular las
   /// direcciones de una etiqueta, por ejemplo): no confirma ni cancela lo que se
   /// está haciendo, así que no tiene sitio en la fila de abajo, y lejos del aspa
@@ -56,15 +56,21 @@ class FernDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // **El aspa, siempre arriba a la derecha**, como en los ajustes,
+              // el selector de color y cualquier ventana del sistema. Estaba a
+              // la izquierda en unos diálogos y a la derecha en otros, y cerrar
+              // obligaba a buscar dónde tocaba esta vez. Las acciones
+              // secundarias van al otro extremo, lejos de ella, para que no se
+              // pulse una por otra.
               Row(
                 children: [
+                  if (trailingAction != null) trailingAction!,
+                  const Spacer(),
                   IconButton(
                     tooltip: AppLocalizations.of(context).actionClose,
                     icon: const Icon(Symbols.close, size: AppSizes.iconExtraLarge),
                     onPressed: onClose,
                   ),
-                  const Spacer(),
-                  if (trailingAction != null) trailingAction!,
                 ],
               ),
               // Flexible y no fijo: es la parte que tiene que ceder cuando el

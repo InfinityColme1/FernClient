@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/navigation/escape_back.dart';
 import 'package:flutter/material.dart';
 
 /// Panel blanco anclado a **una posición** en vez de a un botón.
@@ -49,6 +50,17 @@ class FernContextMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Escape lo cierra, esté donde esté el foco.
+    return EscapeDismiss(
+      onEscape: () {
+        onDismiss();
+        return true;
+      },
+      child: _menu(),
+    );
+  }
+
+  Widget _menu() {
     return LayoutBuilder(
       builder: (context, constraints) {
         final area = constraints.biggest;

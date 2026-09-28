@@ -1,4 +1,5 @@
 import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/utils/file_utils.dart';
 import 'package:Fern/core/utils/source_url.dart';
 import 'package:Fern/features/media/data/models/media/media_model.dart';
 import 'package:Fern/features/media/data/models/media/media_summary_model.dart';
@@ -14,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:Fern/features/media/data/services/media_tag_log.dart';
 import 'package:Fern/features/media/domain/entities/tag_log_entry_entity.dart';
 import 'package:isar/isar.dart';
+import 'package:path/path.dart' as p;
 
 /// Da de alta en la base de datos los ficheros que aparecen, vengan de donde
 /// vengan.
@@ -77,6 +79,81 @@ class MediaRegistry {
     return await _database.mediaSummaryModels.get(idOf(path)) ??
         await _database.mediaSummaryModels.filter().pathEqualTo(path).findFirst();
   }
+
+  /// Lo que ya está dado de alta de [source], por su identificador en ella.
+  ///
+  /// Es la misma pregunta que contesta [register] cuando devuelve `null`
+  /// —«esto ya estaba»— hecha con **la única clave que se conoce antes de
+  /// descargar**. Contestarla sólo después obligaba a bajarse el fichero entero
+  /// para tirarlo: en una fuente lenta eso es la diferencia entre una
+  /// importación de minutos y una de una hora, y encima dejaba el fichero en la
+  /// carpeta de descargas.
+  ///
+  /// Se trae de una vez y no de una en una, por lo mismo que lo bloqueado se
+  /// guarda en memoria: son cientos de piezas por recorrido y una consulta
+  /// por pieza sería cientos de consultas para no hacer nada.
+  ///
+  /// Entra **todo** lo de la fuente, lo definitivo y lo que sigue pendiente de
+  /// revisar, y también lo que está en la papelera: mientras su fila esté, ese
+  /// contenido se conoce y volver a bajarlo no aporta nada. Lo que se descartó
+  /// sí vuelve a ofrecerse, que es justo lo que significa descartar sin
+  /// bloquear.
+  Future<Set<String>> registeredIdsOf(ImportSource source) async {
+    final rows = await _database.mediaSummaryModels
+        .filter()
+        .importSourceEqualTo(source.id)
+        .findAll();
+
+    final known = <String>{};
+
+    for (final row in rows) {
+      final id = row.remoteId;
+      if (id != null && id.isNotEmpty) {
+        known.add(id);
+        continue;
+      }
+
+      // Lo que entró antes de que el identificador se guardara no lo lleva. En
+      // lo remoto el nombre del fichero **es** el identificador, así que se
+      // recupera de la ruta; sin este respaldo, una biblioteca entera anterior
+      // al cambio se volvería a descargar de arriba abajo.
+      final fallback = _remoteIdOfPath(row.path);
+      if (fallback.isNotEmpty) known.add(fallback);
+    }
+
+    return known;
+  }
+
+  /// Tira el fichero recién bajado que no ha dado de alta ningún contenido.
+  ///
+  /// Es lo que hay que hacer con lo que [register] rechaza por conocido: sin su
+  /// fila no lo nombra nadie, no se ve desde ninguna pantalla y en la carpeta de
+  /// descargas sólo ocupa. Con la comprobación de antes de descargar esto casi
+  /// no salta, pero queda lo que no se puede saber por adelantado —lo que sale
+  /// de un comprimido, que no existe para la fuente hasta que se abre— y las
+  /// carreras entre dos recorridos.
+  ///
+  /// **No se toca el que sí es de alguien.** Un contenido pendiente de revisar
+  /// vive en la carpeta de descargas hasta que se da por definitivo, y también
+  /// se rechaza por conocido: borrar su fichero sería borrar contenido de la
+  /// biblioteca.
+  Future<void> discardUnusedFile(String path) async {
+    final row = await existing(path);
+    if (row != null && p.equals(row.path, path)) return;
+
+    await deleteFileAt(path);
+  }
+
+  /// El sufijo con el que la biblioteca separa dos ficheros del mismo nombre.
+  static final RegExp _librarySuffix = RegExp(r' \(\d+\)$');
+
+  /// El identificador que se deduce del nombre del fichero.
+  ///
+  /// Se le quita el sufijo de desempate que le pone la biblioteca al colocarlo:
+  /// sin quitarlo, ese contenido concreto se volvería a bajar en cada
+  /// importación.
+  static String _remoteIdOfPath(String path) =>
+      p.basenameWithoutExtension(path).replaceFirst(_librarySuffix, '');
 
   /// Da de alta el fichero de [path] como contenido pendiente de revisar, con
   /// los datos por defecto: con el creador desconocido y con la [source] de la

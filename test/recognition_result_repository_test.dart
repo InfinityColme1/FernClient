@@ -384,6 +384,136 @@ void main() {
     });
   });
 
+  // Contestar en bloque es lo normal desde que el panel tiene el boton en la
+  // cabecera. De una en una eran tantas transacciones —y tantos recuentos de lo
+  // que queda pendiente— como sugerencias tuviera el contenido.
+  group('contestar en bloque', () {
+    test('las contesta todas de una vez', () async {
+      final media = await addMedia(1);
+
+      await repository.replaceSuggestions(
+        mediaId: media,
+        results: [
+          suggestion(media, fernieId: 10),
+          suggestion(media, fernieId: 20),
+          suggestion(media, fernieId: 30),
+        ],
+      );
+
+      final rows = (await repository.getForMedia(media)).data!;
+
+      final answered = await repository.setStatuses(
+        ids: [for (final row in rows) row.id],
+        status: SuggestionStatus.rejected,
+      );
+
+      expect(answered.data, 3);
+      expect(
+        (await repository.getForMedia(media))
+            .data!
+            .map((row) => row.status)
+            .toSet(),
+        {SuggestionStatus.rejected},
+      );
+    });
+
+    test('deja el contenido sin pendientes cuando no queda ninguna', () async {
+      final media = await addMedia(1);
+
+      await repository.replaceSuggestions(
+        mediaId: media,
+        results: [
+          suggestion(media, fernieId: 10),
+          suggestion(media, fernieId: 20),
+        ],
+      );
+
+      final rows = (await repository.getForMedia(media)).data!;
+      await repository.setStatuses(
+        ids: [for (final row in rows) row.id],
+        status: SuggestionStatus.rejected,
+      );
+
+      expect((await summaryOf(media)).hasPendingSuggestions, isFalse);
+    });
+
+    test('y con alguna sin mirar lo deja pendiente', () async {
+      final media = await addMedia(1);
+
+      await repository.replaceSuggestions(
+        mediaId: media,
+        results: [
+          suggestion(media, fernieId: 10),
+          suggestion(media, fernieId: 20),
+          suggestion(media, fernieId: 30),
+        ],
+      );
+
+      final rows = (await repository.getForMedia(media)).data!;
+      await repository.setStatuses(
+        ids: [rows.first.id],
+        status: SuggestionStatus.accepted,
+      );
+
+      expect((await summaryOf(media)).hasPendingSuggestions, isTrue);
+    });
+
+    // Un identificador que ya no esta no puede dejar sin contestar a los demas:
+    // son decisiones independientes y el usuario ya las ha tomado todas.
+    test('uno que no existe no detiene a los demas', () async {
+      final media = await addMedia(1);
+
+      await repository.replaceSuggestions(
+        mediaId: media,
+        results: [suggestion(media, fernieId: 10)],
+      );
+
+      final only = (await repository.getForMedia(media)).data!.single;
+
+      final answered = await repository.setStatuses(
+        ids: [only.id, 999],
+        status: SuggestionStatus.rejected,
+      );
+
+      expect(answered.data, 1);
+      expect(
+        (await repository.getForMedia(media)).data!.single.status,
+        SuggestionStatus.rejected,
+      );
+    });
+
+    test('sin identificadores no hace nada', () async {
+      final answered = await repository.setStatuses(
+        ids: const [],
+        status: SuggestionStatus.rejected,
+      );
+
+      expect(answered.data, 0);
+    });
+
+    // Contestar no vuelve a mirar nada: la fecha es de cuando pasaron los
+    // modelos por el contenido, y moverla aqui haria que «reconocido hace un
+    // momento» dijera algo que no ha pasado.
+    test('no cuenta como haber vuelto a mirar', () async {
+      final media = await addMedia(1);
+
+      await repository.replaceSuggestions(
+        mediaId: media,
+        results: [suggestion(media)],
+      );
+
+      final looked = (await summaryOf(media)).recognizedAt;
+
+      final rows = (await repository.getForMedia(media)).data!;
+      await repository.setStatuses(
+        ids: [for (final row in rows) row.id],
+        status: SuggestionStatus.accepted,
+      );
+
+      expect((await summaryOf(media)).recognizedAt, looked);
+    });
+  });
+
   group('la purga', () {
     test('lo rechazado hace tiempo se va', () async {
       final media = await addMedia(1);

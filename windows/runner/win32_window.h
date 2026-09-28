@@ -9,19 +9,17 @@
 
 // Tamano minimo de la ventana, en pixeles logicos.
 //
-// La aplicacion no tiene layout de movil: se dibuja siempre igual y lo unico
-// que hace al estrecharse es plegar el menu lateral. Por debajo de este ancho
-// las cabeceras dejan de caber, asi que se impide llegar ahi en vez de dejar
-// que desborden.
+// Por debajo de AppSizes.largeScreenMinWidth (1180) la aplicacion pasa al modo
+// reducido: solo la rejilla de la biblioteca y el visor, que caben en mucho
+// menos (lib/core/navigation/lite_layout.dart). Este es el tope de ese modo, no
+// el de la aplicacion entera.
 //
-// kMinimumWindowWidth es el mismo numero que AppSizes.largeScreenMinWidth, que
-// mide test/layout_breakpoints_test.dart: si crece alli, tiene que crecer aqui.
-// La prueba lee este fichero y falla si los dos se separan.
-constexpr int kMinimumWindowWidth = 1180;
+// kMinimumWindowWidth es el mismo numero que AppSizes.liteWindowMinWidth, y
+// kMinimumWindowHeight el de AppSizes.liteWindowMinHeight. Los compara
+// test/layout_breakpoints_test.dart, que lee este fichero y falla si se separan.
+constexpr int kMinimumWindowWidth = 420;
 
-// El alto no lo manda ninguna cabecera (todo lo alto se desplaza), pero por
-// debajo de esto no cabe la barra superior con una rejilla utilizable debajo.
-constexpr int kMinimumWindowHeight = 600;
+constexpr int kMinimumWindowHeight = 360;
 
 // A class abstraction for a high DPI-aware Win32 Window. Intended to be
 // inherited from by classes that wish to specialize with custom

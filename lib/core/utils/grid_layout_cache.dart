@@ -39,6 +39,12 @@ class GridLayoutCache {
     return found.ids ??= build();
   }
 
+  /// En qué posición está cada identificador, igual.
+  Map<int, int> indexOf(Object source, Map<int, int> Function() build) {
+    final found = _derivedOf(source);
+    return found.indexById ??= build();
+  }
+
   /// El reparto en columnas de [ratios] con estas medidas.
   ///
   /// Las medidas se comparan por valor y las proporciones por identidad: las
@@ -111,6 +117,7 @@ class _Derived {
 
   List<double?>? ratios;
   List<int>? ids;
+  Map<int, int>? indexById;
 
   _Derived(this.source);
 }

@@ -42,8 +42,19 @@ class SearchResultRow extends StatelessWidget {
   /// La fila es una etiqueta marcada como NSFW y hay que decirlo.
   final bool isNsfw;
 
+  /// Si está fijada arriba de las sugerencias de la barra general.
+  final bool isPinned;
+
+  /// Fijarla o soltarla. Sin él no hay chincheta.
+  final VoidCallback? onPinToggled;
+
   /// Cabecera de grupo: nombre en negrita, avatar más pequeño y sin pulsación.
   final bool _isHeader;
+
+  /// Lo que mide de alto una sugerencia: su avatar y el relleno de arriba y
+  /// abajo. Con él se dice cuántas caben en un desplegable.
+  static const double suggestionHeight =
+      AppSizes.avatarMedium * 2 + AppSpacing.s * 2;
 
   const SearchResultRow.suggestion({
     super.key,
@@ -52,6 +63,8 @@ class SearchResultRow extends StatelessWidget {
     required this.onTap,
     this.imagePath,
     this.isNsfw = false,
+    this.isPinned = false,
+    this.onPinToggled,
   })  : radius = AppSizes.avatarMedium,
         _isHeader = false;
 
@@ -63,6 +76,8 @@ class SearchResultRow extends StatelessWidget {
     this.isNsfw = false,
   })  : radius = AppSizes.avatarSmall,
         onTap = null,
+        isPinned = false,
+        onPinToggled = null,
         _isHeader = true;
 
   @override
@@ -104,6 +119,20 @@ class SearchResultRow extends StatelessWidget {
             type.label(AppLocalizations.of(context)),
             style: theme.textTheme.labelSmall?.copyWith(color: context.colors.gray),
           ),
+          if (onPinToggled case final toggle?)
+            IconButton(
+              tooltip: isPinned
+                  ? AppLocalizations.of(context).suggestionUnpin
+                  : AppLocalizations.of(context).suggestionPin,
+              onPressed: toggle,
+              visualDensity: VisualDensity.compact,
+              iconSize: AppSizes.iconCompact,
+              icon: Icon(
+                Symbols.push_pin,
+                fill: isPinned ? 1 : 0,
+                color: isPinned ? context.colors.primary : context.colors.gray,
+              ),
+            ),
         ],
       ),
     );

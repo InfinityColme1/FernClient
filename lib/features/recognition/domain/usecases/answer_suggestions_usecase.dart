@@ -30,23 +30,22 @@ class AnswerSuggestionsUseCase
 
   @override
   Future<DataState<int>> call({AnswerSuggestionsParams? params}) async {
-    var answered = 0;
+    final ids = params!.ids;
+    if (ids.isEmpty) return const DataSuccess(0);
 
-    for (final id in params!.ids) {
-      final result = await _repository.setStatus(id: id, status: params.status);
+    // En una sola escritura, y no una por identificador: contestar en bloque es
+    // lo normal desde que el panel tiene el botón a la vista, y de una en una
+    // eran tantas transacciones como sugerencias.
+    //
+    // Una que falle no puede dejar sin contestar a las demás: son decisiones
+    // independientes y el usuario ya las ha tomado todas. Lo que se devuelve es
+    // cuántas han cuajado, para que quien llame sepa si hubo problemas.
+    final result = await _repository.setStatuses(ids: ids, status: params.status);
 
-      if (result is DataSuccess) {
-        answered++;
-        continue;
-      }
+    if (result case DataSuccess(:final data?)) return DataSuccess(data);
 
-      // Una que falle no puede dejar sin contestar a las demás: son decisiones
-      // independientes, y el usuario ya las ha tomado todas. Lo que sí se
-      // devuelve es cuántas han cuajado, para que quien llame sepa si hubo
-      // problemas.
-      debugPrint('No se pudo contestar la sugerencia $id: ${result.exception}');
-    }
+    debugPrint('No se pudieron contestar las sugerencias: ${result.exception}');
 
-    return DataSuccess(answered);
+    return const DataSuccess(0);
   }
 }

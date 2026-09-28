@@ -36,7 +36,7 @@ import 'package:Fern/features/settings/presentation/blocs/settings_bloc.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_dialog.dart';
 import 'package:Fern/features/settings/presentation/widgets/settings_section.dart';
 import 'package:Fern/features/settings/presentation/blocs/settings_states.dart';
-import 'package:Fern/features/media/presentation/widgets/select_all_button.dart';
+import 'package:Fern/features/media/presentation/widgets/selection_lead.dart';
 import 'package:Fern/features/recognition/presentation/recognition_feedback.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/data/services/blocked_imports.dart';
@@ -802,10 +802,20 @@ class _ImportViewState extends State<_ImportView> {
               // fila se sustituye entera en vez de encender tres botones
               // más, que es lo que la reventaba justo cuando más falta
               // hacía que se entendiera.
+              // El principio de la fila es el mismo con y sin selección: la
+              // casilla de marcarlo todo no se mueve de sitio al marcar.
+              final lead = SelectionLead(
+                visible: visible,
+                selectedIds: state.selectedIds,
+                onSelectAll: (ids) =>
+                    context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
+                onClear: () => context.read<MediaBloc>().add(
+                  const ClearMediaSelectionEvent(),
+                ),
+              );
+
               if (hasSelection) {
                 return _SelectionBar(
-                  selected: selectedCount,
-                  total: visible.length,
                   onAcceptAbove: () => _acceptAbove(context, state),
                   onDelete: () => _discardSelection(context, selectedCount),
                   onRecognize: () => requestRecognition(
@@ -820,17 +830,14 @@ class _ImportViewState extends State<_ImportView> {
                       count: selectedCount,
                     ),
                   ),
-                  selectAll: SelectAllButton(
-                    visible: visible,
-                    selectedIds: state.selectedIds,
-                    onSelectAll: (ids) =>
-                        context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
-                  ),
+                  lead: lead,
                 );
               }
 
               return Row(
                 children: [
+                  lead,
+                  const SizedBox(width: AppSpacing.s),
                   FernDropdownPill<ImportSource>(
                     value: source,
                     items: const [ImportSource.all, ...ImportSource.listed],
@@ -987,12 +994,6 @@ class _ImportViewState extends State<_ImportView> {
                           : Symbols.download,
                     ),
                   ),
-                  SelectAllButton(
-                    visible: visible,
-                    selectedIds: state.selectedIds,
-                    onSelectAll: (ids) =>
-                        context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
-                  ),
                   IconButton(
                     tooltip: texts.actionSelectFolder,
                     onPressed: canPickFolder
@@ -1019,6 +1020,7 @@ class _ImportViewState extends State<_ImportView> {
                   // ha llegado mientras llega el resto.
                   isImporting: true,
                   returnsToViewed: true,
+                  showsKind: _sortOrder == MediaSortOrder.kind,
                   isStopping: _isStopping,
                   // Una importación puede durar mucho, así que se puede parar
                   // desde donde se está mirando cómo va. Lo ya traído se queda.
@@ -1038,13 +1040,12 @@ class _ImportViewState extends State<_ImportView> {
 /// sobre el que ya está— y meterlos en la misma fila obligaba a elegir entre
 /// que no cupieran o quitar opciones que sí hacen falta.
 class _SelectionBar extends StatelessWidget {
-  final int selected;
-  final int total;
   final VoidCallback onAcceptAbove;
   final VoidCallback onDelete;
 
-  /// El botón de marcarlo todo, que la pantalla arma con lo que hay a la vista.
-  final Widget selectAll;
+  /// El principio de la fila, el mismo que sin selección: la casilla, la cuenta
+  /// y el botón de soltarla.
+  final Widget lead;
 
   /// Ponerle el mismo creador a toda la selección.
   final VoidCallback onAssignCreator;
@@ -1057,11 +1058,9 @@ class _SelectionBar extends StatelessWidget {
   final VoidCallback onRecognize;
 
   const _SelectionBar({
-    required this.selected,
-    required this.total,
     required this.onAcceptAbove,
     required this.onDelete,
-    required this.selectAll,
+    required this.lead,
     required this.onRecognize,
     required this.onAssignCreator,
   });
@@ -1069,36 +1068,13 @@ class _SelectionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     return Row(
       children: [
-        // Salir de la selección tiene que estar a mano: es la forma de volver a
-        // la barra de antes, y si no se ve, la pantalla parece haberse quedado
-        // en otro sitio.
-        IconButton(
-          tooltip: texts.actionClearSelection,
-          onPressed: () =>
-              context.read<MediaBloc>().add(const ClearMediaSelectionEvent()),
-          icon: const Icon(Symbols.close),
-        ),
-        selectAll,
+        // La casilla, la cuenta y el botón de soltarla: lo mismo y en el mismo
+        // sitio que sin selección.
+        lead,
         const SizedBox(width: AppSpacing.s),
-        // Con tope y recortada, en vez de flexible: es la unica pieza que no
-        // es un boton, asi que si se le deja crecer se come el sitio de los que
-        // si hay que poder pulsar.
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _countWidth),
-          child: Text(
-            texts.selectedOfCount(selected, total),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: context.colors.terciary,
-            ),
-          ),
-        ),
         // Todo lo que se puede hacer con la seleccion, pegado a la derecha y
         // **desplazable**.
         //
@@ -1146,40 +1122,35 @@ class _SelectionBar extends StatelessWidget {
                 const SizedBox(width: AppSpacing.s),
                 // Antes que «aceptar los seguros»: para que haya sugerencias que aceptar
                 // primero tiene que haber pasado esto.
-                FernPillButton(
-                  label: texts.recognizeSelectedTooltip,
-                  icon: Symbols.auto_awesome,
-                  backgroundColor: context.colors.secondary,
-                  foregroundColor: context.colors.black,
+                //
+                // Iconos con su explicación al pasar el ratón, como en la
+                // biblioteca: con rótulos la fila no cabía en cuanto se marcaba
+                // algo y se cortaba. Sólo confirmar lleva rótulo, que es lo que
+                // se viene a hacer aquí.
+                IconButton(
+                  tooltip: texts.recognizeSelectedTooltip,
                   onPressed: onRecognize,
+                  icon: const Icon(Symbols.auto_awesome),
                 ),
-                const SizedBox(width: AppSpacing.s),
                 // Despachar de golpe lo que los modelos ven con más seguridad. Es lo que
                 // hace usable revisar trescientos: decir que sí trescientas veces a lo
                 // evidente es lo que hace que nadie revise nada.
-                Tooltip(
-                  message: texts.acceptAboveTooltip(
+                IconButton(
+                  tooltip: texts.acceptAboveTooltip(
                     (suggestionHighConfidence * 100).round(),
                   ),
-                  child: FernPillButton(
-                    label: texts.acceptAboveLabel(
-                      (suggestionHighConfidence * 100).round(),
-                    ),
-                    icon: Symbols.done_all,
-                    backgroundColor: context.colors.secondary,
-                    foregroundColor: context.colors.black,
-                    onPressed: onAcceptAbove,
-                  ),
+                  onPressed: onAcceptAbove,
+                  icon: const Icon(Symbols.done_all),
                 ),
-                const SizedBox(width: AppSpacing.s),
-                FernPillButton(
-                  label: texts.actionDelete,
-                  icon: Symbols.delete,
-                  backgroundColor: context.colors.error,
-                  foregroundColor: Colors.white,
+                // Con hueco propio, como en la biblioteca: es lo que no tiene
+                // vuelta atrás.
+                const SizedBox(width: AppSpacing.l),
+                IconButton(
+                  tooltip: texts.actionDelete,
                   onPressed: onDelete,
+                  icon: Icon(Symbols.delete, color: context.colors.error),
                 ),
-                const SizedBox(width: AppSpacing.s),
+                const SizedBox(width: AppSpacing.m),
                 FernPillButton(
                   label: texts.actionConfirm,
                   icon: Symbols.check,
@@ -1197,12 +1168,6 @@ class _SelectionBar extends StatelessWidget {
     );
   }
 }
-
-/// Lo maximo que ocupa la cuenta de lo seleccionado.
-///
-/// Lo que sobre se recorta: la cuenta se lee de un vistazo y el sitio lo
-/// necesitan los botones.
-const double _countWidth = 240;
 
 /// Un control con un rótulo encima que dice qué es.
 ///

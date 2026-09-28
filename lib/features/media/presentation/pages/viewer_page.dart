@@ -49,6 +49,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/presentation/widgets/confirm_delete_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/media_info.dart';
 import 'package:Fern/features/media/presentation/widgets/media_viewer.dart';
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -57,6 +58,9 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../config/theme/app_colors.dart';
 import '../../../../config/theme/app_sizes.dart';
+import 'package:Fern/core/navigation/lite_layout.dart';
+import 'package:Fern/core/navigation/escape_back.dart';
+import 'package:Fern/features/media/presentation/services/viewer_prefetch.dart';
 import '../../../../config/theme/app_spacing.dart';
 import '../blocs/media_bloc.dart';
 import '../blocs/media_events.dart';
@@ -149,6 +153,51 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// Si el menú abierto es para cambiarle el fernie a una región que ya existe,
   /// en vez de para asignar una recién dibujada.
   bool _isReassigning = false;
+
+  /// La propuesta del modelo que está elegida, y cómo va quedando.
+  ///
+  /// **Pulsar una propuesta la marca**, pero no en el acto: primero se elige, y
+  /// se marca pasado lo que tarda un doble clic. Aceptándola al primer toque,
+  /// con varias apiladas —lo normal cuando el modelo ve lo mismo varias veces—
+  /// no había forma de llegar a la de debajo: el doble clic que baja un peldaño
+  /// empezaba marcando la primera. Con la espera, el doble clic baja a la
+  /// siguiente y es ésa la que se marca al soltar. Mientras está elegida se
+  /// puede mover, estirar o cambiar de fernie, y entonces ya no se marca sola:
+  /// se acepta o se tira desde su pestaña.
+  ///
+  /// Vive aquí y no en el bloc: es una selección de pantalla, y lo que el bloc
+  /// guarda como elegida son regiones marcadas.
+  ProposedRegion? _chosenProposed;
+  Rect? _proposedDraftRect;
+  FernieEntity? _proposedDraftFernie;
+
+  /// La espera antes de marcar la propuesta recién pulsada. Ver
+  /// [_chosenProposed].
+  Timer? _proposedAcceptTimer;
+
+  /// Dónde está la propuesta elegida en la lista de ahora, si sigue en ella.
+  ///
+  /// Se busca en cada uso: aceptar todas, ofrecer otras o salir del modo la
+  /// quitan de la lista, y con eso deja de estar elegida sin que nadie tenga
+  /// que acordarse de soltarla.
+  int? _chosenProposedIndex(FernieModeState state) {
+    final chosen = _chosenProposed;
+    if (chosen == null) return null;
+
+    final index = state.proposed.indexOf(chosen);
+    return index < 0 ? null : index;
+  }
+
+  void _chooseProposed(ProposedRegion? one) {
+    _proposedAcceptTimer?.cancel();
+    _proposedAcceptTimer = null;
+
+    setState(() {
+      _chosenProposed = one;
+      _proposedDraftRect = null;
+      _proposedDraftFernie = null;
+    });
+  }
 
   /// Si el ratón está sobre la ayuda del modo fernie.
   ///
@@ -275,6 +324,9 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     context.read<MediaBloc>().add(SetInfoVisibilityEvent(widget.openInfo));
     _restartHideTimer();
 
+    // La rejilla de detrás se queda quieta mientras esto esté abierto.
+    getIt<ViewedMedia>().viewerOpened();
+
     // Las flechas se atienden antes que el foco: ver [_onArrowKey].
     HardwareKeyboard.instance.addHandler(_onArrowKey);
 
@@ -298,6 +350,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _proposedAcceptTimer?.cancel();
     // La pantalla completa es de esta pantalla: al salir de ella (por el botón
     // de volver, por escape o porque el contenido ha desaparecido) la ventana
     // vuelve a como estaba.
@@ -312,6 +365,10 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // El señalado vive fuera de esta pantalla porque lo enciende el panel, así
     // que apagarlo al salir es cosa de aquí: nadie más sabe que se ha salido.
     _spotlight.release();
+    // Por si se ha salido sin pasar por el aviso de cerrar (el contenido ha
+    // desaparecido y el visor se ha ido solo): la rejilla no puede quedarse
+    // congelada para siempre.
+    getIt<ViewedMedia>().viewerClosed();
     HardwareKeyboard.instance.removeHandler(_onArrowKey);
     _keyboardFocusNode.dispose();
     super.dispose();
@@ -389,6 +446,20 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // Para volver a ella al salir: la rejilla se coloca donde está lo último
     // que se miró.
     getIt<ViewedMedia>().see(media.id);
+
+    // Los de al lado, ya descodificados para cuando se pase a ellos. En el
+    // fotograma siguiente: primero se pinta éste, que es el que se está
+    // esperando, y el visor ya ha dicho a qué ancho descodifica.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _fernieMode.state.isFernieMode) return;
+
+      final state = context.read<MediaBloc>().state;
+      final list = state.mediaList;
+      final index = state.currentMediaIndex;
+      if (list == null || index == null) return;
+
+      ViewerPrefetch.around(context, list, index);
+    });
 
     if (_fernieMode.state.mediaId != media.id) {
       _fernieMode.add(LoadMediaRegionsEvent(media.id));
@@ -592,6 +663,9 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
 
   /// Abre el menú para cambiarle el fernie a la región elegida.
   void _onReassignRequested(Offset globalPosition) {
+    _proposedAcceptTimer?.cancel();
+    _proposedAcceptTimer = null;
+
     setState(() {
       _isReassigning = true;
       _pendingRect = null;
@@ -714,6 +788,14 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
 
     // Reasignar no marca nada nuevo: cambia el fernie de la región elegida y
     // queda en su borrador hasta que se confirme desde la pestaña.
+    // Cambiarle el fernie a una propuesta elegida queda en su borrador, como
+    // con una región: se aplica al aceptarla.
+    if (_isReassigning && _chosenProposedIndex(_fernieMode.state) != null) {
+      setState(() => _proposedDraftFernie = fernie);
+      _dismissMenu();
+      return;
+    }
+
     if (_isReassigning) {
       _fernieMode.add(RegionDraftReassignedEvent(fernie));
       _dismissMenu();
@@ -941,6 +1023,13 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // ya se usa para deshacerse de cualquier otra cosa.
     if (key == LogicalKeyboardKey.delete ||
         key == LogicalKeyboardKey.backspace) {
+      // Una propuesta elegida se tira sin preguntar: no está marcada, así que
+      // no se pierde nada que no se pueda volver a pedir al modelo.
+      if (_chosenProposedIndex(_fernieMode.state) case final proposed?) {
+        _discardProposed(proposed);
+        return KeyEventResult.handled;
+      }
+
       final index = _fernieMode.state.selectedIndex;
       if (index == null) return KeyEventResult.ignored;
 
@@ -969,7 +1058,16 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // de fernies de su panel), así que el proveedor no ahorraba nada y sí metía
     // un `InheritedWidget` de por medio que hay que desmontar con cuidado al
     // salir del visor.
-    return MultiBlocListener(
+    //
+    // **Al empezar a salir**, y no al acabar, se suelta la rejilla de detrás:
+    // así se pone al día y se coloca en lo último que se ha mirado mientras el
+    // visor todavía la tapa, y lo que aparece al irse es ya la rejilla en su
+    // sitio, sin saltos.
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) getIt<ViewedMedia>().viewerClosed();
+      },
+      child: MultiBlocListener(
       listeners: [
         // El contenido que se estaba viendo ha desaparecido (su fichero ya no
         // estaba) y no queda nada más que enseñar: se vuelve a la rejilla.
@@ -1084,7 +1182,30 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                   _buildScaffold(context, state, fernieState),
             ),
       ),
+      ),
     );
+  }
+
+  /// Cierra lo último que el visor tenga abierto. `false` si no queda nada y
+  /// lo siguiente es salir del visor.
+  bool _stepBack() {
+    if (_fernieMode.state.isFernieMode) {
+      _exitFernieMode(save: false);
+      return true;
+    }
+
+    if (_isFullscreen) {
+      _toggleFullscreen();
+      return true;
+    }
+
+    final bloc = context.read<MediaBloc>();
+    if (bloc.state.showInfo) {
+      bloc.add(const ToggleInfoEvent());
+      return true;
+    }
+
+    return false;
   }
 
   Widget _buildScaffold(
@@ -1107,7 +1228,12 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         (_areControlsVisible || state.showInfo || fernieState.isFernieMode) &&
         !_isDrawingRegion;
 
-    return Focus(
+    // Escape, un paso cada vez: primero lo que el visor tenga abierto, y sólo
+    // cuando no queda nada, salir (eso lo hace `EscapeBack` cerrando la ruta).
+    return EscapeDismiss(
+      level: EscapeLevel.screen,
+      onEscape: _stepBack,
+      child: Focus(
       focusNode: _keyboardFocusNode,
       autofocus: true,
       onKeyEvent: _handleKeyEvent,
@@ -1211,6 +1337,9 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
                         child: FernContextMenu(
                           position: position,
                           onDismiss: _dismissMenu,
+                          // Más alto que un menú normal: los fernies van como
+                          // avatares en varias filas.
+                          maxHeight: assignRegionMenuMaxHeight,
                           child: AssignRegionMenu(
                             onSelected: _assignPendingRegion,
                           ),
@@ -1222,14 +1351,16 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             ),
 
             // LADO DERECHO: Panel de Información
+            // En modo reducido no hay sitio para él al lado del contenido.
             _InfoPanel(
-              isOpen: state.showInfo,
+              isOpen: state.showInfo && !isLiteLayout(context),
               isReviewing: widget.isReviewing,
               fernieMode: _fernieMode,
               suggestions: _suggestions,
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1490,6 +1621,7 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     // ahí sale a qué corresponde cada índice al pulsarlo.
     final proposedFrom = views.length + onionViews.length;
     final spottedFrom = proposedFrom + fernieState.proposed.length;
+    final chosenProposed = _chosenProposedIndex(fernieState);
 
     return AnimatedBuilder(
       animation: Listenable.merge(
@@ -1518,7 +1650,9 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         tool: fernieState.tool == FernieTool.edit
             ? FernRegionTool.edit
             : FernRegionTool.mark,
-        selectedIndex: fernieState.selectedIndex,
+        selectedIndex: chosenProposed == null
+            ? fernieState.selectedIndex
+            : proposedFrom + chosenProposed,
         // Puede faltar: mientras no se haya medido el fichero, la capa no
         // dibuja ni deja marcar, pero el zoom y el doble clic siguen siendo
         // suyos.
@@ -1548,10 +1682,14 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           // Lo que el modelo propone: dibujado y **sin marcar**, con su
           // porcentaje en la pestaña. Con cuatro rectángulos delante, saber cuál
           // es el del 94 % y cuál el del 51 % es lo que permite elegir bien.
-          for (final one in fernieState.proposed)
+          for (final (index, one) in fernieState.proposed.indexed)
             RegionVisual(
-              rect: one.rect,
-              label: '${one.label} '
+              // La elegida, con lo que se le haya cambiado: la capa suelta su
+              // arrastre al levantar el ratón y pinta lo que le llega de aquí.
+              rect: index == chosenProposed
+                  ? _proposedDraftRect ?? one.rect
+                  : one.rect,
+              label: '${index == chosenProposed ? _proposedDraftFernie?.name ?? one.label : one.label} '
                   '${AppLocalizations.of(context).suggestionConfidence(
                     (one.confidence * 100).round(),
                   )}',
@@ -1563,7 +1701,11 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           // y no puede moverle el índice a las que sí lo son.
           ...spotted,
         ],
-        previews: _buildTracks(views, currentFrame),
+        // Sólo marcando: fuera del modo no hay regiones a la vista, y un
+        // recorrido que las sigue no tiene nada que acompañar.
+        previews: fernieState.isFernieMode
+            ? _buildTracks(views, currentFrame)
+            : const [],
         // Señalar una detección manda sobre el resaltado que venga de la
         // rejilla de fernies: es lo que el usuario está mirando ahora mismo.
         highlightedIndexes: spotted.isNotEmpty
@@ -1589,12 +1731,15 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
             return;
           }
 
-          // Lo que el modelo propone se acepta al pulsarlo: es la forma de
-          // quedarse con los que estén bien y dejar los demás.
+          // Lo que el modelo propone se elige, como cualquier región: con
+          // varias apiladas, el doble clic baja a la de debajo igual que con
+          // las marcadas.
           if (index != null && index >= proposedFrom) {
-            _fernieMode.add(ProposedRegionAcceptedEvent(index - proposedFrom));
+            _chooseProposedAt(fernieState.proposed[index - proposedFrom]);
             return;
           }
+
+          if (chosenProposed != null) _chooseProposed(null);
 
           // Lo que cae más allá de las regiones de verdad es papel cebolla:
           // pulsarlo no elige nada, copia.
@@ -1606,10 +1751,21 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
           _requestSelection(index);
         },
         onReassignRequested: _onReassignRequested,
-        onDraftChanged: (rect) =>
-            _fernieMode.add(RegionDraftResizedEvent(rect)),
-        selectionOverlayBuilder: (context, _) =>
-            _buildRegionTab(fernieState.selectedIndex!),
+        onDraftChanged: (rect) {
+          if (chosenProposed != null) {
+            // Se está retocando: ya no se marca sola, se acepta desde su
+            // pestaña cuando quede bien.
+            _proposedAcceptTimer?.cancel();
+            _proposedAcceptTimer = null;
+            setState(() => _proposedDraftRect = rect);
+            return;
+          }
+
+          _fernieMode.add(RegionDraftResizedEvent(rect));
+        },
+        selectionOverlayBuilder: (context, _) => chosenProposed != null
+            ? _buildProposedTab(chosenProposed)
+            : _buildRegionTab(fernieState.selectedIndex!),
         child: viewer,
         );
       },
@@ -1912,6 +2068,86 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
   /// Los dos últimos hacen lo mismo que los de la barra de arriba pero para una
   /// sola región, y por eso llevan los mismos iconos: lo que se aprende en un
   /// sitio vale en el otro.
+  /// Elige una propuesta, soltando la región marcada que hubiera.
+  Future<void> _chooseProposedAt(ProposedRegion one) async {
+    _pauseForWork();
+
+    if (_fernieMode.state.selectedIndex != null) {
+      if (!await _confirmLosingDraft()) return;
+      _fernieMode.add(const RegionSelectedEvent(null));
+    }
+
+    if (!mounted) return;
+
+    _dismissMenu();
+    _chooseProposed(one);
+
+    // Si en lo que tarda un doble clic no se ha pedido otra —la de debajo— ni
+    // se ha empezado a mover, se marca.
+    _proposedAcceptTimer = Timer(kDoubleTapTimeout, () {
+      _proposedAcceptTimer = null;
+      if (!mounted) return;
+
+      final index = _fernieMode.state.proposed.indexOf(one);
+      if (index < 0 || _chosenProposed != one) return;
+
+      _acceptProposed(index);
+    });
+  }
+
+  /// Marca la propuesta [index] como haya quedado.
+  void _acceptProposed(int index) {
+    _fernieMode.add(ProposedRegionAcceptedEvent(
+      index,
+      rect: _proposedDraftRect,
+      fernie: _proposedDraftFernie,
+    ));
+    _chooseProposed(null);
+  }
+
+  void _discardProposed(int index) {
+    _dismissMenu();
+    _chooseProposed(null);
+    _fernieMode.add(ProposedRegionDiscardedEvent(index));
+  }
+
+  /// La pestaña de una propuesta elegida: la de una región, con lo que
+  /// significa para algo que todavía no está marcado. La papelera la tira, la
+  /// cruz la suelta sin cambios y el visto la acepta como haya quedado.
+  Widget _buildProposedTab(int index) {
+    final l10n = AppLocalizations.of(context);
+
+    return Material(
+      color: context.colors.scrim.withValues(alpha: viewerShadeOpacity),
+      borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+      child: SizedBox(
+        width: regionTabWidth,
+        height: regionTabHeight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildRegionTabAction(
+              tooltip: l10n.fernieProposedDiscard,
+              icon: Symbols.delete,
+              onPressed: () => _discardProposed(index),
+            ),
+            _buildRegionTabAction(
+              tooltip: l10n.fernieRegionCancel,
+              icon: Symbols.close,
+              onPressed: () => _chooseProposed(null),
+            ),
+            _buildRegionTabAction(
+              tooltip: l10n.fernieProposedAccept,
+              icon: Symbols.check,
+              color: context.colors.terciary,
+              onPressed: () => _acceptProposed(index),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildRegionTab(int index) {
     final l10n = AppLocalizations.of(context);
 
@@ -2079,6 +2315,11 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
     final l10n = AppLocalizations.of(context);
     final isFavorite = media?.isFavorite ?? false;
 
+    // En una ventana pequeña se mira, no se trabaja: salir, favorito, NSFW,
+    // compartir y borrar. Marcar regiones, reconocer y el panel no caben, ni en
+    // la barra ni en la ventana.
+    final isLite = isLiteLayout(context);
+
     // Lo que todavía no se ha confirmado no se puede marcar como favorito.
     //
     // Se mira si el contenido es definitivo y no de dónde se ha llegado: un
@@ -2150,38 +2391,40 @@ class _ViewerPageState extends State<ViewerPage> with TickerProviderStateMixin {
         ),
 
       // --- Herramientas ---------------------------------------------------
-      const SizedBox(width: AppSpacing.m),
-      // Marcar regiones se pide desde aquí, junto al resto de lo que se puede
-      // hacer con el contenido. Antes estaba escondido dentro del panel de
-      // información, que hay que abrir para verlo.
-      //
-      // Con el icono de los fernies, que es lo que se va a marcar. Llevaba el de
-      // recortar, y en esta barra ése es prácticamente el mismo dibujo que el de
-      // pantalla completa: dos botones iguales a dos sitios de distancia.
-      _buildAction(
-        tooltip: l10n.fernieModeTooltip,
-        icon: AppIcons.fernie,
-        onPressed: canMark ? _enterFernieMode : null,
-      ),
-      _buildRecognizeAction(enabled: media != null),
-
-      // --- Lo que cambia cómo se ve ----------------------------------------
-      const SizedBox(width: AppSpacing.m),
-      _buildAction(
-        tooltip: l10n.viewerInfoTooltip,
-        icon: AppIcons.info,
-        onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
-      ),
-      // La pantalla completa la da el sistema, así que sólo se ofrece donde la
-      // aplicación sabe pedirla.
-      if (FullscreenService.instance.isSupported)
+      if (!isLite) ...[
+        const SizedBox(width: AppSpacing.m),
+        // Marcar regiones se pide desde aquí, junto al resto de lo que se puede
+        // hacer con el contenido. Antes estaba escondido dentro del panel de
+        // información, que hay que abrir para verlo.
+        //
+        // Con el icono de los fernies, que es lo que se va a marcar. Llevaba el de
+        // recortar, y en esta barra ése es prácticamente el mismo dibujo que el de
+        // pantalla completa: dos botones iguales a dos sitios de distancia.
         _buildAction(
-          tooltip: _isFullscreen
-              ? l10n.viewerExitFullscreen
-              : l10n.viewerFullscreen,
-          icon: _isFullscreen ? Symbols.fullscreen_exit : Symbols.fullscreen,
-          onPressed: _toggleFullscreen,
+          tooltip: l10n.fernieModeTooltip,
+          icon: AppIcons.fernie,
+          onPressed: canMark ? _enterFernieMode : null,
         ),
+        _buildRecognizeAction(enabled: media != null),
+
+        // --- Lo que cambia cómo se ve ----------------------------------------
+        const SizedBox(width: AppSpacing.m),
+        _buildAction(
+          tooltip: l10n.viewerInfoTooltip,
+          icon: AppIcons.info,
+          onPressed: () => context.read<MediaBloc>().add(const ToggleInfoEvent()),
+        ),
+        // La pantalla completa la da el sistema, así que sólo se ofrece donde la
+        // aplicación sabe pedirla.
+        if (FullscreenService.instance.isSupported)
+          _buildAction(
+            tooltip: _isFullscreen
+                ? l10n.viewerExitFullscreen
+                : l10n.viewerFullscreen,
+            icon: _isFullscreen ? Symbols.fullscreen_exit : Symbols.fullscreen,
+            onPressed: _toggleFullscreen,
+          ),
+      ],
 
       // --- Lo que saca el contenido de aquí --------------------------------
       const SizedBox(width: AppSpacing.xl),

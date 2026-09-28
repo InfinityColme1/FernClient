@@ -14,6 +14,8 @@ import 'package:Fern/features/settings/presentation/widgets/settings_section.dar
 import 'package:Fern/features/settings/presentation/widgets/settings_section_list.dart';
 import 'package:Fern/features/settings/presentation/widgets/database_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/files_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/import_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/library_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/language_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/notification_settings_section.dart';
 import 'package:Fern/features/settings/presentation/widgets/recognition_settings_section.dart';
@@ -134,8 +136,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
             child: switch (_section) {
               SettingsSection.language => const LanguageSettingsSection(),
               SettingsSection.appearance => const AppearanceSettingsSection(),
+              SettingsSection.library => const LibrarySettingsSection(),
               SettingsSection.viewer => const ViewerSettingsSection(),
               SettingsSection.files => const FilesSettingsSection(),
+              SettingsSection.importing => const ImportSettingsSection(),
               SettingsSection.remoteSources =>
                 const RemoteSourcesSettingsSection(),
               SettingsSection.recognition =>

@@ -18,17 +18,30 @@ class FernSectionHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
 
+  /// Lo que va **antes** del título, pegado a él.
+  ///
+  /// Es para el botón de volver de una cabecera en la que se ha entrado. Va
+  /// aquí y no fuera de la cabecera para que el título quede a su lado y no
+  /// debajo, que es lo que hace que se lea como «vuelve de aquí» y no como dos
+  /// cosas sueltas. Distinto de [icon]: aquél decora, éste se pulsa.
+  final Widget? leading;
+
   const FernSectionHeader({
     super.key,
     this.icon,
     required this.title,
     this.trailing,
+    this.leading,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (leading != null) ...[
+          leading!,
+          const SizedBox(width: AppSpacing.xs),
+        ],
         if (icon != null) ...[
           Icon(icon, size: AppSizes.iconMedium, color: context.colors.gray),
           const SizedBox(width: AppSpacing.s),

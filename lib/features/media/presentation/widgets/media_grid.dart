@@ -16,6 +16,8 @@ import 'package:Fern/features/media/presentation/widgets/returning_masonry_grid.
 import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
 import 'package:Fern/features/media/presentation/widgets/search_result_row.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/features/media/presentation/services/shift_range_preview.dart';
+import 'package:Fern/core/ui/display/progressive_cell.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -161,6 +163,9 @@ class MediaGrid extends StatelessWidget {
     this.onStop,
     this.isStopping = false,
     this.returnsToViewed = false,
+    this.showsKind = false,
+    this.scrollResetKey,
+    this.revealKey,
   })  : sections = null,
         crops = null,
         onMediaTap = null,
@@ -185,6 +190,17 @@ class MediaGrid extends StatelessWidget {
   /// sería saltar a un sitio cualquiera.
   final bool returnsToViewed;
 
+  /// Si las celdas dicen de qué tipo son también las imágenes. Lo pide quien
+  /// ordena por tipo: ver `MediaItem.showsKind`.
+  final bool showsKind;
+
+  /// Ver [ReturningMasonryGrid.scrollResetKey].
+  final Object? scrollResetKey;
+
+  /// Cuando cambia, las celdas vuelven a pasar por su hueco y aparecen otra
+  /// vez. Ver [ProgressiveCell.revealKey].
+  final Object? revealKey;
+
   const MediaGrid.crops({
     super.key,
     required List<MediaCrop> this.crops,
@@ -205,7 +221,10 @@ class MediaGrid extends StatelessWidget {
         sections = null,
         onMediaTap = null,
         onStop = null,
-        returnsToViewed = false;
+        returnsToViewed = false,
+        showsKind = false,
+        scrollResetKey = null,
+        revealKey = null;
 
   /// Rejilla para **elegir** un contenido: pulsar uno lo devuelve y ya está.
   ///
@@ -232,7 +251,10 @@ class MediaGrid extends StatelessWidget {
         isImporting = false,
         isStopping = false,
         onStop = null,
-        returnsToViewed = false;
+        returnsToViewed = false,
+        showsKind = false,
+        scrollResetKey = null,
+        revealKey = null;
 
   /// Rejilla de resultados de búsqueda: el contenido va separado en grupos
   /// (descripciones, etiquetas y creadores) con una cabecera delante de cada
@@ -249,6 +271,9 @@ class MediaGrid extends StatelessWidget {
         isImporting = false,
         isStopping = false,
         returnsToViewed = false,
+        showsKind = false,
+        scrollResetKey = null,
+        revealKey = null,
         onMediaTap = null,
         crops = null,
         selectedCropIds = const {},
@@ -289,6 +314,15 @@ class MediaGrid extends StatelessWidget {
             ],
           (_, final crops?) => [for (final crop in crops) crop.id],
           _ => [for (final media in mediaList) media.id],
+        },
+      );
+
+  /// En qué posición está cada contenido, para encontrar las celdas por su
+  /// clave cuando se mueven.
+  Map<int, int> get _indexById => _cache.indexOf(
+        _source,
+        () => {
+          for (final (index, id) in _orderedIds.indexed) id: index,
         },
       );
 
@@ -376,31 +410,53 @@ class MediaGrid extends StatelessWidget {
 
     final highlight = getIt<RecognitionHighlight>();
 
-    // Importando no se tapa: lo que llega se suma a lo que ya hay, y taparlo
-    // sería impedir mirar la biblioteca mientras dura. La cuenta y el botón de
-    // parar se enseñan encima, sin quitarle el paso a nada.
-    if (isLoading && isImporting) {
-      return Padding(
-        padding: _padding,
-        child: Column(
-          children: [
-            _importingBar(context),
-            Expanded(child: _framed(content, orderedIds, highlight)),
-          ],
-        ),
+    // La rejilla de una pantalla —la que tiene detrás el visor— se queda quieta
+    // mientras el visor está abierto. Ver `ViewedMedia.isViewerOpen`.
+    if (returnsToViewed && getIt.isRegistered<ViewedMedia>()) {
+      return _StillUnderViewer(
+        child: _body(context, content, orderedIds, highlight),
       );
     }
 
+    return _body(context, content, orderedIds, highlight);
+  }
+
+  Widget _body(
+    BuildContext context,
+    Widget content,
+    List<int> orderedIds,
+    RecognitionHighlight highlight,
+  ) {
+    // Importando no se tapa: lo que llega se suma a lo que ya hay, y taparlo
+    // sería impedir mirar la biblioteca mientras dura. La cuenta y el botón de
+    // parar se enseñan encima, sin quitarle el paso a nada.
+    final importing = isLoading && isImporting;
+
+    // **La misma forma de árbol con importación y sin ella.** Antes eran dos
+    // envoltorios distintos, y pasar de uno a otro —al empezar una importación
+    // y al acabarla— tiraba la rejilla entera y la volvía a montar: cada celda
+    // perdía su miniatura y la pedía otra vez, que es lo que se veía como que
+    // la rejilla se recargaba de arriba abajo en mitad del trabajo. Ahora la
+    // barra entra y sale por encima, y la rejilla (con su clave) se queda.
     return Padding(
       padding: _padding,
-      child: FernBusyOverlay(
-        isBusy: isLoading,
-        action: _stopButton(context),
-        radius: hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,
-        // Las marcas van **encima** del scroll y fuera de la superficie: dicen a
-        // qué altura está lo señalado, que en una rejilla de trescientas
-        // miniaturas casi siempre queda fuera de la pantalla.
-        child: _framed(content, orderedIds, highlight),
+      child: Column(
+        children: [
+          if (importing) _importingBar(context),
+          Expanded(
+            key: const ValueKey('rejilla'),
+            child: FernBusyOverlay(
+              isBusy: isLoading && !isImporting,
+              action: importing ? null : _stopButton(context),
+              radius:
+                  hasSurface ? AppSizes.radiusSurface : AppSizes.radiusMedium,
+              // Las marcas van **encima** del scroll y fuera de la superficie:
+              // dicen a qué altura está lo señalado, que en una rejilla de
+              // trescientas miniaturas casi siempre queda fuera de la pantalla.
+              child: _framed(content, orderedIds, highlight),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -510,6 +566,12 @@ class MediaGrid extends StatelessWidget {
       cache: _cache,
       fallbackRatio: mediaFallbackAspectRatio,
       focusIndex: _returnIndex,
+      scrollResetKey: scrollResetKey,
+      // Para que una celda que se mueve de sitio conserve lo que ya tenía
+      // cargado, en vez de empezar de cero en su posición nueva.
+      findChildIndexCallback: (key) => key is ValueKey<int>
+          ? _indexById[key.value]
+          : null,
       itemBuilder: (context, index) =>
           _buildItem(
             mediaList[index],
@@ -677,9 +739,21 @@ class MediaGrid extends StatelessWidget {
     bool fliesToViewer = false,
   }) {
     final highlight = getIt<RecognitionHighlight>();
+    final rangePreview = ShiftRangePreview.instance;
 
-    return BlocSelector<MediaBloc, MediaStates, Set<int>>(
-      key: key,
+    // Primero un hueco y la celda en su turno: ver [ProgressiveCell]. Así la
+    // rejilla aparece entera desde el primer fotograma y se va llenando según
+    // cada celda está lista, sin esperar a las demás.
+    return ProgressiveCell(
+      // **La clave del contenido, no la de la rejilla.** Pasaba la de la
+      // rejilla a todas las celdas; con ella, cada celda era «la que está en
+      // tal posición», y cualquier cosa que moviera el orden —lo que llega de
+      // una importación, un borrado de arriba— le cambiaba el contenido a
+      // todas las de debajo, que tiraban su miniatura y la pedían otra vez.
+      key: ValueKey(media.id),
+      revealKey: revealKey,
+      placeholderAspectRatio: _ratioOf(media) ?? mediaFallbackAspectRatio,
+      builder: (context) => BlocSelector<MediaBloc, MediaStates, Set<int>>(
       selector: (state) => state.selectedIds,
       builder: (context, selectedIds) {
         final isSelected = selectedIds.contains(media.id);
@@ -687,11 +761,21 @@ class MediaGrid extends StatelessWidget {
         return ListenableBuilder(
         // Se escucha aquí y no arriba para que apagar el destacado no rehaga la
         // rejilla entera: son trescientas celdas, y cada una sabe si le toca.
-        listenable: highlight,
+        // Y lo que entraría en un mayúsculas + clic, por lo mismo.
+        listenable: Listenable.merge([highlight, rangePreview]),
           builder: (context, _) => MediaItem(
             media: media,
             isSelected: isSelected,
+            isInRangePreview: !isSelected && rangePreview.contains(media.id),
+            onHoverChanged: (isHovered) => isHovered
+                ? rangePreview.hover(
+                    media.id,
+                    orderedIds,
+                    context.read<MediaBloc>().selectionAnchorId,
+                  )
+                : rangePreview.leave(media.id),
             fliesToViewer: fliesToViewer,
+            showsKind: showsKind,
             isHighlighted: highlight.contains(media.id),
             // La regla del arrastre: con selección, la selección entera; sin
             // ella, sólo ésta. Arrastrar una celda que no está marcada teniendo
@@ -725,7 +809,57 @@ class MediaGrid extends StatelessWidget {
           ),
         );
       },
+      ),
     );
+  }
+}
+
+/// Deja lo de dentro como estaba mientras el visor está abierto encima.
+///
+/// Devolver **el mismo widget** es lo que hace que Flutter no rehaga nada de
+/// debajo: la pantalla de atrás puede reconstruirse con cada contenido que se
+/// pasa en el visor, pero la rejilla no se entera hasta que se cierra. Al
+/// cerrarlo se pone al día de una vez, con la lista como haya quedado y en lo
+/// último que se miró.
+class _StillUnderViewer extends StatefulWidget {
+  final Widget child;
+
+  const _StillUnderViewer({required this.child});
+
+  @override
+  State<_StillUnderViewer> createState() => _StillUnderViewerState();
+}
+
+class _StillUnderViewerState extends State<_StillUnderViewer> {
+  final ViewedMedia _viewed = getIt<ViewedMedia>();
+
+  /// Lo que se estaba enseñando cuando se abrió el visor.
+  Widget? _frozen;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewed.addListener(_onViewerChanged);
+  }
+
+  @override
+  void dispose() {
+    _viewed.removeListener(_onViewerChanged);
+    super.dispose();
+  }
+
+  void _onViewerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_viewed.isViewerOpen) {
+      _frozen = null;
+      return widget.child;
+    }
+
+    return _frozen ??= widget.child;
   }
 }
 

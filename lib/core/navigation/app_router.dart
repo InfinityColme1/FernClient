@@ -20,13 +20,19 @@ import 'package:Fern/features/recognition/presentation/pages/models_page.dart';
 import 'package:Fern/features/duplicates/presentation/pages/repeated_media_page.dart';
 import 'package:Fern/features/splash/presentation/pages/splash_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/media/presentation/blocs/media_bloc.dart';
 import '../service_locator.dart';
 
 
+/// El navegador de la raíz: donde viven los diálogos y el visor. Lo necesita
+/// Escape para saber qué hay encima (ver `EscapeBack`).
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: splashRoute,
   routes: [
     // La bienvenida va fuera del armazón: no lleva ni cabecera ni menú lateral,
@@ -131,7 +137,13 @@ final appRouter = GoRouter(
               key: state.pageKey,
               location: tagManagerRoute,
               family: ScreenFamily.management,
-              child: const TagManagerPage(),
+              child: TagManagerPage(
+                // Se llega así al pulsar una etiqueta en el panel del visor: la
+                // pantalla se abre con ésa elegida y no con la primera.
+                selectedTagId: int.tryParse(
+                  state.uri.queryParameters[tagQueryParam] ?? '',
+                ),
+              ),
             ),
         ),
         // Las personas: la misma pantalla con el reparto cambiado. Va en la
@@ -143,7 +155,14 @@ final appRouter = GoRouter(
               key: state.pageKey,
               location: personaManagerRoute,
               family: ScreenFamily.management,
-              child: const TagManagerPage(showsPeople: true),
+              child: TagManagerPage(
+                showsPeople: true,
+                // Como la de etiquetas: se llega así al pulsar una persona en
+                // el panel del visor.
+                selectedTagId: int.tryParse(
+                  state.uri.queryParameters[tagQueryParam] ?? '',
+                ),
+              ),
             ),
         ),
         // Reconocimiento. La de fernies es la de esta fase; las otras dos

@@ -121,7 +121,10 @@ class SuggestionRow extends StatelessWidget {
           ? null
           : (_) => onSpotlight!(null),
       child: Tooltip(
-      message: texts.suggestionFromModel,
+      // Con el nombre entero delante: el chip lo recorta a una línea, y en un
+      // panel de 400 puntos un nombre largo se corta. Sin esto, saber a qué se
+      // le está diciendo que sí no tenía dónde mirarse.
+      message: texts.suggestionFromModelNamed(suggestion.label),
       child: Row(
         children: [
           Flexible(

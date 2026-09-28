@@ -184,6 +184,32 @@ class AppSizes {
   /// desborde antes de llegar a [largeScreenMinWidth].
   static const double sidebarAutoCollapseMinWidth = 1320.0;
 
+  /// Alto por debajo del cual se pasa al modo reducido: no cabe la barra
+  /// superior con una rejilla utilizable debajo y el menú lateral al lado.
+  static const double fullLayoutMinHeight = 600.0;
+
+  /// Lo más que se deja estrechar la ventana, ya en modo reducido.
+  ///
+  /// Por debajo de [largeScreenMinWidth] no se impide nada: la aplicación se
+  /// queda sólo con la rejilla de la biblioteca y el visor (ver
+  /// `lite_layout.dart`), que caben en mucho menos. Este sí es el tope del
+  /// ejecutable (`kMinimumWindowWidth`), y lo compara
+  /// `test/layout_breakpoints_test.dart`.
+  static const double liteWindowMinWidth = 420.0;
+
+  /// Lo más que se deja bajar la ventana, en modo reducido. Es el
+  /// `kMinimumWindowHeight` del ejecutable.
+  static const double liteWindowMinHeight = 360.0;
+
+  /// El ancho aproximado de cada columna de la rejilla en modo reducido: con
+  /// las cuatro de siempre, en una ventana de 420 cada miniatura se quedaría en
+  /// un sello.
+  static const double liteGridCellWidth = 180.0;
+
+  /// El logo en la cabecera del modo reducido, casi del alto de los botones
+  /// de la fila: a 22 se perdía al lado de las píldoras.
+  static const double liteLogoHeight = 36.0;
+
   /// Lo ancho que es el menu lateral, desplegado y plegado.
   ///
   /// Vive aqui y no como valor por defecto del cajon porque la barra de arriba

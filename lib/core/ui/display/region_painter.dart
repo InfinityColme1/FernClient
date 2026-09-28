@@ -147,8 +147,20 @@ class RegionPainter extends CustomPainter {
     final focus = pending ?? _highlighted;
     if (focus != null) _paintScrim(canvas, size, focus);
 
-    for (final preview in previews) {
-      _paintPreview(canvas, _toScreen(preview.rect, size), preview.label, size);
+    // Los recorridos, **con la misma opacidad que las regiones**: son un dibujo
+    // de ellas, y fuera del modo fernie tienen que esconderse igual. Pintados
+    // tal cual, un vídeo de la biblioteca enseñaba cajas moviéndose encima en
+    // cuanto se le daba a reproducir.
+    if (regionsOpacity > 0) {
+      for (final preview in previews) {
+        _paintPreview(
+          canvas,
+          _toScreen(preview.rect, size),
+          preview.label,
+          size,
+          opacity: regionsOpacity,
+        );
+      }
     }
 
     for (var index = 0; index < regions.length; index++) {
@@ -242,7 +254,13 @@ class RegionPainter extends CustomPainter {
   ///
   /// Va con trazo fino y sin relleno para que no se confunda con lo marcado: es
   /// una ayuda para comprobar, no algo que se pueda tocar.
-  void _paintPreview(Canvas canvas, Rect rect, String? label, Size size) {
+  void _paintPreview(
+    Canvas canvas,
+    Rect rect,
+    String? label,
+    Size size, {
+    double opacity = 1,
+  }) {
     final rounded = RRect.fromRectAndRadius(
       rect,
       const Radius.circular(AppSizes.radiusSmall),
@@ -253,11 +271,11 @@ class RegionPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = AppSizes.borderThin
-        ..color = strokeColor.withValues(alpha: _previewOpacity),
+        ..color = strokeColor.withValues(alpha: _previewOpacity * opacity),
     );
 
     if (label != null) {
-      _paintLabel(canvas, rect, label, size, opacity: _previewOpacity);
+      _paintLabel(canvas, rect, label, size, opacity: _previewOpacity * opacity);
     }
   }
 

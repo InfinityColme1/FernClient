@@ -106,6 +106,13 @@ class _Registry implements MediaRegistry {
   /// falta para poder bloquearla luego sin tener que deducirlo de nada.
   final registered = <String, String?>{};
 
+  /// Lo que la biblioteca ya tenía antes de empezar, para poder probar que no
+  /// se vuelve a bajar.
+  Set<String> already = const {};
+
+  @override
+  Future<Set<String>> registeredIdsOf(ImportSource source) async => {...already};
+
   @override
   Future<MediaSummaryEntity?> register({
     required String path,
@@ -384,6 +391,57 @@ void main() {
       (blocked as _MemoryBlocked).add('gelbooru_2');
 
       final repository = await scanning([2, 1]);
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(preferences.getLastImportMarker(ImportSource.gelbooru), '2');
+    });
+  });
+
+  // La otra guarda del recorrido, y la que más ahorra: lo que ya está en la
+  // biblioteca. Antes se sabía **después** de bajar el fichero —el registro
+  // devolvía «esto ya estaba» con el fichero delante—, así que una cuenta con
+  // mil marcadas ya importadas bajaba mil ficheros para tirarlos, y los dejaba
+  // en la carpeta de descargas. La fuente da el identificador antes de nada, y
+  // con él se contesta lo mismo sin gastar un byte.
+  group('lo ya importado ni se pide', () {
+    test('no se descarga lo que ya está en la biblioteca', () async {
+      final repository = await scanning([1, 2]);
+      registry.already = {'gelbooru_1'};
+
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(downloader.asked, ['gelbooru_2']);
+    });
+
+    test('ni se pide su publicación', () async {
+      final asked = <String>[];
+      final repository = await scanning([1, 2], postsAsked: asked);
+      registry.already = {'gelbooru_1'};
+
+      await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(asked, ['2'], reason: 'de la que ya se tiene ni se pregunta');
+    });
+
+    test('con todo importado no se pide nada, y no es un fallo', () async {
+      final asked = <String>[];
+      final repository = await scanning([1, 2, 3], postsAsked: asked);
+      registry.already = {'gelbooru_1', 'gelbooru_2', 'gelbooru_3'};
+
+      final results =
+          await repository.scanRemoteSource(ImportSource.gelbooru).toList();
+
+      expect(asked, isEmpty);
+      expect(downloader.asked, isEmpty);
+      // No traer nada porque ya se tenía todo es una importación sin novedades,
+      // no una rota.
+      expect(results.whereType<DataException>(), isEmpty);
+    });
+
+    test('la marca avanza aunque la primera ya estuviera', () async {
+      final repository = await scanning([2, 1]);
+      registry.already = {'gelbooru_2'};
+
       await repository.scanRemoteSource(ImportSource.gelbooru).toList();
 
       expect(preferences.getLastImportMarker(ImportSource.gelbooru), '2');

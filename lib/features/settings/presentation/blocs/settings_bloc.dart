@@ -62,6 +62,7 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
     on<RecognizeOnImportToggledEvent>(onRecognizeOnImportToggled);
     on<ReturnRecognizedToggledEvent>(onReturnRecognizedToggled);
     on<MaxDetectionsChangedEvent>(onMaxDetectionsChanged);
+    on<RegionMergeOverlapChangedEvent>(onRegionMergeOverlapChanged);
     on<ThemeModeChangedEvent>(onThemeModeChanged);
     on<CustomThemeColorChangedEvent>(onCustomThemeColorChanged);
     on<ViewerSaveBehaviorChangedEvent>(onViewerSaveBehaviorChanged);
@@ -241,6 +242,16 @@ class SettingsBloc extends Bloc<SettingsEvents, SettingsState> {
   ) {
     return _apply(
       state.settings.copyWith(returnRecognizedToImport: event.enabled),
+      emit,
+    );
+  }
+
+  Future<void> onRegionMergeOverlapChanged(
+    RegionMergeOverlapChangedEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    return _apply(
+      state.settings.copyWith(regionMergeOverlap: event.value),
       emit,
     );
   }

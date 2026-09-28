@@ -41,6 +41,15 @@ class ReturningMasonryGrid extends StatefulWidget {
   /// Dónde buscar el reparto ya calculado. Ver [GridLayoutCache].
   final GridLayoutCache? cache;
 
+  /// En qué posición está ahora la celda de una clave. Ver
+  /// [FernMasonryGrid.findChildIndexCallback].
+  final int? Function(Key key)? findChildIndexCallback;
+
+  /// Cuando cambia, la rejilla vuelve arriba del todo y se olvida de volver a
+  /// lo último mirado. Lo cambia quien reordena: con otro orden, lo que había
+  /// en esa altura ya es otra cosa.
+  final Object? scrollResetKey;
+
   const ReturningMasonryGrid({
     super.key,
     required this.columns,
@@ -52,6 +61,8 @@ class ReturningMasonryGrid extends StatefulWidget {
     required this.fallbackRatio,
     this.focusIndex,
     this.cache,
+    this.findChildIndexCallback,
+    this.scrollResetKey,
   });
 
   @override
@@ -76,6 +87,15 @@ class _ReturningMasonryGridState extends State<ReturningMasonryGrid> {
   @override
   void didUpdateWidget(ReturningMasonryGrid old) {
     super.didUpdateWidget(old);
+
+    if (old.scrollResetKey != widget.scrollResetKey) {
+      // Lo que haya para volver ya se da por hecho: volver a ello con el orden
+      // nuevo era lo que bajaba la rejilla sola al ordenar.
+      _honoured = widget.focusIndex;
+      if (_controller.hasClients) _controller.jumpTo(0);
+      return;
+    }
+
     _scheduleReturn();
   }
 
@@ -126,6 +146,7 @@ class _ReturningMasonryGridState extends State<ReturningMasonryGrid> {
         fallbackRatio: widget.fallbackRatio,
         cache: widget.cache,
         onLayout: (layout) => _layout = layout,
+        findChildIndexCallback: widget.findChildIndexCallback,
         itemBuilder: widget.itemBuilder,
       ),
     );

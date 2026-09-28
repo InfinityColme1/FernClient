@@ -1,30 +1,20 @@
-import 'dart:async';
-
-import 'package:Fern/core/constants/app_constants.dart';
-import 'package:Fern/core/navigation/screen_slot.dart';
 import 'package:flutter/widgets.dart';
 
-/// Lo que una pantalla hace **al terminar de entrar**, no al empezar.
+/// Lo que una pantalla hace al llegar a ella: leer lo suyo.
 ///
-/// Abrir una pantalla es leer de la base de datos, y con una biblioteca grande
-/// eso es trabajo de sobra para comerse varios fotogramas. Haciéndolo en
-/// `initState` ese trabajo cae justo encima de la transición: la animación no
-/// llega a verse y la ventana parece haberse quedado colgada un instante. Lo que
-/// más se nota no es la espera —que es la misma— sino que el cambio de pantalla
-/// no se ve.
+/// **En paralelo con la transición, no después.** Antes se esperaba a que la
+/// animación terminara para empezar a leer: la animación corría sobre una
+/// rejilla vacía y el contenido llegaba de golpe al acabar, que es lo que se
+/// veía como un parpadeo. Ahora la lectura sale en el fotograma siguiente al de
+/// montar la pantalla, la animación corre con los huecos de carga puestos, y
+/// cada celda sustituye a su hueco en cuanto está lista (`ProgressiveCell`),
+/// con la transición todavía en marcha si hace falta.
 ///
-/// Esperando a que la transición termine, la pantalla entra con lo que ya
-/// hubiera (el estado no se vacía) y la lectura empieza después, con la
-/// animación ya guardada. La espera total no cambia; lo que cambia es que se ve
-/// lo que está pasando.
-///
-/// Sin transición —el navegador, o una prueba sin `ScreenTransitionScope`— se
-/// ejecuta en el acto: no hay nada a lo que dejar sitio.
+/// En el fotograma siguiente y no en el acto: durante la construcción no se
+/// puede tocar el estado de nadie, y así el primer fotograma de la animación
+/// sale limpio.
 mixin ScreenEntryTask<T extends StatefulWidget> on State<T> {
   bool _armed = false;
-  bool _ran = false;
-  Animation<double>? _entering;
-  Timer? _fallback;
 
   /// Lo que hay que hacer al llegar. Se llama **una sola vez**.
   void onScreenEntered();
@@ -38,48 +28,8 @@ mixin ScreenEntryTask<T extends StatefulWidget> on State<T> {
     if (_armed) return;
     _armed = true;
 
-    final entering = ScreenTransitionScope.maybeOf(context)?.entering;
-
-    if (entering == null || entering.status == AnimationStatus.completed) {
-      _run();
-      return;
-    }
-
-    _entering = entering..addStatusListener(_onStatus);
-
-    // Y una red por si la transición no llega a terminar nunca —la interrumpe
-    // otra navegación, la animación se queda a medias—: una pantalla que se
-    // quedara sin cargar para siempre sería mucho peor que cargar antes de
-    // tiempo. El plazo es holgado a propósito: en el camino normal no llega a
-    // saltar.
-    _fallback = Timer(screenEntryTaskFallback, _run);
-  }
-
-  void _onStatus(AnimationStatus status) {
-    if (status != AnimationStatus.completed) return;
-
-    _run();
-  }
-
-  void _run() {
-    if (_ran) return;
-    _ran = true;
-
-    _release();
-
-    if (mounted) onScreenEntered();
-  }
-
-  void _release() {
-    _entering?.removeStatusListener(_onStatus);
-    _entering = null;
-    _fallback?.cancel();
-    _fallback = null;
-  }
-
-  @override
-  void dispose() {
-    _release();
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) onScreenEntered();
+    });
   }
 }

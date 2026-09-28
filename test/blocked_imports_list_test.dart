@@ -1,4 +1,4 @@
-// La lista de bloqueos en Ajustes → Base de datos.
+// La lista de bloqueos en Ajustes → Importación.
 //
 // Un bloqueo que no se puede ver ni deshacer es una trampa: si el usuario se
 // arrepiente no hay forma de volver a importar eso nunca. La lista existe para
@@ -17,7 +17,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/service_locator.dart';
 import 'package:Fern/features/media/data/models/blocked_import_model.dart';
 import 'package:Fern/features/media/data/services/blocked_imports.dart';
-import 'package:Fern/features/settings/presentation/widgets/database_settings_section.dart';
+import 'package:Fern/features/settings/presentation/widgets/blocked_imports_list.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -68,7 +68,8 @@ Future<void> _pump(
       body: SizedBox(
         width: 520,
         height: 560,
-        child: DatabaseSettingsSection(),
+        // Como en el diálogo, que desplaza la sección entera.
+        child: SingleChildScrollView(child: BlockedImportsList()),
       ),
     ),
   ));

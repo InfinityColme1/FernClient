@@ -149,8 +149,11 @@ bool Win32Window::Create(const std::wstring& title,
   return OnCreate();
 }
 
+// Nace maximizada: es una aplicacion para mirar contenido, y cada pixel que no
+// ocupa es rejilla que se pierde. El tamano de Create sigue valiendo: es al que
+// vuelve al restaurarla.
 bool Win32Window::Show() {
-  return ShowWindow(window_handle_, SW_SHOWNORMAL);
+  return ShowWindow(window_handle_, SW_SHOWMAXIMIZED);
 }
 
 // static
@@ -207,12 +210,8 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
     }
 
-    // El ancho minimo de la ventana.
-    //
-    // La aplicacion no tiene layout de movil: se dibuja siempre igual y lo
-    // unico que hace al estrecharse es plegar el menu lateral. Por debajo de
-    // este ancho las cabeceras dejan de caber, asi que se impide llegar ahi en
-    // vez de dejar que desborden.
+    // El tamano minimo de la ventana: el del modo reducido, que es lo mas
+    // pequeno a lo que la aplicacion sabe dibujarse (ver win32_window.h).
     //
     // Va en pixeles logicos y se escala con el DPI del monitor, igual que el
     // tamano inicial: en una pantalla al 150% la misma ventana ocupa la mitad

@@ -49,6 +49,10 @@ class _Downloader implements RemoteMediaDownloader {
 }
 
 class _Registry implements MediaRegistry {
+  /// Nada dado de alta de antes: cada prueba parte de una biblioteca vacía.
+  @override
+  Future<Set<String>> registeredIdsOf(ImportSource source) async => const {};
+
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }

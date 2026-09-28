@@ -117,6 +117,13 @@ class MediaItem extends StatefulWidget {
   /// `true` si el elemento forma parte de la selección actual.
   final bool isSelected;
 
+  /// `true` si un mayúsculas + clic donde está ahora el ratón lo marcaría.
+  /// Ver `ShiftRangePreview`.
+  final bool isInRangePreview;
+
+  /// El ratón entra o sale de la celda. Es lo que sigue el rango de arriba.
+  final ValueChanged<bool>? onHoverChanged;
+
   /// `true` mientras este contenido sea uno de los del último aviso.
   ///
   /// Va aparte de la selección porque no es lo mismo: la selección la hace el
@@ -183,11 +190,21 @@ class MediaItem extends StatefulWidget {
   /// rejilla. Vacío o nulo, la celda no se arrastra.
   final List<int>? dragIds;
 
+  /// Si se dice de qué tipo es también cuando es una imagen.
+  ///
+  /// Un vídeo y un GIF lo dicen siempre —el primero con su duración—, porque
+  /// en una rejilla de miniaturas quietas no se distinguen de una imagen. La
+  /// imagen sólo se marca cuando se ha ordenado por tipo: ahí la pregunta es
+  /// justo esa, y sin marca el orden no se entendía.
+  final bool showsKind;
+
   const MediaItem({
     super.key,
     required this.media,
     this.onTap,
     this.isSelected = false,
+    this.isInRangePreview = false,
+    this.onHoverChanged,
     this.isHighlighted = false,
     this.onHighlightSeen,
     this.onSelectionToggled,
@@ -199,6 +216,7 @@ class MediaItem extends StatefulWidget {
     this.warning,
     this.dragIds,
     this.onContextMenu,
+    this.showsKind = false,
   });
 
   @override
@@ -613,6 +631,8 @@ class _MediaItemState extends State<MediaItem> {
     // hover no cambie de valor, porque lo que importa es el gesto.
     if (isHovered && widget.isHighlighted) widget.onHighlightSeen?.call();
 
+    widget.onHoverChanged?.call(isHovered);
+
     if (_isHovered == isHovered) return;
     setState(() => _isHovered = isHovered);
 
@@ -786,6 +806,7 @@ class _MediaItemState extends State<MediaItem> {
                 children: [
                   _buildContent(),
                   _buildTopShade(),
+                  _buildSelectionMark(),
                   _buildTopLeftBadges(),
                   _buildSelectionButton(),
                   // La última de la pila: lo que tapa tiene que quedar por
@@ -897,11 +918,48 @@ class _MediaItemState extends State<MediaItem> {
         // Se decodifica a la resolución en la que se va a pintar (nunca por
         // debajo), que es lo que evita el efecto borroso.
         cacheWidth: _decodeWidth(context, constraints.maxWidth),
+        // Mientras se decodifica, el hueco que late y no un recuadro vacío:
+        // dice que algo viene, y en su sitio exacto.
+        frameBuilder: _skeletonUntilPainted,
         errorBuilder: (_, _, _) {
           _reportLoadFailure();
           return _buildPlaceholder(isBroken: true);
         },
       ),
+    );
+  }
+
+  /// La imagen en cuanto tiene su primer fotograma; hasta entonces, el hueco.
+  ///
+  /// Lo que ya estaba en la caché llega en el mismo fotograma
+  /// (`wasSynchronouslyLoaded`) y no pasa por el hueco: parpadearía para nada.
+  ///
+  /// Lo que no, **aparece fundiéndose sobre el hueco** en vez de saltar encima
+  /// de él. Era una de las cosas que hacían que todo se sintiera «de golpe»:
+  /// una rejilla que se llena a saltos, celda a celda. El hueco se queda debajo
+  /// —la imagen es la misma pieza en los dos casos, así que no se rehace— y
+  /// la próxima vez, ya en la caché, no hay ni hueco ni fundido.
+  Widget _skeletonUntilPainted(
+    BuildContext context,
+    Widget child,
+    int? frame,
+    bool wasSynchronouslyLoaded,
+  ) {
+    if (wasSynchronouslyLoaded) return child;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Quieto: descodificar dura un momento, y una rejilla entera latiendo a
+        // la vez por eso es más ruido que aviso.
+        _buildPlaceholder(isPulsing: false),
+        AnimatedOpacity(
+          opacity: frame == null ? 0 : 1,
+          duration: context.motion(thumbnailFadeInDuration),
+          curve: Curves.easeInOutCubic,
+          child: child,
+        ),
+      ],
     );
   }
 
@@ -970,9 +1028,21 @@ class _MediaItemState extends State<MediaItem> {
         (target / mediaDecodeWidthStep).ceil() * mediaDecodeWidthStep;
     final intrinsic = _intrinsicWidth;
 
-    if (intrinsic == null || intrinsic <= 0) return stepped;
-    return math.min(stepped, intrinsic);
+    final wanted = intrinsic == null || intrinsic <= 0
+        ? stepped
+        : math.min(stepped, intrinsic);
+
+    // **Sólo crece.** Estrechar la ventana no vuelve a descodificar: lo que ya
+    // hay tiene resolución de sobra para una celda más pequeña, y descodificar
+    // otra vez a cada paso del reescalado es lo que lo hacía ir a tirones.
+    final decoded = _decodedWidth;
+    if (decoded != null && wanted <= decoded) return decoded;
+
+    return _decodedWidth = wanted;
   }
+
+  /// El ancho al que se descodificó la última vez. Ver [_decodeWidth].
+  int? _decodedWidth;
 
   /// El hueco de una celda: **esperando** o **rota**, que no es lo mismo.
   ///
@@ -984,14 +1054,14 @@ class _MediaItemState extends State<MediaItem> {
   ///
   /// Esperando se pinta el hueco que late, el mismo de la carga; roto se dice
   /// con el icono y el color de lo que va mal.
-  Widget _buildPlaceholder({bool isBroken = false}) {
+  Widget _buildPlaceholder({bool isBroken = false, bool isPulsing = true}) {
     if (!isBroken) {
       return FernSkeleton(
         radius: AppSizes.radiusLarge,
         // Lanzada, quieto. La rejilla se llena de huecos justo mientras se
         // desplaza deprisa, y decenas de latidos a la vez son lo contrario de lo
         // que hace falta ahí — además de que nadie los mira al pasar de largo.
-        isPulsing: !_isFlinging,
+        isPulsing: isPulsing && !_isFlinging,
       );
     }
 
@@ -1037,8 +1107,9 @@ class _MediaItemState extends State<MediaItem> {
   Widget _buildTopLeftBadges() {
     final warning = widget.warning;
     final hasSuggestions = widget.media.hasPendingSuggestions;
+    final kind = _kindBadge();
 
-    if (warning == null && !_isVideo && !hasSuggestions) {
+    if (warning == null && kind == null && !hasSuggestions) {
       return const SizedBox.shrink();
     }
 
@@ -1056,8 +1127,56 @@ class _MediaItemState extends State<MediaItem> {
             _buildSuggestionsBadge(),
             const SizedBox(width: AppSpacing.xs),
           ],
-          if (_isVideo) _buildVideoBadge(),
+          ?kind,
         ],
+      ),
+    );
+  }
+
+  /// Lo que dice de qué tipo es: la duración en un vídeo, «GIF» en un GIF, y en
+  /// una imagen sólo si se ha pedido (ver [MediaItem.showsKind]).
+  Widget? _kindBadge() {
+    if (_isVideo) return _buildVideoBadge();
+
+    if (widget.media.path.isGifPath) {
+      return _buildTextBadge(icon: Symbols.gif_box, label: 'GIF');
+    }
+
+    if (widget.showsKind) {
+      return _buildTextBadge(icon: Symbols.image);
+    }
+
+    return null;
+  }
+
+  /// Una pastilla de las de la esquina, con su icono y, si hace falta, texto.
+  Widget _buildTextBadge({required IconData icon, String? label}) {
+    return IgnorePointer(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: label == null ? AppSpacing.xs : AppSpacing.s,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: context.colors.scrim.withValues(alpha: mediaBadgeOpacity),
+          borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: AppSizes.iconSmall),
+            if (label != null) ...[
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                label,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: Colors.white),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1143,8 +1262,43 @@ class _MediaItemState extends State<MediaItem> {
     );
   }
 
+  /// El marco y el velo de lo seleccionado, y de lo que entraría en el rango.
+  ///
+  /// Sólo el círculo de la esquina decía que algo estaba marcado, y sobre una
+  /// imagen clara no se veía: había que ir mirando celda por celda. Ahora lo
+  /// marcado lleva un marco grueso de su color y un velo del mismo tono, que se
+  /// ve de lejos y sobre cualquier imagen. Lo que marcaría un mayúsculas +
+  /// clic lleva lo mismo más suave, para que se distinga de lo ya marcado.
+  Widget _buildSelectionMark() {
+    final colors = context.colors;
+    final (borderWidth, tint) = switch ((widget.isSelected, widget.isInRangePreview)) {
+      (true, _) => (mediaSelectedBorderWidth, mediaSelectedTintOpacity),
+      (false, true) => (mediaRangePreviewBorderWidth, mediaRangePreviewTintOpacity),
+      _ => (0.0, 0.0),
+    };
+
+    return IgnorePointer(
+      child: AnimatedContainer(
+        duration: context.motion(hoverAnimationDuration),
+        decoration: BoxDecoration(
+          color: colors.terciary.withValues(alpha: tint),
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+          border: borderWidth == 0
+              ? null
+              : Border.all(
+                  color: colors.terciary.withValues(
+                    alpha: widget.isSelected ? 1 : mediaRangePreviewBorderOpacity,
+                  ),
+                  width: borderWidth,
+                ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSelectionButton() {
-    final isVisible = _isHovered || widget.isSelected;
+    final isVisible =
+        _isHovered || widget.isSelected || widget.isInRangePreview;
 
     return Positioned(
       top: AppSpacing.xs,
@@ -1161,11 +1315,16 @@ class _MediaItemState extends State<MediaItem> {
                 : AppLocalizations.of(context).selectItem,
             visualDensity: VisualDensity.compact,
             iconSize: AppSizes.iconMedium,
+            // Relleno al marcar: un círculo vacío y uno con la marca se
+            // distinguían mal a ese tamaño y encima de una imagen.
             icon: Icon(
-              widget.isSelected
+              widget.isSelected || widget.isInRangePreview
                   ? Symbols.check_circle
                   : Symbols.radio_button_unchecked,
-              color: widget.isSelected ? context.colors.terciary : Colors.white,
+              fill: widget.isSelected ? 1 : 0,
+              color: widget.isSelected || widget.isInRangePreview
+                  ? context.colors.terciary
+                  : Colors.white,
               shadows: [
                 Shadow(
                   color: context.colors.scrim

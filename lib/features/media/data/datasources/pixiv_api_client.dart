@@ -5,6 +5,7 @@ import 'package:Fern/features/media/data/datasources/remote_media_item.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/remote_session_expired.dart';
 import 'package:Fern/features/settings/domain/entities/pixiv_settings_entity.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// La API de Pixiv, con lo justo para traerse lo que el usuario ha marcado en
@@ -116,14 +117,16 @@ class PixivApiClient {
       );
 
       final body = await _get(uri, headers: headers, what: 'the bookmarks');
-      final works = (body?['works'] as List<dynamic>?) ?? const [];
+      final works = body?['works'] is List
+          ? body!['works'] as List<dynamic>
+          : const <dynamic>[];
       if (works.isEmpty) return;
 
       for (final entry in works) {
         if (entry is! Map<String, dynamic>) continue;
 
-        final id = entry['id'] as String?;
-        if (id == null || id.isEmpty) continue;
+        final id = _text(entry['id']);
+        if (id.isEmpty) continue;
 
         // Aquí se quedó la vez anterior: de este punto para atrás ya se miró.
         if (id == stopAt) return;
@@ -138,9 +141,26 @@ class PixivApiClient {
         // sola pieza, que es justo el caso de las animaciones.
         if (skip?.call(_fileSafe(_nameOf(entry)), id) ?? false) continue;
 
-        yield* Stream.fromIterable(
-          await _mediaOf(entry, credentials: credentials, collection: collection),
-        );
+        // Una obra que no se deja resolver se queda fuera y el recorrido sigue.
+        // Se recoge cualquier cosa, no sólo las excepciones: lo que llega de
+        // Pixiv no siempre tiene la forma que dice tener, y un fallo de tipos en
+        // una sola obra tumbaba la importación entera.
+        final List<RemoteMediaItem> media;
+        try {
+          media = await _mediaOf(
+            entry,
+            credentials: credentials,
+            collection: collection,
+          );
+        } on RemoteSessionExpiredException {
+          // Esto no es una obra que no llega: es que ya no se puede pedir nada.
+          rethrow;
+        } on Object catch (error) {
+          debugPrint('Pixiv: no se pudo resolver la obra $id: $error');
+          continue;
+        }
+
+        yield* Stream.fromIterable(media);
       }
 
       // El listado se ha acabado si esta página no venía llena.
@@ -154,8 +174,8 @@ class PixivApiClient {
   /// hace falta— y al construirla, y dos formas distintas de escribirlo harían
   /// que el salto nunca coincidiera con lo guardado.
   static String _nameOf(Map<String, dynamic> work) {
-    final id = work['id'] as String? ?? '';
-    final authorId = work['userId'] as String? ?? '';
+    final id = _text(work['id']);
+    final authorId = _text(work['userId']);
 
     return authorId.isEmpty ? id : '${authorId}_$id';
   }
@@ -174,9 +194,9 @@ class PixivApiClient {
     required PixivSettingsEntity credentials,
     required String collection,
   }) async {
-    final id = work['id'] as String? ?? '';
-    final title = work['title'] as String? ?? '';
-    final authorId = work['userId'] as String? ?? '';
+    final id = _text(work['id']);
+    final title = _text(work['title']);
+    final authorId = _text(work['userId']);
     final name = _fileSafe(_nameOf(work));
     final sourceUrls = _sourceUrls(id, authorId: authorId);
 
@@ -250,14 +270,16 @@ class PixivApiClient {
       asList: true,
     );
 
-    final pages = (body?['body'] as List<dynamic>?) ?? const [];
+    final pages = body?['body'] is List
+        ? body!['body'] as List<dynamic>
+        : const <dynamic>[];
 
     return [
       for (final page in pages)
         if (page is Map<String, dynamic>)
-          if ((page['urls'] as Map<String, dynamic>?)?['original']
-              case final String url)
-            if (url.isNotEmpty) url,
+          if (page['urls'] case final Map<String, dynamic> urls)
+            if (urls['original'] case final String url)
+              if (url.isNotEmpty) url,
     ];
   }
 
@@ -286,10 +308,12 @@ class PixivApiClient {
       return null;
     }
 
-    final url = (body?['originalSrc'] ?? body?['src']) as String?;
-    if (url == null || url.isEmpty) return null;
+    final url = _text(body?['originalSrc'] ?? body?['src']);
+    if (url.isEmpty) return null;
 
-    final frames = (body?['frames'] as List<dynamic>?) ?? const [];
+    final frames = body?['frames'] is List
+        ? body!['frames'] as List<dynamic>
+        : const <dynamic>[];
 
     return (
       url: url,
@@ -332,7 +356,11 @@ class PixivApiClient {
 
     final Map<String, dynamic> envelope;
     try {
-      envelope = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Pixiv did not answer with its envelope');
+      }
+      envelope = decoded;
     } on FormatException {
       // Lo que ha llegado no es la API: cuando la sesión no vale, Pixiv
       // devuelve la página de inicio de sesión con un código de acierto.
@@ -340,7 +368,7 @@ class PixivApiClient {
     }
 
     if (envelope['error'] == true) {
-      final message = envelope['message'] as String? ?? '';
+      final message = _text(envelope['message']);
       throw Exception(
         'Pixiv refused $what${message.isEmpty ? '' : ': $message'}',
       );
@@ -351,6 +379,19 @@ class PixivApiClient {
 
     return body is Map<String, dynamic> ? body : null;
   }
+
+  /// Un campo de texto de la respuesta, venga como venga.
+  ///
+  /// Pixiv no es constante con los tipos: el mismo campo —el identificador de
+  /// una obra, el de su autor— llega como texto en unas respuestas y como
+  /// número en otras, y una obra suelta con el número bastaba para tumbar la
+  /// importación entera con un fallo de tipos. Lo que no es ni texto ni número
+  /// (un `null`, un objeto) se da por ausente.
+  static String _text(Object? value) => switch (value) {
+        final String text => text,
+        final num number => '$number',
+        _ => '',
+      };
 
   /// Deja el texto en algo que sirva como nombre de fichero en cualquier
   /// sistema.

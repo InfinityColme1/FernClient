@@ -3,23 +3,16 @@ import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
-import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/core/constants/app_constants.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/nsfw/domain/services/nsfw_mode_service.dart';
+import 'package:Fern/features/nsfw/presentation/widgets/nsfw_unlock_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-/// Cómo se nombra cada tipo de resultado en el filtro: en plural, porque lo que
-/// se enciende o se apaga es el grupo entero, no un resultado.
-extension _SearchResultTypeFilterLabel on SearchResultType {
-  String filterLabel(AppLocalizations texts) => switch (this) {
-        SearchResultType.media => texts.filterMedia,
-        SearchResultType.tag => texts.filterTags,
-        SearchResultType.creator => texts.filterCreators,
-      };
-}
 
 /// Cómo se nombra cada fuente en el filtro. Las plataformas se llaman igual en
 /// todos los idiomas y traen su nombre puesto; el equipo sí se traduce.
@@ -41,93 +34,90 @@ extension _MediaKindFilterLabel on MediaKind {
       };
 }
 
-/// Botón "Filters" de la cabecera de la pantalla de media con su panel de
-/// casillas, en tres grupos:
+/// Botón "Filtros" de las cabeceras de la biblioteca y de favoritos con su
+/// panel de casillas, de arriba abajo:
 ///
-/// - **de dónde salen los resultados**: una casilla por tipo (contenidos,
-///   etiquetas y creadores). Recorta lo que ya se ha buscado, así que sin
-///   búsqueda en marcha no hay grupos que esconder y esas casillas quedan
-///   apagadas.
-/// - **de dónde llegó el contenido**: una casilla por fuente. Ésta vale siempre,
-///   con búsqueda y sin ella, porque la fuente es un dato del contenido y no del
-///   resultado. Es lo que sustituye a tener una etiqueta por plataforma: se ve
-///   sólo lo de Reddit sin que nadie lo haya etiquetado.
+/// - **NSFW**: esconder o enseñar lo marcado, sólo con contraseña puesta.
+/// - **qué clase de contenido**: imágenes, GIF, vídeos.
+/// - **de dónde llegó**: una casilla por fuente. Es lo que sustituye a tener
+///   una etiqueta por plataforma: se ve sólo lo de Reddit sin que nadie lo haya
+///   etiquetado.
+///
+/// Los tres valen con búsqueda y sin ella: son datos del contenido. Qué tipos
+/// de resultado devuelve el buscador no está aquí sino junto a él
+/// (`SearchScopeMenu`), que es a lo que afecta.
 ///
 /// El panel no se cierra al marcar una casilla, así que se pueden encender y
 /// apagar varias de una vez y ver la rejilla cambiar por detrás.
 class SearchFilterMenu extends StatelessWidget {
-  /// Tipos de resultado que se están viendo.
-  final Set<SearchResultType> filters;
-
   /// Fuentes de las que se está viendo contenido.
   final Set<ImportSource> sourceFilters;
 
   /// Clases de contenido que se están viendo.
   final Set<MediaKind> typeFilters;
 
-  /// Si hay una búsqueda en marcha, que es lo único que el filtro de tipos puede
-  /// recortar.
-  final bool hasSearch;
-
-  /// Si se enseña el grupo de «de dónde salen los resultados».
-  ///
-  /// Ese grupo sólo recorta una búsqueda, así que en una pantalla que no tiene
-  /// buscador —favoritos— no pinta nada: enseñarlo atenuado explicaría un filtro
-  /// que ahí no puede existir nunca.
-  final bool showResultTypes;
-
   const SearchFilterMenu({
     super.key,
-    required this.filters,
     required this.sourceFilters,
     required this.typeFilters,
-    required this.hasSearch,
-    this.showResultTypes = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final bloc = context.read<MediaBloc>();
+    final nsfw = getIt<NsfwModeService>();
 
     return FernPopupPanel(
+      // Con tope y desplazándose: todos los grupos juntos pasaban del alto de
+      // media pantalla, y un desplegable que tapa la rejilla entera no deja ver
+      // lo que el filtro está cambiando.
+      maxHeight: filterMenuMaxHeight,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (showResultTypes) ...[
-                _groupTitle(context, texts.filtersResultsFrom),
-                for (final type in SearchResultType.values)
-                  FernCheckboxTile(
-                    label: type.filterLabel(texts),
-                    value: filters.contains(type),
-                    // Sin búsqueda no hay nada que recortar: la casilla se queda
-                    // atenuada en lugar de desaparecer, que así se entiende que
-                    // el filtro existe y por qué no hace nada.
-                    onChanged: hasSearch
-                        ? (_) => bloc.add(ToggleSearchFilterEvent(type))
-                        : null,
+              // Arriba del todo: es el que más cambia lo que se ve. Sólo con
+              // contraseña puesta, que sin ella no esconde nada. Quitarlo pide
+              // la contraseña, como en todas partes; ponerlo no pide nada.
+              if (nsfw.isConfigured) ...[
+                _groupTitle(context, texts.filtersNsfw),
+                StreamBuilder<bool>(
+                  stream: nsfw.changes,
+                  builder: (context, _) => FernCheckboxTile(
+                    label: texts.filterNsfwHide,
+                    value: !nsfw.isUnlocked,
+                    onChanged: (_) {
+                      if (nsfw.isUnlocked) {
+                        nsfw.lock();
+                        return;
+                      }
+
+                      showFernDialog<bool, Never>(
+                        context: context,
+                        builder: (_) => const NsfwUnlockDialog(),
+                      );
+                    },
                   ),
+                ),
                 const SizedBox(height: AppSpacing.m),
               ],
-              _groupTitle(context, texts.filtersSource),
-              for (final source in ImportSource.listed)
-                FernCheckboxTile(
-                  label: source.filterLabel(texts),
-                  value: sourceFilters.contains(source),
-                  onChanged: (_) => bloc.add(ToggleSourceFilterEvent(source)),
-                ),
-              const SizedBox(height: AppSpacing.m),
-              // De qué tipo es un fichero es un dato suyo, así que esto vale
-              // con búsqueda y sin ella, igual que la fuente.
               _groupTitle(context, texts.filtersType),
               for (final kind in MediaKind.values)
                 FernCheckboxTile(
                   label: kind.filterLabel(texts),
                   value: typeFilters.contains(kind),
                   onChanged: (_) => bloc.add(ToggleTypeFilterEvent(kind)),
+                ),
+              const SizedBox(height: AppSpacing.m),
+              _groupTitle(context, texts.filtersSource),
+              for (final source in ImportSource.listed)
+                FernCheckboxTile(
+                  label: source.filterLabel(texts),
+                  value: sourceFilters.contains(source),
+                  onChanged: (_) => bloc.add(ToggleSourceFilterEvent(source)),
                 ),
             ],
           ),

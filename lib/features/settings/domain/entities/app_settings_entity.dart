@@ -238,6 +238,11 @@ class AppSettingsEntity extends Equatable {
   /// cincuenta, y eso son cincuenta filas por contenido.
   final int maxDetectionsPerClass;
 
+  /// Desde qué solapamiento, en tanto por ciento, las detecciones de lo mismo
+  /// se juntan en una sola región al enseñarlas. Ver
+  /// `defaultRegionMergeOverlap`.
+  final int regionMergeOverlap;
+
   /// Si el contenido ya definitivo vuelve a la pantalla de importación cuando se
   /// le encuentra algo que revisar.
   ///
@@ -455,6 +460,7 @@ class AppSettingsEntity extends Equatable {
     required this.recognitionPath,
     this.frameSamples = defaultFrameSamples,
     this.maxDetectionsPerClass = defaultMaxDetectionsPerClass,
+    this.regionMergeOverlap = defaultRegionMergeOverlap,
     this.returnRecognizedToImport = true,
     this.recognizeOnImport = true,
     this.duplicateThreshold = defaultDuplicateThreshold,
@@ -499,6 +505,7 @@ class AppSettingsEntity extends Equatable {
     String? recognitionPath,
     int? frameSamples,
     int? maxDetectionsPerClass,
+    int? regionMergeOverlap,
     bool? returnRecognizedToImport,
     bool? recognizeOnImport,
     int? duplicateThreshold,
@@ -539,6 +546,7 @@ class AppSettingsEntity extends Equatable {
       frameSamples: frameSamples ?? this.frameSamples,
       maxDetectionsPerClass:
           maxDetectionsPerClass ?? this.maxDetectionsPerClass,
+      regionMergeOverlap: regionMergeOverlap ?? this.regionMergeOverlap,
       returnRecognizedToImport:
           returnRecognizedToImport ?? this.returnRecognizedToImport,
       recognizeOnImport: recognizeOnImport ?? this.recognizeOnImport,
@@ -585,6 +593,7 @@ class AppSettingsEntity extends Equatable {
         recognitionPath,
         frameSamples,
         maxDetectionsPerClass,
+        regionMergeOverlap,
         returnRecognizedToImport,
         recognizeOnImport,
         duplicateThreshold,

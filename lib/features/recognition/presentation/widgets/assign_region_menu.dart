@@ -1,5 +1,4 @@
 import 'package:Fern/config/theme/app_colors.dart';
-import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
@@ -8,6 +7,7 @@ import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/ui/ui.dart';
 import 'package:Fern/core/utils/debouncer.dart';
 import 'package:Fern/features/media/presentation/widgets/fern_create_dialog.dart';
+import 'package:Fern/features/media/presentation/widgets/media_info_avatar_strip.dart';
 import 'package:Fern/features/recognition/domain/entities/fernie_entity.dart';
 import 'package:Fern/features/recognition/domain/services/recent_fernies.dart';
 import 'package:Fern/features/recognition/domain/usecases/get_fernies_usecase.dart';
@@ -65,9 +65,11 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
 
     setState(() {
       _isSearching = false;
-      _results = _ordered(result is DataSuccess
-          ? result.data ?? const <FernieEntity>[]
-          : const <FernieEntity>[]);
+      _results = _ordered(
+        result is DataSuccess
+            ? result.data ?? const <FernieEntity>[]
+            : const <FernieEntity>[],
+      );
     });
   }
 
@@ -95,9 +97,11 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
 
     setState(() {
       _isSearching = false;
-      _results = _ordered(result is DataSuccess
-          ? result.data ?? const <FernieEntity>[]
-          : const <FernieEntity>[]);
+      _results = _ordered(
+        result is DataSuccess
+            ? result.data ?? const <FernieEntity>[]
+            : const <FernieEntity>[],
+      );
     });
   }
 
@@ -141,11 +145,19 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
             onChanged: _onQueryChanged,
           ),
         ),
-        Flexible(child: _results.isEmpty ? _empty(texts) : _list()),
+        _results.isEmpty ? _empty(texts) : _grid(),
         const Divider(height: AppSpacing.xs),
+        // **Menudo y bajo**: es la salida para cuando el fernie no existe, no lo
+        // que se hace cada vez. Con el círculo grande de la variante en línea
+        // se llevaba casi tanto alto como una fila de fernies. El círculo cae
+        // en el mismo borde que el campo y los avatares: el botón trae su
+        // propio relleno, que se descuenta del margen del menú.
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.m),
-          child: FernAddButton.inline(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.l - AppSpacing.xs,
+            vertical: AppSpacing.xs,
+          ),
+          child: FernAddButton.compact(
             label: texts.createFernie,
             onTap: _create,
           ),
@@ -162,53 +174,40 @@ class _AssignRegionMenuState extends State<AssignRegionMenu> {
       ),
       child: Text(
         texts.noFerniesYet,
-        style: Theme.of(context)
-            .textTheme
-            .labelSmall
-            ?.copyWith(color: context.colors.unremarked),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: context.colors.unremarked),
       ),
     );
   }
 
-  Widget _list() {
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        final fernie = _results[index];
-
-        return InkWell(
-          onTap: () => widget.onSelected(fernie),
-          mouseCursor: WidgetStateMouseCursor.clickable,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.l,
-              vertical: AppSpacing.s,
+  /// Los fernies como avatares, igual que las etiquetas del resumen del panel,
+  /// en una rejilla de [assignRegionMenuColumns] por [assignRegionMenuRows] que
+  /// se desplaza hacia abajo.
+  ///
+  /// **Antes era una lista que se encogía a lo que cupiera**, y entre el buscador
+  /// y el botón de crear quedaba tan poco sitio que el último fernie se podía
+  /// pulsar por debajo del borde sin llegar a verse. Con un alto fijo de filas
+  /// enteras, todo lo que se ve se pulsa y todo lo que se pulsa se ve. En
+  /// vertical porque aquí se busca: se baja por la lista, como en cualquier otra.
+  /// El buscador de encima la sigue acotando igual.
+  Widget _grid() {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s, bottom: AppSpacing.s),
+      child: MediaInfoAvatarStrip(
+        gutter: AppSpacing.l,
+        grid: (columns: assignRegionMenuColumns, rows: assignRegionMenuRows),
+        items: [
+          for (final fernie in _results)
+            MediaInfoAvatarItem(
+              label: fernie.name,
+              picturePath: fernie.picturePath,
+              fallbackIcon: Symbols.face_retouching_natural,
+              tapIcon: Symbols.check,
+              onTap: () => widget.onSelected(fernie),
             ),
-            child: Row(
-              children: [
-                FernAvatar(
-                  imagePath: fernie.picturePath,
-                  fallbackIcon: Symbols.face_retouching_natural,
-                  radius: AppSizes.avatarMedium,
-                  iconSize: AppSizes.iconMedium,
-                  backgroundColor: context.colors.secondary,
-                ),
-                const SizedBox(width: AppSpacing.m),
-                Expanded(
-                  child: Text(
-                    fernie.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

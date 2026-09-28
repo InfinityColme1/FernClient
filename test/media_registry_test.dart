@@ -20,6 +20,7 @@ import 'package:Fern/features/media/data/services/tag_hierarchy.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   late Directory directory;
@@ -275,6 +276,132 @@ void main() {
 
       expect(await tagsOf('C:/media/seis.jpg'), ['Gifs']);
       expect(await tagsOf('C:/media/siete.jpg'), isEmpty);
+    });
+  });
+
+  // La misma pregunta que contesta `register` al devolver `null` —«esto ya
+  // estaba»—, pero hecha con la clave que se conoce **antes de descargar**. Es
+  // lo que evita bajarse entera una cuenta que ya está importada para acabar
+  // tirándolo todo.
+  group('lo que ya está dado de alta', () {
+    test('sale por su identificador en la fuente', () async {
+      await registry.register(
+        path: 'C:/descargas/reddit/abc.jpg',
+        source: ImportSource.reddit,
+        remoteId: 'abc',
+      );
+
+      expect(await registry.registeredIdsOf(ImportSource.reddit), {'abc'});
+    });
+
+    test('cada fuente responde por lo suyo', () async {
+      await registry.register(
+        path: 'C:/descargas/reddit/abc.jpg',
+        source: ImportSource.reddit,
+        remoteId: 'abc',
+      );
+
+      expect(await registry.registeredIdsOf(ImportSource.pixiv), isEmpty);
+    });
+
+    // Lo que entró antes de que el identificador se guardara no lo lleva. En lo
+    // remoto el nombre del fichero **es** el identificador, así que se recupera
+    // de la ruta: sin esto, una biblioteca anterior al cambio se volvería a
+    // descargar de arriba abajo.
+    test('lo que no lo guardó se recupera del nombre del fichero', () async {
+      await registry.register(
+        path: 'C:/descargas/pixiv/999_111_p0.png',
+        source: ImportSource.pixiv,
+      );
+
+      expect(
+        await registry.registeredIdsOf(ImportSource.pixiv),
+        {'999_111_p0'},
+      );
+    });
+
+    // El que la biblioteca renombró al colocarlo junto a otro con el mismo
+    // nombre. Sin quitarle el sufijo, ese contenido concreto se volvería a bajar
+    // en cada importación.
+    test('y al recuperarlo se le quita el desempate de la biblioteca', () async {
+      await registry.register(
+        path: 'C:/biblioteca/Arte/999_111_p0 (2).png',
+        source: ImportSource.pixiv,
+      );
+
+      expect(
+        await registry.registeredIdsOf(ImportSource.pixiv),
+        {'999_111_p0'},
+      );
+    });
+
+    // Mientras su fila esté, ese contenido se conoce: volver a bajarlo no
+    // aporta nada, ni cuando está esperando revisión ni cuando está en la
+    // papelera.
+    test('también lo que sigue pendiente de revisar', () async {
+      await registry.register(
+        path: 'C:/descargas/danbooru/555.jpg',
+        source: ImportSource.danbooru,
+        remoteId: '555',
+      );
+
+      final summary = await isar.mediaSummaryModels
+          .filter()
+          .pathEqualTo('C:/descargas/danbooru/555.jpg')
+          .findFirst();
+      expect(summary!.isImported, isFalse);
+
+      expect(await registry.registeredIdsOf(ImportSource.danbooru), {'555'});
+    });
+  });
+
+  // Lo que hay que hacer con el fichero que `register` rechaza por conocido: sin
+  // su fila no lo nombra nadie y en la carpeta de descargas sólo ocupa. Con una
+  // excepción que importa más que la limpieza.
+  group('el fichero que no da de alta nada', () {
+    test('se tira si no lo nombra ninguna fila', () async {
+      final file = File(p.join(directory.path, 'sobra.jpg'));
+      await file.writeAsString('contenido');
+
+      await registry.discardUnusedFile(file.path);
+
+      expect(await file.exists(), isFalse);
+    });
+
+    // Un contenido pendiente de revisar vive en la carpeta de descargas hasta
+    // que se da por definitivo, y también se rechaza por conocido: borrar su
+    // fichero sería borrar contenido de la biblioteca.
+    test('pero no el del contenido que sigue esperando revisión', () async {
+      final file = File(p.join(directory.path, 'pendiente.jpg'));
+      await file.writeAsString('contenido');
+
+      await registry.register(path: file.path, source: ImportSource.pixiv);
+
+      await registry.discardUnusedFile(file.path);
+
+      expect(await file.exists(), isTrue);
+    });
+
+    // El mismo fichero bajado otra vez cuando el contenido ya se movió a la
+    // biblioteca: la fila existe, pero apunta a otro sitio.
+    test('y sí la copia de lo que ya se colocó en la biblioteca', () async {
+      final file = File(p.join(directory.path, 'movido.jpg'));
+      await file.writeAsString('contenido');
+
+      await registry.register(path: file.path, source: ImportSource.pixiv);
+
+      await isar.writeTxn(() async {
+        final row = await isar.mediaSummaryModels
+            .filter()
+            .pathEqualTo(file.path)
+            .findFirst();
+        row!.path = 'C:/biblioteca/movido.jpg';
+        await isar.mediaSummaryModels.put(row);
+      });
+
+      await registry.discardUnusedFile(file.path);
+
+      expect(await file.exists(), isFalse);
     });
   });
 }

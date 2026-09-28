@@ -46,6 +46,13 @@ class FernMasonryGrid extends StatefulWidget {
   /// celda concreta, o cuánto mide todo.
   final void Function(MasonryLayout layout)? onLayout;
 
+  /// En qué posición está ahora la celda de una clave.
+  ///
+  /// Con esto, una celda que cambia de posición —porque llega algo antes que
+  /// ella, o se va algo de encima— se lleva consigo lo que ya tenía cargado.
+  /// Sin ello Flutter empareja por posición, y lo que se mueve empieza de cero.
+  final int? Function(Key key)? findChildIndexCallback;
+
   const FernMasonryGrid({
     super.key,
     required this.ratios,
@@ -58,6 +65,7 @@ class FernMasonryGrid extends StatefulWidget {
     this.controller,
     this.onLayout,
     this.cache,
+    this.findChildIndexCallback,
   });
 
   @override
@@ -144,6 +152,7 @@ class _FernMasonryGridState extends State<FernMasonryGrid> {
                 delegate: SliverChildBuilderDelegate(
                   widget.itemBuilder,
                   childCount: _layout.cells.length,
+                  findChildIndexCallback: widget.findChildIndexCallback,
                 ),
               ),
             ),

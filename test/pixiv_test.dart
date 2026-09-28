@@ -185,6 +185,28 @@ void main() {
       expect(items.map((item) => item.postId).toSet(), {'333'});
     });
 
+    test('una obra cuyo identificador llega como número no tumba el recorrido',
+        () async {
+      // Pixiv no es constante con los tipos: el mismo campo llega como texto en
+      // unas respuestas y como número en otras. Una obra así reventaba la
+      // importación entera con un fallo de tipos.
+      final numeric = work('444')
+        ..['id'] = 444
+        ..['userId'] = 999;
+
+      final client = PixivApiClient(
+        client: fakePixiv(bookmarks: {
+          'show': [numeric, work('555')],
+          'hide': const [],
+        }),
+      );
+
+      final items = await client.bookmarkedMedia(credentials).toList();
+
+      expect(items.map((item) => item.postId).toSet(), {'444', '555'});
+      expect(items.first.id, '999_444_p0');
+    });
+
     test('una animación sale como su paquete de fotogramas', () async {
       final client = PixivApiClient(
         client: fakePixiv(bookmarks: {

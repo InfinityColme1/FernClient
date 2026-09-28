@@ -25,6 +25,7 @@ import 'package:Fern/features/recognition/presentation/blocs/fernies_events.dart
 import 'package:Fern/features/recognition/presentation/blocs/fernies_states.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:Fern/features/media/presentation/widgets/avatar_picker.dart';
+import 'package:Fern/features/recognition/data/services/region_merge_overlaps.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -339,6 +340,8 @@ class _FernieCardState extends State<FernieCard> {
                       ),
                       const SizedBox(height: AppSpacing.l),
                       _linkField(texts),
+                      const SizedBox(height: AppSpacing.l),
+                      _mergeField(texts),
                     ],
                   ),
                 ),
@@ -404,6 +407,49 @@ class _FernieCardState extends State<FernieCard> {
       onPressed: _isBusy ? null : () => _run(() => _setNsfwMark(!_isNsfw)),
     );
   }
+
+  /// Desde qué solapamiento se juntan las detecciones de este fernie.
+  ///
+  /// **Se guarda al elegirlo**, sin esperar al botón de guardar: no es un dato
+  /// del fernie sino cómo se enseña lo que el modelo ve de él, y se aplica en
+  /// cuanto se vuelve a mirar una sugerencia. «Como todos» es no decir nada:
+  /// sigue al valor de los ajustes aunque éste cambie después.
+  Widget _mergeField(AppLocalizations texts) {
+    final overlaps = getIt<RegionMergeOverlaps>();
+
+    String percentLabel(int value) => value >= 100
+        ? texts.regionMergeOverlapInside
+        : texts.regionMergeOverlapPercent(value);
+
+    return ListenableBuilder(
+      listenable: overlaps,
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FernFieldLabel(text: texts.fernieMergeOverlapLabel),
+          const SizedBox(height: AppSpacing.s),
+          FernDropdownPill<int>(
+            value: overlaps.overrideOf(widget.fernie.id) ?? _mergeFollowsAll,
+            items: const [_mergeFollowsAll, ...regionMergeOverlapOptions],
+            labelBuilder: (value) => value == _mergeFollowsAll
+                ? texts.fernieMergeOverlapDefault(
+                    percentLabel(overlaps.defaultPercent),
+                  )
+                : percentLabel(value),
+            onChanged: _isBusy
+                ? null
+                : (value) => overlaps.setOverride(
+                      widget.fernie.id,
+                      value == null || value == _mergeFollowsAll ? null : value,
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// La opción de no decir nada y seguir al de todos.
+  static const _mergeFollowsAll = -1;
 
   /// El selector de a qué se enlaza: primero de qué tipo y, si es alguno, cuál.
   Widget _linkField(AppLocalizations texts) {

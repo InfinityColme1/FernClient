@@ -12,6 +12,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:Fern/core/service_locator.dart';
+import 'package:Fern/features/recognition/data/services/region_merge_overlaps.dart';
 
 /// Ajustes del reconocimiento de contenido.
 ///
@@ -134,6 +137,74 @@ class RecognitionSettingsSection extends StatelessWidget {
                   .add(MaxDetectionsChangedEvent(
                     value ?? defaultMaxDetectionsPerClass,
                   )),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Divider(),
+            ),
+            // Y justo detrás, qué se hace con esas veces cuando caen unas
+            // encima de otras: es la otra mitad de la misma pregunta.
+            _title(context, texts.regionMergeOverlapLabel),
+            Text(
+              texts.regionMergeOverlapDescription,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colors.gray,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.m),
+            FernDropdownPill<int>(
+              value: state.settings.regionMergeOverlap,
+              items: regionMergeOverlapOptions,
+              labelBuilder: (value) => value >= 100
+                  ? texts.regionMergeOverlapInside
+                  : texts.regionMergeOverlapPercent(value),
+              onChanged: (value) => context
+                  .read<SettingsBloc>()
+                  .add(RegionMergeOverlapChangedEvent(
+                    value ?? defaultRegionMergeOverlap,
+                  )),
+            ),
+            const SizedBox(height: AppSpacing.m),
+            // Lo que cada fernie haya dicho manda sobre esto: se cuenta cuántos,
+            // y se ofrece quitarlo para que todos usen este valor.
+            ListenableBuilder(
+              listenable: getIt<RegionMergeOverlaps>(),
+              builder: (context, _) {
+                final overlaps = getIt<RegionMergeOverlaps>();
+                final overriding = overlaps.overrideCount;
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        texts.regionMergeOverrideCount(overriding),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: context.colors.unremarked,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.m),
+                    FernPillButton(
+                      label: texts.regionMergeApplyAll,
+                      icon: Symbols.done_all,
+                      backgroundColor: context.colors.secondary,
+                      foregroundColor: context.colors.black,
+                      onPressed: overriding == 0
+                          ? null
+                          : () async {
+                              await overlaps.clearOverrides();
+                              if (!context.mounted) return;
+
+                              showFernToast(
+                                context,
+                                texts.regionMergeAppliedAll,
+                                icon: Symbols.done_all,
+                              );
+                            },
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         );

@@ -3,6 +3,7 @@ import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/ui/display/fern_motion.dart';
+import 'package:Fern/core/ui/display/fern_surface_color.dart';
 import 'package:flutter/material.dart';
 
 /// El hueco de algo que todavía está llegando.
@@ -81,9 +82,19 @@ class _FernSkeletonState extends State<FernSkeleton>
 
   @override
   Widget build(BuildContext context) {
+    // **Sobre lo que tenga debajo**, un punto más claro u oscuro. Iba del color
+    // `secondary` a secas, y en el tema oscuro ése es prácticamente el de la
+    // superficie de la rejilla: los huecos estaban ahí pero no se veían, y lo
+    // que se veía era pasar de nada a contenido de golpe.
+    final under = FernSurfaceColor.maybeOf(context) ?? context.colors.background;
+    final tone = Color.alphaBlend(
+      context.colors.black.withValues(alpha: skeletonToneOpacity),
+      under,
+    );
+
     final box = DecoratedBox(
       decoration: BoxDecoration(
-        color: context.colors.secondary,
+        color: tone,
         borderRadius: BorderRadius.circular(widget.radius),
       ),
       child: SizedBox(width: widget.width, height: widget.height),

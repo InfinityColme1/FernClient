@@ -48,6 +48,20 @@ abstract class RecognitionResultRepository {
     required SuggestionStatus status,
   });
 
+  /// Da por contestadas varias propuestas de una vez.
+  ///
+  /// En una sola escritura, y por eso existe además de [setStatus]: contestar
+  /// en bloque es lo normal desde que el panel tiene el botón a la vista, y
+  /// hacerlo de una en una eran tantas transacciones —y tantos recuentos de lo
+  /// que queda pendiente— como sugerencias tuviera el contenido.
+  ///
+  /// Los identificadores que ya no existan no detienen a los demás: lo que se
+  /// devuelve es cuántos se han contestado de verdad.
+  Future<DataState<int>> setStatuses({
+    required List<int> ids,
+    required SuggestionStatus status,
+  });
+
   /// Borra lo rechazado hace más de [before].
   ///
   /// Los rechazos sirven un tiempo para contar el acierto real de un modelo, y

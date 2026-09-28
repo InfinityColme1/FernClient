@@ -4,6 +4,7 @@ import 'package:Fern/config/theme/app_colors.dart';
 import 'package:Fern/config/theme/app_sizes.dart';
 import 'package:Fern/config/theme/app_spacing.dart';
 import 'package:Fern/core/ui/display/fern_scrollbar.dart';
+import 'package:Fern/core/navigation/escape_back.dart';
 import 'package:flutter/material.dart';
 
 /// Panel blanco redondeado anclado a un botón: el armazón de todo lo que cuelga
@@ -169,7 +170,16 @@ class _FernPopupPanelState extends State<FernPopupPanel> {
         ),
       ),
       // El ancho lo fija el panel, no su contenido: las filas se ajustan a él.
-      menuChildren: [_body()],
+      // Escape lo cierra, esté donde esté el foco.
+      menuChildren: [
+        EscapeDismiss(
+          onEscape: () {
+            _controller.close();
+            return true;
+          },
+          child: _body(),
+        ),
+      ],
       builder: (context, controller, _) => KeyedSubtree(
         key: _anchorKey,
         child: widget.builder(context, _toggle),

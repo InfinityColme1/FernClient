@@ -1,10 +1,10 @@
-// Cargar al terminar de entrar, no encima de la transicion.
+// Cargar al llegar, en paralelo con la transicion.
 //
-// Abrir una pantalla es leer de la base de datos, y con una biblioteca grande
-// eso se come varios fotogramas. Hecho en `initState`, ese trabajo cae justo
-// encima de la animacion: la transicion no llega a verse y la ventana parece
-// colgada. Lo que se arregla no es la espera —que es la misma— sino que el
-// cambio de pantalla se vea.
+// Esperar a que la animacion terminara dejaba la rejilla vacia mientras
+// corria y el contenido llegaba de golpe al acabar. Ahora se lee en el
+// fotograma siguiente al de montar la pantalla, con la transicion en marcha:
+// la animacion corre con los huecos de carga puestos y cada celda los va
+// sustituyendo segun esta lista.
 
 import 'package:Fern/core/navigation/screen_entry.dart';
 import 'package:Fern/core/navigation/screen_slot.dart';
@@ -30,7 +30,7 @@ class _ScreenState extends State<_Screen> with ScreenEntryTask<_Screen> {
 }
 
 void main() {
-  testWidgets('sin transicion carga en el acto', (tester) async {
+  testWidgets('carga en el fotograma siguiente al de montarse', (tester) async {
     var loads = 0;
 
     await tester.pumpWidget(MaterialApp(home: _Screen(onLoad: () => loads++)));
@@ -38,7 +38,7 @@ void main() {
     expect(loads, 1);
   });
 
-  testWidgets('con la transicion a medias, espera', (tester) async {
+  testWidgets('sin esperar a que termine la transicion', (tester) async {
     var loads = 0;
 
     final controller = AnimationController(
@@ -55,52 +55,8 @@ void main() {
       ),
     ));
 
-    expect(loads, 0, reason: 'la transicion no ha terminado');
-
-    controller.forward();
-    await tester.pumpAndSettle();
-
-    expect(loads, 1);
-  });
-
-  testWidgets('con la transicion ya terminada, en el acto', (tester) async {
-    var loads = 0;
-
-    await tester.pumpWidget(MaterialApp(
-      home: ScreenTransitionScope(
-        entering: kAlwaysCompleteAnimation,
-        leaving: kAlwaysDismissedAnimation,
-        child: _Screen(onLoad: () => loads++),
-      ),
-    ));
-
-    expect(loads, 1);
-  });
-
-  // La red: una transicion que se queda a medias no puede dejar la pantalla sin
-  // cargar para siempre.
-  testWidgets('y si la transicion no termina, carga igual', (tester) async {
-    var loads = 0;
-
-    final controller = AnimationController(
-      vsync: tester,
-      duration: const Duration(milliseconds: 300),
-    );
-    addTearDown(controller.dispose);
-
-    await tester.pumpWidget(MaterialApp(
-      home: ScreenTransitionScope(
-        entering: controller,
-        leaving: kAlwaysDismissedAnimation,
-        child: _Screen(onLoad: () => loads++),
-      ),
-    ));
-
-    expect(loads, 0);
-
-    await tester.pump(const Duration(seconds: 2));
-
-    expect(loads, 1);
+    expect(controller.isCompleted, isFalse);
+    expect(loads, 1, reason: 'se lee mientras la transicion corre');
   });
 
   // Repintar la pantalla no es volver a entrar en ella: `didChangeDependencies`

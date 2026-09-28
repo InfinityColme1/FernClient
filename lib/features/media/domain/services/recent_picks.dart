@@ -25,11 +25,15 @@ class RecentPicks {
   })  : _preferences = preferences,
         _repository = repository;
 
-  Future<List<TagEntity>> tags() async {
+  /// Las últimas usadas, **sin las de [excluding]** y con los huecos llenos:
+  /// las que ya lleva el contenido se saltan y ocupa su sitio la siguiente de la
+  /// pila, en vez de dejar la lista más corta.
+  Future<List<TagEntity>> tags({Set<int> excluding = const {}}) async {
     final found = <TagEntity>[];
 
     for (final id in _preferences.recentTagIds()) {
       if (found.length == recentPicksShown) break;
+      if (excluding.contains(id)) continue;
 
       final result = await _repository.getTag(id);
       final tag = result is DataSuccess ? result.data : null;
@@ -39,11 +43,13 @@ class RecentPicks {
     return found;
   }
 
-  Future<List<CreatorEntity>> creators() async {
+  /// Como [tags]: sin los de [excluding], con los huecos llenos.
+  Future<List<CreatorEntity>> creators({Set<int> excluding = const {}}) async {
     final found = <CreatorEntity>[];
 
     for (final id in _preferences.recentCreatorIds()) {
       if (found.length == recentPicksShown) break;
+      if (excluding.contains(id)) continue;
 
       final result = await _repository.getCreator(id);
       final creator = result is DataSuccess ? result.data : null;

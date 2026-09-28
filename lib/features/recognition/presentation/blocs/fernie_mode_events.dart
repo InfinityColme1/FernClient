@@ -88,10 +88,23 @@ class ProposedRegionsOfferedEvent extends FernieModeEvents {
 }
 
 /// Da por buena una de las propuestas: pasa a estar marcada.
+///
+/// Con lo que se le haya cambiado antes de aceptarla, si algo: una propuesta se
+/// elige, se mueve, se estira y se cambia de fernie igual que cualquier región,
+/// y lo que se acepta es cómo ha quedado y no cómo la dejó el modelo.
 class ProposedRegionAcceptedEvent extends FernieModeEvents {
   final int index;
+  final Rect? rect;
+  final FernieEntity? fernie;
 
-  const ProposedRegionAcceptedEvent(this.index);
+  const ProposedRegionAcceptedEvent(this.index, {this.rect, this.fernie});
+}
+
+/// Tira una de las propuestas: el modelo se ha equivocado en ésa.
+class ProposedRegionDiscardedEvent extends FernieModeEvents {
+  final int index;
+
+  const ProposedRegionDiscardedEvent(this.index);
 }
 
 /// Da por buenas todas las que queden.

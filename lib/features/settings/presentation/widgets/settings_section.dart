@@ -16,11 +16,17 @@ enum SettingsSection {
   // Cómo se ve y cómo se comporta esto conmigo.
   language(icon: Symbols.language),
   appearance(icon: Symbols.palette),
+
+  /// El menú lateral y la rejilla: cómo se trabaja con lo que ya se tiene.
+  library(icon: Symbols.photo_library),
   viewer(icon: Symbols.slideshow),
   notifications(icon: Symbols.notifications_none),
 
   // Dónde vive el contenido y por dónde entra.
   files(icon: Symbols.folder),
+
+  /// Qué pasa con lo que entra, venga de donde venga.
+  importing(icon: Symbols.download),
   remoteSources(icon: Symbols.cloud_download),
 
   /// Experimental: los ajustes del navegador de dentro de la aplicación.
@@ -48,8 +54,10 @@ enum SettingsSection {
   String title(AppLocalizations texts) => switch (this) {
         SettingsSection.language => texts.settingsLanguage,
         SettingsSection.appearance => texts.settingsAppearance,
+        SettingsSection.library => texts.settingsLibrary,
         SettingsSection.viewer => texts.settingsViewer,
         SettingsSection.files => texts.settingsFiles,
+        SettingsSection.importing => texts.settingsImport,
         SettingsSection.remoteSources => texts.settingsRemoteSources,
         SettingsSection.recognition => texts.settingsRecognition,
         SettingsSection.duplicates => texts.settingsDuplicates,

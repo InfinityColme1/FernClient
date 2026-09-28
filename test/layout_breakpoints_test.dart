@@ -481,13 +481,20 @@ void main() {
       return int.parse(match!.group(1)!);
     }
 
-    test('no se puede estrechar más de lo que miden las cabeceras', () {
+    // Por debajo del ancho de las cabeceras la aplicación pasa al modo
+    // reducido; el tope del ejecutable es el de ese modo.
+    test('no se puede estrechar más de lo que cabe el modo reducido', () {
       expect(
         _declared('win32_window.h', 'kMinimumWindowWidth'),
-        AppSizes.largeScreenMinWidth,
-        reason: 'el tope del ejecutable y el ancho que miden las cabeceras se '
-            'han separado',
+        AppSizes.liteWindowMinWidth,
+        reason: 'el tope del ejecutable y el del modo reducido se han separado',
       );
+      expect(
+        _declared('win32_window.h', 'kMinimumWindowHeight'),
+        AppSizes.liteWindowMinHeight,
+        reason: 'el tope del ejecutable y el del modo reducido se han separado',
+      );
+      expect(AppSizes.liteWindowMinWidth, lessThan(AppSizes.largeScreenMinWidth));
     });
 
     test('y nace lo bastante ancha para el menú desplegado', () {

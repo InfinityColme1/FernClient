@@ -36,6 +36,10 @@ import 'package:Fern/core/services/shuffle_seed.dart';
 void main() {
   late Directory directory;
   late Directory avatars;
+
+  /// La carpeta de paso de las fuentes remotas. Lo que está aquí dentro no es
+  /// un fichero del usuario, y por eso se borra aunque se pida conservarlo.
+  late Directory downloads;
   late Isar isar;
   late LocalMediaRepositoryImpl repository;
 
@@ -57,6 +61,7 @@ void main() {
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('fern_deletion_test');
     avatars = await Directory(p.join(directory.path, 'avatars')).create();
+    downloads = await Directory(p.join(directory.path, 'downloads')).create();
 
     isar = await Isar.open(
       [
@@ -87,6 +92,7 @@ void main() {
       avatarStorage: AvatarStorageService(settingsRepository: settings),
       registry: MediaRegistry(database: isar, tagHierarchy: hierarchy),
       tagHierarchy: hierarchy,
+      downloadsPath: () => downloads.path,
     );
   });
 
@@ -206,6 +212,23 @@ void main() {
 
       expect(await file.exists(), isFalse);
       expect(await isar.mediaSummaryModels.get(id), isNull);
+    });
+
+    test('lo bajado de una fuente remota se va aunque se conserven los ficheros',
+        () async {
+      // Conservar el fichero es no tocar lo que el usuario tiene en sus
+      // carpetas. Lo que sigue en la de descargas no es suyo: se bajó solo, su
+      // sitio era la biblioteca, y dejarlo ahí sólo ocupa.
+      final downloaded = await newFile('bajado.jpg', inside: downloads);
+      final own = await newFile('propio.jpg');
+
+      final fromSource = await newMedia(downloaded);
+      final fromDisk = await newMedia(own);
+
+      await repository.deleteMediaList([fromSource, fromDisk]);
+
+      expect(await downloaded.exists(), isFalse);
+      expect(await own.exists(), isTrue);
     });
 
     test('el fichero que ya no está no impide la baja', () async {

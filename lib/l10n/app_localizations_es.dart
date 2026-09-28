@@ -21,7 +21,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navTags => 'Etiquetas';
 
   @override
-  String get navMedia => 'Contenido';
+  String get navMedia => 'Biblioteca';
 
   @override
   String get navImport => 'Importar';
@@ -805,6 +805,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get tagsNoneHere => 'Aquí todavía no hay ninguna etiqueta';
+
+  @override
   String get tagsTitle => 'Etiquetas';
 
   @override
@@ -981,6 +984,38 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsAppearance => 'Apariencia';
 
   @override
+  String get settingsLibrary => 'Biblioteca';
+
+  @override
+  String get settingsImport => 'Importación';
+
+  @override
+  String get libraryGridSectionTitle => 'Rejilla';
+
+  @override
+  String get libraryGridSectionNote =>
+      'Cómo se comporta la rejilla de la biblioteca cuando vuelves a ella.';
+
+  @override
+  String get importTaggingSectionTitle => 'Al traer contenido';
+
+  @override
+  String get importTaggingSectionNote =>
+      'Lo que Fern hace solo con cada contenido que entra de una fuente remota.';
+
+  @override
+  String get filtersNsfw => 'Contenido NSFW';
+
+  @override
+  String get filterNsfwHide => 'Ocultar NSFW';
+
+  @override
+  String get suggestionPin => 'Fijar arriba';
+
+  @override
+  String get suggestionUnpin => 'Dejar de fijar';
+
+  @override
   String get settingsViewer => 'Visor';
 
   @override
@@ -1001,7 +1036,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sidebarSectionNote =>
-      'Cómo se pinta la lista de etiquetas del menú lateral.';
+      'Cómo se pinta el menú lateral y cómo se comportan sus listas.';
 
   @override
   String get showListAvatars => 'Mostrar avatares en lista';
@@ -2835,6 +2870,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fernieToolWholeFrame => 'Marcar el fotograma entero';
 
   @override
+  String get fernieProposedAccept => 'Aceptar esta región';
+
+  @override
+  String get fernieProposedDiscard => 'Descartar esta región';
+
+  @override
   String fernieAcceptAllProposed(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2974,28 +3015,126 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String suggestionInstances(int count) {
-    return '×$count';
+  String get sectionBack => 'Volver al resumen';
+
+  @override
+  String get sectionFilterHint => 'Filtrar…';
+
+  @override
+  String get sectionSort => 'Ordenar';
+
+  @override
+  String get sortAlphabetical => 'Por nombre';
+
+  @override
+  String get sortRecent => 'Lo más reciente primero';
+
+  @override
+  String get sortConfidence => 'Por confianza';
+
+  @override
+  String sectionSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count marcadas',
+      one: '1 marcada',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get suggestionFromModel =>
-      'Lo propone un modelo, todavía sin confirmar';
+  String get sectionRemoveSelected => 'Quitar de este contenido';
 
   @override
-  String get suggestionCreatorTitle => 'Creador propuesto';
+  String get sectionOpenManager => 'Abrir la pantalla de gestión';
+
+  @override
+  String get sectionNothingMatches => 'No hay nada que case con eso';
+
+  @override
+  String suggestionsTitle(int count) {
+    return 'Sugerencias · $count';
+  }
+
+  @override
+  String get suggestionsKindCreators => 'Creadores';
+
+  @override
+  String get suggestionsKindTags => 'Etiquetas';
+
+  @override
+  String get suggestionsKindUnlinked => 'Sin enlazar';
+
+  @override
+  String suggestionsSubheader(String kind, int count) {
+    return '$kind · $count';
+  }
+
+  @override
+  String suggestionsSubheaderFiltered(String kind, int shown, int total) {
+    return '$kind · $shown de $total';
+  }
+
+  @override
+  String suggestionAcceptAllCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Aceptar las $count',
+      one: 'Aceptar la que hay',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String suggestionRejectAllCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Rechazar las $count',
+      one: 'Rechazar la que hay',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get suggestionThresholdLabel => 'Confianza mínima';
+
+  @override
+  String get suggestionThresholdAll => 'Todas';
+
+  @override
+  String suggestionThresholdFrom(int percent) {
+    return '≥$percent%';
+  }
+
+  @override
+  String suggestionsBelowThreshold(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count por debajo del listón',
+      one: '1 por debajo del listón',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String suggestionFromModelNamed(String label) {
+    return '$label — lo propone un modelo, todavía sin confirmar';
+  }
+
+  @override
+  String suggestionInstances(int count) {
+    return '×$count';
+  }
 
   @override
   String get actionAccept => 'Aceptar';
 
   @override
   String get actionReject => 'Rechazar';
-
-  @override
-  String get suggestionAcceptAll => 'Aceptar todas';
-
-  @override
-  String get suggestionRejectAll => 'Rechazar todas';
 
   @override
   String get recognizeNoModelsInTree =>
@@ -3188,6 +3327,47 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get returnRecognizedLabel =>
       'Devolver a importación el contenido reconocido';
+
+  @override
+  String get regionMergeApplyAll => 'Aplicar a todos los fernies';
+
+  @override
+  String get regionMergeAppliedAll => 'Todos los fernies usan ahora este valor';
+
+  @override
+  String regionMergeOverrideCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fernies tienen uno propio',
+      one: '1 fernie tiene uno propio',
+      zero: 'Ningún fernie tiene uno propio',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fernieMergeOverlapLabel => 'Juntar sus detecciones solapadas';
+
+  @override
+  String fernieMergeOverlapDefault(String value) {
+    return 'Como todos · $value';
+  }
+
+  @override
+  String get regionMergeOverlapLabel => 'Juntar detecciones solapadas';
+
+  @override
+  String get regionMergeOverlapDescription =>
+      'Cuando un modelo ve lo mismo varias veces casi en el mismo sitio —la cara y la cabeza de la misma persona—, las cajas que se solapan desde este punto se juntan en una sola región, en la media de todas. Se mide contra la más pequeña. Las que sólo están una al lado de la otra se quedan como están. Es el valor de todos los fernies: cada uno puede tener el suyo en su ficha.';
+
+  @override
+  String regionMergeOverlapPercent(int percent) {
+    return 'Solapadas desde un $percent %';
+  }
+
+  @override
+  String get regionMergeOverlapInside => 'Sólo si una está dentro de otra';
 
   @override
   String get maxDetectionsLabel => 'Cuántas veces se guarda lo mismo';

@@ -40,6 +40,7 @@ export 'interaction/fern_drag_watch.dart';
 export 'interaction/fern_draggable_card.dart';
 export 'interaction/fern_drop_absorb.dart';
 export 'interaction/fern_drop_slot.dart';
+export 'interaction/fern_reveal_row.dart';
 export 'inputs/fern_checkbox_tile.dart';
 export 'inputs/fern_color_field.dart';
 export 'inputs/fern_directory_field.dart';

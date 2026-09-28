@@ -5,6 +5,7 @@ import 'package:Fern/features/media/presentation/blocs/media_bloc.dart';
 import 'package:Fern/features/media/presentation/blocs/media_events.dart';
 import 'package:Fern/features/media/presentation/blocs/media_states.dart';
 import 'package:Fern/features/media/presentation/widgets/media_grid.dart';
+import 'package:Fern/features/media/presentation/widgets/selection_lead.dart';
 import 'package:Fern/features/media/presentation/widgets/search_filter_menu.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +54,6 @@ class _FavoritesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final texts = AppLocalizations.of(context);
 
     return BlocConsumer<MediaBloc, MediaStates>(
@@ -72,21 +72,22 @@ class _FavoritesView extends StatelessWidget {
         return FernGridScreen(
           header: Row(
             children: [
-              Text(
-                texts.favoritesCount(mediaList.length),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+              SelectionLead(
+                visible: mediaList,
+                selectedIds: state.selectedIds,
+                countLabel: texts.favoritesCount(mediaList.length),
+                onSelectAll: (ids) =>
+                    context.read<MediaBloc>().add(SelectAllMediaEvent(ids)),
+                onClear: () => context.read<MediaBloc>().add(
+                  const ClearMediaSelectionEvent(),
                 ),
               ),
               const Spacer(),
               // El mismo panel de la biblioteca, sin el grupo que sólo
               // recorta una búsqueda: aquí no hay buscador.
               SearchFilterMenu(
-                filters: state.searchFilters,
                 sourceFilters: state.sourceFilters,
                 typeFilters: state.typeFilters,
-                hasSearch: false,
-                showResultTypes: false,
               ),
             ],
           ),

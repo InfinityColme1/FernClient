@@ -196,52 +196,52 @@ void main() {
       expect(results.answers, [(two.first.id, SuggestionStatus.rejected)]);
     });
 
-    test('aceptar quita la fila pero todavía no escribe', () async {
+    // **Aceptar baja en el acto, igual que rechazar.** Antes se apartaba y
+    // esperaba al botón de guardar del panel, porque la etiqueta también
+    // esperaba. Desde que el panel guarda solo, la etiqueta baja al aceptarla:
+    // si la respuesta no bajara con ella, salir del visor dejaría el contenido
+    // etiquetado y la sugerencia volviendo a preguntar lo mismo.
+    test('aceptar quita la fila y contesta', () async {
       final two = await loadTwo();
 
       bloc.add(SuggestionsAcceptedEvent([two.first]));
       await settle();
 
       expect(bloc.state.suggestions, hasLength(1));
-      expect(bloc.state.accepted, hasLength(1));
-
-      // La etiqueta está entre los cambios sin guardar del contenido: apuntar
-      // aquí que se aceptó dejaría la sugerencia contestada y la etiqueta sin
-      // poner si el usuario se marchara sin guardar.
-      expect(results.answers, isEmpty);
+      expect(results.answers, [(two.first.id, SuggestionStatus.accepted)]);
     });
 
-    test('guardar confirma lo aceptado', () async {
+    test('aceptar varias las contesta todas', () async {
       final two = await loadTwo();
 
       bloc.add(SuggestionsAcceptedEvent(two));
-      await settle();
-
-      bloc.add(const SuggestionsCommittedEvent());
       await settle();
 
       expect(results.answers, [
         (two[0].id, SuggestionStatus.accepted),
         (two[1].id, SuggestionStatus.accepted),
       ]);
-      expect(bloc.state.accepted, isEmpty);
+      expect(bloc.state.suggestions, isEmpty);
     });
 
-    test('guardar dos veces no confirma dos veces', () async {
+    // Ya no queda nada apartado, así que confirmar el contenido no tiene nada
+    // que cerrar. Se queda como red por si algo llegara apartado de otro camino
+    // o de una versión anterior.
+    test('confirmar sin nada apartado no escribe', () async {
       final two = await loadTwo();
 
       bloc.add(SuggestionsAcceptedEvent([two.first]));
       await settle();
 
-      bloc.add(const SuggestionsCommittedEvent());
-      await settle();
+      final answered = results.answers.length;
+
       bloc.add(const SuggestionsCommittedEvent());
       await settle();
 
-      expect(results.answers, hasLength(1));
+      expect(results.answers, hasLength(answered));
     });
 
-    test('guardar sin haber aceptado nada no escribe', () async {
+    test('confirmar sin haber aceptado nada tampoco', () async {
       await loadTwo();
 
       bloc.add(const SuggestionsCommittedEvent());
@@ -250,29 +250,12 @@ void main() {
       expect(results.answers, isEmpty);
     });
 
-    test('irse sin guardar deja la sugerencia como estaba', () async {
+    test('lo aceptado no vuelve a la lista', () async {
       final two = await loadTwo();
 
       bloc.add(SuggestionsAcceptedEvent([two.first]));
       await settle();
 
-      // Pasar al siguiente contenido: el `MediaBloc` tira los cambios sin
-      // guardar del anterior, y esto tiene que tirar los suyos con ellos.
-      bloc.add(const LoadSuggestionsEvent(8));
-      await settle();
-
-      expect(bloc.state.accepted, isEmpty);
-      expect(results.answers, isEmpty);
-    });
-
-    test('lo aceptado sin confirmar no vuelve a la lista', () async {
-      final two = await loadTwo();
-
-      bloc.add(SuggestionsAcceptedEvent([two.first]));
-      await settle();
-
-      // Vuelve a la lista sólo al releer de verdad, que es lo correcto: en la
-      // base de datos sigue sin contestar.
       expect(
         bloc.state.suggestions.map((one) => one.id),
         isNot(contains(two.first.id)),
@@ -702,6 +685,21 @@ class _FakeResults implements RecognitionResultRepository {
       for (final row in rows)
         if (row.mediaId == mediaId) row,
     ]);
+  }
+
+  /// El de verdad contesta todas en una sola escritura. Aquí basta con apuntar
+  /// lo mismo que apuntaba una a una: lo que se comprueba es qué se contesta,
+  /// no cuántas transacciones hacen falta para ello.
+  @override
+  Future<DataState<int>> setStatuses({
+    required List<int> ids,
+    required SuggestionStatus status,
+  }) async {
+    for (final id in ids) {
+      await setStatus(id: id, status: status);
+    }
+
+    return DataSuccess(ids.length);
   }
 
   @override

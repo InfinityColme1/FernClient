@@ -123,6 +123,46 @@ class RecognitionResultRepositoryImpl implements RecognitionResultRepository {
     }
   }
 
+  @override
+  Future<DataState<int>> setStatuses({
+    required List<int> ids,
+    required SuggestionStatus status,
+  }) async {
+    if (ids.isEmpty) return const DataSuccess(0);
+
+    try {
+      final rows = [
+        for (final row in await _database.recognitionResultModels.getAll(ids))
+          if (row != null) row,
+      ];
+      if (rows.isEmpty) return const DataSuccess(0);
+
+      // Los contenidos a los que hay que recalcularles la marca. Son casi
+      // siempre uno —lo que se contesta en bloque es lo de un contenido—, pero
+      // se recogen de las filas y no se dan por supuestos.
+      final touched = {for (final row in rows) row.mediaId};
+
+      await _database.writeTxn(() async {
+        for (final row in rows) {
+          row.status = status;
+        }
+        await _database.recognitionResultModels.putAll(rows);
+
+        // Una vez por contenido y no una por sugerencia: el recuento de lo que
+        // queda pendiente es el mismo para todas las de un mismo contenido, y
+        // repetirlo cuarenta veces era cuarenta consultas para llegar cuarenta
+        // veces a la misma respuesta.
+        for (final mediaId in touched) {
+          await _markMedia(mediaId, hasPending: await _hasPending(mediaId));
+        }
+      });
+
+      return DataSuccess(rows.length);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   /// Si al contenido le queda algo por mirar.
   Future<bool> _hasPending(int mediaId) async {
     final pending = await _database.recognitionResultModels

@@ -2,6 +2,7 @@ import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/domain/entities/media_deletion_kind.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
+import 'package:Fern/features/recognition/domain/entities/suggestion_threshold.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -370,6 +371,26 @@ class PreferencesService {
   Future<void> pushRecentFernie(int id) =>
       _pushRecent(recentFerniesPreferenceKey, id);
 
+  /// El listón de juntar detecciones de cada fernie que tenga uno propio, en
+  /// tanto por ciento. Ver `RegionMergeOverlaps`.
+  ///
+  /// Como «identificador:valor» en una lista, igual que los recientes: nada de
+  /// estructuras que haya que migrar si un día cambia algo.
+  Map<int, int> fernieMergeOverlaps() => {
+        for (final each
+            in _prefs.getStringList(fernieMergeOverlapsPreferenceKey) ??
+                const <String>[])
+          if (each.split(':') case [final id, final percent]
+              when int.tryParse(id) != null && int.tryParse(percent) != null)
+            int.parse(id): int.parse(percent),
+      };
+
+  Future<bool> setFernieMergeOverlaps(Map<int, int> overlaps) =>
+      _prefs.setStringList(
+        fernieMergeOverlapsPreferenceKey,
+        [for (final entry in overlaps.entries) '${entry.key}:${entry.value}'],
+      );
+
   /// Las ramas de etiquetas que están plegadas en el menú y en la lista.
   ///
   /// Se guardan las plegadas: sin nada guardado el árbol sale entero, que es lo
@@ -384,6 +405,18 @@ class PreferencesService {
   Future<bool> setImportsAsNsfw(bool value) =>
       _prefs.setBool(importsAsNsfwPreferenceKey, value);
 
+  /// Desde qué confianza se enseñan las sugerencias en el panel.
+  ///
+  /// Se recuerda entre contenidos: quien revisa con un listón alto lo hace toda
+  /// la tanda, y volver a elegirlo en cada uno sería repetir mil veces la misma
+  /// decisión.
+  SuggestionThreshold suggestionThreshold() => SuggestionThreshold.fromId(
+        _prefs.getString(suggestionThresholdPreferenceKey),
+      );
+
+  Future<bool> setSuggestionThreshold(SuggestionThreshold threshold) =>
+      _prefs.setString(suggestionThresholdPreferenceKey, threshold.id);
+
   Set<int> collapsedTagIds() => {
         for (final each
             in _prefs.getStringList(collapsedTagsPreferenceKey) ??
@@ -395,6 +428,29 @@ class PreferencesService {
         collapsedTagsPreferenceKey,
         [for (final id in ids) '$id'],
       );
+
+  /// Lo último que se ha buscado en la barra general, de lo más reciente a lo
+  /// más antiguo, como claves `tipo:id`.
+  List<String> recentSearches() =>
+      _prefs.getStringList(recentSearchesPreferenceKey) ?? const [];
+
+  /// Apunta [key] como la búsqueda más reciente. Si ya estaba, sube.
+  Future<void> pushRecentSearch(String key) => _prefs.setStringList(
+        recentSearchesPreferenceKey,
+        [
+          key,
+          for (final each in recentSearches())
+            if (each != key) each,
+        ].take(recentSearchesStored).toList(),
+      );
+
+  /// Las sugerencias fijadas arriba de la barra general, en el orden en que se
+  /// fijaron, como claves `tipo:id`.
+  List<String> pinnedSuggestions() =>
+      _prefs.getStringList(pinnedSuggestionsPreferenceKey) ?? const [];
+
+  Future<bool> setPinnedSuggestions(List<String> keys) =>
+      _prefs.setStringList(pinnedSuggestionsPreferenceKey, keys);
 
   List<int> _recent(String key) => [
         for (final each in _prefs.getStringList(key) ?? const <String>[])

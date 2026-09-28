@@ -284,6 +284,21 @@ class _FakeResults implements RecognitionResultRepository {
     ]);
   }
 
+  /// El de verdad contesta todas en una sola escritura. Aquí basta con apuntar
+  /// lo mismo que apuntaba una a una: lo que se comprueba es qué se contesta,
+  /// no cuántas transacciones hacen falta para ello.
+  @override
+  Future<DataState<int>> setStatuses({
+    required List<int> ids,
+    required SuggestionStatus status,
+  }) async {
+    for (final id in ids) {
+      await setStatus(id: id, status: status);
+    }
+
+    return DataSuccess(ids.length);
+  }
+
   @override
   Future<DataState<RecognitionResultEntity>> setStatus({
     required int id,
@@ -383,7 +398,7 @@ class _FakeLibrary implements LocalMediaRepository {
   }
 
   @override
-  Future<DataState> saveMedia(media) async {
+  Future<DataState> saveMedia(media, {bool confirm = true}) async {
     confirmed.add(media.id);
 
     return const DataSuccess(null);

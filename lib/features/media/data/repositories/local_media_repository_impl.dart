@@ -28,11 +28,13 @@ import 'package:Fern/features/media/domain/entities/search/media_search_section_
 import 'package:Fern/features/media/domain/entities/search/search_criterion_entity.dart';
 import 'package:Fern/features/media/domain/entities/search/search_result_type.dart';
 import 'package:Fern/features/media/domain/entities/search/search_suggestion_entity.dart';
+import 'package:Fern/features/media/domain/entities/search/suggestion_candidate.dart';
 import 'package:Fern/features/media/domain/entities/duplicate_tag_name.dart';
 import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/duplicates/data/models/duplicate_group_model.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
 import 'package:Fern/features/media/domain/repositories/local_media_repository.dart';
+import 'package:Fern/features/media/domain/services/name_match.dart';
 import 'package:Fern/features/media/domain/services/sibling_direction.dart';
 import 'package:Fern/features/media/domain/services/content_visibility.dart';
 import 'package:Fern/features/recognition/data/models/fernie_model.dart';
@@ -67,6 +69,21 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// cambiar algo que le importa a alguien.
   final Future<void> Function()? _onNsfwChanged;
 
+  /// Dónde caen las descargas de las fuentes remotas.
+  ///
+  /// Es la carpeta de trabajo de la aplicación, no una del usuario: lo que hay
+  /// dentro se bajó solo, nadie eligió que estuviera ahí y su sitio definitivo
+  /// es la biblioteca. Por eso un contenido que sale de la base de datos se
+  /// lleva su fichero de aquí **aunque se haya dicho que se conserve**: esa
+  /// casilla está para no tocar lo que el usuario tiene en sus propias
+  /// carpetas, y ésta no lo es. Sin ella, cada descarte dejaba en el disco
+  /// megas que ya no se veían desde ninguna pantalla.
+  ///
+  /// Va por función porque la resuelve el arranque, y opcional porque lo que no
+  /// la tenga (las pruebas) se comporta como antes: sin carpeta de paso, no hay
+  /// nada que valga menos que un fichero del usuario.
+  final String Function()? _downloadsPath;
+
   LocalMediaRepositoryImpl({
     required ShuffleSeed shuffle,
     required Isar appDatabase,
@@ -76,6 +93,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     required TagHierarchy tagHierarchy,
     ContentVisibility visibility = const ContentVisibility(),
     Future<void> Function()? onNsfwChanged,
+    String Function()? downloadsPath,
   })  : _shuffle = shuffle,
         _appDatabase = appDatabase,
         _fileOrganizer = fileOrganizer,
@@ -83,7 +101,8 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         _registry = registry,
         _tagHierarchy = tagHierarchy,
         _visibility = visibility,
-        _onNsfwChanged = onNsfwChanged;
+        _onNsfwChanged = onNsfwChanged,
+        _downloadsPath = downloadsPath;
 
   /// El que se lleva las copias de avatar que dejan de usarse.
   ///
@@ -696,7 +715,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   }
 
   @override
-  Future<DataState> saveMedia(MediaEntity media) async {
+  Future<DataState> saveMedia(MediaEntity media, {bool confirm = true}) async {
     try {
       // 1. Get or fallback for Creator
       final creatorModel = await _appDatabase.creatorModels.get(media.creator.id)
@@ -757,11 +776,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         // Guardar detalles
         await _appDatabase.mediaModels.put(model);
 
-        // MARCAR COMO IMPORTADO en el sumario
-        final summary = await _appDatabase.mediaSummaryModels.get(media.id);
-        if (summary != null) {
-          summary.isImported = true;
-          await _appDatabase.mediaSummaryModels.put(summary);
+        // MARCAR COMO IMPORTADO en el sumario, si esto es una confirmación.
+        //
+        // El guardado automático pasa por aquí en cada cambio, y darlo por
+        // revisado ahí sacaría el contenido de la pantalla de importación por
+        // haberle escrito una palabra en la descripción.
+        if (confirm) {
+          final summary = await _appDatabase.mediaSummaryModels.get(media.id);
+          if (summary != null) {
+            summary.isImported = true;
+            await _appDatabase.mediaSummaryModels.put(summary);
+          }
         }
 
         model.creator.value = creatorModel;
@@ -792,7 +817,13 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       // ficheros, este es el momento de llevarlo a su carpeta. La ruta nueva se
       // devuelve porque quien ha guardado sigue enseñando el contenido y su
       // ruta ya no es la de antes.
-      final newPath = await _relocatedPath(media.copyWith(isImported: true));
+      //
+      // Sin confirmar no se mueve nada: lo que sigue pendiente de revisar vive
+      // donde llegó, y moverlo en cada tecla de la descripción sería mover un
+      // fichero por pulsación.
+      final newPath = confirm
+          ? await _relocatedPath(media.copyWith(isImported: true))
+          : null;
 
       return DataSuccess<String?>(newPath);
     } on Exception catch (e) {
@@ -838,7 +869,9 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
     try {
       if (ids.isEmpty) return DataSuccess(null);
 
-      if (deleteFiles) await _deleteFilesOf(ids);
+      // Siempre se llama: sin la casilla puesta lo que se lleva es sólo lo que
+      // sigue en la carpeta de descargas, que no es un fichero del usuario.
+      await _deleteFilesOf(ids, onlyStaged: !deleteFiles);
 
       await _purgeRows(ids);
 
@@ -925,10 +958,20 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// Va antes de la baja porque la ruta está en la fila, y lo que no se pueda
   /// borrar (ya no está, lo tiene abierto otro programa) no detiene nada: el
   /// contenido sale de la aplicación igual.
-  Future<void> _deleteFilesOf(List<int> ids) async {
+  ///
+  /// Con [onlyStaged] sólo se lleva lo que todavía está en la carpeta de
+  /// descargas: es lo que se hace cuando el usuario ha dicho que se conserven
+  /// los ficheros. Lo que hay ahí no es suyo —se bajó solo y su sitio era la
+  /// biblioteca—, así que conservarlo no conserva nada, sólo ocupa.
+  Future<void> _deleteFilesOf(List<int> ids, {bool onlyStaged = false}) async {
+    final staging = onlyStaged ? _downloadsPath?.call() : null;
+    if (onlyStaged && (staging == null || staging.isEmpty)) return;
+
     final summaries = await _appDatabase.mediaSummaryModels.getAll(ids);
 
     for (final summary in summaries.nonNulls) {
+      if (staging != null && !p.isWithin(staging, summary.path)) continue;
+
       await deleteFileAt(summary.path);
     }
   }
@@ -1009,7 +1052,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (ids.isEmpty) return const DataSuccess(0);
 
-      if (deleteFiles) await _deleteFilesOf(ids);
+      await _deleteFilesOf(ids, onlyStaged: !deleteFiles);
 
       await _purgeRows(ids);
 
@@ -1036,7 +1079,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
 
       if (ids.isEmpty) return const DataSuccess(0);
 
-      if (deleteFiles) await _deleteFilesOf(ids);
+      await _deleteFilesOf(ids, onlyStaged: !deleteFiles);
 
       await _purgeRows(ids);
 
@@ -2786,6 +2829,70 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
   /// (contenido, etiqueta, creador) hasta llegar a [limit]: así un término que
   /// aparece en muchas descripciones no deja fuera a las etiquetas ni a los
   /// creadores que también encajan.
+  /// Va una por una y soltando el hilo cada poco: es un recorrido por todas
+  /// las etiquetas y creadores, y se hace en segundo plano al abrir la
+  /// aplicación, cuando la ventana tiene que seguir respondiendo.
+  @override
+  Future<DataState<List<SuggestionCandidate>>> suggestionCandidates() async {
+    try {
+      final candidates = <SuggestionCandidate>[];
+
+      final tags = await _appDatabase.tagModels.where().findAll();
+      for (final (index, tag) in tags.indexed) {
+        if (index % suggestionCandidatesBatch == 0) await _breathe();
+        if (_visibility.hidesTag(tag.id)) continue;
+
+        final count = await tag.media.count();
+        if (count == 0) continue;
+
+        candidates.add(SuggestionCandidate(
+          suggestion: SearchSuggestionEntity(
+            id: tag.id,
+            type: SearchResultType.tag,
+            label: tag.name,
+            imagePath: tag.picturePath,
+            isNsfw: _visibility.marksTag(tag.id),
+          ),
+          mediaCount: count,
+          favoriteCount:
+              await tag.media.filter().isFavoriteEqualTo(true).count(),
+        ));
+      }
+
+      final creators = await _appDatabase.creatorModels.where().findAll();
+      for (final (index, creator) in creators.indexed) {
+        if (index % suggestionCandidatesBatch == 0) await _breathe();
+        if (_visibility.hidesCreator(creator.id)) continue;
+
+        final ofCreator = _appDatabase.mediaModels
+            .filter()
+            .creator((q) => q.idEqualTo(creator.id));
+        final count = await ofCreator.count();
+        if (count == 0) continue;
+
+        candidates.add(SuggestionCandidate(
+          suggestion: SearchSuggestionEntity(
+            id: creator.id,
+            type: SearchResultType.creator,
+            label: creator.name,
+            imagePath: creator.picturePath,
+            isNsfw: _visibility.marksCreator(creator.id),
+          ),
+          mediaCount: count,
+          favoriteCount: await _appDatabase.mediaModels
+              .filter()
+              .creator((q) => q.idEqualTo(creator.id))
+              .isFavoriteEqualTo(true)
+              .count(),
+        ));
+      }
+
+      return DataSuccess(candidates);
+    } on Exception catch (e) {
+      return DataException(e);
+    }
+  }
+
   @override
   Future<DataState<List<SearchSuggestionEntity>>> searchSuggestions(
     String query, {
@@ -2795,9 +2902,14 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
       final term = query.trim();
       if (term.isEmpty) return const DataSuccess([]);
 
+      // Se piden más de los que se enseñan: cada consulta devuelve los suyos
+      // en el orden de la base, y lo que más se parece puede no estar entre los
+      // primeros.
+      final candidates = limit * mediaSearchSuggestionsOversample;
+
       final byType = [
         [
-          for (final media in await _mediaByText(term, limit: limit))
+          for (final media in await _mediaByText(term, limit: candidates))
             SearchSuggestionEntity(
               id: media.id!,
               type: SearchResultType.media,
@@ -2806,7 +2918,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
             ),
         ],
         [
-          for (final tag in await _tagsByName(term, limit: limit))
+          for (final tag in await _tagsByName(term, limit: candidates))
             SearchSuggestionEntity(
               id: tag.id,
               type: SearchResultType.tag,
@@ -2818,7 +2930,7 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
             ),
         ],
         [
-          for (final creator in await _creatorsByName(term, limit: limit))
+          for (final creator in await _creatorsByName(term, limit: candidates))
             SearchSuggestionEntity(
               id: creator.id,
               type: SearchResultType.creator,
@@ -2832,16 +2944,17 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         ],
       ];
 
-      final suggestions = <SearchSuggestionEntity>[];
-      for (var round = 0; suggestions.length < limit; round++) {
-        final available = byType.where((list) => round < list.length);
-        if (available.isEmpty) break;
-
-        for (final list in available) {
-          suggestions.add(list[round]);
-          if (suggestions.length == limit) break;
-        }
-      }
+      // **Por parecido, no por tipo.** Se repartían por turnos —un contenido,
+      // una etiqueta, un creador…— y así escribir «nam» ponía delante la
+      // descripción larga de un contenido que dice «Nami» antes que la
+      // etiqueta «Nami». Ahora se ordena todo junto por lo que se parece a lo
+      // escrito: lo que empieza igual antes que lo que lo lleva por dentro, y
+      // lo corto antes que lo largo.
+      final suggestions = rankByName(
+        [for (final list in byType) ...list],
+        term,
+        (suggestion) => suggestion.label,
+      ).take(limit).toList();
 
       return DataSuccess(suggestions);
     } on Exception catch (e) {
@@ -3215,7 +3328,10 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         .nameContains(term, caseSensitive: false)
         .findAll();
 
-    final visible = _visibleTags(found);
+    // Lo que más se parece, primero, y **antes de recortar**: recortando en el
+    // orden de la base, una etiqueta corta que encaja entera se quedaba fuera
+    // detrás de otras más largas que sólo la contenían.
+    final visible = rankByName(_visibleTags(found), term, (tag) => tag.name);
 
     return limit == null || visible.length <= limit
         ? visible
@@ -3234,7 +3350,12 @@ class LocalMediaRepositoryImpl implements LocalMediaRepository {
         .nameContains(term, caseSensitive: false)
         .findAll();
 
-    final visible = _visibleCreators(found);
+    // Como las etiquetas: lo que más se parece, primero, y antes de recortar.
+    final visible = rankByName(
+      _visibleCreators(found),
+      term,
+      (creator) => creator.name,
+    );
 
     return limit == null || visible.length <= limit
         ? visible

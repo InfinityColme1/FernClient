@@ -46,7 +46,18 @@ class TagManagerPage extends StatefulWidget {
   /// con el primer arreglo que se hiciera en una de ellas.
   final bool showsPeople;
 
-  const TagManagerPage({super.key, this.showsPeople = false});
+  /// Con cuál abrir, si se ha llegado por una concreta.
+  ///
+  /// Llega de la dirección, y de ahí que sea un identificador y no una entidad:
+  /// quien salta desde el panel del visor sabe cuál quiere ver, pero no la tiene
+  /// cargada.
+  final int? selectedTagId;
+
+  const TagManagerPage({
+    super.key,
+    this.showsPeople = false,
+    this.selectedTagId,
+  });
 
   @override
   State<TagManagerPage> createState() => _TagManagerPageState();
@@ -59,6 +70,35 @@ class _TagManagerPageState extends State<TagManagerPage>
   /// La etiqueta elegida, por identificador y no por entidad: al guardarla
   /// cambian su nombre y su avatar, pero sigue siendo la misma etiqueta.
   int? _selectedTagId;
+
+  @override
+  void didUpdateWidget(covariant TagManagerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Volver a la misma pantalla por otra etiqueta tiene que cambiar de
+    // elegida. Pasa al pulsar una en el panel del visor con esta pantalla
+    // debajo: la ruta la reutiliza en vez de montarla de nuevo.
+    final asked = widget.selectedTagId;
+    if (asked == null || asked == oldWidget.selectedTagId) return;
+
+    // **Aquí mismo**, sin esperar a que cambien las etiquetas: ya están leídas
+    // y no va a llegar ningún estado nuevo que lo dispare. Antes se soltaba la
+    // elegida y nada volvía a elegir la pedida, así que la pantalla se quedaba
+    // en la primera. Sin `setState`: después de esto viene `build`.
+    final rows = TagList.flatten(_tree(_tagsBloc.state));
+    if (rows.any((row) => row.tag.id == asked)) {
+      _selectedTagId = asked;
+      getIt<MediaBloc>().add(LoadMediaByTagEvent(asked));
+      return;
+    }
+
+    // No está en esta lista —es de la otra, o no se han leído todavía—: se
+    // resuelve como al entrar.
+    _selectedTagId = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncSelection(_tagsBloc.state);
+    });
+  }
 
   @override
   void initState() {
@@ -91,12 +131,33 @@ class _TagManagerPageState extends State<TagManagerPage>
   /// mismo en lugar de quedarse enseñando algo que ya no está.
   void _syncSelection(TagsState state) {
     final tags = TagList.flatten(_tree(state));
-    if (tags.isEmpty) return;
 
     final isStillThere = tags.any((row) => row.tag.id == _selectedTagId);
     if (isStillThere) return;
 
-    _select(tags.first.tag);
+    // La que diga la dirección, si sigue existiendo; si no, la primera.
+    final asked = widget.selectedTagId;
+    final wanted = asked == null
+        ? null
+        : tags.where((row) => row.tag.id == asked).firstOrNull;
+
+    // **La pedida es de la otra lista**: una persona pedida en la de etiquetas,
+    // o al revés. Se va a la otra con ella elegida en vez de quedarse aquí en
+    // la primera, que era lo que pasaba al pulsar un personaje en el panel del
+    // visor. Sólo mientras no haya ninguna elegida: con una ya elegida, la
+    // dirección es la de cuando se llegó y no manda.
+    if (asked != null && wanted == null && _selectedTagId == null) {
+      final elsewhere = _fromTree(state.tags, asked);
+
+      if (elsewhere != null && elsewhere.isPerson != widget.showsPeople) {
+        context.go(tagManagerRouteWithTag(asked, isPerson: elsewhere.isPerson));
+        return;
+      }
+    }
+
+    if (tags.isEmpty) return;
+
+    _select(wanted?.tag ?? tags.first.tag);
   }
 
   /// Elige una etiqueta y pide su contenido para la rejilla.

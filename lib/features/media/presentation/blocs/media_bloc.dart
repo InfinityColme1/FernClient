@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/core/services/shuffle_seed.dart';
 import 'package:Fern/features/media/domain/entities/media_sort_order.dart';
@@ -41,6 +42,8 @@ import 'package:Fern/features/media/domain/usecases/set_media_list_favorite_usec
 import 'package:Fern/features/media/domain/usecases/set_media_nsfw_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/select_import_directory_usecase.dart';
 import 'dart:math' as math;
+
+import 'package:path/path.dart' as p;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -152,6 +155,18 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     Set<ImportSource> sources,
     Set<MediaKind> types,
   })? _libraryStamp;
+
+  /// La biblioteca leída **sin filtrar**, una por orden, y de qué versión de
+  /// la base es.
+  ///
+  /// Encender o apagar un filtro, o cambiar el orden, releía la base entera, y
+  /// eso es lo que se notaba como una espera sin explicación. Mientras la base
+  /// no cambie, filtrar es recortar una de estas listas y volver a un orden ya
+  /// visto es cogerla: inmediato. Los órdenes que sólo miran el fichero
+  /// —nombre, tipo, al azar— ni siquiera necesitan haberse leído: salen de
+  /// cualquier otra (ver [_sortedInMemory]).
+  final Map<MediaSortOrder, List<MediaSummaryEntity>> _libraryByOrder = {};
+  int? _libraryByOrderRevision;
 
   /// Por qué versión va la base. Sin él, todo está siempre por releer, que es
   /// lo que hacía la aplicación hasta ahora y lo que hacen las pruebas.
@@ -802,14 +817,39 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // por buena una biblioteca a la que le falta lo último.
     final revision = _libraryRevision?.value;
 
-    final result = await _getMediaListUsecase(params: order);
+    // Lo ya leído vale mientras la base siga igual: cambiar los filtros o el
+    // orden se resuelve aquí sin volver a ella.
+    if (revision == null || _libraryByOrderRevision != revision) {
+      _libraryByOrder.clear();
+      _libraryByOrderRevision = revision;
+    }
 
-    final mediaList = (result is DataSuccess && result.data != null)
-        ? [
-            for (final summary in result.data!)
+    final cachedAll = revision == null
+        ? null
+        : _libraryByOrder[order] ?? _sortedInMemory(order);
+
+    final result = cachedAll != null
+        ? DataSuccess<List<MediaSummaryEntity>>(cachedAll)
+        : await _getMediaListUsecase(params: order);
+
+    if (result is DataSuccess && result.data != null && revision != null) {
+      _libraryByOrder[order] = result.data!;
+    }
+
+    final all = result is DataSuccess ? result.data : null;
+    final filtered = all == null
+        ? const <MediaSummaryEntity>[]
+        : [
+            for (final summary in all)
               if (state.shows(summary)) summary,
-          ]
-        : const <MediaSummaryEntity>[];
+          ];
+
+    // **La misma lista** cuando el filtro no quita nada. La maquetación de la
+    // rejilla se guarda por lista, así que una copia con lo mismo dentro era
+    // volver a calcularla entera —veinte mil celdas— al cambiar de orden o al
+    // quitar el último filtro.
+    final mediaList =
+        all != null && filtered.length == all.length ? all : filtered;
 
     // Sólo se sella lo que ha salido bien: con una lectura fallida el estado se
     // queda con una biblioteca vacía, y darla por buena la dejaría vacía hasta
@@ -830,6 +870,42 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       sourceFilters: sourceFilters,
       typeFilters: typeFilters,
     ));
+  }
+
+  /// La biblioteca en [order] sacada de otra ya leída, sin ir a la base.
+  ///
+  /// Sólo para los órdenes que miran el fichero y nada más: por nombre, por
+  /// tipo y al azar. Los otros dependen de datos que no están en la lista
+  /// —cuándo llegó cada uno, su descripción— y ésos sí se leen.
+  ///
+  /// Hace **lo mismo que el repositorio**, paso a paso: el mismo nombre de
+  /// fichero sin carpeta y en minúsculas, y el azar sobre la lista en orden de
+  /// identificador con la misma semilla. Si no, el mismo orden saldría
+  /// distinto según se hubiera leído o calculado.
+  List<MediaSummaryEntity>? _sortedInMemory(MediaSortOrder order) {
+    if (_libraryByOrder.isEmpty) return null;
+
+    final any = _libraryByOrder.values.first;
+    String nameOf(MediaSummaryEntity media) =>
+        p.basename(media.path).toLowerCase();
+
+    final sorted = switch (order) {
+      MediaSortOrder.fileName => [...any]
+        ..sort((one, other) => nameOf(one).compareTo(nameOf(other))),
+      MediaSortOrder.kind => [...any]..sort((one, other) {
+          final byKind = MediaKind.of(one.path)
+              .index
+              .compareTo(MediaKind.of(other.path).index);
+
+          return byKind != 0 ? byKind : nameOf(one).compareTo(nameOf(other));
+        }),
+      MediaSortOrder.random => ([...any]..sort((a, b) => a.id.compareTo(b.id)))
+        ..shuffle(math.Random(_shuffle.value)),
+      _ => null,
+    };
+
+    if (sorted != null) _libraryByOrder[order] = sorted;
+    return sorted;
   }
 
   /// Enciende o apaga una clase de contenido en el filtro.
@@ -876,6 +952,11 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     // aquí, el orden es estable hasta la siguiente pulsación — y pulsarlo
     // estando ya en «al azar» vuelve a barajar, que es lo que se espera.
     if (event.order == MediaSortOrder.random) _shuffle.renew();
+
+    // Barajar otra vez: lo barajado antes ya no vale.
+    if (event.order == MediaSortOrder.random) {
+      _libraryByOrder.remove(MediaSortOrder.random);
+    }
 
     // Dos ajustes distintos y no uno: lo pendiente de revisar y la biblioteca
     // se miran para cosas distintas —una tanda se repasa por tipo o por nombre,
@@ -1124,6 +1205,24 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
       currentMedia: event.media,
       isModified: true,
     ));
+
+    _persist(event.media);
+  }
+
+  /// Baja al disco lo que el panel tiene puesto, sin darlo por revisado.
+  ///
+  /// **El panel ya no espera a ningún botón.** Antes todo lo que se tocaba se
+  /// quedaba en el estado hasta pulsar Guardar, y salir del visor sin pulsarlo
+  /// lo perdía sin decir nada — que es justo lo que pasa cuando se está
+  /// mirando contenido, no rellenando un formulario.
+  ///
+  /// No espera a que termine ni cuenta si ha ido bien: quien ha escrito una
+  /// etiqueta ya la ve puesta, y bloquear el panel por una escritura de disco
+  /// haría que escribir la descripción fuera a tirones. Si falla, lo que hay en
+  /// pantalla sigue siendo lo que el usuario quiso y el siguiente cambio lo
+  /// vuelve a intentar.
+  void _persist(MediaEntity media) {
+    unawaited(_saveMediaUseCase(params: (media: media, confirm: false)));
   }
 
   /// Le pone el creador al contenido que se esta mirando y le suma lo que el
@@ -1142,12 +1241,19 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     final current = state.currentMedia;
     if (current == null) return;
 
-    emit(state.copyWith(
-      currentMedia: mediaWithCreator(current, event.creator, event.brings),
-      isModified: true,
-    ));
+    final updated = mediaWithCreator(current, event.creator, event.brings);
+
+    emit(state.copyWith(currentMedia: updated, isModified: true));
+
+    _persist(updated);
   }
 
+  /// La descripción, tecla a tecla, **sin bajar al disco**.
+  ///
+  /// A diferencia de las etiquetas y el creador, aquí no se guarda en cada
+  /// cambio: sería una escritura en Isar por pulsación. Lo baja el propio campo
+  /// cuando deja de escribirse, cuando pierde el foco o cuando se cambia de
+  /// contenido, con [PersistMediaEditsEvent].
   void onUpdateMediaDescription(UpdateMediaDescriptionEvent event, Emitter<MediaStates> emit) {
     final media = state.currentMedia;
     if (media == null) return;
@@ -1158,10 +1264,23 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     ));
   }
 
+  /// Baja lo que haya sin guardar. Lo pide el campo de la descripción.
+  void onPersistMediaEdits(
+    PersistMediaEditsEvent event,
+    Emitter<MediaStates> emit,
+  ) {
+    final media = state.currentMedia;
+    if (media == null) return;
+
+    _persist(media);
+  }
+
   void onSaveMedia(SaveMediaEvent event, Emitter<MediaStates> emit) async {
     emit(state.copyWith(isBusy: true));
 
-    final result = await _saveMediaUseCase(params: event.media);
+    final result = await _saveMediaUseCase(
+      params: (media: event.media, confirm: true),
+    );
     if (result is! DataSuccess) {
       emit(_idle);
       return;
@@ -1779,6 +1898,10 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     return result;
   }
 
+  /// Desde dónde se estiraría ahora la selección con mayúsculas + clic. Lo
+  /// mira la rejilla para enseñar el rango antes de hacerlo.
+  int? get selectionAnchorId => _selectionAnchorId;
+
   void onToggleMediaSelection(ToggleMediaSelectionEvent event, Emitter<MediaStates> emit) {
     final selectedIds = Set<int>.from(state.selectedIds);
     if (!selectedIds.remove(event.media.id)) selectedIds.add(event.media.id);
@@ -2056,6 +2179,24 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     bool showingImport() =>
         _lastListing is LoadScannedMediaEvent && state is! DetailedMedia;
 
+    // **Lo que llega se pinta por tandas**, no de uno en uno. Cada contenido
+    // que llegaba rehacía la lista entera, y con ella las cuentas de la rejilla
+    // y la cabecera: una importación de mil ficheros eran mil repintados de
+    // todo, que es lo que hacía imposible etiquetar mientras entraba contenido.
+    // Juntando lo de [importArrivalBatch] se repinta pocas veces por segundo y
+    // lo que llega sigue viéndose llegar.
+    final waiting = <MediaSummaryEntity>[];
+    var lastPaint = DateTime.fromMillisecondsSinceEpoch(0);
+
+    List<MediaSummaryEntity>? withWaiting(List<MediaSummaryEntity>? list) {
+      var merged = list;
+      for (final one in waiting) {
+        merged = withArrival(merged, one);
+      }
+      waiting.clear();
+      return merged;
+    }
+
     await emit.forEach<DataState<MediaSummaryEntity>>(
       stream,
       onData: (dataState) {
@@ -2065,11 +2206,20 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
 
           // Fuera de su pantalla no se pinta nada, pero lo que llega **no se
           // pierde**: está en la base de datos, y al volver se relee de ahí.
-          if (!showingImport()) return state;
+          if (!showingImport()) {
+            waiting.clear();
+            return state;
+          }
+
+          waiting.add(dataState.data!);
+
+          final now = DateTime.now();
+          if (now.difference(lastPaint) < importArrivalBatch) return state;
+          lastPaint = now;
 
           // Se añade a lo que hay a la vista, no a una copia de aquí: la regla
           // y el porqué están en `withArrival`.
-          final merged = withArrival(state.mediaList, dataState.data!);
+          final merged = withWaiting(state.mediaList);
           if (identical(merged, state.mediaList)) return state;
 
           return MediaLoading(
@@ -2135,7 +2285,8 @@ class MediaBloc extends Bloc<MediaEvents, MediaStates> {
     if (emit.isDone || !showingImport()) return;
 
     emit(MediaLoading(
-      mediaList: state.mediaList,
+      // Con lo que quedara de la última tanda, que no llegó a pintarse.
+      mediaList: withWaiting(state.mediaList),
       selectedIds: state.selectedIds,
       searchCriteria: state.searchCriteria,
       searchSections: state.searchSections,

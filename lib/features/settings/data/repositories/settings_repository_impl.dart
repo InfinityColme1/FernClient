@@ -210,6 +210,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       maxDetectionsPerClass:
           _preferences.getInt(maxDetectionsPreferenceKey) ??
               defaultMaxDetectionsPerClass,
+      regionMergeOverlap:
+          _preferences.getInt(regionMergeOverlapPreferenceKey) ??
+              defaultRegionMergeOverlap,
       recognitionPath: _preferences.getString(recognitionPathPreferenceKey) ??
           defaultRecognitionPath,
       organization: FileOrganizationCriteria.fromId(
@@ -352,6 +355,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
     await _preferences.setInt(
       maxDetectionsPreferenceKey,
       settings.maxDetectionsPerClass,
+    );
+    await _preferences.setInt(
+      regionMergeOverlapPreferenceKey,
+      settings.regionMergeOverlap,
     );
     await _preferences.setBool(
       autoTagRemoteSourcePreferenceKey,

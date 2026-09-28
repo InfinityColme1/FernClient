@@ -275,35 +275,54 @@ class _TagListState extends State<TagList> {
     }
   }
 
-  /// Abre las ramas que hagan falta para que la etiqueta elegida se vea.
+  /// Lo que se ha desplazado la lista, para poder llevarla hasta la elegida.
+  final _scroll = ScrollController();
+
+  /// Deja la etiqueta elegida a la vista: abre las ramas que la esconden y lleva
+  /// la lista hasta ella.
   ///
-  /// Pasa al crear una hija bajo una madre plegada, y al mover una etiqueta a
-  /// una rama cerrada: sin esto la fila marcada no está en pantalla y parece que
-  /// no se ha hecho nada.
+  /// Las ramas, al crear una hija bajo una madre plegada o al mover una
+  /// etiqueta a una rama cerrada: sin esto la fila marcada no está en pantalla y
+  /// parece que no se ha hecho nada. Y el desplazamiento, al llegar por una
+  /// concreta —pulsándola en el panel del visor—: con doscientas, la elegida
+  /// quedaba marcada muy abajo y el salto parecía no llevar a ninguna parte.
   void _revealSelected() {
     final collapsed = _collapsed;
     final id = widget.selectedTagId;
-    if (collapsed == null || id == null) return;
+    if (id == null) return;
 
     final hidden = [
-      for (final ancestor in TagList.ancestorsOf(_tree, id))
-        if (collapsed.isCollapsed(ancestor.id)) ancestor.id,
+      if (collapsed != null)
+        for (final ancestor in TagList.ancestorsOf(_tree, id))
+          if (collapsed.isCollapsed(ancestor.id)) ancestor.id,
     ];
-    if (hidden.isEmpty) return;
 
     // Después del fotograma: esto se llama desde `initState` y desde
     // `didUpdateWidget`, y avisar a quien escucha en mitad de una construcción
-    // la deja a medias.
+    // la deja a medias. Y la lista, con las ramas ya abiertas: es entonces
+    // cuando la fila está entre las que se pintan.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       for (final tagId in hidden) {
-        await collapsed.expand(tagId);
+        await collapsed!.expand(tagId);
       }
+      if (hidden.isNotEmpty) await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      final rows = _rows;
+      revealListRow(
+        _scroll,
+        index: rows.indexWhere((row) => row.tag.id == widget.selectedTagId),
+        count: rows.length,
+        duration: context.motion(motionStandard),
+        curve: motionEnterCurve,
+      );
     });
   }
 
   @override
   void dispose() {
     _collapsed?.removeListener(_onCollapsedChanged);
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -427,6 +446,7 @@ class _TagListState extends State<TagList> {
               // Las filas se pintan bajo demanda: las etiquetas pueden ser
               // muchas.
               child: ListView.builder(
+                controller: _scroll,
                 // Apartado por la derecha lo que ocupa la barra de
                 // desplazamiento: sin ese carril la pastilla queda pegada al
                 // borde de las fichas y parece parte de ellas.

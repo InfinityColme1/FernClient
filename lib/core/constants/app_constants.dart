@@ -94,6 +94,22 @@ const tagManagerRoute = '/tag-manager';
 /// diría que no se está en ninguna parte.
 const personaManagerRoute = '$tagManagerRoute/people';
 
+/// Con qué se dice en la dirección qué etiqueta hay que dejar elegida.
+const tagQueryParam = 'tag';
+
+/// La pantalla de etiquetas abierta por una concreta.
+///
+/// Se llega así al pulsar una etiqueta en el panel del visor, igual que con los
+/// fernies: la pantalla se abre con ésa elegida y no con la primera, que es lo
+/// que convierte el salto en «ver ésta» y no en «ver la lista».
+///
+/// **Una persona va a la suya.** Las personas tienen su propia lista, y abierta
+/// la de etiquetas no estaría en ella: la pantalla se quedaba en la primera, y
+/// pulsar un personaje en el panel del visor no llevaba a ese personaje.
+String tagManagerRouteWithTag(int tagId, {bool isPerson = false}) =>
+    '${isPerson ? personaManagerRoute : tagManagerRoute}'
+    '?$tagQueryParam=$tagId';
+
 // Reconocimiento. Las pantallas llegan en fases posteriores; las rutas se
 // declaran ya porque los avisos necesitan saber a dónde llevan.
 const fernieManagerRoute = '/fernies';
@@ -223,6 +239,28 @@ const recentCreatorsPreferenceKey = 'recent_creators';
 /// Y los últimos fernies a los que se les asignó una región.
 const recentFerniesPreferenceKey = 'recent_fernies';
 
+/// Lo último que se ha buscado en la barra general (etiquetas y creadores, como
+/// `tag:12`) y lo que se ha fijado arriba de sus sugerencias.
+const recentSearchesPreferenceKey = 'recent_searches';
+const pinnedSuggestionsPreferenceKey = 'pinned_suggestions';
+
+/// Cada cuántas etiquetas o creadores se suelta el hilo al reunir los
+/// candidatos a sugerencia.
+const suggestionCandidatesBatch = 40;
+
+/// Cuántas búsquedas recientes se recuerdan para dar peso a las sugerencias.
+const recentSearchesStored = 50;
+
+/// Cuántas sugerencias se ofrecen al pulsar la barra general sin escribir
+/// nada, sin contar las fijadas.
+const searchSuggestionPoolSize = 25;
+
+/// El peso de cada criterio al sortear esas sugerencias. Todo suma a un peso
+/// base de 1, así que nada queda sin posibilidad de salir.
+const suggestionWeightPerContentLog = 1.0;
+const suggestionWeightRecentSearch = 4.0;
+const suggestionWeightFavorite = 2.0;
+
 /// Si la casilla de «no volver a importar» quedó marcada la última vez.
 const blocksImportOnDiscardPreferenceKey = 'blocks_import_on_discard';
 
@@ -233,9 +271,12 @@ const blockedListMaxHeight = 220.0;
 
 /// Cuántos recientes se guardan y cuántos se enseñan.
 ///
-/// Se guardan más de los que se enseñan a propósito: una etiqueta borrada deja
-/// su identificador sin dueño, y sin colchón la lista se quedaría en dos.
-const recentPicksStored = 10;
+/// Se guardan muchos más de los que se enseñan a propósito. Una etiqueta
+/// borrada deja su identificador sin dueño, y **las que ya lleva el contenido no
+/// se ofrecen**: al asignar una de las tres, su hueco lo ocupa la siguiente de
+/// la pila. Con un colchón corto, poner unas cuantas seguidas dejaba la lista
+/// en dos, en una y en nada.
+const recentPicksStored = 25;
 
 /// Qué ramas de etiquetas están plegadas, por identificador.
 ///
@@ -267,7 +308,11 @@ const tagListChevronWidth = 24.0;
 
 /// Lo mismo en el menú lateral, que tiene sus propias medidas.
 const sidebarChevronWidth = 20.0;
-const recentPicksShown = 3;
+
+/// Cuántas de las últimas usadas se ofrecen al pulsar un buscador vacío: la
+/// pila entera. Se ven tres a la vez y el resto se desplaza, como las
+/// sugerencias de lo escrito.
+const recentPicksShown = recentPicksStored;
 
 const rootPathPreferenceKey = 'user_media_root_path';
 const languagePreferenceKey = 'app_language';
@@ -1174,6 +1219,42 @@ const motionExitCurve = Curves.easeInCubic;
 const hoverAnimationDuration = motionFast;
 const drawerAnimationDuration = Duration(milliseconds: 300);
 const viewerTransitionDuration = Duration(milliseconds: 250);
+
+/// Lo que tarda una miniatura en aparecer sobre su hueco cuando no estaba en la
+/// caché. Corto: es para que la rejilla no se llene a saltos, no para que se
+/// note que algo se anima.
+const thumbnailFadeInDuration = Duration(milliseconds: 350);
+
+/// Qué vecinos del contenido abierto en el visor se dejan descodificados: el
+/// siguiente y el anterior. Más no: cada uno, a la resolución del visor, son
+/// decenas de megas de la caché de imágenes, y llenarla de adelantos es lo que
+/// echa de ella las miniaturas de la rejilla.
+const viewerPrefetchOffsets = [1, -1];
+
+/// El marco de un contenido seleccionado en la rejilla y el velo de su color.
+const mediaSelectedBorderWidth = 3.0;
+const mediaSelectedTintOpacity = 0.22;
+
+/// Lo mismo, más suave, para lo que marcaría un mayúsculas + clic.
+const mediaRangePreviewBorderWidth = 2.0;
+const mediaRangePreviewBorderOpacity = 0.7;
+const mediaRangePreviewTintOpacity = 0.1;
+
+/// Cuántas celdas de rejilla pasan de hueco a contenido en cada fotograma.
+/// Ver `ProgressiveCell`: pocas, para que la rejilla se llene **en cascada**
+/// —cuarenta celdas en unos catorce fotogramas, cada una fundiéndose sobre la
+/// anterior— y no toda de golpe, que es como se leía con ocho.
+const progressiveCellsPerFrame = 3;
+
+/// Cuánto del color del texto se mezcla con la superficie para pintar un
+/// hueco de carga: lo justo para que se vea sin llamar la atención.
+const skeletonToneOpacity = 0.09;
+
+/// Lo que tarda una celda en aparecer sobre su hueco.
+const progressiveCellFadeDuration = Duration(milliseconds: 450);
+
+/// El alto máximo del desplegable de filtros. Lo que no quepa se desplaza.
+const filterMenuMaxHeight = 320.0;
 const infoPanelAnimationDuration = Duration(milliseconds: 300);
 
 /// Lo que tarda el cambio de pantalla: la que sale se desvanece mientras la que
@@ -1190,23 +1271,15 @@ const pageTransitionDuration = Duration(milliseconds: 220);
 ///
 /// Además va partida en dos mitades que no se solapan, así que cada pieza
 /// dispone de la mitad de esto para su recorrido.
-const screenTransitionDuration = Duration(milliseconds: 540);
+const screenTransitionDuration = Duration(milliseconds: 720);
 
 /// Lo que dura cambiar entre dos pantallas de la misma forma.
 ///
 /// Menos, porque hay menos que contar: la maquetación es idéntica a los dos
 /// lados y lo único que cambia es el contenido de cada hueco. Pero no tan poco
 /// como para que sea un parpadeo, que es lo que era.
-const screenCrossfadeDuration = Duration(milliseconds: 400);
+const screenCrossfadeDuration = Duration(milliseconds: 560);
 
-/// Cuánto se espera como mucho a que termine la transición antes de cargar la
-/// pantalla de todas formas.
-///
-/// Es una red, no un plazo: en el camino normal manda el final de la animación
-/// y esto no llega a saltar. Está por encima de [screenTransitionDuration] para
-/// no adelantarse a ella, y es corto para que una transición que se quede a
-/// medias no deje la pantalla vacía más de un parpadeo.
-const screenEntryTaskFallback = Duration(milliseconds: 900);
 
 /// Las dos curvas del fundido cruzado, y por qué no son una y su inversa.
 ///
@@ -1363,19 +1436,33 @@ const sidebarTileGap = 10.0;
 const mediaDescriptionMaxLines = 10;
 
 // Search suggestions
-const searchSuggestionsLimit = 3;
+/// Cuántas sugerencias traen los buscadores de los diálogos. Se ven
+/// [searchInputVisibleSuggestions] a la vez y el resto se desplaza: con 3 se
+/// traían justo las que se veían y desplazarse no llevaba a ninguna parte.
+const searchSuggestionsLimit = 20;
 const searchDebounceDuration = Duration(milliseconds: 250);
 
-/// Sugerencias del buscador principal: hasta cinco entre contenidos, etiquetas
-/// y creadores.
-const mediaSearchSuggestionsLimit = 5;
+/// Sugerencias que se ven a la vez bajo un campo de búsqueda de los diálogos.
+const searchInputVisibleSuggestions = 3;
+
+/// Alto de cada sugerencia bajo un campo de búsqueda.
+const searchInputSuggestionHeight = 40.0;
+
+/// Sugerencias del buscador principal entre contenidos, etiquetas y creadores.
+/// Se ven [mediaSearchSuggestionsVisible] a la vez y el resto se desplaza.
+const mediaSearchSuggestionsLimit = 20;
+
+/// Cuántas sugerencias caben a la vez en el desplegable del buscador.
+const mediaSearchSuggestionsVisible = 4;
+
+/// Cuántas veces más candidatos se piden a la base que sugerencias se enseñan,
+/// para poder elegir los más parecidos.
+const mediaSearchSuggestionsOversample = 3;
 
 /// Tiempo sin escribir tras el que el buscador principal actualiza la rejilla
 /// por su cuenta, sin necesidad de pulsar enter ni elegir una sugerencia.
 const mediaSearchDelay = Duration(seconds: 3);
 
-/// Alto máximo del desplegable de sugerencias del buscador principal.
-const mediaSearchSuggestionsMaxHeight = 320.0;
 
 /// Hasta dónde crece el texto de una pastilla de la barra.
 ///
@@ -1489,6 +1576,21 @@ const defaultMaxDetectionsPerClass = 25;
 
 /// Entre cuántas puede elegir el usuario en los ajustes.
 const maxDetectionsPerClassOptions = [1, 5, 10, 25, 50, 100];
+
+/// Desde cuánto solapadas dos detecciones de lo mismo se juntan en una sola
+/// región, en tanto por ciento. Es el de todos los fernies: cada uno puede tener
+/// el suyo (ver `RegionMergeOverlaps`).
+///
+/// Se mide contra **la más pequeña de las dos**: una caja metida entera dentro
+/// de otra está solapada al cien por cien aunque sea diminuta, y es justo el
+/// caso que hay que juntar — el modelo ha visto la cara y la cabeza de la misma
+/// persona. Dos cajas que sólo se rozan, o que están una al lado de la otra,
+/// son dos cosas distintas y se quedan como están.
+const defaultRegionMergeOverlap = 35;
+
+/// Entre cuáles puede elegir el usuario. El cien es «sólo si una está dentro de
+/// la otra».
+const regionMergeOverlapOptions = [20, 35, 50, 65, 80, 100];
 
 /// Por debajo de esta parte del contenido se avisa de que la región es muy
 /// pequeña. No impide guardarla: el aviso es informativo.
@@ -1802,14 +1904,103 @@ const nsfwTagsHideMediaPreferenceKey = 'nsfw_tags_hide_media';
 /// de un fotograma.
 const mediaReadChunkSize = 1500;
 
-/// Cómo se reparten el alto que queda las dos listas del panel de información.
+/// Cuánto se espera desde la última tecla para bajar la descripción al disco.
 ///
-/// Los fernies de un contenido son unos pocos y las etiquetas crecen sin techo,
-/// así que el reparto es holgado para las segundas. Ninguna de las dos pide más
-/// de lo que necesita: lo que sobre de una no se lo queda, se ve como hueco, y
-/// lo que a la otra le falte se desplaza dentro de la suya.
-const mediaInfoFerniesFlex = 2;
-const mediaInfoTagsFlex = 3;
+/// El panel guarda solo, y todo lo demás que se toca en él —etiquetas, creador,
+/// sugerencias— baja en el acto porque son cambios sueltos. La descripción se
+/// escribe letra a letra, así que necesita una espera: sin ella, un párrafo
+/// serían doscientas escrituras en Isar.
+///
+/// Corta a propósito. Es el tiempo que puede perderse si la aplicación se cierra
+/// de golpe justo después de teclear, y eso pesa más que ahorrarse una
+/// escritura. Lo escrito baja además al salir del campo y al cambiar de
+/// contenido, que es lo que cubre el caso normal.
+const mediaDescriptionSaveDelay = Duration(milliseconds: 800);
+
+/// El alto por debajo del cual el menú de gestión se desplaza entero.
+///
+/// Su cabecera, su barra de filtrar y sus filas de abajo suman un alto fijo. Con
+/// la lista flexible en medio eso cuadra mientras quepa; cuando no, la lista se
+/// queda en cero y lo que sobra desborda por abajo. Con este suelo el menú se
+/// desplaza en lugar de romperse, que es lo que hay que hacer cuando de verdad
+/// no cabe.
+///
+/// La cifra es la del fijo con sitio para un par de filas: por encima de ella
+/// nada se desplaza y el menú se ve exactamente igual que siempre.
+const mediaInfoManagerMinHeight = 260.0;
+
+/// Lo que mide un elemento de la tira de avatares del resumen, y sus botones.
+///
+/// El avatar deja sitio por arriba para el porcentaje y los dos botones, que
+/// asoman por sus esquinas de arriba. Debajo va el nombre, en una línea
+/// recortada — entero está en el tooltip.
+const mediaInfoAvatarActionSize = 20.0;
+const mediaInfoAvatarItemWidth = 72.0;
+
+/// Lo que los botones de un avatar del resumen asoman por encima de él.
+///
+/// **Asomando y no montados sobre la cara**: a la altura de su borde de arriba
+/// tapaban un trozo del avatar, y más adentro eran blancos pequeños perdidos
+/// sobre la foto. La tira les reserva este hueco encima de cada fila, para que
+/// lo que asoma se pinte entero y se pueda pulsar.
+const mediaInfoAvatarActionLift = 6.0;
+
+/// Hasta cuántas filas ocupan los fernies y las etiquetas en el resumen cuando
+/// al panel le sobra alto.
+///
+/// Siempre desplazándose de lado: las filas de más enseñan más de un vistazo,
+/// no sustituyen al desplazamiento. Las etiquetas llegan más lejos porque un
+/// contenido suele llevar muchas más etiquetas que fernies.
+const mediaInfoFerniesMaxRows = 2;
+const mediaInfoTagsMaxRows = 3;
+
+/// Hasta cuántas columnas llegan las etiquetas del resumen antes de pasar a la
+/// fila siguiente. Cinco etiquetas son dos filas y no una de cinco: con una
+/// quinta columna la tira llegaba justa al borde y no se veía dónde acababa.
+const mediaInfoTagsMaxColumns = 4;
+
+/// Lo que mide la palabra «NSFW» cuando la marca va sobre un avatar.
+///
+/// Más pequeña que la de una fila: ahí la marca va al lado del nombre y tiene
+/// todo el ancho, y sobre un avatar de cuarenta y ocho puntos se comía media
+/// cara.
+const nsfwCompactMarkFontSize = 8.0;
+
+/// Lo apagado que va el avatar de algo que todavía no está puesto: las
+/// etiquetas elegidas en el diálogo de asignar, hasta confirmar.
+const pendingAvatarOpacity = 0.55;
+
+/// Hasta cuántas filas de etiquetas enseña el diálogo de asignarlas, y el alto
+/// que tienen para ello.
+const assignTagDialogRows = 3;
+const assignTagDialogListHeight = 280.0;
+
+/// Hasta dónde crece el menú de asignar una región, que enseña los fernies como
+/// avatares en varias filas.
+const assignRegionMenuMaxHeight = 420.0;
+
+/// Cuántos fernies se ven a la vez en ese menú: tres columnas y dos filas, y
+/// el resto se desplaza hacia abajo.
+const assignRegionMenuColumns = 3;
+const assignRegionMenuRows = 2;
+
+/// El botón de añadir de la cabecera de una sección del resumen: del alto de su
+/// título, para que no sea él quien decida cuánto mide la cabecera.
+const mediaInfoHeaderButtonSize = 28.0;
+
+/// La banda de encima del avatar, donde va el porcentaje.
+///
+/// **Es suya y no la comparte con el avatar.** Puesto encima sin reservarle
+/// sitio, el porcentaje caía sobre la imagen y se leía mal justo en la que
+/// importa. Los dos botones sí montan sobre el avatar —a media altura de su
+/// borde— porque van en las esquinas y el porcentaje va en medio, así que no se
+/// estorban.
+const mediaInfoAvatarBadgeHeight = 16.0;
+
+/// Lo que se hunde un avatar del resumen al pulsarlo, y el aro que lleva con el
+/// ratón encima: la señal de que se puede pulsar y de que se ha pulsado.
+const mediaInfoAvatarPressedScale = 0.9;
+const mediaInfoAvatarRingWidth = 2.0;
 
 /// Con qué clave se guarda de qué fuente se estuvo importando la última vez.
 const lastImportSourcePreferenceKey = 'import_last_source';
@@ -1844,6 +2035,8 @@ const recognitionImportBatchMax = 200;
 /// Con qué clave se guarda cuántos fotogramas se miran de un vídeo.
 const frameSamplesPreferenceKey = 'recognition_frame_samples';
 const maxDetectionsPreferenceKey = 'recognition_max_detections';
+const regionMergeOverlapPreferenceKey = 'recognition_region_merge_overlap';
+const fernieMergeOverlapsPreferenceKey = 'recognition_fernie_merge_overlaps';
 
 /// Cuántos fotogramas se miran de un contenido que se mueve, al reconocer.
 ///
@@ -1993,7 +2186,14 @@ const mediaFallbackAspectRatio = 1.0;
 /// Salto del ancho al que se descodifican las imágenes de la rejilla, en
 /// píxeles físicos. Cuanto más grande, menos veces hay que volver al disco al
 /// reescalar la ventana, y más resolución de sobra se guarda de más.
-const mediaDecodeWidthStep = 64;
+///
+/// Con 64 reescalar la ventana volvía a descodificar cada miniatura a cada
+/// poco, y se notaba lento aun con una biblioteca de veinte contenidos.
+const mediaDecodeWidthStep = 256;
+
+/// El mismo salto para el visor, que descodifica a tamaño de pantalla: sin él
+/// cada píxel de reescalado era volver a descodificar la imagen entera.
+const viewerDecodeWidthStep = 512;
 const mediaVideoPreviewLength = Duration(seconds: 10);
 
 /// Cuánto tiene que quedarse el ratón encima de un vídeo antes de que empiece a
@@ -2015,6 +2215,17 @@ const mediaVideoPreviewDelay = Duration(milliseconds: 300);
 /// formas: volver a pedir uno olvidado es leer una entrada de caché, no abrir
 /// el vídeo otra vez.
 const mediaPreviewCacheLimit = 2000;
+
+/// Cuántas veces el ancho de la pantalla se decodifica una imagen en el visor,
+/// fuera del modo de marcar. Dos: se puede acercar el doble sin que se note, y
+/// una foto enorme no ocupa en memoria como si fuera a imprimirse.
+const viewerDecodeOversample = 2.0;
+
+/// Cada cuánto se repinta la rejilla de importación con lo que va llegando.
+///
+/// Lo bastante corto para que se vea entrar contenido casi en el acto, y lo
+/// bastante largo para no rehacer la lista con cada fichero.
+const importArrivalBatch = Duration(milliseconds: 300);
 
 /// Techo de la caché de imágenes decodificadas de Flutter.
 ///
@@ -2152,6 +2363,15 @@ const suggestionLowOpacity = 0.55;
 /// No se esconde: media docena de aciertos raros al año salen de aquí, y lo que
 /// hace falta es que se note de un vistazo cuáles hay que mirar con calma.
 const suggestionLowConfidence = 0.5;
+
+/// Con qué clave se guarda el listón de confianza del panel de sugerencias.
+///
+/// Es una preferencia de vista y no un ajuste del reconocimiento: no cambia lo
+/// que los modelos proponen ni lo que se guarda, sólo cuánto de ello se enseña
+/// de golpe. Se recuerda porque quien tiene un modelo por personaje revisa
+/// siempre con el mismo listón, y volver a bajarlo en cada contenido sería
+/// pedirle que repita la misma decisión mil veces.
+const suggestionThresholdPreferenceKey = 'suggestion_threshold';
 
 /// Con qué confianza mínima se le pregunta al motor al reconocer.
 ///

@@ -28,6 +28,8 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Fern/core/navigation/sidebar_collapse.dart';
+import 'package:Fern/core/navigation/lite_layout.dart';
+import 'package:Fern/core/constants/app_constants.dart';
 import 'package:go_router/go_router.dart';
 
 /// Lo que se puede crear desde el "+" de la barra superior.
@@ -222,6 +224,15 @@ class _MainLayoutState extends State<MainLayout> {
     // por debajo de [AppSizes.largeScreenMinWidth] la ventana no puede llegar:
     // el propio ejecutable lo impide (`windows/runner/win32_window.cpp`).
     return LayoutBuilder(builder: (context, constraints) {
+      // Por debajo del tamaño de la aplicación entera no se desborda: se pasa
+      // al modo reducido, con la biblioteca sola. El tutorial no va: lo que
+      // señala —el menú, la barra— no está.
+      if (isLiteLayout(context)) {
+        _keepToLibrary(context);
+
+        return _buildLiteLayout(widget.child);
+      }
+
       final collapse = sidebarCollapse(
         width: constraints.maxWidth,
         halfScreenWidth: _halfScreenWidth(context),
@@ -249,6 +260,30 @@ class _MainLayoutState extends State<MainLayout> {
         ],
       );
     });
+  }
+
+  /// En modo reducido sólo existe la biblioteca: si se estrecha la ventana
+  /// estando en otra pantalla, se vuelve a ella.
+  ///
+  /// En el fotograma siguiente: durante la construcción no se puede navegar.
+  void _keepToLibrary(BuildContext context) {
+    if (GoRouterState.of(context).matchedLocation == mediaRoute) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !isLiteLayout(context)) return;
+      context.go(mediaRoute);
+    });
+  }
+
+  /// La aplicación en una ventana pequeña: la biblioteca sola.
+  ///
+  /// **Sin barra superior.** Con el logo solo en ella era una franja entera
+  /// de alto perdida en la ventana que menos alto tiene; el logo va en la
+  /// cabecera de la biblioteca, en la misma fila que la cuenta y los filtros.
+  /// Sin menú lateral, sin buscador y sin crear ni ajustes: no caben, y llevan
+  /// a pantallas que aquí no existen. Para ellos basta con agrandar la ventana.
+  Widget _buildLiteLayout(Widget child) {
+    return Scaffold(body: SafeArea(child: child));
   }
 
   Widget _buildLargeScreenLayout(

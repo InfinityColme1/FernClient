@@ -116,10 +116,13 @@ class MediaPlaybackController extends ChangeNotifier {
 
   /// Si al llegar al final vuelve a empezar.
   ///
-  /// Un GIF se repite siempre, como haría en cualquier sitio; en un vídeo es
-  /// algo que se pide, y el visor lo ofrece con un botón.
+  /// Un GIF se repite siempre, como haría en cualquier sitio. **Un vídeo
+  /// también, de fábrica**: aquí se miran vídeos cortos una y otra vez, y
+  /// quedarse parado en el último fotograma obligaba a volver a darle cada vez.
+  /// El botón del visor lo quita, y lo que se elija **se queda para los
+  /// siguientes**: es una preferencia de cómo se mira, no algo de un vídeo.
   bool get isLooping => _frames != null || _isLooping;
-  bool _isLooping = false;
+  bool _isLooping = true;
 
   /// Margen para dar por bueno que algo es «de este fotograma».
   ///
@@ -192,6 +195,11 @@ class MediaPlaybackController extends ChangeNotifier {
     // que suene nada. Sin esto, cada contenido empezaría a tope y bajarlo no
     // serviría de una vez para la siguiente.
     unawaited(player.setVolume(_volume * _playerVolumeScale));
+
+    // Y la repetición, que también es de quien mira y no del contenido.
+    unawaited(player.setPlaylistMode(
+      _isLooping ? PlaylistMode.single : PlaylistMode.none,
+    ));
 
     _subscriptions.addAll([
       player.stream.position.listen((value) {
@@ -287,7 +295,6 @@ class MediaPlaybackController extends ChangeNotifier {
     _position = Duration.zero;
     _duration = Duration.zero;
     _isPlaying = false;
-    _isLooping = false;
     _fps = null;
 
     _notify();
@@ -387,7 +394,7 @@ class MediaPlaybackController extends ChangeNotifier {
   /// En un GIF no hace nada: su reloj vuelve al principio siempre, que es lo
   /// que hace un GIF en cualquier sitio.
   Future<void> setLooping(bool value) async {
-    if (_frames != null || _isLooping == value) return;
+    if (_isLooping == value) return;
 
     _isLooping = value;
     _notify();

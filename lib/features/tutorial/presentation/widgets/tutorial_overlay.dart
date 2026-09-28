@@ -9,6 +9,7 @@ import 'package:Fern/features/tutorial/presentation/tutorial_anchors.dart';
 import 'package:Fern/features/tutorial/presentation/tutorial_controller.dart';
 import 'package:Fern/features/tutorial/presentation/tutorial_step.dart';
 import 'package:Fern/l10n/app_localizations.dart';
+import 'package:Fern/core/navigation/escape_back.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -163,7 +164,13 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
     if (step == null) return const SizedBox.shrink();
 
     return Positioned.fill(
-      child: Focus(
+      // Escape lo termina aunque el foco se haya ido a otra parte.
+      child: EscapeDismiss(
+        onEscape: () {
+          widget.controller.finish();
+          return true;
+        },
+        child: Focus(
         autofocus: true,
         onKeyEvent: _onKey,
         child: Stack(
@@ -187,6 +194,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
             _card(context, step.title, step.body),
           ],
         ),
+      ),
       ),
     );
   }

@@ -19,6 +19,7 @@ import 'package:Fern/l10n/app_localizations.dart';
 
 import 'dart:async';
 
+import 'package:Fern/core/navigation/escape_back.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -64,6 +65,9 @@ Future<void> main() async {
   // caducan y que nadie va a ir a limpiar a mano. Sin `await`: no hay ninguna
   // pantalla esperando a que termine, y arrancar es lo que no puede esperar.
   unawaited(getIt<PurgeOldRejectionsUseCase>()());
+
+  // Escape, un paso atrás desde cualquier sitio: ver `EscapeBack`.
+  EscapeBack.instance.attach(rootNavigatorKey);
 
   runApp(const MyApp());
 }

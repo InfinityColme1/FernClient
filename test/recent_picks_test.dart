@@ -8,7 +8,6 @@
 // un reciente que ya no lleva a ninguna parte, y una borrada —o escondida por el
 // filtro NSFW— desaparece sola de la lista sin que nadie vaya a limpiarla.
 
-import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/resources/data_state.dart';
 import 'package:Fern/core/services/preferences_service.dart';
 import 'package:Fern/features/media/domain/entities/persona/creator_entity.dart';
@@ -71,14 +70,17 @@ void main() {
       expect(await recents.tags(), hasLength(1));
     });
 
-    test('se enseñan tres como mucho', () async {
+    // La pila entera: el desplegable enseña tres y el resto se desplaza.
+    test('se ofrece la pila entera, de la última a la primera', () async {
       repository.tags = {for (var i = 1; i <= 6; i++) i: 'tag $i'};
 
       for (var i = 1; i <= 6; i++) {
         await recents.pushTag(i);
       }
 
-      expect(await recents.tags(), hasLength(recentPicksShown));
+      final tags = await recents.tags();
+      expect(tags, hasLength(6));
+      expect(tags.first.id, 6);
     });
 
     // Se guardan más de los que se enseñan a propósito: sin colchón, borrar dos
@@ -98,6 +100,37 @@ void main() {
       expect(
         (await recents.tags()).map((tag) => tag.name),
         ['tag 3', 'tag 2', 'tag 1'],
+      );
+    });
+
+    // Las que ya lleva el contenido no se ofrecen, y su sitio lo ocupa la
+    // siguiente de la pila: al asignar una de las tres siguen saliendo tres.
+    test('sin las ya puestas, y con los huecos llenos', () async {
+      repository.tags = {for (var i = 1; i <= 6; i++) i: 'tag $i'};
+
+      for (var i = 1; i <= 6; i++) {
+        await recents.pushTag(i);
+      }
+
+      expect(
+        (await recents.tags(excluding: {6, 4})).map((tag) => tag.name),
+        ['tag 5', 'tag 3', 'tag 2', 'tag 1'],
+      );
+    });
+
+    // La pila llega a veinticinco: poner muchas seguidas no la vacía.
+    test('se guardan veinticinco', () async {
+      repository.tags = {for (var i = 1; i <= 30; i++) i: 'tag $i'};
+
+      for (var i = 1; i <= 30; i++) {
+        await recents.pushTag(i);
+      }
+
+      expect(preferences.recentTagIds(), hasLength(25));
+      expect(
+        (await recents.tags(excluding: {for (var i = 8; i <= 30; i++) i}))
+            .map((tag) => tag.name),
+        ['tag 7', 'tag 6'],
       );
     });
 

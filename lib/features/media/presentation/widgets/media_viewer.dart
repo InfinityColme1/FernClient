@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:Fern/core/ui/display/fern_broken_media.dart';
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/features/media/data/services/gif_frames.dart';
 import 'package:Fern/features/media/presentation/services/media_playback_controller.dart';
+import 'package:Fern/features/media/presentation/services/viewer_prefetch.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -293,19 +293,66 @@ class _MediaViewerState extends State<MediaViewer> {
       // simplemente no hay vuelo, que es la forma de no volar sin romper nada.
       Hero(
         tag: mediaHeroTag(widget.path),
-        child: Image.file(
-          File(widget.path),
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (_, _, _) {
-            _reportLoadFailure();
-            return const FernBrokenMedia();
+        child: LayoutBuilder(
+          builder: (context, space) {
+            final decodeWidth = _decodeWidth(context, space.maxWidth);
+
+            // Lo que se adelanta de los vecinos se descodifica a este mismo
+            // ancho: con otro, la caché no lo reconocería al llegar a ellos.
+            ViewerPrefetch.noteDecodeWidth(decodeWidth);
+
+            return Image(
+              image: ViewerPrefetch.provider(widget.path, decodeWidth),
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+              filterQuality: FilterQuality.high,
+              // Sin saltar a negro al cambiar de resolución (al entrar a
+              // marcar) ni al pasar al siguiente mientras se decodifica.
+              gaplessPlayback: true,
+              errorBuilder: (_, _, _) {
+                _reportLoadFailure();
+                return const FernBrokenMedia();
+              },
+            );
           },
         ),
       ),
     );
   }
+
+  /// A qué ancho se decodifica la imagen, o `null` para el fichero entero.
+  ///
+  /// **Mirando, a lo que cabe en pantalla con margen para acercar**, y no al
+  /// tamaño del fichero. Una foto de veinte megapíxeles decodificada entera son
+  /// ochenta megas de memoria; pasar doscientas en el visor era llenar la caché
+  /// de imágenes con cosas del tamaño de un póster para enseñarlas en una
+  /// ventana, y eso es lo que acababa haciendo reventar la aplicación al volver
+  /// a la rejilla. Nunca se amplía: una imagen más pequeña se queda como es.
+  ///
+  /// **Marcando, entera**: ahí se acerca mucho para ajustar una región, y lo
+  /// que se ve tiene que ser el fichero de verdad.
+  int? _decodeWidth(BuildContext context, double width) {
+    if (widget.stepped || !width.isFinite || width <= 0) return null;
+
+    final pixels = width * MediaQuery.devicePixelRatioOf(context);
+    final target = pixels * viewerDecodeOversample;
+    final stepped =
+        (target / viewerDecodeWidthStep).ceil() * viewerDecodeWidthStep;
+
+    // Por saltos y **sólo creciendo** para este fichero: reescalar la ventana
+    // con el visor abierto descodificaba la imagen entera a cada fotograma.
+    final decoded = _decodedWidth;
+    if (_decodedPath == widget.path && decoded != null && stepped <= decoded) {
+      return decoded;
+    }
+
+    _decodedPath = widget.path;
+    return _decodedWidth = stepped;
+  }
+
+  /// El ancho al que se descodificó [_decodedPath]. Ver [_decodeWidth].
+  int? _decodedWidth;
+  String? _decodedPath;
 
   Widget _buildVideoPlayer() {
     final controller = _controller;

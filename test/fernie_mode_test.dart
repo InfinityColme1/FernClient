@@ -1038,6 +1038,47 @@ void main() {
       expect(bloc.state.proposed.single.rect.left, 0.4);
     });
 
+    // Una propuesta se elige y se retoca como cualquier región antes de
+    // aceptarla: lo que se marca es cómo ha quedado.
+    test('se acepta con lo que se le haya cambiado', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        regions: [proposal(0.1)],
+      ));
+      await _settle();
+
+      const moved = Rect.fromLTWH(0.3, 0.3, 0.2, 0.2);
+      bloc.add(ProposedRegionAcceptedEvent(
+        0,
+        rect: moved,
+        fernie: _fernie(2, 'Marinette'),
+      ));
+      await _settle();
+
+      expect(bloc.state.pending.single.rect, moved);
+      expect(bloc.state.views.single.label, 'Marinette');
+    });
+
+    test('una se puede tirar sin tocar las demás', () async {
+      final bloc = _blocOf(_FakeRepository());
+
+      bloc.add(const LoadMediaRegionsEvent(_mediaId));
+      bloc.add(ProposedRegionsOfferedEvent(
+        infoWasOpen: false,
+        regions: [proposal(0.1), proposal(0.4)],
+      ));
+      await _settle();
+
+      bloc.add(const ProposedRegionDiscardedEvent(0));
+      await _settle();
+
+      expect(bloc.state.pending, isEmpty);
+      expect(bloc.state.proposed.single.rect.left, 0.4);
+    });
+
     // Con doce coches bien detectados, pulsarlos de uno en uno es el trabajo que
     // esto venía a ahorrar.
     test('y hay un botón para todas', () async {

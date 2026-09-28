@@ -16,6 +16,9 @@ import 'package:Fern/features/media/domain/entities/tag_entity.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_creator_tags_usecase.dart';
 import 'package:Fern/features/media/domain/usecases/save_tag_usecase.dart';
+import 'package:Fern/features/media/domain/usecases/save_tag_siblings_usecase.dart';
+import 'package:Fern/features/media/domain/services/sibling_direction.dart';
+import 'package:Fern/features/media/presentation/widgets/tag_relations_dialog.dart';
 import 'package:Fern/features/media/presentation/widgets/assign_creator_tags_dialog.dart';
 import 'package:Fern/features/media/domain/usecases/search_tags_usecase.dart';
 import 'package:Fern/features/media/presentation/blocs/creators_bloc.dart';
@@ -80,6 +83,15 @@ enum CreateDialogType {
 
 /// Diálogo para crear una etiqueta o un creador y guardarlo en la base de
 /// datos.
+///
+/// **Hace lo mismo que la ficha de la pantalla de gestión** (`TagCard`,
+/// `CreatorCard`), con los mismos botones y los mismos campos: una etiqueta
+/// nace con su madre, sus hermanas y sus direcciones a la vista, y un creador
+/// con sus perfiles —marcables— y sus etiquetas. Antes el diálogo se quedaba
+/// corto —sin hermanas, con los perfiles como campos sueltos— y había que crear
+/// y luego ir a la ficha a terminar. Lo único que falta es lo que no tiene
+/// sentido sin existir: reconocer su contenido, quitárselo a lo seleccionado y
+/// borrar.
 ///
 /// El avatar de la izquierda es editable y alimenta el `picturePath` del
 /// modelo; el texto que hay debajo va siguiendo lo que se escribe en el campo
@@ -179,10 +191,13 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   late final TextEditingController _nameController =
       TextEditingController(text: widget.initialName);
 
-  /// Un campo por enlace de red social. Siempre hay al menos uno.
-  final List<TextEditingController> _socialControllers = [
-    TextEditingController(),
-  ];
+  /// Los perfiles del creador, con su marca, como en su ficha.
+  List<FernLink> _socialProfiles = const [];
+
+  /// Las hermanas de la etiqueta y quién arrastra a quién, como se dejen en su
+  /// árbol. Se guardan al crearla, que es cuando ya hay a quién engancharlas.
+  List<TagEntity> _siblings = const [];
+  Map<int, SiblingDirection> _siblingDirections = const {};
 
   String? _selectedImagePath;
 
@@ -315,15 +330,56 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     setState(() => _sourceUrls = urls);
   }
 
-  void _addSocialField() {
-    setState(() => _socialControllers.add(TextEditingController()));
+  /// La etiqueta que se está creando, para el árbol de relaciones: todavía sin
+  /// identificador, con el nombre que lleve escrito.
+  TagEntity get _draftTag => TagEntity(
+        id: unsavedId,
+        name: _nameController.text.trim().isEmpty
+            ? widget.type.title(AppLocalizations.of(context))
+            : _nameController.text.trim(),
+        picturePath: _selectedImagePath,
+        children: const [],
+      );
+
+  /// Abre el árbol de relaciones, el mismo de la ficha, y se queda con lo que
+  /// se decida. No se guarda nada todavía: la etiqueta no existe.
+  Future<void> _editRelations() async {
+    final result = await showFernDialog<TagRelations, Never>(
+      context: context,
+      builder: (_) => TagRelationsDialog(
+        tag: _draftTag,
+        parent: _parentTag,
+        siblings: _siblings,
+        searchParents: _searchParentTags,
+        searchSiblings: _searchSiblings,
+        createTag: () => showFernDialog<TagEntity, Never>(
+          context: context,
+          builder: (_) => const FernCreateDialog.tag(),
+        ),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _parentTag = result.parent;
+      _siblings = result.siblings;
+      _siblingDirections = {
+        for (final one in result.siblings) one.id: result.directionOf(one.id),
+      };
+    });
   }
 
-  /// Enlaces escritos, sin los campos que se han quedado vacíos.
-  List<String> get _socialProfiles => _socialControllers
-      .map((controller) => controller.text.trim())
-      .where((link) => link.isNotEmpty)
-      .toList();
+  /// Las candidatas a hermana: las que no lo son ya.
+  Future<List<TagEntity>> _searchSiblings(String query) async {
+    final found = await _searchParentTags(query);
+    final already = {for (final one in _siblings) one.id};
+
+    return [
+      for (final tag in found)
+        if (!already.contains(tag.id)) tag,
+    ];
+  }
 
   /// Guarda en la base de datos y, si sale bien, cierra el diálogo devolviendo
   /// lo guardado. Si falla, el diálogo se queda abierto para no perder lo
@@ -371,6 +427,18 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         final tag = result.data;
         if (result is! DataSuccess || tag == null) return;
 
+        // Las hermanas van aparte, como en la ficha: son una relación entre dos
+        // etiquetas y se escriben en las dos. Después de crearla, que es cuando
+        // ya hay a quién engancharlas.
+        if (_siblingDirections.isNotEmpty) {
+          await getIt<SaveTagSiblingsUseCase>()(
+            params: SaveTagSiblingsParams(
+              tagId: tag.id,
+              siblings: _siblingDirections,
+            ),
+          );
+        }
+
         // La etiqueta nueva tiene que salir en el menú lateral sin tener que
         // reiniciar: es el único sitio donde se crean, así que el aviso va aquí.
         getIt<TagsBloc>().add(const LoadTagsEvent());
@@ -378,7 +446,10 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
         navigator.pop(tag);
 
       case CreateDialogType.creator:
-        final links = _socialProfiles;
+        final links = [
+          for (final link in _socialProfiles)
+            if (link.url.trim().isNotEmpty) link.url.trim(),
+        ];
 
         final result = await _saveCreator(
           params: CreatorEntity(
@@ -386,6 +457,10 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
             name: name,
             picturePath: _selectedImagePath,
             socialProfiles: links.isEmpty ? null : links,
+            nsfwSocialProfiles: [
+              for (final link in _socialProfiles)
+                if (link.isNsfw && link.url.trim().isNotEmpty) link.url.trim(),
+            ],
             sourceUrls: [for (final link in _sourceUrls) link.url],
             nsfwSourceUrls: [
               for (final link in _sourceUrls)
@@ -466,9 +541,6 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    for (final controller in _socialControllers) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -489,11 +561,13 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
       // y marcarlo esconde todo lo suyo. Había que crearlo primero e ir a la
       // pantalla de gestión a por las dos cosas.
       trailingAction: switch (widget.type) {
+        // En el orden de la ficha: persona, marca, relaciones y direcciones.
         CreateDialogType.tag => Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _personToggle(texts),
               _nsfwToggle(texts),
+              _relationsButton(texts),
               _assignUrlsButton(texts),
             ],
           ),
@@ -552,7 +626,7 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
           ],
           const SizedBox(height: AppSpacing.xl),
           switch (widget.type) {
-            CreateDialogType.tag => _parentTagField(),
+            CreateDialogType.tag => _tagFields(texts),
             CreateDialogType.creator => _socialProfilesField(),
             // Un fernie nace sin nada más: sin regiones, que se le marcan desde
             // el visor, y sin enlace, que se le pone en su ficha.
@@ -749,60 +823,103 @@ class _FernCreateDialogState extends State<FernCreateDialog> {
     );
   }
 
-  Widget _parentTagField() {
-    final texts = AppLocalizations.of(context);
-
-    return FernEntitySearchField<TagEntity>(
-      label: widget.type.secondaryLabel(texts),
-      hintText: texts.searchEllipsisHint,
-      search: _searchParentTags,
-      labelOf: (tag) => tag.name,
-      // Las marcadas se distinguen al autocompletar: elegir una sin
-      // saberlo es esconder contenido sin querer.
-      trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
-      onSelected: (tag) => setState(() => _parentTag = tag),
-      debounce: searchDebounceDuration,
+  /// Lo de la etiqueta debajo del nombre, como en su ficha: de quién cuelga y
+  /// con cuántas va, en una línea —el detalle en el árbol—, y sus direcciones a
+  /// la vista.
+  /// Lo de la etiqueta debajo del nombre: **de quién cuelga**, escribiéndolo, y
+  /// con cuántas va, si va con alguna.
+  ///
+  /// Aquí un buscador de madre y no la lista de direcciones de la ficha, aunque
+  /// el resto del diálogo sea el mismo: al crear una etiqueta lo que se sabe es
+  /// dónde va en el árbol —se está ordenando, y casi siempre se crea colgando de
+  /// algo—, y sus direcciones son cosa de después. Se siguen poniendo desde su
+  /// botón de arriba.
+  Widget _tagFields(AppLocalizations texts) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FernEntitySearchField<TagEntity>(
+          // Se rehace cuando la madre llega del árbol de relaciones: el campo
+          // se queda con el nombre que recibe al nacer.
+          key: ValueKey(_parentTag?.id),
+          label: widget.type.secondaryLabel(texts),
+          hintText: texts.searchEllipsisHint,
+          initialValue: _parentTag?.name ?? '',
+          search: _searchParentTags,
+          labelOf: (tag) => tag.name,
+          // Las marcadas se distinguen al autocompletar: elegir una sin
+          // saberlo es esconder contenido sin querer.
+          trailingOf: (tag) => tag.isUnderNsfw ? const NsfwTagMark() : null,
+          onSelected: (tag) => setState(() => _parentTag = tag),
+          // Vaciar el campo la suelta, como en la ficha: la etiqueta nace como
+          // raíz.
+          onChanged: (value) {
+            if (value.trim().isEmpty && _parentTag != null) {
+              setState(() => _parentTag = null);
+            }
+          },
+          debounce: searchDebounceDuration,
+        ),
+        // Las hermanas se ponen en el árbol, así que aquí sólo se dicen: sin
+        // esto, lo que se acaba de elegir allí no se veía por ninguna parte.
+        if (_siblings.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.m),
+          Row(
+            children: [
+              Icon(
+                Symbols.account_tree,
+                size: AppSizes.iconSmall,
+                color: context.colors.unremarked,
+              ),
+              const SizedBox(width: AppSpacing.s),
+              Expanded(
+                child: Text(
+                  texts.tagRelationsSiblingCount(_siblings.length),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: context.colors.gray),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
-  /// Enlaces de redes sociales: un campo por enlace, desplazables, y debajo un
-  /// botón pequeño para añadir uno más.
+  /// Abre el árbol de relaciones, como el botón de la ficha.
+  Widget _relationsButton(AppLocalizations texts) {
+    return IconButton(
+      icon: const Icon(Symbols.account_tree, size: AppSizes.iconExtraLarge),
+      tooltip: texts.tagRelationsTooltip,
+      onPressed: _isBusy ? null : _editRelations,
+    );
+  }
+
+  /// Los perfiles del creador, con la misma lista que su ficha: se abren, se
+  /// editan, se quitan y se marcan. Eran campos de texto sueltos, sin marca, y
+  /// lo marcado había que ponerlo después en la ficha.
   Widget _socialProfilesField() {
-    final theme = Theme.of(context);
     final texts = AppLocalizations.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.type.secondaryLabel(texts),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s),
-        ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxHeight: createDialogSocialFieldsMaxHeight,
-          ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: _socialControllers.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
-            itemBuilder: (_, index) => TextField(
-              controller: _socialControllers[index],
-              keyboardType: TextInputType.url,
-              decoration: InputDecoration(hintText: texts.profileLinkHint),
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s),
-        FernAddButton.compact(
-          label: texts.addProfile,
-          onTap: _addSocialField,
-        ),
-      ],
+    return FernLinkListField(
+      links: _socialProfiles,
+      onChanged: (links) => _socialProfiles = links,
+      canMarkNsfw: getIt<NsfwModeService>().isConfigured,
+      markNsfwTooltip: texts.markLinkNsfwTooltip,
+      unmarkNsfwTooltip: texts.unmarkLinkNsfwTooltip,
+      label: texts.socialProfilesLabel,
+      emptyMessage: texts.noSocialProfiles,
+      hintText: texts.profileLinkHint,
+      addLabel: texts.addProfile,
+      openTooltip: texts.openProfileTooltip,
+      editTooltip: texts.editProfileTooltip,
+      removeTooltip: texts.removeProfileTooltip,
+      doneTooltip: texts.doneEditingProfileTooltip,
     );
   }
 }

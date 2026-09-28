@@ -204,6 +204,51 @@ void main() {
       );
     });
 
+    // **El panel guarda solo, en cada cambio.** Eso pasa por aqui sin confirmar:
+    // escribir una palabra en la descripcion no puede sacar el contenido de la
+    // pantalla de importacion, que es lo que haria darlo por revisado.
+    test('guardar sin confirmar no lo da por revisado', () async {
+      final shown = await details(taggedId);
+
+      await isar.writeTxn(() async {
+        final summary = await isar.mediaSummaryModels.get(taggedId);
+        summary!.isImported = false;
+        await isar.mediaSummaryModels.put(summary);
+      });
+
+      await repository.saveMedia(shown, confirm: false);
+
+      final summary = await isar.mediaSummaryModels.get(taggedId);
+      expect(summary!.isImported, isFalse);
+    });
+
+    test('pero si baja lo que se ha escrito', () async {
+      final shown = await details(taggedId);
+
+      await repository.saveMedia(
+        shown.copyWith(description: 'lo que se acaba de escribir'),
+        confirm: false,
+      );
+
+      final stored = await isar.mediaModels.get(taggedId);
+      expect(stored!.description, 'lo que se acaba de escribir');
+    });
+
+    test('y confirmar si lo da por revisado', () async {
+      final shown = await details(taggedId);
+
+      await isar.writeTxn(() async {
+        final summary = await isar.mediaSummaryModels.get(taggedId);
+        summary!.isImported = false;
+        await isar.mediaSummaryModels.put(summary);
+      });
+
+      await repository.saveMedia(shown);
+
+      final summary = await isar.mediaSummaryModels.get(taggedId);
+      expect(summary!.isImported, isTrue);
+    });
+
     // El registro dice el nombre de lo que se puso, asi que ensenar su linea
     // cuenta lo que la marca tapaba.
     test('el registro tampoco la nombra', () async {

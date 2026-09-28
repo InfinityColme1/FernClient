@@ -707,7 +707,7 @@ class _FakeMedia implements LocalMediaRepository {
   var brokenTrash = false;
 
   @override
-  Future<DataState> saveMedia(MediaEntity media) async {
+  Future<DataState> saveMedia(MediaEntity media, {bool confirm = true}) async {
     saved.add(media);
 
     return const DataSuccess(null);

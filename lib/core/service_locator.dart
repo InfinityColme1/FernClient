@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:Fern/core/constants/app_constants.dart';
 import 'package:Fern/core/utils/media_type.dart';
 import 'package:Fern/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:Fern/core/services/preferences_service.dart';
+import 'package:Fern/features/media/data/services/search_suggestion_pool.dart';
 import 'package:Fern/features/tutorial/presentation/tutorial_controller.dart';
 import 'package:Fern/core/navigation/screen_choreography.dart';
 import 'package:Fern/core/services/shuffle_seed.dart';
@@ -114,6 +117,7 @@ import 'package:Fern/features/settings/domain/usecases/crop_avatar_usecase.dart'
 import 'package:Fern/features/settings/domain/usecases/store_avatar_usecase.dart';
 import 'package:Fern/features/media/data/services/import_feed.dart';
 import 'package:Fern/features/media/presentation/widgets/viewed_media.dart';
+import 'package:Fern/features/recognition/data/services/region_merge_overlaps.dart';
 import 'package:Fern/features/media/domain/entities/media/media_summary_entity.dart';
 import 'package:Fern/features/media/domain/entities/import_source.dart';
 import 'package:Fern/features/media/data/services/import_job_runner.dart';
@@ -505,6 +509,10 @@ Future<void> initializeDependencies() async {
         // bloqueado, así que el índice se rehace desde el propio repositorio y
         // no desde cada pantalla que marque algo.
         onNsfwChanged: getIt<NsfwIndex>().rebuild,
+        // La carpeta de paso de las fuentes remotas: lo que salga de la base de
+        // datos y siga ahí se borra aunque se haya pedido conservar los
+        // ficheros, que esa casilla es para las carpetas del usuario.
+        downloadsPath: () => getIt<RemoteMediaDownloader>().downloadsPath,
       )
   );
 
@@ -724,6 +732,16 @@ Future<void> initializeDependencies() async {
 
   getIt.registerSingleton<RecentPicks>(
     RecentPicks(preferences: getIt(), repository: getIt())
+  );
+
+  // Lo que ofrece la barra general sin nada escrito. Se sortea al abrir, más
+  // abajo, sin esperar a que termine.
+  getIt.registerSingleton<SearchSuggestionPool>(
+    SearchSuggestionPool(
+      repository: getIt(),
+      preferences: getIt(),
+      visibility: getIt<NsfwVisibility>(),
+    ),
   );
 
   getIt.registerSingleton<SetCreatorNsfwUseCase>(
@@ -1161,6 +1179,15 @@ Future<void> initializeDependencies() async {
   // Y a dónde volver al salir del visor.
   getIt.registerSingleton<ViewedMedia>(ViewedMedia());
 
+  // El listón de juntar detecciones, el de todos y el de cada fernie.
+  getIt.registerSingleton<RegionMergeOverlaps>(
+    RegionMergeOverlaps(
+      preferences: getIt(),
+      defaultPercent: () =>
+          getIt<SettingsRepository>().getSettings().regionMergeOverlap,
+    ),
+  );
+
   getIt.registerLazySingleton<RecognitionJobRunner>(
     () => RecognitionJobRunner(
       tree: getIt(),
@@ -1423,7 +1450,12 @@ Future<void> initializeDependencies() async {
   //
   // Va aquí, al final, porque necesita los dos blocs ya registrados, y sin
   // cancelar la suscripción porque estos tres viven lo que vive la aplicación.
+  // En segundo plano: la ventana no espera a que esté.
+  unawaited(getIt<SearchSuggestionPool>().refresh());
+
   getIt<NsfwModeService>().changes.listen((_) {
+    // Con el bloqueo abierto entran candidatas que antes no podían salir.
+    unawaited(getIt<SearchSuggestionPool>().refresh());
     getIt<TagsBloc>().add(const LoadTagsEvent());
     // Los creadores también se marcan, así que su lista también cambia al abrir
     // y cerrar. Se quedó fuera de aquí cuando no se podían marcar, y el síntoma
